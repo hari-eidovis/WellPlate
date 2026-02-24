@@ -7,17 +7,12 @@
 
 import SwiftUI
 import SwiftData
-
-#if canImport(DeviceActivity)
-import DeviceActivity
 import Combine
-#endif
 
 struct StressView: View {
 
     @StateObject var viewModel: StressViewModel
     @ObservedObject private var screenTimeManager = ScreenTimeManager.shared
-    @State private var reportRefreshKey = Self.makeReportRefreshKey()
     @Environment(\.scenePhase) private var scenePhase
     private let refreshTicker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
@@ -46,22 +41,18 @@ struct StressView: View {
             await ScreenTimeManager.shared.requestAuthorization()
             ScreenTimeManager.shared.startMonitoring()
             await viewModel.requestPermissionAndLoad()
-            reportRefreshKey = Self.makeReportRefreshKey()
             viewModel.refreshScreenTimeOnly()
         }
         .onAppear {
             viewModel.refreshDietFactor()
             viewModel.refreshScreenTimeOnly()
-            reportRefreshKey = Self.makeReportRefreshKey()
         }
         .onReceive(refreshTicker) { _ in
             guard viewModel.isAuthorized else { return }
-            reportRefreshKey = Self.makeReportRefreshKey()
             viewModel.refreshScreenTimeOnly()
         }
         .onChange(of: scenePhase) { phase in
             guard phase == .active else { return }
-            reportRefreshKey = Self.makeReportRefreshKey()
             viewModel.refreshScreenTimeOnly()
         }
     }
@@ -82,7 +73,6 @@ struct StressView: View {
         }
         .refreshable {
             await viewModel.loadData()
-            reportRefreshKey = Self.makeReportRefreshKey()
             viewModel.refreshScreenTimeOnly()
         }
     }
@@ -115,18 +105,18 @@ struct StressView: View {
 
     // MARK: - Screen Time Report Card
 
-    @ViewBuilder
     private var screenTimeReportCard: some View {
-        #if canImport(DeviceActivity)
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 14) {
+            // Header
             HStack {
                 Image(systemName: "iphone")
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.cyan)
                 Text("Screen Time")
                     .font(.r(.headline, .semibold))
                 Spacer()
                 if viewModel.screenTimeSource == .auto {
-                    Text("Auto")
+                    Text("Live")
                         .font(.r(.caption2, .bold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 8)
@@ -135,38 +125,66 @@ struct StressView: View {
                 }
             }
 
-            if screenTimeManager.isAuthorized {
-                DeviceActivityReport(
-                    .init(rawValue: "TotalActivity"),
-                    filter: DeviceActivityFilter(
-                        segment: .daily(
-                            during: DateInterval(
-                                start: Calendar.current.startOfDay(for: Date()),
-                                end: Date()
-                            )
-                        )
-                    )
-                )
-                .id(reportRefreshKey)
-                .frame(minHeight: 60)
-            } else {
-                HStack(spacing: 8) {
-                    ProgressView()
-                        .tint(.cyan)
-                    Text("Waiting for Screen Time permission…")
-                        .font(.r(.caption, .regular))
+            // Main time display
+            let factor = viewModel.screenTimeFactor
+            HStack(alignment: .lastTextBaseline, spacing: 4) {
+                if viewModel.screenTimeSource == .auto,
+                   let reading = ScreenTimeManager.shared.currentAutoDetectedReading {
+                    Text("\(reading.displayRoundedHours)")
+                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(LinearGradient(
+                            colors: [.cyan, .blue],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
+                    Text("h today")
+                        .font(.r(.subheadline, .medium))
+                        .foregroundColor(.secondary)
+                        .padding(.bottom, 6)
+                } else {
+                    Text("< 15 min")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(.cyan)
+                    Text("today")
+                        .font(.r(.subheadline, .medium))
+                        .foregroundColor(.secondary)
+                        .padding(.bottom, 4)
+                }
+                Spacer()
+                // Score badge
+                VStack(spacing: 2) {
+                    Text(String(format: "%.0f", factor.score))
+                        .font(.r(22, .bold))
+                        .foregroundColor(factor.accentColor)
+                    + Text(" /25")
+                        .font(.r(.caption, .medium))
+                        .foregroundColor(.secondary)
+                    Text("stress pts")
+                        .font(.r(.caption2, .regular))
                         .foregroundColor(.secondary)
                 }
-                .frame(height: 44)
             }
+
+            // Progress bar
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color(.systemGray5))
+                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(factor.accentColor)
+                        .frame(width: max(0, geo.size.width * factor.progress), height: 6)
+                }
+            }
+            .frame(height: 6)
+
+            // Detail label
+            Text(factor.detailText)
+                .font(.r(.caption, .regular))
+                .foregroundColor(.secondary)
         }
         .padding(20)
         .background(cardBackground)
-        #endif
-    }
-
-    private static func makeReportRefreshKey() -> String {
-        String(Int(Date().timeIntervalSince1970 / 60))
     }
 
     // MARK: - Factors Section

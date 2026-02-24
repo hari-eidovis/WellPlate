@@ -87,27 +87,41 @@ final class StressViewModel: ObservableObject {
 
     func loadData() async {
         let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: Date())
         let now = Date()
-        let todayInterval = DateInterval(start: startOfDay, end: now)
+        let startOfToday = calendar.startOfDay(for: now)
+
+        // Exercise window: if it's before 9 AM, yesterday's full day has more
+        // meaningful data than the handful of minutes since midnight.
+        let hour = calendar.component(.hour, from: now)
+        let exerciseStart: Date
+        let exerciseEnd: Date
+        if hour < 3 {
+            // Early morning — show yesterday's full-day activity
+            exerciseStart = calendar.date(byAdding: .day, value: -1, to: startOfToday) ?? startOfToday
+            exerciseEnd   = startOfToday
+        } else {
+            exerciseStart = startOfToday
+            exerciseEnd   = now
+        }
+        let exerciseInterval = DateInterval(start: exerciseStart, end: exerciseEnd)
 
         // Sleep: look back 1 day to capture last night
-        let sleepStart = calendar.date(byAdding: .day, value: -1, to: startOfDay) ?? startOfDay
+        let sleepStart = calendar.date(byAdding: .day, value: -1, to: startOfToday) ?? startOfToday
         let sleepInterval = DateInterval(start: sleepStart, end: now)
 
         #if DEBUG
         let fmt = DateFormatter()
         fmt.dateFormat = "HH:mm"
         log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        log("🔄 loadData() started")
-        log("   Today window : \(fmt.string(from: startOfDay)) → \(fmt.string(from: now))")
-        log("   Sleep window : \(fmt.string(from: sleepStart)) → \(fmt.string(from: now))")
+        log("🔄 loadData() started  (hour=\(hour))")
+        log("   Exercise window : \(fmt.string(from: exerciseStart)) → \(fmt.string(from: exerciseEnd))\(hour < 3 ? " [yesterday fallback]" : "")")
+        log("   Sleep window    : \(fmt.string(from: sleepStart)) → \(fmt.string(from: now))")
         log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         #endif
 
         // Fetch exercise + sleep in parallel
-        async let stepsResult = fetchStepsSafely(for: todayInterval)
-        async let energyResult = fetchEnergySafely(for: todayInterval)
+        async let stepsResult = fetchStepsSafely(for: exerciseInterval)
+        async let energyResult = fetchEnergySafely(for: exerciseInterval)
         async let sleepResult = fetchSleepSafely(for: sleepInterval)
 
         let steps = await stepsResult
@@ -192,11 +206,15 @@ final class StressViewModel: ObservableObject {
     // MARK: - Private: Safe Fetchers (return nil on error)
 
     private func fetchStepsSafely(for range: DateInterval) async -> Double? {
-        try? await healthService.fetchSteps(for: range).first?.value
+        guard let samples = try? await healthService.fetchSteps(for: range) else { return nil }
+        let total = samples.map(\.value).reduce(0, +)
+        return total > 0 ? total : nil
     }
 
     private func fetchEnergySafely(for range: DateInterval) async -> Double? {
-        try? await healthService.fetchActiveEnergy(for: range).first?.value
+        guard let samples = try? await healthService.fetchActiveEnergy(for: range) else { return nil }
+        let total = samples.map(\.value).reduce(0, +)
+        return total > 0 ? total : nil
     }
 
     private func fetchSleepSafely(for range: DateInterval) async -> DailySleepSummary? {
