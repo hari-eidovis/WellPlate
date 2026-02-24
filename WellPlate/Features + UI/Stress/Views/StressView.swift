@@ -80,6 +80,11 @@ struct StressView: View {
             .padding(.top, 8)
             .padding(.bottom, 32)
         }
+        .refreshable {
+            await viewModel.loadData()
+            reportRefreshKey = Self.makeReportRefreshKey()
+            viewModel.refreshScreenTimeOnly()
+        }
     }
 
     // MARK: - Gauge Card
@@ -229,18 +234,22 @@ struct StressView: View {
     private func tipForFactor(_ factor: StressFactorResult) -> String {
         switch factor.title {
         case "Exercise":
-            return factor.score > 15
+            // Low score = low activity = bad
+            return factor.score < 10
                 ? "A 20-minute walk can significantly reduce stress hormones."
                 : "Keep moving — your activity level is helping!"
         case "Sleep":
-            return factor.score > 15
+            // Low score = poor sleep = bad
+            return factor.score < 10
                 ? "Aim for 7–9 hours tonight. Avoid screens before bed."
                 : "Your sleep is contributing to lower stress."
         case "Diet":
-            return factor.score > 15
+            // Low score = poor nutrition = bad
+            return factor.score < 10
                 ? "Try adding more protein and fiber to your meals today."
                 : "Good nutritional balance today!"
         case "Screen Time":
+            // High score = high usage = bad
             return factor.score > 15
                 ? "Take a break from your phone — try reading or a short walk."
                 : "Nice screen time management!"

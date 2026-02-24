@@ -87,25 +87,25 @@ struct StressFactorCardView: View {
 
 // MARK: - Preview
 
-#Preview {
-    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-        StressFactorCardView(
-            factor: StressFactorResult(
-                title: "Exercise", score: 8.2, maxScore: 25,
-                icon: "figure.run", accentColor: .orange,
-                statusText: "7,245 steps · 312 kcal",
-                detailText: "Great activity level!"
-            )
-        )
-        StressFactorCardView(
-            factor: StressFactorResult(
-                title: "Screen Time", score: 18, maxScore: 25,
-                icon: "iphone", accentColor: .cyan,
-                statusText: "5.5 hours today",
-                detailText: "Consider reducing screen time"
-            ),
-            onTap: { }
-        )
-    }
-    .padding()
-}
+//#Preview {
+//    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+//        StressFactorCardView(
+//            factor: StressFactorResult(
+//                title: "Exercise", score: 8.2, maxScore: 25,
+//                icon: "figure.run",
+//                statusText: "7,245 steps · 312 kcal",
+//                detailText: "Great activity level!"
+//            )
+//        )
+//        StressFactorCardView(
+//            factor: StressFactorResult(
+//                title: "Screen Time", score: 18, maxScore: 25,
+//                icon: "iphone",
+//                statusText: "5.5 hours today",
+//                detailText: "Consider reducing screen time"
+//            ),
+//            onTap: { }
+//        )
+//    }
+//    .padding()
+//}

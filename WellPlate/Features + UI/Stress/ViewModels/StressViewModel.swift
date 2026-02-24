@@ -22,10 +22,10 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - Published State
 
-    @Published var exerciseFactor: StressFactorResult  = .neutral(title: "Exercise",    icon: "figure.run",  accentColor: .orange)
-    @Published var sleepFactor: StressFactorResult      = .neutral(title: "Sleep",       icon: "moon.fill",   accentColor: .indigo)
-    @Published var dietFactor: StressFactorResult       = .neutral(title: "Diet",        icon: "leaf.fill",   accentColor: .green)
-    @Published var screenTimeFactor: StressFactorResult = .neutral(title: "Screen Time", icon: "iphone",      accentColor: .cyan)
+    @Published var exerciseFactor: StressFactorResult  = .neutral(title: "Exercise",    icon: "figure.run", higherIsBetter: true)
+    @Published var sleepFactor: StressFactorResult      = .neutral(title: "Sleep",       icon: "moon.fill",  higherIsBetter: true)
+    @Published var dietFactor: StressFactorResult       = .neutral(title: "Diet",        icon: "leaf.fill",  higherIsBetter: true)
+    @Published var screenTimeFactor: StressFactorResult = .neutral(title: "Screen Time", icon: "iphone",     higherIsBetter: false)
     @Published var isLoading = false
     @Published var isAuthorized = false
     @Published var errorMessage: String? = nil
@@ -33,8 +33,14 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - Computed
 
+    /// Stress total 0–100.
+    /// Exercise / sleep / diet contribute (25 - score) each — more activity = less stress.
+    /// Screen time contributes its score directly — more usage = more stress.
     var totalScore: Double {
-        exerciseFactor.score + sleepFactor.score + dietFactor.score + screenTimeFactor.score
+        exerciseFactor.stressContribution
+        + sleepFactor.stressContribution
+        + dietFactor.stressContribution
+        + screenTimeFactor.stressContribution
     }
 
     var stressLevel: StressLevel { StressLevel(score: totalScore) }
@@ -43,9 +49,9 @@ final class StressViewModel: ObservableObject {
         [exerciseFactor, sleepFactor, dietFactor, screenTimeFactor]
     }
 
-    /// Top 2 factors contributing most to stress (highest score = most stressful).
+    /// Top 2 factors contributing most to stress, ranked by stress contribution.
     var topStressors: [StressFactorResult] {
-        allFactors.sorted { $0.score > $1.score }.prefix(2).map { $0 }
+        allFactors.sorted { $0.stressContribution > $1.stressContribution }.prefix(2).map { $0 }
     }
 
     // MARK: - Dependencies
@@ -89,6 +95,16 @@ final class StressViewModel: ObservableObject {
         let sleepStart = calendar.date(byAdding: .day, value: -1, to: startOfDay) ?? startOfDay
         let sleepInterval = DateInterval(start: sleepStart, end: now)
 
+        #if DEBUG
+        let fmt = DateFormatter()
+        fmt.dateFormat = "HH:mm"
+        log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        log("🔄 loadData() started")
+        log("   Today window : \(fmt.string(from: startOfDay)) → \(fmt.string(from: now))")
+        log("   Sleep window : \(fmt.string(from: sleepStart)) → \(fmt.string(from: now))")
+        log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        #endif
+
         // Fetch exercise + sleep in parallel
         async let stepsResult = fetchStepsSafely(for: todayInterval)
         async let energyResult = fetchEnergySafely(for: todayInterval)
@@ -98,19 +114,50 @@ final class StressViewModel: ObservableObject {
         let energy = await energyResult
         let sleepSummary = await sleepResult
 
+        #if DEBUG
+        log("📦 HealthKit raw fetch results:")
+        log("   Steps  : \(steps.map { String(format: "%.0f", $0) } ?? "nil (no data)")")
+        log("   Energy : \(energy.map { String(format: "%.1f kcal", $0) } ?? "nil (no data)")")
+        if let s = sleepSummary {
+            log("   Sleep  : totalHours=\(String(format: "%.2f", s.totalHours))h  deepHours=\(String(format: "%.2f", s.deepHours))h")
+        } else {
+            log("   Sleep  : nil (no data for last night)")
+        }
+        #endif
+
         // Compute exercise factor
         let exerciseScore = computeExerciseScore(steps: steps, energy: energy)
         exerciseFactor = buildExerciseFactor(score: exerciseScore, steps: steps, energy: energy)
 
+        #if DEBUG
+        log("🏃 Exercise  → score=\(fmt2(exerciseScore))/25  stressContrib=\(fmt2(exerciseFactor.stressContribution))/25  [\(exerciseFactor.detailText)]")
+        #endif
+
         // Compute sleep factor
         let sleepScore = computeSleepScore(summary: sleepSummary)
         sleepFactor = buildSleepFactor(score: sleepScore, summary: sleepSummary)
+
+        #if DEBUG
+        log("🌙 Sleep     → score=\(fmt2(sleepScore))/25  stressContrib=\(fmt2(sleepFactor.stressContribution))/25  [\(sleepFactor.detailText)]")
+        #endif
 
         // Refresh diet synchronously from SwiftData
         refreshDietFactor()
 
         // Refresh screen time from persisted value
         refreshScreenTimeFactor()
+
+        #if DEBUG
+        log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        log("📊 Stress summary:")
+        log("   Exercise  score=\(fmt2(exerciseFactor.score))  contrib=\(fmt2(exerciseFactor.stressContribution))")
+        log("   Sleep     score=\(fmt2(sleepFactor.score))  contrib=\(fmt2(sleepFactor.stressContribution))")
+        log("   Diet      score=\(fmt2(dietFactor.score))  contrib=\(fmt2(dietFactor.stressContribution))")
+        log("   ScrnTime  score=\(fmt2(screenTimeFactor.score))  contrib=\(fmt2(screenTimeFactor.stressContribution))")
+        log("   ─────────────────────────────────────")
+        log("   Total stress : \(fmt2(totalScore))/100  → Level: \(stressLevel.label)")
+        log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        #endif
     }
 
     func refreshDietFactor() {
@@ -123,6 +170,19 @@ final class StressViewModel: ObservableObject {
         let logs = (try? modelContext.fetch(descriptor)) ?? []
         let score = computeDietScore(logs: logs)
         dietFactor = buildDietFactor(score: score, logs: logs)
+
+        #if DEBUG
+        if logs.isEmpty {
+            log("🥗 Diet      → no food logged today  score=\(fmt2(score))/25  stressContrib=\(fmt2(dietFactor.stressContribution))/25")
+        } else {
+            let protein = logs.map(\.protein).reduce(0, +)
+            let fiber   = logs.map(\.fiber).reduce(0, +)
+            let fat     = logs.map(\.fat).reduce(0, +)
+            let carbs   = logs.map(\.carbs).reduce(0, +)
+            log("🥗 Diet      → \(logs.count) entries  protein=\(fmt1(protein))g  fiber=\(fmt1(fiber))g  fat=\(fmt1(fat))g  carbs=\(fmt1(carbs))g")
+            log("             → score=\(fmt2(score))/25  stressContrib=\(fmt2(dietFactor.stressContribution))/25  [\(dietFactor.detailText)]")
+        }
+        #endif
     }
 
     func refreshScreenTimeOnly() {
@@ -145,47 +205,49 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - Score Engines
 
+    // Higher score = more activity = better (green).
     private func computeExerciseScore(steps: Double?, energy: Double?) -> Double {
         guard steps != nil || energy != nil else { return 12.5 }
 
         var scores: [Double] = []
 
         if let s = steps {
-            scores.append(25.0 * (1.0 - clamp(s / 10_000.0)))
+            scores.append(25.0 * clamp(s / 10_000.0))   // 10k steps → 25
         }
         if let e = energy {
-            scores.append(25.0 * (1.0 - clamp(e / 600.0)))
+            scores.append(25.0 * clamp(e / 600.0))      // 600 kcal  → 25
         }
 
         return scores.reduce(0, +) / Double(scores.count)
     }
 
+    // Higher score = better sleep quality = better (green).
     private func computeSleepScore(summary: DailySleepSummary?) -> Double {
         guard let s = summary else { return 12.5 }
         let h = s.totalHours
 
-        // Base score from total hours (0–20 pts)
+        // Base quality from total hours (0–20 pts) — peaks at 7–9 h
         let baseScore: Double
         switch h {
-        case ..<4:     baseScore = 20
-        case 4..<5:    baseScore = lerp(from: 20, to: 18, t: (h - 4) / 1)
-        case 5..<6:    baseScore = lerp(from: 18, to: 12, t: (h - 5) / 1)
-        case 6..<7:    baseScore = lerp(from: 12, to: 5,  t: (h - 6) / 1)
-        case 7..<9:    baseScore = lerp(from: 5,  to: 0,  t: (h - 7) / 2)
-        case 9..<10:   baseScore = lerp(from: 0,  to: 4,  t: (h - 9) / 1)
-        default:       baseScore = 6
+        case ..<4:     baseScore = 0
+        case 4..<5:    baseScore = lerp(from: 0,  to: 5,  t: (h - 4) / 1)
+        case 5..<6:    baseScore = lerp(from: 5,  to: 12, t: (h - 5) / 1)
+        case 6..<7:    baseScore = lerp(from: 12, to: 18, t: (h - 6) / 1)
+        case 7..<9:    baseScore = lerp(from: 18, to: 20, t: (h - 7) / 2)
+        case 9..<10:   baseScore = lerp(from: 20, to: 16, t: (h - 9) / 1)
+        default:       baseScore = 14
         }
 
-        // Deep sleep penalty (0–5 pts)
-        let deepPenalty: Double
+        // Deep sleep bonus (0–5 pts) — more deep sleep = higher score
+        let deepBonus: Double
         if h > 0 {
             let deepRatio = s.deepHours / h
-            deepPenalty = clamp((0.18 - deepRatio) / 0.18) * 5
+            deepBonus = clamp(deepRatio / 0.18) * 5
         } else {
-            deepPenalty = 2.5 // neutral
+            deepBonus = 2.5 // neutral
         }
 
-        return min(25, baseScore + deepPenalty)
+        return min(25, baseScore + deepBonus)
     }
 
     private func computeDietScore(logs: [FoodLogEntry]) -> Double {
@@ -206,7 +268,8 @@ final class StressViewModel: ObservableObject {
 
         let netBalance = clamp((balancedScore - excessScore * 0.6 + 0.5) / 1.0)
 
-        return 25.0 * (1.0 - netBalance)
+        // Higher netBalance = better diet = higher score (green).
+        return 25.0 * netBalance
     }
 
     private func computeScreenTimeScore(hours: Double?) -> Double {
@@ -233,12 +296,12 @@ final class StressViewModel: ObservableObject {
         }
 
         let detail: String
-        if score < 8 { detail = "Great activity level!" }
-        else if score < 16 { detail = "Moderate activity today" }
+        if score >= 18 { detail = "Great activity level!" }
+        else if score >= 10 { detail = "Moderate activity today" }
         else { detail = "Try to move more today" }
 
         return StressFactorResult(title: "Exercise", score: score, maxScore: 25, icon: "figure.run",
-                                  accentColor: .orange, statusText: status, detailText: detail)
+                                  statusText: status, detailText: detail, higherIsBetter: true)
     }
 
     private func buildSleepFactor(score: Double, summary: DailySleepSummary?) -> StressFactorResult {
@@ -250,12 +313,12 @@ final class StressViewModel: ObservableObject {
         }
 
         let detail: String
-        if score < 8 { detail = "Well rested!" }
-        else if score < 16 { detail = "Decent sleep" }
+        if score >= 18 { detail = "Well rested!" }
+        else if score >= 10 { detail = "Decent sleep" }
         else { detail = "Try to sleep more tonight" }
 
         return StressFactorResult(title: "Sleep", score: score, maxScore: 25, icon: "moon.fill",
-                                  accentColor: .indigo, statusText: status, detailText: detail)
+                                  statusText: status, detailText: detail, higherIsBetter: true)
     }
 
     private func buildDietFactor(score: Double, logs: [FoodLogEntry]) -> StressFactorResult {
@@ -270,12 +333,12 @@ final class StressViewModel: ObservableObject {
 
         let detail: String
         if logs.isEmpty { detail = "Log meals for an accurate score" }
-        else if score < 8 { detail = "Balanced diet today!" }
-        else if score < 16 { detail = "Fair nutritional balance" }
+        else if score >= 18 { detail = "Balanced diet today!" }
+        else if score >= 10 { detail = "Fair nutritional balance" }
         else { detail = "Consider healthier choices" }
 
         return StressFactorResult(title: "Diet", score: score, maxScore: 25, icon: "leaf.fill",
-                                  accentColor: .green, statusText: status, detailText: detail)
+                                  statusText: status, detailText: detail, higherIsBetter: true)
     }
 
     private func refreshScreenTimeFactor() {
@@ -285,10 +348,6 @@ final class StressViewModel: ObservableObject {
         screenTimeSource = reading != nil ? .auto : .none
 
         let score = computeScreenTimeScore(hours: scoreHours)
-        #if DEBUG
-        let hoursLog = scoreHours.map { String(format: "%.3f", $0) } ?? "nil"
-        print("[StressViewModel] screenTime hours=\(hoursLog) score=\(String(format: "%.2f", score))")
-        #endif
 
         let status: String
         let detail: String
@@ -303,7 +362,14 @@ final class StressViewModel: ObservableObject {
         }
 
         screenTimeFactor = StressFactorResult(title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
-                                              accentColor: .cyan, statusText: status, detailText: detail)
+                                              statusText: status, detailText: detail, higherIsBetter: false)
+
+        #if DEBUG
+        let rawHoursStr = scoreHours.map { String(format: "%.3f h", $0) } ?? "nil"
+        let sourceStr   = reading != nil ? "auto (DeviceActivity threshold)" : "none (< threshold)"
+        log("📱 ScrnTime  → rawHours=\(rawHoursStr)  source=\(sourceStr)")
+        log("             → score=\(fmt2(score))/25  stressContrib=\(fmt2(screenTimeFactor.stressContribution))/25  [\(detail)]")
+        #endif
     }
 
     // MARK: - Helpers
@@ -315,4 +381,14 @@ final class StressViewModel: ObservableObject {
     private func lerp(from a: Double, to b: Double, t: Double) -> Double {
         a + (b - a) * clamp(t)
     }
+
+    // MARK: - Debug Logging
+
+    #if DEBUG
+    private func log(_ message: String) {
+        print("[StressVM] \(message)")
+    }
+    private func fmt2(_ v: Double) -> String { String(format: "%.2f", v) }
+    private func fmt1(_ v: Double) -> String { String(format: "%.1f", v) }
+    #endif
 }

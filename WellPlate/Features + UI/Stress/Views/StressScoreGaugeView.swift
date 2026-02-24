@@ -23,18 +23,10 @@ struct StressScoreGaugeView: View {
             arcShape
                 .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 18, lineCap: .round))
 
-            // Filled arc
+            // Filled arc — green (low stress) to red (high stress)
             arcShape
                 .trim(from: 0, to: animatedProgress)
-                .stroke(
-                    AngularGradient(
-                        gradient: Gradient(colors: [.teal, .green, .yellow, .orange, .red]),
-                        center: .center,
-                        startAngle: .degrees(startAngle),
-                        endAngle: .degrees(startAngle + sweepAngle)
-                    ),
-                    style: StrokeStyle(lineWidth: 18, lineCap: .round)
-                )
+                .stroke(gaugeColor, style: StrokeStyle(lineWidth: 18, lineCap: .round))
 
             // Center content
             VStack(spacing: 4) {
@@ -71,6 +63,12 @@ struct StressScoreGaugeView: View {
     }
 
     @State private var animatedProgress: Double = 0
+
+    /// Green (score = 0) → Red (score = 100)
+    private var gaugeColor: Color {
+        let t = min(max(score / 100.0, 0), 1)
+        return Color(hue: 0.33 * (1.0 - t), saturation: 0.75, brightness: 0.80)
+    }
 
     private var arcShape: some Shape {
         Arc(startAngle: .degrees(startAngle), endAngle: .degrees(startAngle + sweepAngle), clockwise: false)

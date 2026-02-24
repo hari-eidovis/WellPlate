@@ -30,11 +30,11 @@ enum StressLevel: String, CaseIterable {
 
     var color: Color {
         switch self {
-        case .excellent: return .teal
-        case .good:      return .green
-        case .moderate:  return .yellow
-        case .high:      return .orange
-        case .veryHigh:  return .red
+        case .excellent: return Color(hue: 0.33, saturation: 0.75, brightness: 0.80)
+        case .good:      return Color(hue: 0.27, saturation: 0.70, brightness: 0.78)
+        case .moderate:  return Color(hue: 0.17, saturation: 0.80, brightness: 0.82)
+        case .high:      return Color(hue: 0.08, saturation: 0.80, brightness: 0.82)
+        case .veryHigh:  return Color(hue: 0.00, saturation: 0.75, brightness: 0.80)
         }
     }
 
@@ -67,22 +67,37 @@ struct StressFactorResult: Identifiable {
     let score: Double          // 0–25
     let maxScore: Double       // always 25
     let icon: String           // SF Symbol name
-    let accentColor: Color
     let statusText: String     // e.g. "7,245 steps"
     let detailText: String     // e.g. "Above average today"
+    /// true  → exercise / sleep / diet  (high score = good = green)
+    /// false → screen time              (high score = bad  = red)
+    let higherIsBetter: Bool
 
     var progress: Double { score / maxScore }
 
-    /// Neutral factor when no data is available (defaults to 12.5).
-    static func neutral(title: String, icon: String, accentColor: Color) -> StressFactorResult {
+    /// How much this factor contributes to total stress (0–25).
+    var stressContribution: Double {
+        higherIsBetter ? (maxScore - score) : score
+    }
+
+    /// Green = healthy end, Red = stressed end — direction depends on `higherIsBetter`.
+    var accentColor: Color {
+        let t = min(max(score / maxScore, 0), 1)
+        // stressRatio: 0 → green, 1 → red
+        let stressRatio = higherIsBetter ? (1.0 - t) : t
+        return Color(hue: 0.33 * (1.0 - stressRatio), saturation: 0.75, brightness: 0.80)
+    }
+
+    /// Neutral factor when no data is available (defaults to midpoint 12.5).
+    static func neutral(title: String, icon: String, higherIsBetter: Bool) -> StressFactorResult {
         StressFactorResult(
             title: title,
             score: 12.5,
             maxScore: 25,
             icon: icon,
-            accentColor: accentColor,
             statusText: "No data",
-            detailText: "Using neutral estimate"
+            detailText: "Using neutral estimate",
+            higherIsBetter: higherIsBetter
         )
     }
 }
