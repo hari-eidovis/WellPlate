@@ -13,7 +13,8 @@ import Combine
 // MARK: - Screen Time Source
 
 enum ScreenTimeSource {
-    case auto        // from DeviceActivity report / threshold resolver
+    case auto        // from DeviceActivity threshold
+    case manual      // user-entered
     case none        // no data for today
 }
 
@@ -52,6 +53,28 @@ final class StressViewModel: ObservableObject {
     /// Top 2 factors contributing most to stress, ranked by stress contribution.
     var topStressors: [StressFactorResult] {
         allFactors.sorted { $0.stressContribution > $1.stressContribution }.prefix(2).map { $0 }
+    }
+
+    // MARK: - Manual Screen Time Persistence
+
+    private static let manualHoursKey = "wellplate.manualScreenTimeHours"
+    private static let manualDateKey  = "wellplate.manualScreenTimeDate"
+
+    /// The manually-entered hours for today, or 0 if none.
+    var currentManualHours: Double { storedManualHours ?? 0 }
+
+    private var storedManualHours: Double? {
+        let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd"
+        guard UserDefaults.standard.string(forKey: Self.manualDateKey) == fmt.string(from: Date()) else { return nil }
+        let h = UserDefaults.standard.double(forKey: Self.manualHoursKey)
+        return h > 0 ? h : nil
+    }
+
+    func setManualScreenTime(_ hours: Double) {
+        let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd"
+        UserDefaults.standard.set(hours, forKey: Self.manualHoursKey)
+        UserDefaults.standard.set(fmt.string(from: Date()), forKey: Self.manualDateKey)
+        refreshScreenTimeFactor()
     }
 
     // MARK: - Dependencies
@@ -360,31 +383,46 @@ final class StressViewModel: ObservableObject {
     }
 
     private func refreshScreenTimeFactor() {
-        let reading = ScreenTimeManager.shared.currentAutoDetectedReading
-        let scoreHours = reading?.rawHours
+        let autoReading  = ScreenTimeManager.shared.currentAutoDetectedReading
+        let manualHours  = storedManualHours
 
-        screenTimeSource = reading != nil ? .auto : .none
-
-        let score = computeScreenTimeScore(hours: scoreHours)
-
+        let scoreHours: Double?
         let status: String
         let detail: String
-        if let reading {
+
+        if let reading = autoReading {
+            screenTimeSource = .auto
+            scoreHours = reading.rawHours
             status = "\(reading.displayRoundedHours)h detected (±15m)"
-            if score < 8 { detail = "Low screen time 👍" }
-            else if score < 16 { detail = "Moderate screen usage" }
-            else { detail = "Consider reducing screen time" }
+            let s = computeScreenTimeScore(hours: reading.rawHours)
+            detail = s < 8 ? "Low screen time 👍" : s < 16 ? "Moderate screen usage" : "Consider reducing screen time"
+
+        } else if let m = manualHours {
+            screenTimeSource = .manual
+            scoreHours = m
+            status = String(format: "%.1fh entered manually", m)
+            let s = computeScreenTimeScore(hours: m)
+            detail = s < 8 ? "Low screen time 👍" : s < 16 ? "Moderate screen usage" : "Consider reducing screen time"
+
         } else {
-            status = "Under 4h today"
-            detail = "Score adds 2pts per hour above 4h"
+            screenTimeSource = .none
+            scoreHours = nil
+            status = "Under 15 min today"
+            detail = "Tap to enter screen time manually"
         }
 
+        let score = computeScreenTimeScore(hours: scoreHours)
         screenTimeFactor = StressFactorResult(title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
                                               statusText: status, detailText: detail, higherIsBetter: false)
 
         #if DEBUG
         let rawHoursStr = scoreHours.map { String(format: "%.3f h", $0) } ?? "nil"
-        let sourceStr   = reading != nil ? "auto (DeviceActivity threshold)" : "none (< threshold)"
+        let sourceStr: String
+        switch screenTimeSource {
+        case .auto:   sourceStr = "auto (DeviceActivity threshold)"
+        case .manual: sourceStr = "manual (user entered)"
+        case .none:   sourceStr = "none (< 15 min)"
+        }
         log("📱 ScrnTime  → rawHours=\(rawHoursStr)  source=\(sourceStr)")
         log("             → score=\(fmt2(score))/25  stressContrib=\(fmt2(screenTimeFactor.stressContribution))/25  [\(detail)]")
         #endif

@@ -14,6 +14,8 @@ struct StressView: View {
     @StateObject var viewModel: StressViewModel
     @ObservedObject private var screenTimeManager = ScreenTimeManager.shared
     @Environment(\.scenePhase) private var scenePhase
+    @State private var showScreenTimeSheet = false
+    @State private var pendingManualHours: Double = 0
     private let refreshTicker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -54,6 +56,14 @@ struct StressView: View {
         .onChange(of: scenePhase) { phase in
             guard phase == .active else { return }
             viewModel.refreshScreenTimeOnly()
+        }
+        .sheet(isPresented: $showScreenTimeSheet) {
+            ScreenTimeInputSheet(
+                hours: $pendingManualHours,
+                autoDetectedHours: ScreenTimeManager.shared.currentAutoDetectedReading.map { Double($0.displayRoundedHours) }
+            ) {
+                viewModel.setManualScreenTime(pendingManualHours)
+            }
         }
     }
 
@@ -115,36 +125,77 @@ struct StressView: View {
                 Text("Screen Time")
                     .font(.r(.headline, .semibold))
                 Spacer()
-                if viewModel.screenTimeSource == .auto {
+                switch viewModel.screenTimeSource {
+                case .auto:
                     Text("Live")
                         .font(.r(.caption2, .bold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
                         .background(Capsule().fill(.cyan))
+                case .manual:
+                    Text("Manual")
+                        .font(.r(.caption2, .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(.orange))
+                case .none:
+                    EmptyView()
                 }
             }
 
             // Main time display
             let factor = viewModel.screenTimeFactor
             HStack(alignment: .lastTextBaseline, spacing: 4) {
-                if viewModel.screenTimeSource == .auto,
-                   let reading = ScreenTimeManager.shared.currentAutoDetectedReading {
-                    Text("\(reading.displayRoundedHours)")
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(LinearGradient(
-                            colors: [.cyan, .blue],
-                            startPoint: .leading, endPoint: .trailing
-                        ))
+                switch viewModel.screenTimeSource {
+                case .auto:
+                    if let reading = ScreenTimeManager.shared.currentAutoDetectedReading {
+                        Text("\(reading.displayRoundedHours)")
+                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(LinearGradient(
+                                colors: [.cyan, .blue],
+                                startPoint: .leading, endPoint: .trailing
+                            ))
+                        Text("h today")
+                            .font(.r(.subheadline, .medium))
+                            .foregroundColor(.secondary)
+                            .padding(.bottom, 6)
+                    }
+                case .manual:
+                    Button {
+                        pendingManualHours = viewModel.currentManualHours
+                        showScreenTimeSheet = true
+                    } label: {
+                        Text(String(format: "%.1f", viewModel.currentManualHours))
+                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(LinearGradient(
+                                colors: [.cyan, .blue],
+                                startPoint: .leading, endPoint: .trailing
+                            ))
+                    }
+                    .buttonStyle(.plain)
                     Text("h today")
                         .font(.r(.subheadline, .medium))
                         .foregroundColor(.secondary)
                         .padding(.bottom, 6)
-                } else {
-                    Text("< 15 min")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundColor(.cyan)
+                case .none:
+                    Button {
+                        pendingManualHours = 0
+                        showScreenTimeSheet = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text("< 15 min")
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundColor(.cyan)
+                            Image(systemName: "pencil.circle.fill")
+                                .font(.system(size: 22))
+                                .foregroundColor(.cyan.opacity(0.6))
+                        }
+                    }
+                    .buttonStyle(.plain)
                     Text("today")
                         .font(.r(.subheadline, .medium))
                         .foregroundColor(.secondary)

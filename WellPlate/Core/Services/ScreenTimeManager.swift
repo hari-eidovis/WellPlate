@@ -39,8 +39,6 @@ final class ScreenTimeManager: ObservableObject {
     static let appGroupID = "group.com.hariom.health.WellPlate"
     static let thresholdKey = "screenTimeThresholdHours"
     static let thresholdDateKey = "screenTimeThresholdDate"
-    private static let thresholdStartMinutes = 240   // first threshold at 4 hours
-    private static let thresholdIntervalMinutes = 60  // then every 1 hour
     private static let logPrefix = "[ScreenTimeManager]"
 
     // MARK: - Published State
@@ -92,14 +90,15 @@ final class ScreenTimeManager: ObservableObject {
             repeats: true
         )
 
+        // Non-uniform schedule: ±7.5 min resolution for < 2h (where most users fall),
+        // ±15 min for 2–4h, ±1h for 4–12h. 17 events total.
+        let thresholdMinutes = [15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240, 300, 360, 480, 600, 720]
         var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
-        var minutes = Self.thresholdStartMinutes
-        while minutes <= 720 { // 4h, 5h, 6h … up to 12h
+        for minutes in thresholdMinutes {
             let name = DeviceActivityEvent.Name("threshold_\(minutes)m")
             events[name] = DeviceActivityEvent(
                 threshold: DateComponents(hour: minutes / 60, minute: minutes % 60)
             )
-            minutes += Self.thresholdIntervalMinutes
         }
 
         do {
@@ -120,7 +119,7 @@ final class ScreenTimeManager: ObservableObject {
     // MARK: - Read Threshold Data
 
     /// Returns the latest threshold-based reading for today from the shared App Group.
-    /// Resolution: nearest 15-minute interval (±7.5 min accuracy).
+    /// Resolution: ±7.5 min for < 2h, ±15 min for 2–4h, ±1h for 4–12h.
     /// Returns nil if the user hasn't crossed the first 15-minute threshold yet today.
     var currentAutoDetectedReading: ScreenTimeReading? {
         guard let defaults = UserDefaults(suiteName: Self.appGroupID) else { return nil }
