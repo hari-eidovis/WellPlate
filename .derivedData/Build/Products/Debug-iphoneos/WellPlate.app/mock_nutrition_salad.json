@@ -1,0 +1,16 @@
+{
+  "success": true,
+  "message": "Nutrition analysis completed successfully",
+  "data": {
+    "foodName": "Mixed Green Salad",
+    "servingSize": "1 bowl (approx. 200g)",
+    "nutrition": {
+      "calories": 85,
+      "protein": 3.5,
+      "carbohydrates": 12.0,
+      "fat": 3.0,
+      "fiber": 4.5
+    },
+    "confidence": 0.95
+  }
+}

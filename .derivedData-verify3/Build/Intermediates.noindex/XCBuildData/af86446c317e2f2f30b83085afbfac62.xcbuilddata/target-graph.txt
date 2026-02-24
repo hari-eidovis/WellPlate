@@ -1,0 +1,6 @@
+Target dependency graph (3 targets)
+Target 'WellPlate' in project 'WellPlate'
+➜ Explicit dependency on target 'ScreenTimeMonitor' in project 'WellPlate'
+➜ Explicit dependency on target 'ScreenTimeReport' in project 'WellPlate'
+Target 'ScreenTimeReport' in project 'WellPlate' (no dependencies)
+Target 'ScreenTimeMonitor' in project 'WellPlate' (no dependencies)

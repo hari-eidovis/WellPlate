@@ -1,0 +1,29 @@
+{
+  "" : {
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-primary.dia",
+    "emit-module-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-primary-emit-module.dia",
+    "pch" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-primary.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/ScreenTimeReport/ScreenTimeReportExtension.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReportExtension.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReportExtension.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReportExtension.dia",
+    "index-unit-output-path" : "/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReportExtension.o",
+    "llvm-bc" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReportExtension.bc",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReportExtension.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReportExtension.swiftdeps",
+    "swiftmodule" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReportExtension~partial.swiftmodule"
+  },
+  "/Users/hariom/Desktop/WellPlate/ScreenTimeReport/TotalActivityView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/TotalActivityView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/TotalActivityView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/TotalActivityView.dia",
+    "index-unit-output-path" : "/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/TotalActivityView.o",
+    "llvm-bc" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/TotalActivityView.bc",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/TotalActivityView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/TotalActivityView.swiftdeps",
+    "swiftmodule" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/TotalActivityView~partial.swiftmodule"
+  }
+}

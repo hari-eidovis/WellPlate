@@ -1,0 +1,16 @@
+{
+  "success": true,
+  "message": "Nutrition analysis completed successfully",
+  "data": {
+    "foodName": "Plain Paratha",
+    "servingSize": "2 pieces (approx. 120g)",
+    "nutrition": {
+      "calories": 340,
+      "protein": 8.0,
+      "carbohydrates": 44.0,
+      "fat": 15.0,
+      "fiber": 2.5
+    },
+    "confidence": 0.88
+  }
+}

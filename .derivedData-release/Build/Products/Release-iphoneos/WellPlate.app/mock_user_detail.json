@@ -1,0 +1,10 @@
+{
+  "id": "123",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "+1-555-0123",
+  "createdAt": "2026-01-01T00:00:00Z",
+  "updatedAt": "2026-02-16T12:00:00Z",
+  "role": "user",
+  "isActive": true
+}

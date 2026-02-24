@@ -1,0 +1,5 @@
+{
+  "success": true,
+  "message": "User deleted successfully",
+  "deletedId": "123"
+}

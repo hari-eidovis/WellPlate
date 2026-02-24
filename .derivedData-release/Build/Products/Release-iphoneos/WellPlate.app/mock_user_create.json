@@ -1,0 +1,7 @@
+{
+  "id": "456",
+  "name": "New User",
+  "email": "newuser@example.com",
+  "createdAt": "2026-02-16T12:00:00Z",
+  "message": "User created successfully"
+}

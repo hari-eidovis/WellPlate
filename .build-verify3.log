@@ -1,0 +1,679 @@
+2026-02-24 21:32:57.119 xcodebuild[38703:1302588]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-02-24 21:32:58.299 xcodebuild[38703:1302572] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+2026-02-24 21:33:00.489 xcodebuild[38703:1302588] CoreSimulatorService connection became invalid.  Simulator services will no longer be available.
+2026-02-24 21:33:00.491 xcodebuild[38703:1304862] Logging connecton invalid: <OS_xpc_error: <dictionary: 0x20488c3d0> { count = 1, transaction: 0, voucher = 0x0, contents =
+	"XPCErrorDescription" => <string: 0x20488c518> { string cache = 0x0, length = 18, contents = "Connection invalid" }
+}>
+2026-02-24 21:33:00.491 xcodebuild[38703:1304862] Error opening log file (/Users/hariom/Library/Logs/CoreSimulator/CoreSimulator.com.apple.dt.xcodebuild.log): Operation not permitted
+[-[SimServiceContext sendRequest:]:1743] ERROR : Unable to deliver request ({
+    "developer_dir" = "/Applications/Xcode.app/Contents/Developer";
+    request = "set_developer_dir";
+}) because we are not connected to CoreSimulatorService.
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project /Users/hariom/Desktop/WellPlate/WellPlate.xcodeproj -scheme WellPlate -configuration Debug -destination generic/platform=iOS -derivedDataPath /Users/hariom/Desktop/WellPlate/.derivedData-verify3 CODE_SIGNING_ALLOWED=NO build
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+
+[-[SimServiceContext initWithDeveloperDir:connectionType:error:]:450] WARN  : Unable to discover any Simulator runtimes. Developer Directory is /Applications/Xcode.app/Contents/Developer.
+[-[SimDiskImageManager init]:175] ERROR : Could not kickstart simdiskimaged; SimDiskImageManager services will not be available: Error Domain=NSPOSIXErrorDomain Code=53 "Software caused connection abort" UserInfo={NSLocalizedDescription=Error returned in reply from CoreSimulatorService: Connection invalid}
+[-[SimDiskImageManager _onQueue_checkConnection:]:239] ERROR : simdiskimaged returned error (invalid), marking disconnected.
+[-[SimDiskImageManager _onQueue_checkConnection:]:239] ERROR : simdiskimaged returned error (invalid), marking disconnected.
+[-[SimServiceContext initWithDeveloperDir:connectionType:error:]_block_invoke:486] ERROR : Could not get list of trusted mount directories: Error Domain=com.apple.CoreSimulator.SimError Code=410 "The service used to manage runtime disk images (simdiskimaged) crashed or is not responding" UserInfo={NSLocalizedDescription=The service used to manage runtime disk images (simdiskimaged) crashed or is not responding}
+[-[SimServiceContext sendRequest:reply:error:]:1763] ERROR : Unable to deliver request ({
+    request = "notification_subscription";
+    "set_path" = "/Users/hariom/Library/Developer/CoreSimulator/Devices";
+}) because we are not connected to CoreSimulatorService.
+2026-02-24 21:33:00.751 xcodebuild[38703:1304862] Error Domain=NSPOSIXErrorDomain Code=61 "Connection refused" UserInfo={NSLocalizedDescription=CoreSimulatorService connection became invalid.  Simulator services will no longer be available.}
+2026-02-24 21:33:00.753 xcodebuild[38703:1304862]  iOSSimulator: [SimServiceContext defaultDeviceSetWithError:] returned nil (Error Domain=NSPOSIXErrorDomain Code=61 "Connection refused" UserInfo={NSLocalizedFailureReason=Failed to subscribe to notifications from CoreSimulatorService., NSLocalizedDescription=Failed to initialize simulator device set., NSUnderlyingError=0x938567e40 {Error Domain=NSPOSIXErrorDomain Code=61 "Connection refused" UserInfo={NSLocalizedDescription=CoreSimulatorService connection became invalid.  Simulator services will no longer be available.}}}). Simulator device support disabled.
+[-[SimServiceContext sendRequest:reply:error:]:1763] ERROR : Unable to deliver request ({
+    request = "notification_subscription";
+    "set_path" = "/Users/hariom/Library/Developer/CoreSimulator/Devices";
+}) because we are not connected to CoreSimulatorService.
+2026-02-24 21:33:00.753 xcodebuild[38703:1302589] Error Domain=NSPOSIXErrorDomain Code=61 "Connection refused" UserInfo={NSLocalizedDescription=CoreSimulatorService connection became invalid.  Simulator services will no longer be available.}
+2026-02-24 21:33:00.754 xcodebuild[38703:1302589]  IDESimulatorAvailability: startObservingSimulatorUpdates() FAILED to register SimDeviceSet observer
+2026-02-24 21:33:00.772 xcodebuild[38703:1302572] [MT] DVTAssertions: Warning in DVTFrameworks/DVTFoundation/FileTypes/DVTFileDataTypeDetection.m:79
+Details:  detectedTypeIdentifier (com.apple.binary-property-list) does not conform to matchedTypeIdentifier in MagicFileDataTypeDetector extenson com.apple.property-list. When both are specified, this conformance is required unless overridden by setting allowNonInheritance. extension.identifier:Xcode.MagicFileDataTypeDetector.BinaryPlist
+Object:   <DVTFileDataTypeDetectionMagicCache: 0x938a16790>
+Method:   -initWithExtension:
+Thread:   <_NSMainThread: 0x104b2a160>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-02-24 21:33:00.778 xcodebuild[38703:1302572] [MT] DVTAssertions: Warning in DVTFrameworks/DVTFoundation/FileTypes/DVTFileDataTypeDetection.m:79
+Details:  detectedTypeIdentifier (com.apple.xml-property-list) does not conform to matchedTypeIdentifier in MagicFileDataTypeDetector extenson com.apple.property-list. When both are specified, this conformance is required unless overridden by setting allowNonInheritance. extension.identifier:Xcode.MagicFileDataTypeDetector.XMLPlist
+Object:   <DVTFileDataTypeDetectionMagicCache: 0x938a17630>
+Method:   -initWithExtension:
+Thread:   <_NSMainThread: 0x104b2a160>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-02-24 21:33:01.610 xcodebuild[38703:1304973]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/280c1e81-435a-4d4a-b970-a1d4271917af.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.611 xcodebuild[38703:1304976]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/7959a347-a3b6-467f-ba8a-94f4167980ce.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.611 xcodebuild[38703:1304862]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/4b1579df-bf25-4d46-9453-522ec1c5a0b2.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.611 xcodebuild[38703:1305060]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/bf3ccf9d-61b6-4bdb-9780-96dfc315f41c.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.614 xcodebuild[38703:1305062]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/c7cca0bf-55b1-4c0b-9048-536de35b0bc5.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.612 xcodebuild[38703:1302589]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/7d49b68d-cc77-4737-8519-2fa62228f211.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.613 xcodebuild[38703:1305061]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/3ab9c7fd-4fc9-492d-95bd-4d585bdf89fa.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.614 xcodebuild[38703:1305059]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/d60ef075-e073-41a8-879a-7a76d30a28cd.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.616 xcodebuild[38703:1304973]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/340c407d-d024-4af2-8535-c233e87ae1ad.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.620 xcodebuild[38703:1304976]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/f3359d65-52e2-43f5-9ed1-ec10216586f7.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.630 xcodebuild[38703:1304862]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/b46d6e70-ba97-40b0-99de-8fd45c0850fc.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.630 xcodebuild[38703:1305060]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/6fc4b327-6f99-4ba9-b796-2abe04d1c67d.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.645 xcodebuild[38703:1302589]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/caf064c8-a12a-4fb6-91d8-d595ca75cf59.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.646 xcodebuild[38703:1304976]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/e4f1e651-05ef-4d80-90bb-ce6e09789c82.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.650 xcodebuild[38703:1304973]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/d73a7634-f729-47b4-b30d-202a69f2f6cd.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.651 xcodebuild[38703:1305061]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/a2fa1dae-eb34-49d9-8619-b13c612ff599.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.652 xcodebuild[38703:1305059]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/dfe49057-4ffe-4950-9479-e58934321f40.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.652 xcodebuild[38703:1305062]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/3cd5d499-cafb-4601-8ab3-c877e30fdba2.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.658 xcodebuild[38703:1305060]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/92dc0ecd-f38c-4da4-888d-6ba41a9b40a4.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.661 xcodebuild[38703:1304862]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/11430003-c2e4-4db0-b378-5e14907924ed.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.668 xcodebuild[38703:1302589]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/2b4a5429-c2ff-4a66-84a9-18dbe55589e4.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.670 xcodebuild[38703:1304976]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/7fddeff8-1f2f-4338-8e54-300c7252290f.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.672 xcodebuild[38703:1304973]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/0e4b6c1a-e444-43a3-b99f-a999c543d153.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.672 xcodebuild[38703:1305061]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/a841b1bf-140d-4cc7-bc56-aed8bf4296e6.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.673 xcodebuild[38703:1305062]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/62a8bafa-ecc3-4c23-ae3d-3f7fc5d04880.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.675 xcodebuild[38703:1305059]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/2e33c2b5-791d-46c8-a7d6-aa17f0c01d99.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.676 xcodebuild[38703:1305060]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/afa37a91-9897-4d65-b504-3ee9c271a8d7.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.676 xcodebuild[38703:1304862]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/674b83b0-e92a-4bb5-827d-1cac5fd13121.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.680 xcodebuild[38703:1302589]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/7794d0ca-9577-442a-8894-d10a5433edcd.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.680 xcodebuild[38703:1304976]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/a03268f1-72b3-4ce7-b78e-361555cb7eaf.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.685 xcodebuild[38703:1304973]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/c524398e-a89c-4c1e-9c9e-d3a30b660ca8.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.688 xcodebuild[38703:1305062]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/0d283a6e-6e41-4591-b655-bda1625c0c51.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.685 xcodebuild[38703:1305061]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/c2b240eb-cfb2-497f-94ec-2840a36c1851.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.690 xcodebuild[38703:1305059]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/21af7ce6-3acd-4d4e-84c2-f4ffe13287df.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.692 xcodebuild[38703:1305060]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/49ef3619-989c-45b1-b168-69154ed55820.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.692 xcodebuild[38703:1304862]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/c4a99b12-99ff-47a9-8de6-edd1a1d6f6b1.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.697 xcodebuild[38703:1304976]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/927e3d45-6d60-46d5-bc70-4ee7671d4011.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.700 xcodebuild[38703:1305062]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/9b9cc5e0-5a17-460e-a35c-3a07fe2ee603.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.701 xcodebuild[38703:1304862]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/b5d05876-faea-4fba-a497-969dd8b7c4a5.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.701 xcodebuild[38703:1305061]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/6633ef54-c4d3-41ee-9cd1-daf755808b08.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.701 xcodebuild[38703:1305059]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/0e61e5c1-4a10-46d7-8c57-6b9e4533e97d.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.705 xcodebuild[38703:1302589]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/b3ddec1f-e263-4374-9835-8d61d4397291.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.706 xcodebuild[38703:1305060]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/dcb29794-bf8e-4ccf-84e5-b92f9f2bee3f.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.706 xcodebuild[38703:1304973]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/a608907b-1569-4c8b-9a06-ffc68cb4e5a7.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.710 xcodebuild[38703:1305062]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/b0726179-acc3-48e4-8f96-185cedf9375c.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.712 xcodebuild[38703:1304976]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/e9d9bc62-2511-48c3-8363-afb9666c97f1.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+2026-02-24 21:33:01.723 xcodebuild[38703:1304862]  DVTProvisioningProfileManager: Failed to load profile "/Users/hariom/Library/Developer/Xcode/UserData/Provisioning Profiles/27e815b2-c7cc-48b5-ba07-f3235545c989.mobileprovision" (Error Domain=DVTProvisioningProfileProviderErrorDomain Code=1 "Failed to load profile." UserInfo={NSLocalizedDescription=Failed to load profile., NSLocalizedRecoverySuggestion=Profile is missing the required UUID property.})
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (3 targets)
+    Target 'WellPlate' in project 'WellPlate'
+        ➜ Explicit dependency on target 'ScreenTimeMonitor' in project 'WellPlate'
+        ➜ Explicit dependency on target 'ScreenTimeReport' in project 'WellPlate'
+    Target 'ScreenTimeReport' in project 'WellPlate' (no dependencies)
+    Target 'ScreenTimeMonitor' in project 'WellPlate' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/hariom/Desktop/WellPlate/WellPlate/Resources/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+Build description signature: af86446c317e2f2f30b83085afbfac62
+Build description path: /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/XCBuildData/af86446c317e2f2f30b83085afbfac62.xcbuilddata
+CreateBuildDirectory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products
+    cd /Users/hariom/Desktop/WellPlate/WellPlate.xcodeproj
+    builtin-create-build-directory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products
+
+CreateBuildDirectory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex
+    cd /Users/hariom/Desktop/WellPlate/WellPlate.xcodeproj
+    builtin-create-build-directory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex
+
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk /Users/hariom/Desktop/WellPlate/.derivedData-verify3/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache
+    cd /Users/hariom/Desktop/WellPlate/WellPlate.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -o /Users/hariom/Desktop/WellPlate/.derivedData-verify3/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache
+
+CreateBuildDirectory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos
+    cd /Users/hariom/Desktop/WellPlate/WellPlate.xcodeproj
+    builtin-create-build-directory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos
+
+CreateBuildDirectory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/hariom/Desktop/WellPlate/WellPlate.xcodeproj
+    builtin-create-build-directory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/hariom/Desktop/WellPlate/WellPlate.xcodeproj
+    builtin-create-build-directory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate-c3f760f026260d5ab5774f11071ebff4-VFS-iphoneos/all-product-headers.yaml
+    cd /Users/hariom/Desktop/WellPlate/WellPlate.xcodeproj
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate-c3f760f026260d5ab5774f11071ebff4-VFS-iphoneos/all-product-headers.yaml
+
+CreateBuildDirectory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos
+    cd /Users/hariom/Desktop/WellPlate/WellPlate.xcodeproj
+    builtin-create-build-directory /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/empty-WellPlate.plist (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/empty-WellPlate.plist
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate.hmap (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate.DependencyStaticMetadataFileList (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate.DependencyMetadataFileList (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-project-headers.hmap (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-project-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-own-target-headers.hmap (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-generated-files.hmap (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-generated-files.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-all-target-headers.hmap (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-all-non-framework-target-headers.hmap (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-DebugDylibPath-normal-arm64.txt (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-DebugDylibInstallName-normal-arm64.txt (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate_const_extract_protocols.json (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.SwiftFileList (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.SwiftFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.SwiftConstValuesFileList (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.LinkFileList (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.LinkFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate-OutputFileMap.json (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport.DependencyStaticMetadataFileList (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport.hmap (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport.DependencyMetadataFileList (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-project-headers.hmap (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-project-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-own-target-headers.hmap (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-generated-files.hmap (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-generated-files.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-all-target-headers.hmap (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-all-non-framework-target-headers.hmap (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-DebugEntryPoint-normal-arm64.txt (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-DebugEntryPoint-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-DebugDylibPath-normal-arm64.txt (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-DebugDylibInstallName-normal-arm64.txt (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.SwiftFileList (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.SwiftFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport_const_extract_protocols.json (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.SwiftConstValuesFileList (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.LinkFileList (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.LinkFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-OutputFileMap.json (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor.DependencyStaticMetadataFileList (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor.hmap (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor.DependencyMetadataFileList (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-project-headers.hmap (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-project-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-own-target-headers.hmap (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-generated-files.hmap (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-generated-files.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-all-target-headers.hmap (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-all-non-framework-target-headers.hmap (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-DebugEntryPoint-normal-arm64.txt (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-DebugEntryPoint-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-DebugDylibPath-normal-arm64.txt (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-DebugDylibInstallName-normal-arm64.txt (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor_const_extract_protocols.json (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.SwiftFileList (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.SwiftFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.SwiftConstValuesFileList (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.LinkFileList (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.LinkFileList
+
+WriteAuxiliaryFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-OutputFileMap.json (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    write-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-OutputFileMap.json
+
+MkDir /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/WellPlate.app/PlugIns (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /bin/mkdir -p /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/WellPlate.app/PlugIns
+
+MkDir /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/WellPlate.app (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /bin/mkdir -p /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/WellPlate.app
+
+MkDir /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.appex (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /bin/mkdir -p /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.appex
+
+MkDir /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /bin/mkdir -p /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex
+
+Ld /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.appex/__preview.dylib normal (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -O0 -L/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -install_name @rpath/ScreenTimeReport.debug.dylib -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport_dependency_info.dat -o /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.appex/__preview.dylib
+
+ProcessInfoPlistFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.appex/Info.plist /Users/hariom/Desktop/WellPlate/ScreenTimeReport/Info.plist (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-infoPlistUtility /Users/hariom/Desktop/WellPlate/ScreenTimeReport/Info.plist -producttype com.apple.product-type.app-extension -expandbuildsettings -format binary -platform iphoneos -requiredArchitecture arm64 -o /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.appex/Info.plist
+
+Ld /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/__preview.dylib normal (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -O0 -L/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -install_name @rpath/ScreenTimeMonitor.debug.dylib -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor_dependency_info.dat -o /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/__preview.dylib
+
+ProcessInfoPlistFile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/Info.plist /Users/hariom/Desktop/WellPlate/ScreenTimeMonitor/Info.plist (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-infoPlistUtility /Users/hariom/Desktop/WellPlate/ScreenTimeMonitor/Info.plist -producttype com.apple.product-type.app-extension -expandbuildsettings -format binary -platform iphoneos -requiredArchitecture arm64 -o /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/Info.plist
+
+SwiftDriver ScreenTimeMonitor normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ScreenTimeMonitor -Onone -enforce-exclusivity\=checked @/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -Xfrontend -serialize-debugging-options -application-extension -enable-testing -index-store-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -parse-as-library -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache -output-file-map /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -sdk-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor_const_extract_protocols.json -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-generated-files.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-own-target-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-all-target-headers.hmap -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-project-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/include -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources-normal/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-Swift.h -working-directory /Users/hariom/Desktop/WellPlate -experimental-emit-module-separately -disable-cmo
+
+SwiftDriver ScreenTimeReport normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ScreenTimeReport -Onone -enforce-exclusivity\=checked @/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -Xfrontend -serialize-debugging-options -application-extension -enable-testing -index-store-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache -output-file-map /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -sdk-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport_const_extract_protocols.json -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-generated-files.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-own-target-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-all-target-headers.hmap -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-project-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/include -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/DerivedSources-normal/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/DerivedSources/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-Swift.h -working-directory /Users/hariom/Desktop/WellPlate -experimental-emit-module-separately -disable-cmo
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_stddef-53ALJ0LD4H3B0TW02M4HTJJ2O.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/SwiftShims-31JZSKWSPMN5T919T36L2DAEC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_SwiftConcurrencyShims-EURFXR0K23FDG0A1NACP5LA8G.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_stdarg-73NYPM5CETZI2C19SMOZV41M6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_stdbool-8W8FHJGEXDTXJ9BN5SSSPY3N5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_AvailabilityInternal-4M4XUGDWLEWMTZ4M0ULLM677A.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/ptrauth-4P3DK2Q1PFJXNMAV1CC6ZGH5M.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_float-1XP1D4DMZREFYYQV4QJV7QZBO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/ptrcheck-3NJJIBYYCO3N4O6SS4BMV0YV9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_DarwinFoundation1-9M3WC118BA65HM0PIEYPXNF4K.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_DarwinFoundation2-OR56EP2PABLJ899HOJNS0M88.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_limits-AGTYOM7P6PESQ8YGUV457DVK2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/DeveloperToolsSupport-D11WNFGR1ZEK563LQ5JKEGKYH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/ExtensionFoundation-4NEKSOHMO7C8LVICDJHD7ZY1T.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_stdint-1U5J5MVY6B1YG4T4MP5GVJIG0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/sys_types-3VJD9UWJZO2NNL2AG7UVRV0LO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_tgmath-4TVBT40X9CQM3QFLL484BA9W8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_DarwinFoundation3-1A8RX498ZMGG6SKAWPF7N58FL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_stdatomic-5WSG10XRJKZAT0DWI3QMTXEF3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_intrinsics-EDY1N9VHRJLR13ZJSWNFE2541.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/_Builtin_inttypes-9HQERGFFZSXIHZ3EJ6FRKSNOJ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Darwin-8G6X2A1WCQ7POV0LY5UK0QE36.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/simd-CFTRRY6LJD0IZ4FAPW3LQGVJK.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/ObjectiveC-AI8RCUW4CI1E7AU3ZY8X6UYXR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/MachO-CP4D8KNCGY2TJLJXC7BZCA5N6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/os_object-8K9DZXH6DWSBZWI2JOPXXLFPR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/os_workgroup-54VAZYXL2S8XZVBBTF1UH55W1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Dispatch-B5UYCYVLI91Y606BMS5GJIP8G.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/XPC-2KAN07J7CZ8WNV2Y3J5550PNW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/CoreFoundation-2PRG0Q2GKCD58T12G52GZDMDX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/dnssd-6OEZ2HBHLI2A05V03SXM3VISC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/os-5HGL4F90Q83S0MX0TQY10KP43.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Security-8OKZ8LH5ZZA7ZCD72UN3ZQ5NW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/CFNetwork-9I1HUUZBQVTSS24MASTEAYWG2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/CoreGraphics-69M78GD1JUSQKW1UIEGUFD00Z.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Foundation-4JP8DNA7VQDNREDZ2R2VATHQN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/CoreText-6HFCP9K963TF6Z1SHEOVJB6DC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/ImageIO-BXY7NFWVSJRP9VHXE6HSVSAFB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Spatial-5T3ZNBFHLSR3ISN9IDVVRCM6Z.pcm
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ ScreenTimeMonitor (in target 'ScreenTimeMonitor' from project 'WellPlate')
+
+SwiftCompile normal arm64 /Users/hariom/Desktop/WellPlate/ScreenTimeMonitor/ScreenTimeMonitorExtension.swift (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Network-DNQMRW4TR39GVMGPL2JT3T591.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/DataDetection-1KKKLJUEU7WFS5IM9WPC0D7XV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/UIUtilities-1O19AKOCJ6Q7BHGROG6F9PAD7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/UserNotifications-3QKZWX57A0A6FHV3R1K1HJV7O.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Symbols-69GEIKHWR9GCOPWWJ5P8M8G7J.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/CoreData-2MNVOG3WBX7E1PH05NJ20NI7G.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/FileProvider-AFG4ZNCPJSIUORXVITJIVI2C4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/OSLog-C7OILF2SCXDS9JV5V5XUSN4DP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/IOSurface-58VUSDQI3C387Q5PJ1WWYYNV1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Accessibility-BJFUMT3G8ODWYAJ2BM0481RK0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/CoreTransferable-1IIH8H9JYNT1GM64ORQUBVHDM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/UniformTypeIdentifiers-CGOFPO1UZYUT8SN5MSBBQPEVO.pcm
+
+SwiftCompile normal arm64 Compiling\ ScreenTimeMonitorExtension.swift /Users/hariom/Desktop/WellPlate/ScreenTimeMonitor/ScreenTimeMonitorExtension.swift (in target 'ScreenTimeMonitor' from project 'WellPlate')
+SwiftCompile normal arm64 /Users/hariom/Desktop/WellPlate/ScreenTimeMonitor/ScreenTimeMonitorExtension.swift (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for ScreenTimeMonitor (in target 'ScreenTimeMonitor' from project 'WellPlate')
+
+SwiftDriver\ Compilation\ Requirements ScreenTimeMonitor normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ScreenTimeMonitor -Onone -enforce-exclusivity\=checked @/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -Xfrontend -serialize-debugging-options -application-extension -enable-testing -index-store-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -parse-as-library -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache -output-file-map /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -sdk-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor_const_extract_protocols.json -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-generated-files.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-own-target-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-all-target-headers.hmap -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-project-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/include -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources-normal/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-Swift.h -working-directory /Users/hariom/Desktop/WellPlate -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources/ScreenTimeMonitor-Swift.h /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-Swift.h (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-swiftHeaderTool -arch arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-Swift.h -o /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources/ScreenTimeMonitor-Swift.h
+
+Copy /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.swiftmodule/arm64-apple-ios.swiftmodule /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftmodule (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftmodule /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.swiftmodule/arm64-apple-ios.swiftmodule
+
+Copy /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.swiftmodule/arm64-apple-ios.swiftdoc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftdoc (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftdoc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.swiftmodule/arm64-apple-ios.swiftdoc
+
+Copy /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.swiftmodule/arm64-apple-ios.abi.json /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.abi.json (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.abi.json /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.swiftmodule/arm64-apple-ios.abi.json
+
+Copy /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftsourceinfo (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftsourceinfo /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Metal-183GGT9ILA2OLBTWRQ8T48R16.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/OpenGLES-2EGR8BPZXTYX4UA9JVJTZ7N61.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/CoreVideo-SVXKASHPA56FDHJ6LPPDTROF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/CoreImage-8TEKSRTNNKQ5128YCKPBKUSYP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/QuartzCore-6RI2W4DM2M6XZH6Q73Y1FLDE9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/SwiftUICore-8WXA5ASOFRD1XZEMWOUO2S2D3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/UIKit-41CY84BZ1AY3E20D47TQ9P9B.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/ExtensionKit-8SY5NZV8QV48T7GPWY0YFZ4A8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/SwiftUI-38VBF5X0AOVBT1SGT6W0EDE5A.pcm
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ ScreenTimeReport (in target 'ScreenTimeReport' from project 'WellPlate')
+
+EmitSwiftModule normal arm64 (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    
+
+SwiftCompile normal arm64 Compiling\ ScreenTimeReportExtension.swift /Users/hariom/Desktop/WellPlate/ScreenTimeReport/ScreenTimeReportExtension.swift (in target 'ScreenTimeReport' from project 'WellPlate')
+SwiftCompile normal arm64 /Users/hariom/Desktop/WellPlate/ScreenTimeReport/ScreenTimeReportExtension.swift (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    
+
+SwiftCompile normal arm64 Compiling\ TotalActivityView.swift /Users/hariom/Desktop/WellPlate/ScreenTimeReport/TotalActivityView.swift (in target 'ScreenTimeReport' from project 'WellPlate')
+
+SwiftCompile normal arm64 /Users/hariom/Desktop/WellPlate/ScreenTimeReport/TotalActivityView.swift (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for ScreenTimeReport (in target 'ScreenTimeReport' from project 'WellPlate')
+
+SwiftDriver\ Compilation\ Requirements ScreenTimeReport normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ScreenTimeReport -Onone -enforce-exclusivity\=checked @/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -Xfrontend -serialize-debugging-options -application-extension -enable-testing -index-store-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache -output-file-map /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -sdk-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport_const_extract_protocols.json -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-generated-files.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-own-target-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-all-target-headers.hmap -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/ScreenTimeReport-project-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/include -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/DerivedSources-normal/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/DerivedSources/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-Swift.h -working-directory /Users/hariom/Desktop/WellPlate -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/DerivedSources/ScreenTimeReport-Swift.h /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-Swift.h (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-swiftHeaderTool -arch arm64 /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport-Swift.h -o /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/DerivedSources/ScreenTimeReport-Swift.h
+
+Copy /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.swiftmodule/arm64-apple-ios.swiftdoc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.swiftdoc (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.swiftdoc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.swiftmodule/arm64-apple-ios.swiftdoc
+
+Copy /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.swiftmodule/arm64-apple-ios.swiftmodule /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.swiftmodule (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.swiftmodule /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.swiftmodule/arm64-apple-ios.swiftmodule
+
+Copy /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.swiftmodule/arm64-apple-ios.abi.json /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.abi.json (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.abi.json /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.swiftmodule/arm64-apple-ios.abi.json
+
+Copy /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.swiftsourceinfo (in target 'ScreenTimeReport' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeReport.build/Objects-normal/arm64/ScreenTimeReport.swiftsourceinfo /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeReport.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo
+
+MkDir /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_output/unthinned (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /bin/mkdir -p /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_output/unthinned
+
+MkDir /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_output/thinned (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /bin/mkdir -p /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_output/thinned
+
+GenerateAssetSymbols /Users/hariom/Desktop/WellPlate/WellPlate/Resources/Assets.xcassets (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/hariom/Desktop/WellPlate/WellPlate/Resources/Assets.xcassets --compile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/WellPlate.app --output-format human-readable-text --notices --warnings --export-dependency-info /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_dependencies --output-partial-info-plist /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 26.1 --platform iphoneos --bundle-identifier com.hariom.health.WellPlate.screen --generate-swift-asset-symbols /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+2026-02-24 21:33:39.348 ibtoold[54706:1325489] CoreSimulatorService connection became invalid.  Simulator services will no longer be available.
+2026-02-24 21:33:39.350 ibtoold[54706:1325524] Logging connecton invalid: <OS_xpc_error: <dictionary: 0x20488c3d0> { count = 1, transaction: 0, voucher = 0x0, contents =
+	"XPCErrorDescription" => <string: 0x20488c518> { string cache = 0x0, length = 18, contents = "Connection invalid" }
+}>
+2026-02-24 21:33:39.351 ibtoold[54706:1325489] Error opening log file (/Users/hariom/Library/Logs/CoreSimulator/CoreSimulator.com.apple.ibtool.log): Operation not permitted
+[-[SimServiceContext sendRequest:]:1743] ERROR : Unable to deliver request ({
+    "developer_dir" = "/Applications/Xcode.app/Contents/Developer";
+    request = "set_developer_dir";
+}) because we are not connected to CoreSimulatorService.
+/* com.apple.actool.compilation-results */
+/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+CompileAssetCatalogVariant thinned /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/WellPlate.app /Users/hariom/Desktop/WellPlate/WellPlate/Resources/Assets.xcassets (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/hariom/Desktop/WellPlate/WellPlate/Resources/Assets.xcassets --compile /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 26.1 --platform iphoneos
+2026-02-24 21:33:38.100 ibtoold[54707:1325078] CoreSimulatorService connection became invalid.  Simulator services will no longer be available.
+2026-02-24 21:33:47.951 ibtoold[54707:1325517] CoreSimulatorService connection became invalid.  Simulator services will no longer be available.
+/* com.apple.actool.errors */
+/Users/hariom/Desktop/WellPlate/WellPlate/Resources/Assets.xcassets: error: No available simulator runtimes for platform iphonesimulator. SimServiceContext supportedRuntimes=[]
+/* com.apple.actool.compilation-results */
+/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/assetcatalog_generated_info.plist_thinned
+
+
+SwiftDriverJobDiscovery normal arm64 Compiling ScreenTimeMonitorExtension.swift (in target 'ScreenTimeMonitor' from project 'WellPlate')
+
+SwiftDriver\ Compilation ScreenTimeMonitor normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ScreenTimeMonitor -Onone -enforce-exclusivity\=checked @/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -Xfrontend -serialize-debugging-options -application-extension -enable-testing -index-store-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -parse-as-library -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache -output-file-map /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -sdk-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor_const_extract_protocols.json -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-generated-files.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-own-target-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-all-target-headers.hmap -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-project-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/include -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources-normal/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-Swift.h -working-directory /Users/hariom/Desktop/WellPlate -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/ScreenTimeMonitor.debug.dylib normal (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -O0 -L/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos -L/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos -F/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -filelist /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.LinkFileList -install_name @rpath/ScreenTimeMonitor.debug.dylib -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker @executable_path/Frameworks -Xlinker -rpath -Xlinker @executable_path/../../Frameworks -dead_strip -Xlinker -object_path_lto -Xlinker /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor_dependency_info.dat -fapplication-extension -fobjc-link-runtime -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.swiftmodule @/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor-linker-args.resp -Xlinker -alias -Xlinker _NSExtensionMain -Xlinker ___debug_main_executable_dylib_entry_point -framework FamilyControls -o /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/ScreenTimeMonitor.debug.dylib
+
+ConstructStubExecutorLinkFileList /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-ExecutorLinkFileList-normal-arm64.txt (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    construct-stub-executor-link-file-list /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/ScreenTimeMonitor.debug.dylib /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library without Swift entry point. (in target 'ScreenTimeMonitor' from project 'WellPlate')
+
+Ld /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/ScreenTimeMonitor normal (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -O0 -L/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/Frameworks -Xlinker -rpath -Xlinker @executable_path/../../Frameworks -rdynamic -Xlinker -no_deduplicate -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_entry -Xlinker /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-DebugEntryPoint-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor-ExecutorLinkFileList-normal-arm64.txt /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/ScreenTimeMonitor.debug.dylib -o /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/ScreenTimeMonitor
+
+ExtractAppIntentsMetadata (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name ScreenTimeMonitor --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk --xcode-version 17B100 --platform-family iOS --deployment-target 16.0 --bundle-identifier com.hariom.health.WellPlate.screen.ScreenTimeMonitor --output /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex --target-triple arm64-apple-ios16.0 --binary-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/ScreenTimeMonitor --dependency-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor_dependency_info.dat --stringsdata-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.SwiftFileList --metadata-file-list /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor.DependencyMetadataFileList --static-metadata-file-list /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor.DependencyStaticMetadataFileList --swift-const-vals-list /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/Objects-normal/arm64/ScreenTimeMonitor.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-02-24 21:33:35.655 appintentsmetadataprocessor[55913:1323959] Starting appintentsmetadataprocessor export
+2026-02-24 21:33:35.658 appintentsmetadataprocessor[55913:1323959] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+AppIntentsSSUTraining (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/Info.plist --temp-dir-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ssu --bundle-id com.hariom.health.WellPlate.screen.ScreenTimeMonitor --product-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex --extracted-metadata-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex/Metadata.appintents --metadata-file-list /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/ScreenTimeMonitor.build/ScreenTimeMonitor.DependencyMetadataFileList --archive-ssu-assets
+2026-02-24 21:33:35.768 appintentsnltrainingprocessor[55972:1324045] Parsing options for appintentsnltrainingprocessor
+2026-02-24 21:33:35.769 appintentsnltrainingprocessor[55972:1324045] No AppShortcuts found - Skipping.
+
+RegisterExecutionPolicyException /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-RegisterExecutionPolicyException /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex
+
+Touch /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex (in target 'ScreenTimeMonitor' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    /usr/bin/touch -c /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/ScreenTimeMonitor.appex
+
+SwiftDriver WellPlate normal arm64 com.apple.xcode.tools.swift.compiler (in target 'WellPlate' from project 'WellPlate')
+    cd /Users/hariom/Desktop/WellPlate
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name WellPlate -Onone -enforce-exclusivity\=checked @/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios26.1 -g -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -F /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos -emit-localized-strings -emit-localized-strings-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache -output-file-map /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -sdk-module-cache-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/hariom/Desktop/WellPlate/.derivedData-verify3/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate_const_extract_protocols.json -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-generated-files.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-own-target-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-all-target-headers.hmap -Xcc -iquote -Xcc /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/WellPlate-project-headers.hmap -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/include -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/DerivedSources-normal/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/DerivedSources/arm64 -Xcc -I/Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate-Swift.h -working-directory /Users/hariom/Desktop/WellPlate -experimental-emit-module-separately -disable-cmo
+
+** BUILD FAILED **
+
+
+The following build commands failed:
+	CompileAssetCatalogVariant thinned /Users/hariom/Desktop/WellPlate/.derivedData-verify3/Build/Products/Debug-iphoneos/WellPlate.app /Users/hariom/Desktop/WellPlate/WellPlate/Resources/Assets.xcassets (in target 'WellPlate' from project 'WellPlate')
+	Building project WellPlate with scheme WellPlate and configuration Debug
+(2 failures)

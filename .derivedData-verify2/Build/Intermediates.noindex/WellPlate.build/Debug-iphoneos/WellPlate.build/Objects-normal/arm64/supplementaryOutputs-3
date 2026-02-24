@@ -1,0 +1,51 @@
+{
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Burn/Views/BurnDetailView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Burn/Views/BurnView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/GoalExpandableView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/ViewModels/HomeViewModel.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeViewModel.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeViewModel.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeViewModel.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeViewModel.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeViewModel.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Views/HomeView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Progress/Views/ProgressInsightsView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ProgressInsightsView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ProgressInsightsView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ProgressInsightsView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ProgressInsightsView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ProgressInsightsView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Sleep/Components/SleepChartView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepChartView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepChartView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepChartView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepChartView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-verify2/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepChartView.swiftdeps"
+  }
+}

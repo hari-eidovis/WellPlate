@@ -1,0 +1,12 @@
+{
+  "/Users/hariom/Desktop/WellPlate/WellPlate/App/RootView.swift" : {
+    "abi-baseline-json" : "/Users/hariom/Desktop/WellPlate/.derivedData-release/Build/Intermediates.noindex/WellPlate.build/Release-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.abi.json",
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData-release/Build/Intermediates.noindex/WellPlate.build/Release-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate-primary.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData-release/Build/Intermediates.noindex/WellPlate.build/Release-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate-primary.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData-release/Build/Intermediates.noindex/WellPlate.build/Release-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate-primary.dia",
+    "objc-header" : "/Users/hariom/Desktop/WellPlate/.derivedData-release/Build/Intermediates.noindex/WellPlate.build/Release-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate-Swift.h",
+    "swiftdoc" : "/Users/hariom/Desktop/WellPlate/.derivedData-release/Build/Intermediates.noindex/WellPlate.build/Release-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.swiftdoc",
+    "swiftmodule" : "/Users/hariom/Desktop/WellPlate/.derivedData-release/Build/Intermediates.noindex/WellPlate.build/Release-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.swiftmodule",
+    "swiftsourceinfo" : "/Users/hariom/Desktop/WellPlate/.derivedData-release/Build/Intermediates.noindex/WellPlate.build/Release-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlate.swiftsourceinfo"
+  }
+}
