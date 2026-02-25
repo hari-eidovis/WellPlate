@@ -21,23 +21,17 @@ struct MainTabView: View {
             Tab("Burn", systemImage: "flame.fill") {
                 BurnView()
             }
-
-            // MARK: - Sleep
-            Tab("Sleep", systemImage: "moon.zzz.fill") {
-                SleepView()
-            }
-
             // MARK: - Stress
             Tab("Stress", systemImage: "brain.head.profile.fill") {
                 StressView(viewModel: StressViewModel(modelContext: modelContext))
             }
 
-            // MARK: - Profile (separated — like Search in Apple Music)
-            Tab("Profile", systemImage: "person.crop.circle.fill", role: .search) {
+            // MARK: - Profile
+            Tab("Profile", systemImage: "person.crop.circle.fill") {
                 ProfilePlaceholderView()
             }
         }
-        .tabViewStyle(.sidebarAdaptable)
+       // .tabViewStyle(.sidebarAdaptable)
         .tint(.orange)
     }
 }

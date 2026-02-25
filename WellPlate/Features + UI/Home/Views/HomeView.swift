@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var showDatePicker = false
     @State private var showProfile = false
     @State private var showProgressInsights = false
+    @State private var showStreak = false
     @State private var isGoalsExpanded = false
     @FocusState private var isTextEditorFocused: Bool
     @State private var scrollOffset: CGFloat = 0
@@ -51,6 +52,22 @@ struct HomeView: View {
             fiber: totalFiber,
             confidence: nil
         )
+    }
+
+    private var currentStreak: Int {
+        let cal = Calendar.current
+        let loggedDays = Set(foodLogs.map { cal.startOfDay(for: $0.day) })
+        var start = cal.startOfDay(for: Date())
+        if !loggedDays.contains(start) {
+            start = cal.date(byAdding: .day, value: -1, to: start) ?? start
+        }
+        var streak = 0
+        var current = start
+        while loggedDays.contains(current) {
+            streak += 1
+            current = cal.date(byAdding: .day, value: -1, to: current) ?? current
+        }
+        return streak
     }
 
     private var foodLogsForSelectedDate: [FoodLogEntry] {
@@ -151,6 +168,9 @@ struct HomeView: View {
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
         }
+        .sheet(isPresented: $showStreak) {
+            StreakDetailView()
+        }
         .fullScreenCover(isPresented: $showProgressInsights) {
             ProgressInsightsView()
         }
@@ -179,13 +199,12 @@ struct HomeView: View {
                 
                 HStack(spacing: 14){
                    
-                    Button(action: {}) {
-                        HStack(spacing:4){
+                    Button(action: { showStreak = true }) {
+                        HStack(spacing: 4) {
                             Image(systemName: "flame.fill")
                                 .font(.system(size: 14))
                                 .foregroundColor(.orange)
-
-                            Text("1")
+                            Text("\(currentStreak)")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.primary)
                         }
@@ -197,16 +216,6 @@ struct HomeView: View {
                             Image(systemName: "chart.bar.xaxis")
                                 .font(.system(size: 16))
                                 .foregroundColor(.orange)
-                        }
-                    }
-                    
-                    HStack{
-                        Button(action: {
-                            showProfile = true
-                        }) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(.primary)
                         }
                     }
                 }
