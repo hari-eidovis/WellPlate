@@ -1,18 +1,4 @@
 {
-  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Burn/Views/BurnDetailView.swift" : {
-    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.swiftconstvalues",
-    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.d",
-    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.dia",
-    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.o",
-    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.swiftdeps"
-  },
-  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Burn/Views/BurnView.swift" : {
-    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.swiftconstvalues",
-    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.d",
-    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.dia",
-    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.o",
-    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.swiftdeps"
-  },
   "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/GoalExpandableView.swift" : {
     "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.swiftconstvalues",
     "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.d",
@@ -47,5 +33,26 @@
     "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepChartView.dia",
     "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepChartView.o",
     "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepChartView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Sleep/Components/SleepStageBarView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepStageBarView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepStageBarView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepStageBarView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepStageBarView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepStageBarView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Sleep/ViewModels/SleepViewModel.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepViewModel.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepViewModel.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepViewModel.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepViewModel.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepViewModel.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Sleep/Views/SleepDetailView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepDetailView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepDetailView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepDetailView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepDetailView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SleepDetailView.swiftdeps"
   }
 }

@@ -47,5 +47,12 @@
     "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionServiceProtocol.dia",
     "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionServiceProtocol.o",
     "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionServiceProtocol.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/ScreenTimeManager.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.swiftdeps"
   }
 }

@@ -40,5 +40,12 @@
     "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NormalizeFoodName.dia",
     "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NormalizeFoodName.o",
     "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NormalizeFoodName.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Widgets/SharedFoodData.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SharedFoodData.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SharedFoodData.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SharedFoodData.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SharedFoodData.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SharedFoodData.swiftdeps"
   }
 }

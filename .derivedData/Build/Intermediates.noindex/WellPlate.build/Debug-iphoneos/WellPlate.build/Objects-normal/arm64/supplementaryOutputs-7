@@ -1,4 +1,11 @@
 {
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Networking/Mock/MockDataLoader.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MockDataLoader.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MockDataLoader.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MockDataLoader.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MockDataLoader.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MockDataLoader.swiftdeps"
+  },
   "/Users/hariom/Desktop/WellPlate/WellPlate/Networking/Mock/MockResponseRegistry.swift" : {
     "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MockResponseRegistry.swiftconstvalues",
     "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MockResponseRegistry.d",

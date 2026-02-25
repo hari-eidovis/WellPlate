@@ -6,13 +6,6 @@
     "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/AppConfig.o",
     "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/AppConfig.swiftdeps"
   },
-  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/ScreenTimeManager.swift" : {
-    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.swiftconstvalues",
-    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.d",
-    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.dia",
-    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.o",
-    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.swiftdeps"
-  },
   "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Burn/Components/BurnChartView.swift" : {
     "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnChartView.swiftconstvalues",
     "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnChartView.d",
@@ -47,5 +40,19 @@
     "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnViewModel.dia",
     "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnViewModel.o",
     "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnViewModel.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Burn/Views/BurnDetailView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnDetailView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Burn/Views/BurnView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.derivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/BurnView.swiftdeps"
   }
 }
