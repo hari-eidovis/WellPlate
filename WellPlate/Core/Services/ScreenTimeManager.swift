@@ -36,7 +36,7 @@ final class ScreenTimeManager: ObservableObject {
     // MARK: - Constants
 
     static let shared = ScreenTimeManager()
-    static let appGroupID = "group.com.hariom.health.WellPlate"
+    static let appGroupID = "group.com.hariom.wellplate"
     static let thresholdKey = "screenTimeThresholdHours"
     static let thresholdDateKey = "screenTimeThresholdDate"
     private static let logPrefix = "[ScreenTimeManager]"
@@ -184,7 +184,7 @@ final class ScreenTimeManager: ObservableObject {
 @MainActor
 final class ScreenTimeManager: ObservableObject {
     static let shared = ScreenTimeManager()
-    static let appGroupID = "group.com.hariom.health.WellPlate"
+    static let appGroupID = "group.com.hariom.wellplate"
 
     @Published var isAuthorized = false
     @Published var authorizationError: String? = "FamilyControls not available"

@@ -13,7 +13,7 @@ import Foundation
 /// can read it for stress scoring.
 class ScreenTimeMonitorExtension: DeviceActivityMonitor {
 
-    private let appGroupID = "group.com.hariom.health.WellPlate"
+    private let appGroupID = "group.com.hariom.wellplate"
     private let thresholdKey = "screenTimeThresholdHours"
     private let thresholdDateKey = "screenTimeThresholdDate"
 

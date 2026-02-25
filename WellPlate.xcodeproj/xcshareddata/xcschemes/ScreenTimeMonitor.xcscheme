@@ -59,7 +59,7 @@
       launchAutomaticallySubstyle = "2">
       <RemoteRunnable
          runnableDebuggingMode = "0"
-         BundleIdentifier = "com.hariom.health.WellPlate.screen"
+         BundleIdentifier = "com.hariom.wellplate"
          RemotePath = "/var/containers/Bundle/Application/68825DFD-1A50-47C9-B5F0-BE8ED72D2560/WellPlate.app">
       </RemoteRunnable>
       <MacroExpansion>

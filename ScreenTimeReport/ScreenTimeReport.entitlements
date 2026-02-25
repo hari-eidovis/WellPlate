@@ -6,7 +6,7 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.hariom.health.WellPlate</string>
+		<string>group.com.hariom.wellplate</string>
 	</array>
 </dict>
 </plist>
