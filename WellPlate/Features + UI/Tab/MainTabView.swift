@@ -9,30 +9,41 @@ import SwiftUI
 
 struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
+    @State private var selectedTab = 0
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             // MARK: - Intake
-            Tab("Intake", systemImage: "fork.knife") {
+            Tab(value: 0) {
                 HomeView(viewModel: HomeViewModel(modelContext: modelContext))
+            } label: {
+                Label("Intake", systemImage: "fork.knife")
             }
 
             // MARK: - Burn
-            Tab("Burn", systemImage: "flame.fill") {
+            Tab(value: 1) {
                 BurnView()
+            } label: {
+                Label("Burn", systemImage: "flame.fill")
             }
+
             // MARK: - Stress
-            Tab("Stress", systemImage: "brain.head.profile.fill") {
+            Tab(value: 2) {
                 StressView(viewModel: StressViewModel(modelContext: modelContext))
+            } label: {
+                Label("Stress", systemImage: "brain.head.profile.fill")
             }
 
             // MARK: - Profile
-            Tab("Profile", systemImage: "person.crop.circle.fill") {
+            Tab(value: 3) {
                 ProfilePlaceholderView()
+            } label: {
+                Label("Profile", systemImage: "person.crop.circle.fill")
             }
         }
        // .tabViewStyle(.sidebarAdaptable)
         .tint(.orange)
+        .sensoryFeedback(.selection, trigger: selectedTab)
     }
 }
 

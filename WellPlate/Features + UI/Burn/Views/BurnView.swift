@@ -214,6 +214,7 @@ struct BurnView: View {
             }
 
             Button {
+                HapticService.impact(.medium)
                 Task { await viewModel.requestPermissionAndLoad() }
             } label: {
                 Text("Allow Access")

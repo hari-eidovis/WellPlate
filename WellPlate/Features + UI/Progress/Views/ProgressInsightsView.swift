@@ -245,6 +245,7 @@ struct ProgressInsightsView: View {
         HStack(spacing: 0) {
             ForEach(TimeRange.allCases, id: \.self) { range in
                 Button(action: {
+                    HapticService.selectionChanged()
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                         selectedTimeRange = range
                     }
@@ -333,6 +334,7 @@ struct ProgressInsightsView: View {
                 HStack(spacing: 8) {
                     ForEach(NutritionMetric.allCases, id: \.self) { metric in
                         Button(action: {
+                            HapticService.selectionChanged()
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                 selectedMetric = metric
                             }

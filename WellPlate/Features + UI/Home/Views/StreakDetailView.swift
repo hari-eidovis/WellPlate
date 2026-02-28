@@ -380,6 +380,7 @@ struct StreakDetailView: View {
             let currentMonthStart = cal.date(from: cal.dateComponents([.year, .month], from: Date()))!
             guard newMonth <= currentMonthStart else { return }
         }
+        HapticService.selectionChanged()
         displayedMonth = newMonth
     }
 

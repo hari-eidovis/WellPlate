@@ -38,6 +38,7 @@ struct GoalsExpandableView: View {
     
     private var collapsedView: some View {
         Button(action: {
+            HapticService.impact(.medium)
             isExpanded = true
         }) {
             HStack(spacing: 12) {
@@ -118,6 +119,7 @@ struct GoalsExpandableView: View {
                     Spacer()
 
                     Button(action: {
+                        HapticService.impact(.light)
                         isExpanded = false
                     }) {
                         Image(systemName: "xmark.circle.fill")

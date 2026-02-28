@@ -67,6 +67,7 @@ struct ScreenTimeInputSheet: View {
                 HStack(spacing: 10) {
                     ForEach(quickPicks, id: \.self) { value in
                         Button {
+                            HapticService.impact(.rigid)
                             withAnimation(.snappy) { hours = value }
                         } label: {
                             Text("\(Int(value))h")
@@ -85,6 +86,7 @@ struct ScreenTimeInputSheet: View {
 
                 // Save button
                 Button {
+                    HapticService.notify(.success)
                     onSave()
                     dismiss()
                 } label: {

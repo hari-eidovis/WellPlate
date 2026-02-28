@@ -15,7 +15,10 @@ struct StressVitalCardView: View {
 
     var body: some View {
         if let onTap {
-            Button(action: onTap) { cardContent }
+            Button(action: {
+                HapticService.impact(.light)
+                onTap()
+            }) { cardContent }
                 .buttonStyle(.plain)
         } else {
             cardContent

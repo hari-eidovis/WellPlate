@@ -150,6 +150,7 @@ struct HomeView: View {
                     let isHorizontalSwipe = horizontalAmount > verticalAmount * 1.8 && horizontalAmount > 70
 
                     if isHorizontalSwipe && !isGoalsExpanded {
+                        HapticService.selectionChanged()
                         if value.translation.width > 0 {
                             // Swipe right - go to previous day
                             changeDate(by: -1)
@@ -164,6 +165,9 @@ struct HomeView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage)
+        }
+        .onChange(of: viewModel.showError) { _, isError in
+            if isError { HapticService.notify(.error) }
         }
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
@@ -199,7 +203,10 @@ struct HomeView: View {
                 
                 HStack(spacing: 14){
                    
-                    Button(action: { showStreak = true }) {
+                    Button(action: {
+                        HapticService.impact(.light)
+                        showStreak = true
+                    }) {
                         HStack(spacing: 4) {
                             Image(systemName: "flame.fill")
                                 .font(.system(size: 14))
@@ -210,6 +217,7 @@ struct HomeView: View {
                         }
                     }
                     Button(action: {
+                        HapticService.impact(.light)
                         showProgressInsights = true
                     }) {
                         HStack(spacing:4){
@@ -229,6 +237,7 @@ struct HomeView: View {
             }
             
             Button(action: {
+                HapticService.impact(.light)
                 showDatePicker = true
             }) {
                 HStack(spacing: 8) {
@@ -283,6 +292,7 @@ struct HomeView: View {
                         }
                         .contextMenu {
                             Button {
+                                HapticService.impact(.light)
                                 addAgain(entry)
                             } label: {
                                 Label("Add Again", systemImage: "plus.circle.fill")
@@ -393,6 +403,9 @@ struct HomeView: View {
             await viewModel.logFood(on: selectedDate)
             // Clear input after successful log
             await MainActor.run {
+                if !viewModel.showError {
+                    HapticService.notify(.success)
+                }
                 viewModel.foodDescription = ""
             }
         }

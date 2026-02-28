@@ -16,7 +16,10 @@ struct BurnMetricCardView: View {
     let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            HapticService.impact(.light)
+            onTap()
+        }) {
             VStack(alignment: .leading, spacing: 10) {
 
                 // Icon

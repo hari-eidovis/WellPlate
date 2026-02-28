@@ -140,6 +140,7 @@ private struct WidgetSetupCard: View {
                         namespace:  namespace
                     )
                     .onTapGesture {
+                        HapticService.selectionChanged()
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
                             selectedSize = size
                         }
@@ -161,7 +162,10 @@ private struct WidgetSetupCard: View {
                 .animation(.easeInOut(duration: 0.2), value: selectedSize)
 
             // Add button
-            Button(action: onAddTapped) {
+            Button(action: {
+                HapticService.impact(.medium)
+                onAddTapped()
+            }) {
                 HStack(spacing: 8) {
                     Image(systemName: isInstalled ? "checkmark.circle.fill" : "plus.circle.fill")
                     Text(isInstalled ? "Widget Active — Add Another" : "Add to Home Screen")

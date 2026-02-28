@@ -186,6 +186,7 @@ struct SleepView: View {
 
             // Tap to see details
             Button {
+                HapticService.impact(.light)
                 showDetail = true
             } label: {
                 HStack {
@@ -239,6 +240,7 @@ struct SleepView: View {
             }
 
             Button {
+                HapticService.impact(.medium)
                 Task { await viewModel.requestPermissionAndLoad() }
             } label: {
                 Text("Allow Access")

@@ -242,6 +242,7 @@ struct StressView: View {
 
     private func bpHalfCard(metric: VitalMetric, value: Double?) -> some View {
         Button {
+            HapticService.impact(.light)
             activeSheet = .vital(metric)
         } label: {
             VStack(alignment: .leading, spacing: 8) {
@@ -325,6 +326,7 @@ struct StressView: View {
             }
 
             Button {
+                HapticService.impact(.medium)
                 Task { await viewModel.requestPermissionAndLoad() }
             } label: {
                 Text("Allow Access")
