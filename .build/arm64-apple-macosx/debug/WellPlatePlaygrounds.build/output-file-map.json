@@ -1,0 +1,61 @@
+{
+  "": {
+    "swift-dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/master.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/AboutPlaygroundView.swift": {
+    "dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/AboutPlaygroundView.d",
+    "object": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/AboutPlaygroundView.swift.o",
+    "swiftmodule": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/AboutPlaygroundView~partial.swiftmodule",
+    "swift-dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/AboutPlaygroundView.swiftdeps",
+    "diagnostics": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/AboutPlaygroundView.dia"
+  },
+  "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/IntakePlaygroundView.swift": {
+    "dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/IntakePlaygroundView.d",
+    "object": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/IntakePlaygroundView.swift.o",
+    "swiftmodule": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/IntakePlaygroundView~partial.swiftmodule",
+    "swift-dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/IntakePlaygroundView.swiftdeps",
+    "diagnostics": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/IntakePlaygroundView.dia"
+  },
+  "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlatformColors.swift": {
+    "dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlatformColors.d",
+    "object": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlatformColors.swift.o",
+    "swiftmodule": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlatformColors~partial.swiftmodule",
+    "swift-dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlatformColors.swiftdeps",
+    "diagnostics": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlatformColors.dia"
+  },
+  "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundModels.swift": {
+    "dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundModels.d",
+    "object": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundModels.swift.o",
+    "swiftmodule": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundModels.swiftdeps",
+    "diagnostics": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundModels.dia"
+  },
+  "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundRootView.swift": {
+    "dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundRootView.d",
+    "object": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundRootView.swift.o",
+    "swiftmodule": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundRootView~partial.swiftmodule",
+    "swift-dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundRootView.swiftdeps",
+    "diagnostics": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundRootView.dia"
+  },
+  "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundStore.swift": {
+    "dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundStore.d",
+    "object": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundStore.swift.o",
+    "swiftmodule": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundStore.swiftdeps",
+    "diagnostics": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundStore.dia"
+  },
+  "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellPlatePlaygroundsApp.swift": {
+    "dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellPlatePlaygroundsApp.d",
+    "object": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellPlatePlaygroundsApp.swift.o",
+    "swiftmodule": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellPlatePlaygroundsApp~partial.swiftmodule",
+    "swift-dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellPlatePlaygroundsApp.swiftdeps",
+    "diagnostics": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellPlatePlaygroundsApp.dia"
+  },
+  "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellnessPlaygroundView.swift": {
+    "dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellnessPlaygroundView.d",
+    "object": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellnessPlaygroundView.swift.o",
+    "swiftmodule": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellnessPlaygroundView~partial.swiftmodule",
+    "swift-dependencies": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellnessPlaygroundView.swiftdeps",
+    "diagnostics": "/Users/hariom/Desktop/WellPlate/.build/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellnessPlaygroundView.dia"
+  }
+}

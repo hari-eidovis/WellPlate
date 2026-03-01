@@ -45,6 +45,24 @@ enum HapticService {
         selection.selectionChanged()
     }
 
+    /// Double light tap — fired when the AI narrator starts speaking.
+    static func narratorStart() {
+        lightImpact.impactOccurred()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            lightImpact.impactOccurred()
+        }
+    }
+
+    /// Success notification followed by three rigid pulses — fired when a daily goal is fully met.
+    static func goalAchieved() {
+        notification.notificationOccurred(.success)
+        for i in 1...3 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.15) {
+                rigidImpact.impactOccurred()
+            }
+        }
+    }
+
     /// Pre-warms all generators. Call early (e.g. on app launch) for best latency.
     static func prepare() {
         lightImpact.prepare()

@@ -4,6 +4,7 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel: HomeViewModel
+    @StateObject private var narrator = NutritionNarratorService()
 
     @State private var selectedDate = Date()
     @State private var showDatePicker = false
@@ -119,11 +120,51 @@ struct HomeView: View {
                 Spacer()
             }
 
-            // Hide GoalExpandableView when keyboard is visible
+            // Hide GoalExpandableView + NarratorButton when keyboard is visible
             if !isTextEditorFocused {
                 VStack {
                     Spacer()
                     Spacer()
+
+                    // Voice quality nudge banner (shown once if only default voice available)
+                    if narrator.showVoiceNudge, aggregatedNutrition != nil {
+                        HStack(spacing: 8) {
+                            Image(systemName: "speaker.wave.2")
+                                .font(.system(size: 12))
+                                .foregroundColor(.orange)
+                            Text("Download an enhanced voice in **Settings → Accessibility → Live Speech** for richer audio.")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal, 16)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+
+                    // Narrator button — only visible when food is logged today
+                    if let nutrition = aggregatedNutrition {
+                        HStack {
+                            Spacer()
+                            NarratorButton(
+                                isSpeaking: narrator.isSpeaking,
+                                isGenerating: narrator.isGenerating
+                            ) {
+                                Task {
+                                    await narrator.generateAndSpeak(
+                                        nutrition: nutrition,
+                                        goals: .default
+                                    )
+                                }
+                            }
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 8)
+                        }
+                        .transition(.scale(scale: 0.8).combined(with: .opacity))
+                    }
+
                     GoalsExpandableView(
                         isExpanded: $isGoalsExpanded,
                         currentNutrition: aggregatedNutrition,
@@ -136,6 +177,41 @@ struct HomeView: View {
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+            }
+
+            // Disambiguation overlay — Feature 3
+            if let state = viewModel.disambiguationState {
+                DisambiguationChipsView(
+                    question: state.question,
+                    options: state.options,
+                    rawInput: state.rawInput,
+                    onSelect: { option in
+                        viewModel.disambiguationState = nil
+                        Task {
+                            await viewModel.logFood(on: selectedDate, coachOverride: option.label)
+                            await MainActor.run {
+                                if !viewModel.showError {
+                                    HapticService.notify(.success)
+                                    viewModel.foodDescription = ""
+                                }
+                            }
+                        }
+                    },
+                    onAddAsTyped: {
+                        viewModel.disambiguationState = nil
+                        Task {
+                            await viewModel.logFood(on: selectedDate, coachOverride: state.rawInput)
+                            await MainActor.run {
+                                if !viewModel.showError {
+                                    HapticService.notify(.success)
+                                    viewModel.foodDescription = ""
+                                }
+                            }
+                        }
+                    }
+                )
+                .transition(.opacity)
+                .zIndex(10)
             }
         }
         .simultaneousGesture(
@@ -335,6 +411,7 @@ struct HomeView: View {
                                     } else {
                                         Image(systemName: "sparkles")
                                             .font(.system(size: 16, weight: .semibold))
+                                            .symbolEffect(.breathe, isActive: viewModel.isLoading)
                                     }
                                 }
                                 .foregroundColor(.white)

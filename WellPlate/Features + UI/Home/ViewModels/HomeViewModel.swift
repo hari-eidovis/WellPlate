@@ -11,30 +11,63 @@ final class HomeViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var showError: Bool = false
     @Published var errorMessage: String = ""
+    /// Non-nil when MealCoachService needs the user to pick between alternatives.
+    @Published var disambiguationState: DisambiguationState?
 
     private let nutritionService: NutritionServiceProtocol
+    private let mealCoach: MealCoachService
     private let modelContext: ModelContext
 
-    init(modelContext: ModelContext,
-         nutritionService: NutritionServiceProtocol = NutritionService()) {
+    @MainActor
+    init(
+        modelContext: ModelContext,
+        nutritionService: NutritionServiceProtocol = NutritionService(),
+        mealCoach: MealCoachService = MealCoachService()
+    ) {
         self.modelContext = modelContext
         self.nutritionService = nutritionService
+        self.mealCoach = mealCoach
     }
 
-    func logFood(on date: Date) async {
-        let trimmed = foodDescription.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { showErrorMessage("Please enter a food description"); return }
+    func logFood(on date: Date, coachOverride: String? = nil) async {
+        let rawInput = foodDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !rawInput.isEmpty else { showErrorMessage("Please enter a food description"); return }
 
         isLoading = true
         defer { isLoading = false }
 
+        // 1) Run MealCoachService to canonicalize input (falls back to raw on older OS)
+        let extraction: FoodExtraction
+        if let override = coachOverride {
+            // Called from disambiguation chip selection — skip coach, use chip label directly
+            extraction = FoodExtraction(foodName: override, portion: "unknown", confidence: 1.0, clarifyingQuestion: "")
+        } else {
+            extraction = await mealCoach.extractFoodEntry(from: rawInput)
+        }
+
+        // 2) If confidence is low and a clarifying question exists, surface disambiguation
+        if extraction.needsDisambiguation && coachOverride == nil {
+            let options = await mealCoach.generateOptions(for: rawInput)
+            if !options.isEmpty {
+                isLoading = false
+                disambiguationState = DisambiguationState(
+                    question: extraction.clarifyingQuestion,
+                    options: options,
+                    rawInput: rawInput
+                )
+                return
+            }
+            // If option generation failed, fall through and log with extracted name
+        }
+
+        let canonicalName = extraction.foodName
         let day = Calendar.current.startOfDay(for: date)
-        let key = normalizeFoodKey(trimmed)
+        let key = normalizeFoodKey(canonicalName)  // audit fix #7: key from coach-extracted name
 
         do {
-            // 1) cache lookup
+            // 3) Cache lookup
             if let cached = try fetchCache(key: key) {
-                insertLog(from: cached, day: day, typedName: trimmed, key: key)
+                insertLog(from: cached, day: day, typedName: canonicalName, key: key)
                 nutritionalInfo = NutritionalInfo(
                     foodName: cached.displayName,
                     servingSize: cached.servingSize,
@@ -50,17 +83,17 @@ final class HomeViewModel: ObservableObject {
                 return
             }
 
-            // 2) API call
+            // 4) API call using canonical name
             let request = NutritionAnalysisRequest(
-                foodDescription: trimmed,
+                foodDescription: canonicalName,
                 servingSize: servingSize.isEmpty ? nil : servingSize
             )
             let result = try await nutritionService.analyzeFood(request: request)
             nutritionalInfo = result
 
-            // 3) upsert cache + insert log
-            try upsertCache(from: result, key: key, displayName: trimmed)
-            insertLog(from: result, day: day, typedName: trimmed, key: key)
+            // 5) Upsert cache + insert log
+            try upsertCache(from: result, key: key, displayName: canonicalName)
+            insertLog(from: result, day: day, typedName: canonicalName, key: key)
 
             try modelContext.save()
             refreshWidget(for: day)
