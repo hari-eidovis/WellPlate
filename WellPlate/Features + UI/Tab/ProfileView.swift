@@ -115,6 +115,7 @@ private struct WidgetSetupCard: View {
     let isInstalled:  Bool
     let namespace:    Namespace.ID
     let onAddTapped:  () -> Void
+    @State private var isExpanded = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -124,68 +125,76 @@ private struct WidgetSetupCard: View {
                 Image(systemName: "rectangle.3.group.fill")
                     .font(.title3)
                     .foregroundStyle(.orange)
-                Text("Food Widget")
+                Text("Widget")
                     .font(.r(.headline, .semibold))
                 Spacer()
                 // Status badge
                 StatusBadge(isInstalled: isInstalled)
+
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .font(.r(14, .regular))
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    isExpanded.toggle()
+                }
             }
 
-            // Size picker pills
-            HStack(spacing: 8) {
-                ForEach(FoodWidgetSize.allCases) { size in
-                    SizePill(
-                        size:       size,
-                        isSelected: selectedSize == size,
-                        namespace:  namespace
-                    )
-                    .onTapGesture {
-                        HapticService.selectionChanged()
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
-                            selectedSize = size
+            if isExpanded {
+                // Size picker pills
+                HStack(spacing: 8) {
+                    ForEach(FoodWidgetSize.allCases) { size in
+                        SizePill(
+                            size:       size,
+                            isSelected: selectedSize == size,
+                            namespace:  namespace
+                        )
+                        .onTapGesture {
+                            HapticService.selectionChanged()
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
+                                selectedSize = size
+                            }
                         }
                     }
                 }
-            }
+                .transition(.opacity.combined(with: .move(edge: .top)))
 
-            // Live widget preview
-            WidgetPreview(size: selectedSize)
-                .transition(.opacity.combined(with: .scale(scale: 0.97)))
-                .animation(.spring(response: 0.38, dampingFraction: 0.8), value: selectedSize)
-                .id(selectedSize)   // forces re-render + transition on size change
+                // Live widget preview
+                WidgetPreview(size: selectedSize)
+                    .transition(.opacity.combined(with: .scale(scale: 0.27)))
+                    .animation(.spring(response: 0.38, dampingFraction: 0.8), value: selectedSize)
+                    .id(selectedSize)
 
-            // Description
-            Text(selectedSize.description)
-                .font(.r(.subheadline, .regular))
-                .foregroundStyle(.secondary)
-                .contentTransition(.opacity)
-                .animation(.easeInOut(duration: 0.2), value: selectedSize)
-
-            // Add button
-            Button(action: {
-                HapticService.impact(.medium)
-                onAddTapped()
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: isInstalled ? "checkmark.circle.fill" : "plus.circle.fill")
-                    Text(isInstalled ? "Widget Active — Add Another" : "Add to Home Screen")
-                        .fontWeight(.semibold)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
-                .foregroundStyle(.white)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(
-                            LinearGradient(
-                                colors: [.orange, .pink.opacity(0.85)],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                // Add button
+                Button(action: {
+                    HapticService.impact(.medium)
+                    onAddTapped()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: isInstalled ? "checkmark.circle.fill" : "plus.circle.fill")
+                        Text(isInstalled ? "Widget Active — Add Another" : "Add")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .foregroundStyle(.white)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(
+                                LinearGradient(
+                                    colors: [.orange.opacity(0.85)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
                             )
-                        )
-                )
+                    )
+                }
+                .buttonStyle(.plain)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
-            .buttonStyle(.plain)
         }
         .padding(18)
         .background(
@@ -619,9 +628,6 @@ private struct InstructionRow: View {
         }
     }
 }
-
-// MARK: - Preview
-
 #Preview {
     ProfilePlaceholderView()
 }

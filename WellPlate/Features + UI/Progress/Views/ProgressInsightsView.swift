@@ -106,12 +106,6 @@ struct ProgressInsightsView: View {
             ZStack(alignment: .top) {
                 bgGradient.ignoresSafeArea()
 
-//                GeometryReader { outerGeo in
-//                    Color.clear
-//                        .onAppear { safeTopInset = outerGeo.safeAreaInsets.top }
-//                }
-//                .frame(height: 0)
-
                 ScrollView(showsIndicators: false) {
                         VStack(spacing: 20) {
                             timeRangeSelector
@@ -153,9 +147,9 @@ struct ProgressInsightsView: View {
                 ToolbarItem(placement: .topBarLeading){
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white)
-                            .frame(width: 20, height: 20)
+                            .font(.system(size: 12))
+                            .foregroundColor(.primary)
+                            .frame(width: 16, height: 16)
                     }
                 }
             }
