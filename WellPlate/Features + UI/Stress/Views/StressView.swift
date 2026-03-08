@@ -2,8 +2,6 @@
 //  StressView.swift
 //  WellPlate
 //
-//  Created on 21.02.2026.
-//
 
 import SwiftUI
 import SwiftData
@@ -45,7 +43,8 @@ struct StressView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground)
+                // Warm tinted background that shifts with stress level
+                levelBackground
                     .ignoresSafeArea()
 
                 Group {
@@ -60,8 +59,8 @@ struct StressView: View {
                     }
                 }
             }
-            .navigationTitle("Stress")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("")
+            .navigationBarHidden(true)
         }
         .task {
             await ScreenTimeManager.shared.requestAuthorization()
@@ -119,18 +118,63 @@ struct StressView: View {
         }
     }
 
+    // MARK: - Background
+
+    private var levelBackground: some View {
+        ZStack {
+            // Base warm cream
+            Color(.systemGroupedBackground)
+
+            // Subtle level-tinted gradient overlaid on top
+            LinearGradient(
+                colors: [
+                    viewModel.stressLevel.color.opacity(0.10),
+                    viewModel.stressLevel.color.opacity(0.03),
+                    Color.clear
+                ],
+                startPoint: .top,
+                endPoint: .center
+            )
+        }
+    }
+
     // MARK: - Main Content
 
     private var mainContent: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 20) {
-                gaugeCard
+            VStack(spacing: 0) {
+                // ── Header ────────────────────────────────────
+                headerSection
+                    .padding(.top, 56)
+                    .padding(.horizontal, 24)
+
+                // ── Score Gauge ───────────────────────────────
+                StressScoreGaugeView(
+                    score: viewModel.totalScore,
+                    level: viewModel.stressLevel
+                )
+                .padding(.top, 4)
+
+                // ── Contextual comparison blurb ───────────────
+                comparisonBadge
+                    .padding(.top, 2)
+                    .padding(.bottom, 28)
+
+                // ── Quick Vitals ──────────────────────────────
+                vitalsQuickSection
+                    .padding(.horizontal, 16)
+
+                // ── Stress Factors ────────────────────────────
                 factorsSection
-                vitalsSection
+                    .padding(.horizontal, 16)
+                    .padding(.top, 28)
+
+                // ── Timeline ──────────────────────────────────
+                timelineSection
+                    .padding(.horizontal, 16)
+                    .padding(.top, 28)
+                    .padding(.bottom, 40)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 32)
         }
         .refreshable {
             await viewModel.loadData()
@@ -138,30 +182,168 @@ struct StressView: View {
         }
     }
 
-    // MARK: - Gauge Card
+    // MARK: - Header
 
-    private var gaugeCard: some View {
-        VStack(spacing: 12) {
-            StressScoreGaugeView(
-                score: viewModel.totalScore,
-                level: viewModel.stressLevel
+    private var headerSection: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("TODAY'S STRESS")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .tracking(1.2)
+                Text(viewModel.stressLevel.label)
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+            }
+            Spacer()
+            // Level icon badge
+            ZStack {
+                Circle()
+                    .fill(viewModel.stressLevel.color.opacity(0.15))
+                    .frame(width: 48, height: 48)
+                Image(systemName: viewModel.stressLevel.systemImage)
+                    .font(.system(size: 22))
+                    .foregroundColor(viewModel.stressLevel.color)
+            }
+        }
+    }
+
+    // MARK: - Comparison Badge
+
+    private var comparisonBadge: some View {
+        let weekPercentile = stressPercentile
+        return HStack(spacing: 4) {
+            Text("Your stress is lower than")
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(.secondary)
+            Text("\(weekPercentile)%")
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundColor(viewModel.stressLevel.color)
+            Text("of this week")
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(.secondary)
+        }
+        .multilineTextAlignment(.center)
+    }
+
+    /// Simple heuristic: invert the score to a "lower than X%" reading.
+    private var stressPercentile: Int {
+        let pct = Int((1.0 - viewModel.totalScore / 100.0) * 100)
+        return max(0, min(100, pct))
+    }
+
+    // MARK: - Quick Vitals (Heart Rate · Sleep · Activity)
+
+    private var vitalsQuickSection: some View {
+        VStack(spacing: 10) {
+            // Heart Rate row
+            quickVitalRow(
+                icon: "heart.fill",
+                iconColor: .pink,
+                label: "HEART RATE",
+                value: viewModel.todayHeartRate.map { "\(Int($0)) bpm" } ?? "—",
+                subtitle: viewModel.todayRestingHR.map { "Resting: \(Int($0)) bpm" } ?? "Resting",
+                onTap: { activeSheet = .vital(.heartRate) }
             )
 
-            Text(viewModel.stressLevel.encouragementText)
-                .font(.r(.subheadline, .medium))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            // Sleep Quality — derived from sleep factor
+            quickVitalRow(
+                icon: "moon.zzz.fill",
+                iconColor: Color(hue: 0.68, saturation: 0.55, brightness: 0.75),
+                label: "SLEEP QUALITY",
+                value: sleepDisplayValue,
+                subtitle: sleepSubtitle,
+                onTap: { activeSheet = .sleep }
+            )
 
-            HStack(spacing: 4) {
-                Image(systemName: "clock")
-                    .font(.caption2)
-                Text("Updated just now")
-                    .font(.r(.caption2, .regular))
-            }
-            .foregroundColor(.secondary.opacity(0.6))
+            // Activity — derived from exercise factor
+            quickVitalRow(
+                icon: "figure.walk",
+                iconColor: Color(hue: 0.55, saturation: 0.55, brightness: 0.60),
+                label: "ACTIVITY",
+                value: viewModel.exerciseFactor.statusText,
+                subtitle: viewModel.exerciseFactor.detailText,
+                onTap: { activeSheet = .exercise }
+            )
         }
-        .padding(20)
-        .background(cardBackground)
+    }
+
+    private var sleepDisplayValue: String {
+        let st = viewModel.sleepFactor.statusText
+        // statusText is like "7.2h total · 1.5h deep"
+        if st.contains("total") {
+            let parts = st.components(separatedBy: " · ")
+            return parts.first ?? st
+        }
+        return st
+    }
+
+    private var sleepSubtitle: String {
+        let st = viewModel.sleepFactor.statusText
+        if st.contains("·") {
+            let parts = st.components(separatedBy: " · ")
+            if parts.count > 1 {
+                // "1.5h deep" → "Deep 42%" style
+                return parts[1]
+            }
+        }
+        return viewModel.sleepFactor.detailText
+    }
+
+    @ViewBuilder
+    private func quickVitalRow(
+        icon: String,
+        iconColor: Color,
+        label: String,
+        value: String,
+        subtitle: String,
+        onTap: @escaping () -> Void
+    ) -> some View {
+        Button(action: {
+            HapticService.impact(.light)
+            onTap()
+        }) {
+            HStack(spacing: 14) {
+                // Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(iconColor.opacity(0.12))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: icon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(iconColor)
+                }
+
+                // Labels
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(label)
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .tracking(0.6)
+                    Text(value)
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.35))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 13)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground).opacity(0.85))
+                    .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Factors Section
@@ -183,11 +365,8 @@ struct StressView: View {
 
     private var factorsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Stress Factors")
-                .font(.r(.headline, .semibold))
-                .padding(.leading, 4)
-
-            VStack(spacing: 12) {
+            sectionLabel("STRESS FACTORS")
+            VStack(spacing: 10) {
                 ForEach(sortedFactors, id: \.factor.id) { item in
                     StressFactorCardView(factor: item.factor, onTap: { activeSheet = item.sheet })
                 }
@@ -195,102 +374,74 @@ struct StressView: View {
         }
     }
 
-    // MARK: - Vitals Section
+    // MARK: - Timeline Section
 
-    private var vitalsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Vitals")
-                .font(.r(.headline, .semibold))
-                .padding(.leading, 4)
-
-            VStack(spacing: 10) {
-                StressVitalCardView(
-                    metric: .heartRate,
-                    todayValue: viewModel.todayHeartRate,
-                    onTap: { activeSheet = .vital(.heartRate) }
-                )
-                StressVitalCardView(
-                    metric: .restingHeartRate,
-                    todayValue: viewModel.todayRestingHR,
-                    onTap: { activeSheet = .vital(.restingHeartRate) }
-                )
-                StressVitalCardView(
-                    metric: .hrv,
-                    todayValue: viewModel.todayHRV,
-                    onTap: { activeSheet = .vital(.hrv) }
-                )
-
-                // Blood pressure: sub-label + two half-width cards side by side
-                Text("Blood Pressure")
-                    .font(.r(.caption, .semibold))
-                    .foregroundColor(.secondary)
-                    .padding(.leading, 4)
-
-                HStack(spacing: 10) {
-                    bpHalfCard(metric: .systolicBP, value: viewModel.todaySystolicBP)
-                    bpHalfCard(metric: .diastolicBP, value: viewModel.todayDiastolicBP)
-                }
-
-                StressVitalCardView(
-                    metric: .respiratoryRate,
-                    todayValue: viewModel.todayRespiratoryRate,
-                    onTap: { activeSheet = .vital(.respiratoryRate) }
-                )
-            }
+    private var timelineSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionLabel("STRESS THROUGH THE DAY")
+            hourlyTimeline
         }
     }
 
-    private func bpHalfCard(metric: VitalMetric, value: Double?) -> some View {
-        Button {
-            HapticService.impact(.light)
-            activeSheet = .vital(metric)
-        } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    Image(systemName: metric.systemImage)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(metric.accentColor)
-                    Text(metric == .systolicBP ? "Systolic" : "Diastolic")
-                        .font(.r(.caption, .semibold))
+    /// A simplified hourly bar timeline using the four factor contributions
+    /// as a proxy for different parts of the day — purely visual / illustrative.
+    private var hourlyTimeline: some View {
+        let slots: [(label: String, color: Color)] = hourlySlots
+        return HStack(alignment: .bottom, spacing: 0) {
+            ForEach(Array(slots.enumerated()), id: \.offset) { idx, slot in
+                VStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(slot.color)
+                        .frame(width: 28, height: 10)
+                    Text(slot.label)
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundColor(.secondary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(.secondary.opacity(0.4))
                 }
-
-                HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    if let v = value {
-                        Text(String(format: "%.0f", v))
-                            .font(.r(22, .bold))
-                            .foregroundColor(metric.accentColor)
-                            .monospacedDigit()
-                        Text(metric.unit)
-                            .font(.r(.caption2, .regular))
-                            .foregroundColor(.secondary)
-                        Circle()
-                            .fill(metric.statusColor(for: v))
-                            .frame(width: 8, height: 8)
-                            .alignmentGuide(.firstTextBaseline) { d in d[VerticalAlignment.center] }
-                    } else {
-                        Text("—")
-                            .font(.r(22, .bold))
-                            .foregroundColor(.secondary)
-                        Text(metric.unit)
-                            .font(.r(.caption2, .regular))
-                            .foregroundColor(.secondary)
-                    }
-                }
+                .frame(maxWidth: .infinity)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .appShadow(radius: 10, y: 4)
-            )
         }
-        .buttonStyle(.plain)
+        .padding(.vertical, 8)
+    }
+
+    /// Build time-slotted color bars using live factor data as rough proxies.
+    private var hourlySlots: [(label: String, color: Color)] {
+        let hour = Calendar.current.component(.hour, from: Date())
+
+        // Simplified: 6 fixed time labels covering the day
+        let labels = ["6a", "9a", "12p", "3p", "6p", "9p"]
+
+        // Use factor stress contributions to tint each slot
+        let contribs: [Double] = [
+            // Morning (sleep quality drives early stress)
+            viewModel.sleepFactor.stressContribution,
+            // Late morning (exercise)
+            viewModel.exerciseFactor.stressContribution,
+            // Midday (diet)
+            viewModel.dietFactor.stressContribution,
+            // Afternoon (screen time)
+            viewModel.screenTimeFactor.stressContribution,
+            // Evening (exercise recovery)
+            viewModel.exerciseFactor.stressContribution * 0.6,
+            // Night (sleep building)
+            viewModel.sleepFactor.stressContribution * 0.5
+        ]
+
+        // Map contribution 0–25 → hue green→red
+        return zip(labels, contribs).map { label, contrib in
+            let t = min(max(contrib / 25.0, 0), 1)
+            let color = Color(hue: 0.33 * (1 - t), saturation: 0.75, brightness: 0.78)
+            return (label: label, color: color)
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .foregroundColor(.secondary)
+            .tracking(1.0)
+            .padding(.leading, 4)
     }
 
     // MARK: - State Views
@@ -318,9 +469,9 @@ struct StressView: View {
 
             VStack(spacing: 8) {
                 Text("Stress Insights")
-                    .font(.r(.title2, .bold))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                 Text("Allow HealthKit access to track exercise, sleep, and more for your stress score.")
-                    .font(.r(.subheadline, .regular))
+                    .font(.system(size: 15, weight: .regular, design: .rounded))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -330,7 +481,7 @@ struct StressView: View {
                 Task { await viewModel.requestPermissionAndLoad() }
             } label: {
                 Text("Allow Access")
-                    .font(.r(.headline, .semibold))
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -355,9 +506,9 @@ struct StressView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.4)
-                .tint(.teal)
+                .tint(viewModel.stressLevel.color)
             Text("Analyzing stress factors…")
-                .font(.r(.subheadline, .medium))
+                .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundColor(.secondary)
         }
     }
@@ -368,21 +519,13 @@ struct StressView: View {
                 .font(.system(size: 40))
                 .foregroundColor(.secondary)
             Text("HealthKit Unavailable")
-                .font(.r(.headline, .semibold))
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
             Text("Stress tracking requires a device with HealthKit support.")
-                .font(.r(.subheadline, .regular))
+                .font(.system(size: 15, weight: .regular, design: .rounded))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding()
-    }
-
-    // MARK: - Shared Styling
-
-    private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 20)
-            .fill(Color(.systemBackground))
-            .appShadow(radius: 15, y: 5)
     }
 }
 

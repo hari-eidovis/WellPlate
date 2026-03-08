@@ -16,8 +16,16 @@ final class HomeViewModel: ObservableObject {
 
     private let nutritionService: NutritionServiceProtocol
     private let mealCoach: MealCoachService
-    private let modelContext: ModelContext
+    private var modelContext: ModelContext!
 
+    /// Lightweight init for `@StateObject` — no `ModelContext` needed yet.
+    @MainActor
+    init() {
+        self.nutritionService = NutritionService()
+        self.mealCoach = MealCoachService()
+    }
+
+    /// Full init for previews / tests where ModelContext is immediately available.
     @MainActor
     init(
         modelContext: ModelContext,
@@ -27,6 +35,12 @@ final class HomeViewModel: ObservableObject {
         self.modelContext = modelContext
         self.nutritionService = nutritionService
         self.mealCoach = mealCoach
+    }
+
+    /// Call from `.onAppear` to inject the SwiftData context once the environment is available.
+    func bindContext(_ context: ModelContext) {
+        guard modelContext == nil else { return }
+        modelContext = context
     }
 
     func logFood(on date: Date, coachOverride: String? = nil) async {

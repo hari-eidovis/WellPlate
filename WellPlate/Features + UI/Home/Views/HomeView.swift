@@ -1,303 +1,215 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - HomeView
+// Redesigned dashboard: header, wellness rings, quick log, mood check-in,
+// hydration, activity, and stress insight sections.
+
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel: HomeViewModel
-    @StateObject private var narrator = NutritionNarratorService()
 
-    @State private var selectedDate = Date()
-    @State private var showDatePicker = false
+    // MARK: - State
+
+    @State private var selectedMood: MoodOption?
+    @State private var hydrationGlasses: Int = 5
+    @State private var showLogMeal = false
+    @State private var showWellnessCalendar = false
     @State private var showProgressInsights = false
-    @State private var showStreak = false
-    @FocusState private var isTextEditorFocused: Bool
-
-    @Query private var foodLogs: [FoodLogEntry]
-
-    init(viewModel: HomeViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
-
-        let sixtyDaysAgo = Calendar.current.date(byAdding: .day, value: -60, to: Date()) ?? Date()
-        let predicate = #Predicate<FoodLogEntry> { entry in
-            entry.day >= sixtyDaysAgo
-        }
-        _foodLogs = Query(filter: predicate, sort: \.createdAt, order: .reverse)
-    }
-
-    // MARK: - Computed Properties
-
-    private var aggregatedNutrition: NutritionalInfo? {
-        let targetDay = Calendar.current.startOfDay(for: selectedDate)
-        let filteredLogs = foodLogs.filter { $0.day == targetDay }
-        guard !filteredLogs.isEmpty else { return nil }
-
-        return NutritionalInfo(
-            foodName: "\(filteredLogs.count) item\(filteredLogs.count == 1 ? "" : "s")",
-            servingSize: nil,
-            calories: min(filteredLogs.reduce(0) { $0 + $1.calories }, 999999),
-            protein: filteredLogs.reduce(0.0) { $0 + $1.protein },
-            carbs: filteredLogs.reduce(0.0) { $0 + $1.carbs },
-            fat: filteredLogs.reduce(0.0) { $0 + $1.fat },
-            fiber: filteredLogs.reduce(0.0) { $0 + $1.fiber },
-            confidence: nil
-        )
-    }
-
-    private var currentStreak: Int {
-        let cal = Calendar.current
-        let loggedDays = Set(foodLogs.map { cal.startOfDay(for: $0.day) })
-        var start = cal.startOfDay(for: Date())
-        if !loggedDays.contains(start) {
-            start = cal.date(byAdding: .day, value: -1, to: start) ?? start
-        }
-        var streak = 0
-        var current = start
-        while loggedDays.contains(current) {
-            streak += 1
-            current = cal.date(byAdding: .day, value: -1, to: current) ?? current
-        }
-        return streak
-    }
-
-    private var foodLogsForSelectedDate: [FoodLogEntry] {
-        let targetDay = Calendar.current.startOfDay(for: selectedDate)
-        return foodLogs.filter { $0.day == targetDay }
-            .sorted { $0.createdAt < $1.createdAt }
-    }
+    @StateObject private var foodJournalViewModel = HomeViewModel()
 
     // MARK: - Body
 
     var body: some View {
-        ZStack {
-            Color(.systemGroupedBackground)
-                .ignoresSafeArea()
-
+        NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
+                LazyVStack(spacing: 16) {
+
                     // 1. Header
-                    HomeHeaderView(
-                        selectedDate: selectedDate,
-                        currentStreak: currentStreak,
-                        onDateTap: { showDatePicker = true },
-                        onStreakTap: { showStreak = true },
-                        onChartTap: { showProgressInsights = true }
-                    )
+                    homeHeader
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
 
-                    // 2. Calorie Hero Card
-                    CalorieHeroCard(
-                        currentNutrition: aggregatedNutrition,
-                        dailyGoals: .default
+                    // 2. Wellness Rings Card
+                    WellnessRingsCard(
+                        rings: wellnessRings,
+                        completionPercent: 71,
+                        onTap: { showWellnessCalendar = true }
                     )
+                    .padding(.horizontal, 16)
 
-                    // 3. Quick-Add Input
-                    QuickAddCard(
-                        foodDescription: $viewModel.foodDescription,
-                        isLoading: viewModel.isLoading,
-                        isFocused: $isTextEditorFocused,
-                        onSubmit: triggerAnalysis
+                    // 3. Quick Log
+                    QuickLogSection(
+                        onLogMeal: {
+                            showLogMeal = true
+                        },
+                        onLogWater: {
+                            HapticService.impact(.light)
+                            if hydrationGlasses < 8 { hydrationGlasses += 1 }
+                        },
+                        onExercise: { /* TODO: navigate to exercise log */ },
+                        onMood:     { /* scroll handled by section below */ }
                     )
+                    .padding(.horizontal, 16)
 
-                    // 4. Today's Meals
-                    MealLogCard(
-                        foodLogs: foodLogsForSelectedDate,
-                        isToday: Calendar.current.isDateInToday(selectedDate),
-                        onDelete: deleteFoodEntry,
-                        onAddAgain: addAgain
+                    // 4. Mood Check-In
+                    MoodCheckInCard(selectedMood: $selectedMood)
+                        .padding(.horizontal, 16)
+
+                    // 5. Hydration
+                    HydrationCard(
+                        glassesConsumed: $hydrationGlasses,
+                        totalGlasses: 8
                     )
+                    .padding(.horizontal, 16)
+
+                    // 6. Activity
+                    ActivityCard.sample()
+                        .padding(.horizontal, 16)
+
+                    // 7. Stress Insight
+                    StressInsightCard(
+                        stressLevel: "Low",
+                        tip: "Try a 5-min breathing exercise to stay centered 🧘",
+                        onStart: { /* TODO: navigate to stress / breathing */ }
+                    )
+                    .padding(.horizontal, 16)
                 }
-                .padding(.bottom, 100)
+                .padding(.bottom, 32)
             }
-            .scrollDismissesKeyboard(.interactively)
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 10)
-                    .onEnded { value in
-                        let hAmt = abs(value.translation.width)
-                        let vAmt = abs(value.translation.height)
-                        let isHorizontal = hAmt > vAmt * 1.8 && hAmt > 70
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .scrollIndicators(.hidden)
+            // Navigation destination for Log Meal
+            .navigationDestination(isPresented: $showLogMeal) {
+                FoodJournalView(viewModel: foodJournalViewModel)
+            }
+            .navigationDestination(isPresented: $showWellnessCalendar) {
+                WellnessCalendarView()
+            }
+            .navigationBarHidden(true)
+        }
+        .onAppear {
+            // Inject the model context into the VM once the environment is available.
+            foodJournalViewModel.bindContext(modelContext)
+        }
+    }
 
-                        if isHorizontal {
-                            HapticService.selectionChanged()
-                            changeDate(by: value.translation.width > 0 ? -1 : 1)
-                        }
-                    }
+    // MARK: - Header
+
+    private var homeHeader: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(todayString)
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+
+                Text(greeting)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+
+                Text(motivationalSubtitle)
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            // Avatar circle
+            Button {
+                HapticService.impact(.light)
+                showProgressInsights = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(hue: 0.40, saturation: 0.50, brightness: 0.84),
+                                    Color(hue: 0.40, saturation: 0.40, brightness: 0.72)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+
+                    Text("A")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+            }
+            .buttonStyle(.plain)
+            .fullScreenCover(isPresented: $showProgressInsights) {
+                ProgressInsightsView()
+            }
+        }
+    }
+
+    // MARK: - Wellness Rings Data
+
+    private var wellnessRings: [WellnessRingItem] {
+        [
+            WellnessRingItem(
+                label: "Calories",
+                sublabel: "/ 2000",
+                value: "1420",
+                progress: 0.71,
+                color: .orange,
+                emojiOrSymbol: nil
+            ),
+            WellnessRingItem(
+                label: "Water",
+                sublabel: "/ 8 cups",
+                value: "\(hydrationGlasses)",
+                progress: CGFloat(hydrationGlasses) / 8.0,
+                color: Color(hue: 0.58, saturation: 0.68, brightness: 0.82),
+                emojiOrSymbol: nil
+            ),
+            WellnessRingItem(
+                label: "Exercise",
+                sublabel: "/ 45 min",
+                value: "32",
+                progress: 0.71,
+                color: Color(hue: 0.40, saturation: 0.62, brightness: 0.70),
+                emojiOrSymbol: nil
+            ),
+            WellnessRingItem(
+                label: "Stress",
+                sublabel: "Low",
+                value: "",
+                progress: 0.25,
+                color: Color(hue: 0.76, saturation: 0.50, brightness: 0.75),
+                emojiOrSymbol: "😌"
             )
+        ]
+    }
 
-            // Narrator FAB + Voice nudge
-            if !isTextEditorFocused {
-                VStack(spacing: 8) {
-                    Spacer()
+    // MARK: - Helpers
 
-                    // Narrator button
-                    if let nutrition = aggregatedNutrition {
-                        HStack {
-                            Spacer()
-                            NarratorButton(
-                                isSpeaking: narrator.isSpeaking,
-                                isGenerating: narrator.isGenerating
-                            ) {
-                                Task {
-                                    await narrator.generateAndSpeak(
-                                        nutrition: nutrition,
-                                        goals: .default
-                                    )
-                                }
-                            }
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 8)
-                        }
-                        .transition(.scale(scale: 0.8).combined(with: .opacity))
-                    }
-                }
-            }
+    private var todayString: String {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMMM d"
+        return f.string(from: Date())
+    }
 
-            // Disambiguation overlay
-            if let state = viewModel.disambiguationState {
-                DisambiguationChipsView(
-                    question: state.question,
-                    options: state.options,
-                    rawInput: state.rawInput,
-                    onSelect: { option in
-                        viewModel.disambiguationState = nil
-                        Task {
-                            await viewModel.logFood(on: selectedDate, coachOverride: option.label)
-                            await MainActor.run {
-                                if !viewModel.showError {
-                                    HapticService.notify(.success)
-                                    viewModel.foodDescription = ""
-                                }
-                            }
-                        }
-                    },
-                    onAddAsTyped: {
-                        viewModel.disambiguationState = nil
-                        Task {
-                            await viewModel.logFood(on: selectedDate, coachOverride: state.rawInput)
-                            await MainActor.run {
-                                if !viewModel.showError {
-                                    HapticService.notify(.success)
-                                    viewModel.foodDescription = ""
-                                }
-                            }
-                        }
-                    }
-                )
-                .transition(.opacity)
-                .zIndex(10)
-            }
-        }
-        .alert("Error", isPresented: $viewModel.showError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage)
-        }
-        .onChange(of: viewModel.showError) { _, isError in
-            if isError { HapticService.notify(.error) }
-        }
-        .sheet(isPresented: $showDatePicker) {
-            datePickerSheet
-        }
-        .sheet(isPresented: $showStreak) {
-            StreakDetailView()
-        }
-        .fullScreenCover(isPresented: $showProgressInsights) {
-            ProgressInsightsView()
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12:  return "Good Morning, Alex"
+        case 12..<17: return "Good Afternoon, Alex"
+        default:      return "Good Evening, Alex"
         }
     }
 
-    // MARK: - Actions
-
-    private func deleteFoodEntry(_ entry: FoodLogEntry) {
-        withAnimation {
-            modelContext.delete(entry)
-            do {
-                try modelContext.save()
-            } catch {
-                print("Error deleting food entry: \(error)")
-            }
-        }
-    }
-
-    private func changeDate(by days: Int) {
-        if let newDate = Calendar.current.date(byAdding: .day, value: days, to: selectedDate) {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                selectedDate = newDate
-            }
-        }
-    }
-
-    private func addAgain(_ entry: FoodLogEntry) {
-        viewModel.foodDescription = entry.foodName
-        Task {
-            await viewModel.logFood(on: selectedDate)
-            await MainActor.run {
-                viewModel.foodDescription = ""
-            }
-        }
-    }
-
-    private func triggerAnalysis() {
-        isTextEditorFocused = false
-        let foodInput = viewModel.foodDescription.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !foodInput.isEmpty else { return }
-
-        Task {
-            await viewModel.logFood(on: selectedDate)
-            await MainActor.run {
-                if !viewModel.showError {
-                    HapticService.notify(.success)
-                }
-                viewModel.foodDescription = ""
-            }
-        }
-    }
-
-    // MARK: - Date Picker Sheet
-
-    private var datePickerSheet: some View {
-        NavigationView {
-            VStack {
-                DatePicker(
-                    "Select Date",
-                    selection: $selectedDate,
-                    displayedComponents: [.date]
-                )
-                .datePickerStyle(.graphical)
-                .padding()
-
-                Spacer()
-            }
-            .navigationTitle("Select Date")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Today") {
-                        selectedDate = Date()
-                    }
-                    .foregroundColor(.orange)
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showDatePicker = false
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-        }
-        .presentationDetents([.medium])
+    private var motivationalSubtitle: String {
+        "Every mindful choice counts ✨"
     }
 }
 
-#Preview("Light") {
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: FoodLogEntry.self, configurations: config)
-    return HomeView(viewModel: HomeViewModel(modelContext: container.mainContext))
-        .modelContainer(container)
-}
+// MARK: - Preview
 
-#Preview("Dark") {
+#Preview("Home Dashboard") {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: FoodLogEntry.self, configurations: config)
-    return HomeView(viewModel: HomeViewModel(modelContext: container.mainContext))
+    return HomeView()
         .modelContainer(container)
-        .preferredColorScheme(.dark)
 }

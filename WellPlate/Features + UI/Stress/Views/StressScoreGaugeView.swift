@@ -2,8 +2,6 @@
 //  StressScoreGaugeView.swift
 //  WellPlate
 //
-//  Created on 21.02.2026.
-//
 
 import SwiftUI
 
@@ -11,67 +9,96 @@ struct StressScoreGaugeView: View {
 
     let score: Double
     let level: StressLevel
-    var size: CGFloat = 220
+    var size: CGFloat = 230
 
-    // 270° arc: starts at 135° (bottom-left), sweeps 270° to 45° (bottom-right)
+    @State private var animatedProgress: Double = 0
+
+    private let trackWidth: CGFloat = 18
+    // 270° arc: starts bottom-left, sweeps clockwise
     private let startAngle: Double = 135
     private let sweepAngle: Double = 270
 
     var body: some View {
         ZStack {
-            // Background arc
-            arcShape
-                .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 18, lineCap: .round))
+            // Outer glow halo — pulses with stress level color
+            Circle()
+                .fill(level.color.opacity(0.13))
+                .frame(width: size + 52, height: size + 52)
+                .blur(radius: 24)
 
-            // Filled arc — green (low stress) to red (high stress)
+            Circle()
+                .fill(level.color.opacity(0.07))
+                .frame(width: size + 28, height: size + 28)
+
+            // Track ring
+            arcShape
+                .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: trackWidth, lineCap: .round))
+
+            // Progress ring
             arcShape
                 .trim(from: 0, to: animatedProgress)
-                .stroke(gaugeColor, style: StrokeStyle(lineWidth: 18, lineCap: .round))
+                .stroke(
+                    AngularGradient(
+                        gradient: Gradient(colors: [level.color.opacity(0.6), level.color]),
+                        center: .center,
+                        startAngle: .degrees(startAngle),
+                        endAngle: .degrees(startAngle + sweepAngle * animatedProgress)
+                    ),
+                    style: StrokeStyle(lineWidth: trackWidth, lineCap: .round)
+                )
+
+            // Thumb dot at the tip of the arc
+            thumbDot
 
             // Center content
-            VStack(spacing: 4) {
+            VStack(spacing: 6) {
+                Text(level.label.uppercased())
+                    .font(.system(size: size * 0.065, weight: .semibold, design: .rounded))
+                    .foregroundColor(level.color)
+                    .tracking(1.5)
+
                 Text("\(Int(score))")
-                    .font(.system(size: size * 0.25, weight: .bold, design: .rounded))
+                    .font(.system(size: size * 0.28, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
                     .monospacedDigit()
                     .contentTransition(.numericText())
-
-                Text("/ 100")
-                    .font(.system(size: size * 0.08, weight: .medium, design: .rounded))
-                    .foregroundColor(.secondary)
-
-                // Level pill badge
-                Text(level.label)
-                    .font(.system(size: size * 0.065, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(level.color))
-                    .padding(.top, 4)
             }
         }
-        .frame(width: size, height: size)
+        .frame(width: size + 52, height: size + 52)
         .onAppear {
-            withAnimation(.spring(response: 0.8, dampingFraction: 0.75).delay(0.2)) {
+            withAnimation(.spring(response: 0.9, dampingFraction: 0.72).delay(0.15)) {
                 animatedProgress = score / 100.0
             }
         }
         .onChange(of: score) { _, newValue in
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
+            withAnimation(.spring(response: 0.65, dampingFraction: 0.75)) {
                 animatedProgress = newValue / 100.0
             }
         }
     }
 
-    @State private var animatedProgress: Double = 0
+    // MARK: - Thumb Dot
+    private var thumbDot: some View {
+        let progress = animatedProgress
+        let sweepRad = sweepAngle * .pi / 180.0
+        let progressAngle = startAngle + sweepAngle * progress
+        let rad = progressAngle * .pi / 180.0
+        let radius = size / 2
+        let x = radius * CGFloat(cos(rad))
+        let y = radius * CGFloat(sin(rad))
 
-    /// Green (score = 0) → Red (score = 100)
-    private var gaugeColor: Color {
-        let t = min(max(score / 100.0, 0), 1)
-        return Color(hue: 0.33 * (1.0 - t), saturation: 0.75, brightness: 0.80)
+        return Circle()
+            .fill(level.color)
+            .frame(width: trackWidth + 4, height: trackWidth + 4)
+            .shadow(color: level.color.opacity(0.6), radius: 6, x: 0, y: 2)
+            .offset(x: x, y: y)
+            .opacity(progress > 0.01 ? 1 : 0)
     }
 
     private var arcShape: some Shape {
-        Arc(startAngle: .degrees(startAngle), endAngle: .degrees(startAngle + sweepAngle), clockwise: false)
+        Arc(startAngle: .degrees(startAngle),
+            endAngle: .degrees(startAngle + sweepAngle),
+            clockwise: false)
     }
 }
 
@@ -98,9 +125,10 @@ private struct Arc: Shape {
 // MARK: - Preview
 
 #Preview {
-    VStack(spacing: 30) {
-        StressScoreGaugeView(score: 35, level: .good)
-        StressScoreGaugeView(score: 72, level: .high, size: 160)
+    VStack(spacing: 40) {
+        StressScoreGaugeView(score: 22, level: .good)
+        StressScoreGaugeView(score: 72, level: .high, size: 180)
     }
     .padding()
+    .background(Color(.systemGroupedBackground))
 }

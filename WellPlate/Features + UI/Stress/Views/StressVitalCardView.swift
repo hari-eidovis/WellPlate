@@ -2,11 +2,12 @@
 //  StressVitalCardView.swift
 //  WellPlate
 //
-//  Created on 25.02.2026.
-//
 
 import SwiftUI
 
+/// A flat, emoji-icon row card for showing a single vital metric.
+/// Inspired by the reference design: emoji left, label + subtitle in centre,
+/// value right — all on a soft translucent background.
 struct StressVitalCardView: View {
 
     let metric: VitalMetric
@@ -27,59 +28,64 @@ struct StressVitalCardView: View {
 
     private var cardContent: some View {
         HStack(spacing: 14) {
-            // Icon
-            Image(systemName: metric.systemImage)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(metric.accentColor)
-                .frame(width: 40, height: 40)
-                .background(metric.accentColor.opacity(0.12))
-                .clipShape(Circle())
-
-            // Name + subtitle
-            VStack(alignment: .leading, spacing: 2) {
-                Text(metric.rawValue)
-                    .font(.r(.subheadline, .semibold))
-                    .foregroundColor(.primary)
-                Text("Today's average")
-                    .font(.r(.caption2, .regular))
-                    .foregroundColor(.secondary)
+            // Emoji-style icon badge
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(metric.accentColor.opacity(0.12))
+                    .frame(width: 46, height: 46)
+                Image(systemName: metric.systemImage)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(metric.accentColor)
             }
 
-            Spacer()
+            // Label + subtitle
+            VStack(alignment: .leading, spacing: 3) {
+                Text(metric.rawValue)
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .textCase(.uppercase)
+                    .tracking(0.4)
 
-            // Value + unit + status dot + chevron
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
                 if let value = todayValue {
-                    Text(String(format: "%.0f", value))
-                        .font(.r(17, .bold))
-                        .foregroundColor(metric.accentColor)
-                        .monospacedDigit()
-                    Text(metric.unit)
-                        .font(.r(.caption, .medium))
-                        .foregroundColor(.secondary)
-                    Circle()
-                        .fill(metric.statusColor(for: value))
-                        .frame(width: 8, height: 8)
-                        .alignmentGuide(.firstTextBaseline) { d in d[VerticalAlignment.center] }
+                    HStack(alignment: .firstTextBaseline, spacing: 3) {
+                        Text(String(format: "%.0f", value))
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                            .monospacedDigit()
+                        Text(metric.unit)
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
+                    }
                 } else {
-                    Text("—")
-                        .font(.r(17, .bold))
+                    Text("No data")
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundColor(.secondary)
                 }
             }
 
-            if onTap != nil {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary.opacity(0.4))
+            Spacer()
+
+            // Status dot + chevron
+            HStack(spacing: 8) {
+                if let value = todayValue {
+                    Circle()
+                        .fill(metric.statusColor(for: value))
+                        .frame(width: 9, height: 9)
+                }
+                if onTap != nil {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.secondary.opacity(0.35))
+                }
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.vertical, 13)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 10, y: 4)
+                .fill(Color(.systemBackground).opacity(0.85))
+                .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
         )
     }
 }

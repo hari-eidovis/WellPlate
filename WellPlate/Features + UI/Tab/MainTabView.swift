@@ -13,11 +13,11 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            // MARK: - Intake
+            // MARK: - Home
             Tab(value: 0) {
-                HomeView(viewModel: HomeViewModel(modelContext: modelContext))
+                HomeView()
             } label: {
-                Label("Intake", systemImage: "fork.knife")
+                Label("Home", systemImage: "house.fill")
             }
 
             // MARK: - Burn

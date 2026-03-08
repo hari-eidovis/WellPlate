@@ -2,8 +2,6 @@
 //  StressFactorCardView.swift
 //  WellPlate
 //
-//  Created on 21.02.2026.
-//
 
 import SwiftUI
 
@@ -25,96 +23,96 @@ struct StressFactorCardView: View {
     }
 
     private var cardContent: some View {
-        HStack(alignment: .top, spacing: 12) {
-            // Icon 44×44
-            Image(systemName: factor.icon)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(factor.accentColor)
-                .frame(width: 44, height: 44)
-                .background(factor.accentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+        HStack(alignment: .center, spacing: 14) {
+            // Icon badge
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(factor.accentColor.opacity(0.13))
+                    .frame(width: 44, height: 44)
+                Image(systemName: factor.icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(factor.accentColor)
+            }
 
-            VStack(alignment: .leading, spacing: 8) {
-                // Title row: name + score pill + chevron
-                HStack(spacing: 6) {
-                    Text(factor.title)
-                        .font(.r(.subheadline, .semibold))
-                        .foregroundColor(.primary)
-
+            // Content column
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(factor.title.uppercased())
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .tracking(0.5)
                     Spacer()
-
+                    // Score pill
                     Text("\(Int(factor.score))/25")
-                        .font(.r(.caption, .bold))
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundColor(factor.accentColor)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
                         .background(Capsule().fill(factor.accentColor.opacity(0.12)))
-
                     if onTap != nil {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.secondary.opacity(0.4))
+                            .foregroundColor(.secondary.opacity(0.35))
                     }
                 }
 
-                // Progress bar — 8pt capsule
+                // Status text (main info line)
+                Text(factor.statusText)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+
+                // Slim progress bar
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule()
                             .fill(Color(.systemGray5))
-                            .frame(height: 8)
+                            .frame(height: 5)
                         Capsule()
                             .fill(factor.accentColor)
-                            .frame(width: max(0, geo.size.width * factor.progress), height: 8)
+                            .frame(width: max(0, geo.size.width * factor.progress), height: 5)
+                            .animation(.spring(response: 0.7, dampingFraction: 0.75), value: factor.progress)
                     }
                 }
-                .frame(height: 8)
+                .frame(height: 5)
 
-                // Status text
-                Text(factor.statusText)
-                    .font(.r(.caption, .medium))
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-
-                // Inline tip
+                // Tip text
                 if !inlineTip.isEmpty {
                     Text(inlineTip)
-                        .font(.r(.caption2, .regular))
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
             }
         }
         .padding(14)
-        .background(cardBackground)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color(.systemBackground).opacity(0.88))
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
+        )
     }
 
     private var inlineTip: String {
         switch factor.title {
         case "Exercise":
             return factor.score < 10
-                ? "A 20-min walk can significantly reduce stress hormones."
-                : "Keep moving — your activity level is helping!"
+                ? "A 20-min walk reduces cortisol significantly."
+                : "Activity is keeping your stress low!"
         case "Sleep":
             return factor.score < 10
-                ? "Aim for 7–9 hours tonight. Avoid screens before bed."
-                : "Your sleep is contributing to lower stress."
+                ? "Aim for 7–9 hours. Avoid screens an hour before bed."
+                : "Your sleep quality is helping."
         case "Diet":
             return factor.score < 10
-                ? "Try adding more protein and fiber to your meals today."
+                ? "Add more protein and fiber to your next meal."
                 : "Good nutritional balance today!"
         case "Screen Time":
             return factor.score > 15
-                ? "Take a break from your phone — try reading or a short walk."
+                ? "Take a break — try a short walk or reading."
                 : "Nice screen time management!"
         default:
             return ""
         }
-    }
-
-    private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 20)
-            .fill(Color(.systemBackground))
-            .appShadow(radius: 10, y: 4)
     }
 }

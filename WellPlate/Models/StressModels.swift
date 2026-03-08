@@ -28,13 +28,22 @@ enum StressLevel: String, CaseIterable {
 
     var label: String { rawValue }
 
+//    var color: Color {
+//        switch self {
+//        case .excellent: return Color(hue: 0.33, saturation: 0.75, brightness: 0.80)
+//        case .good:      return Color(hue: 0.27, saturation: 0.70, brightness: 0.78)
+//        case .moderate:  return Color(hue: 0.17, saturation: 0.80, brightness: 0.82)
+//        case .high:      return Color(hue: 0.08, saturation: 0.80, brightness: 0.82)
+//        case .veryHigh:  return Color(hue: 0.00, saturation: 0.75, brightness: 0.80)
+//        }
+//    }
     var color: Color {
         switch self {
-        case .excellent: return Color(hue: 0.33, saturation: 0.75, brightness: 0.80)
-        case .good:      return Color(hue: 0.27, saturation: 0.70, brightness: 0.78)
-        case .moderate:  return Color(hue: 0.17, saturation: 0.80, brightness: 0.82)
-        case .high:      return Color(hue: 0.08, saturation: 0.80, brightness: 0.82)
-        case .veryHigh:  return Color(hue: 0.00, saturation: 0.75, brightness: 0.80)
+        case .excellent: return Color(hue: 0.33, saturation: 0.75, brightness: 0.90) // green
+        case .good:      return Color(hue: 0.25, saturation: 0.80, brightness: 0.92) // lime
+        case .moderate:  return Color(hue: 0.14, saturation: 0.85, brightness: 0.95) // yellow
+        case .high:      return Color(hue: 0.07, saturation: 0.90, brightness: 0.92) // orange
+        case .veryHigh:  return Color(hue: 0.00, saturation: 0.85, brightness: 0.88) // red
         }
     }
 
