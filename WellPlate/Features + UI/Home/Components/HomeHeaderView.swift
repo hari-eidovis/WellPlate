@@ -11,10 +11,6 @@ struct HomeHeaderView: View {
         HStack(alignment: .top) {
             // Left: Greeting + date
             VStack(alignment: .leading, spacing: 2) {
-                Text(greeting)
-                    .font(.r(.title3, .semibold))
-                    .foregroundColor(.primary)
-
                 Button(action: {
                     HapticService.impact(.light)
                     onDateTap()
