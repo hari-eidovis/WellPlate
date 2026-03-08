@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>11</integer>
+	<key>logs</key>
+	<dict>
+		<key>26AAAC23-EFE9-40B7-8E70-A45C4773415D</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>26AAAC23-EFE9-40B7-8E70-A45C4773415D.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>1</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>WellPlate project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>WellPlate</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project WellPlate with scheme WellPlate and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>794678756.40716803</real>
+			<key>timeStoppedRecording</key>
+			<real>794678765.92314005</real>
+			<key>title</key>
+			<string>Building project WellPlate with scheme WellPlate and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>26AAAC23-EFE9-40B7-8E70-A45C4773415D</string>
+		</dict>
+		<key>53675510-977D-4B29-B597-819008AC7876</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>53675510-977D-4B29-B597-819008AC7876.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>4</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>29</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>WellPlate project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>WellPlate</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project WellPlate with scheme WellPlate and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>794678958.99012196</real>
+			<key>timeStoppedRecording</key>
+			<real>794678967.41000497</real>
+			<key>title</key>
+			<string>Building project WellPlate with scheme WellPlate and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>53675510-977D-4B29-B597-819008AC7876</string>
+		</dict>
+		<key>86265A65-1246-409D-ABD6-76E06338AA72</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>86265A65-1246-409D-ABD6-76E06338AA72.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>40</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>WellPlate project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>WellPlate</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project WellPlate with scheme WellPlate and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>794679026.38132799</real>
+			<key>timeStoppedRecording</key>
+			<real>794679037.500669</real>
+			<key>title</key>
+			<string>Building project WellPlate with scheme WellPlate and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>86265A65-1246-409D-ABD6-76E06338AA72</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

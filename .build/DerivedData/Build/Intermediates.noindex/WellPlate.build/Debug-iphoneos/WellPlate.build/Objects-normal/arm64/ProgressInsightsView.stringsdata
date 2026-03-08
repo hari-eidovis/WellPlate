@@ -1,0 +1,128 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Progress/Views/ProgressInsightsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Progress & Insights",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "Progress & Insights",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 177
+        }
+      },
+      {
+        "comment": "",
+        "key": "%.0f",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 296
+        }
+      },
+      {
+        "comment": "",
+        "key": "vs prev. period",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 326
+        }
+      },
+      {
+        "comment": "",
+        "key": "%.1f%%",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 318
+        }
+      },
+      {
+        "comment": "",
+        "key": "Goal",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 378
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 390
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 398
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 401
+        }
+      },
+      {
+        "comment": "",
+        "key": "Goal",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "No data yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 461
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start logging meals to see your progress",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 464
+        }
+      },
+      {
+        "comment": "",
+        "key": "%.0f%%",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 512
+        }
+      },
+      {
+        "comment": "",
+        "key": "g total",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 555
+        }
+      }
+    ]
+  },
+  "version": 1
+}

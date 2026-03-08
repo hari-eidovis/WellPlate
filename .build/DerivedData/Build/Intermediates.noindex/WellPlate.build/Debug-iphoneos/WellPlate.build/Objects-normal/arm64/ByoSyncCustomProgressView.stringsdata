@@ -1,0 +1,72 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Shared/Components/ByoSyncCustomProgressView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld%%",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "Breathing Logo",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 392
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rotating Logo",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 392
+        }
+      },
+      {
+        "comment": "",
+        "key": "Shimmer Logo",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 392
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pulsing Logo",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 392
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spinning Arc",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 392
+        }
+      },
+      {
+        "comment": "",
+        "key": "Three Dots",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 392
+        }
+      },
+      {
+        "comment": "",
+        "key": "Progress Bar",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 392
+        }
+      }
+    ]
+  },
+  "version": 1
+}

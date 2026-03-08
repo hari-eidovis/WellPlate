@@ -51,10 +51,12 @@ final class BurnViewModel: ObservableObject {
         return best > 0 ? "\(Int(best))" : "—"
     }
 
-    var activeEnergyGoal: Double { 500 }   // kcal — will be user-configurable in Profile phase
+    @Published var activeEnergyGoal: Double = 500
+    @Published var dailyStepsGoal: Double = 10_000
 
     var activeEnergyProgress: Double {
-        min(todayActiveEnergy / activeEnergyGoal, 1.0)
+        guard activeEnergyGoal > 0 else { return 0 }
+        return min(todayActiveEnergy / activeEnergyGoal, 1.0)
     }
 
     // MARK: - Data Access

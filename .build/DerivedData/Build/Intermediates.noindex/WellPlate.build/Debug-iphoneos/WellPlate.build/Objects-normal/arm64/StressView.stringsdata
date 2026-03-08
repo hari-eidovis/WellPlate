@@ -1,0 +1,96 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Stress/Views/StressView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "TODAY'S STRESS",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Your stress is lower than",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 216
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld%%",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 219
+        }
+      },
+      {
+        "comment": "",
+        "key": "of this week",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 222
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stress Insights",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 471
+        }
+      },
+      {
+        "comment": "",
+        "key": "Allow HealthKit access to track exercise, sleep, and more for your stress score.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 473
+        }
+      },
+      {
+        "comment": "",
+        "key": "Allow Access",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 483
+        }
+      },
+      {
+        "comment": "",
+        "key": "Analyzing stress factors…",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 510
+        }
+      },
+      {
+        "comment": "",
+        "key": "HealthKit Unavailable",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 521
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stress tracking requires a device with HealthKit support.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 523
+        }
+      }
+    ]
+  },
+  "version": 1
+}

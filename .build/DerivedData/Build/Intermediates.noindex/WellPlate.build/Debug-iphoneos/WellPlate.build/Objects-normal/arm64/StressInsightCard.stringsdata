@@ -1,0 +1,24 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/StressInsightCard.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Stress Level: %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 62
+        }
+      }
+    ]
+  },
+  "version": 1
+}

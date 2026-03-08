@@ -36,7 +36,7 @@ final class HealthKitService: HealthKitServiceProtocol {
     private var readTypes: Set<HKObjectType> {
         var types = Set<HKObjectType>()
         let quantityIDs: [HKQuantityTypeIdentifier] = [
-            .stepCount, .activeEnergyBurned, .heartRate, .dietaryWater,
+            .stepCount, .activeEnergyBurned, .appleExerciseTime, .heartRate, .dietaryWater,
             .restingHeartRate, .heartRateVariabilitySDNN,
             .bloodPressureSystolic, .bloodPressureDiastolic, .respiratoryRate
         ]
@@ -88,6 +88,13 @@ final class HealthKitService: HealthKitServiceProtocol {
             throw HealthKitError.typeNotAvailable
         }
         return try await fetchDailySum(type: type, unit: .kilocalorie(), range: range)
+    }
+
+    func fetchExerciseMinutes(for range: DateInterval) async throws -> [DailyMetricSample] {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .appleExerciseTime) else {
+            throw HealthKitError.typeNotAvailable
+        }
+        return try await fetchDailySum(type: type, unit: .minute(), range: range)
     }
 
     func fetchWater(for range: DateInterval) async throws -> [DailyMetricSample] {

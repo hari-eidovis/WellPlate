@@ -1,0 +1,112 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Views/WellnessCalendarView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Wellness Calendar",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "Home",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mood check-in recorded",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "No mood logged",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 189
+        }
+      },
+      {
+        "comment": "",
+        "key": "/ 8 glasses",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 193
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld%%",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 200
+        }
+      },
+      {
+        "comment": "",
+        "key": "No stress data",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 345
+        }
+      },
+      {
+        "comment": "",
+        "key": "No meals logged",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 375
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld cal",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 405
+        }
+      },
+      {
+        "comment": "",
+        "key": "No wellness data for this day",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 438
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log your mood, water, exercise, and meals to see insights here.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 442
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 527
+        }
+      }
+    ]
+  },
+  "version": 1
+}

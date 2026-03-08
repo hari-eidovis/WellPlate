@@ -1,0 +1,79 @@
+{
+  "/Users/hariom/Desktop/WellPlate/WellPlate/App/RootView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/RootView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/RootView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/RootView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/RootView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/RootView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/App/SplashScreenView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SplashScreenView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SplashScreenView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SplashScreenView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SplashScreenView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/SplashScreenView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/App/WellPlateApp.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlateApp.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlateApp.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlateApp.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlateApp.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/WellPlateApp.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/HapticService.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HapticService.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HapticService.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HapticService.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HapticService.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HapticService.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/HealthKitService.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitService.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitService.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitService.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitService.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitService.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/HealthKitServiceProtocol.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitServiceProtocol.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitServiceProtocol.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitServiceProtocol.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitServiceProtocol.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HealthKitServiceProtocol.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/MealCoachService.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealCoachService.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealCoachService.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealCoachService.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealCoachService.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealCoachService.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/NutritionNarratorService.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionNarratorService.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionNarratorService.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionNarratorService.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionNarratorService.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionNarratorService.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/NutritionService.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionService.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionService.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionService.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionService.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionService.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/NutritionServiceProtocol.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionServiceProtocol.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionServiceProtocol.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionServiceProtocol.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionServiceProtocol.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/NutritionServiceProtocol.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Core/Services/ScreenTimeManager.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ScreenTimeManager.swiftdeps"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/HomeHeaderView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 45
+        }
+      }
+    ]
+  },
+  "version": 1
+}

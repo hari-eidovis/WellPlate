@@ -1,0 +1,64 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Sleep/Components/SleepChartView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hours",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stage",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hours",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hours",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 89
+        }
+      }
+    ]
+  },
+  "version": 1
+}

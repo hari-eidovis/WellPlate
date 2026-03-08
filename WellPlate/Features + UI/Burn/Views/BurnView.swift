@@ -6,13 +6,19 @@
 //
 
 import SwiftUI
+import SwiftData
 import Charts
 
 struct BurnView: View {
 
+    @Query private var userGoalsList: [UserGoals]
     @StateObject private var viewModel = BurnViewModel()
     @State private var selectedMetric: BurnMetric = .activeEnergy
     @State private var detailMetric: BurnMetric? = nil
+
+    private var currentGoals: UserGoals {
+        userGoalsList.first ?? UserGoals.defaults()
+    }
 
     var body: some View {
         NavigationStack {
@@ -41,6 +47,14 @@ struct BurnView: View {
             }
         }
         .task { await viewModel.requestPermissionAndLoad() }
+        .onAppear { syncGoals() }
+        .onChange(of: userGoalsList.first?.activeEnergyGoalKcal) { _, _ in syncGoals() }
+        .onChange(of: userGoalsList.first?.dailyStepsGoal) { _, _ in syncGoals() }
+    }
+
+    private func syncGoals() {
+        viewModel.activeEnergyGoal = Double(currentGoals.activeEnergyGoalKcal)
+        viewModel.dailyStepsGoal = Double(currentGoals.dailyStepsGoal)
     }
 
     // MARK: - Main Scroll Content

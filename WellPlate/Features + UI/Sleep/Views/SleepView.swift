@@ -6,13 +6,19 @@
 //
 
 import SwiftUI
+import SwiftData
 import Charts
 
 struct SleepView: View {
 
+    @Query private var userGoalsList: [UserGoals]
     @StateObject private var viewModel = SleepViewModel()
     @State private var showStages = true
     @State private var showDetail = false
+
+    private var currentGoals: UserGoals {
+        userGoalsList.first ?? UserGoals.defaults()
+    }
 
     var body: some View {
         NavigationStack {
@@ -41,6 +47,10 @@ struct SleepView: View {
             }
         }
         .task { await viewModel.requestPermissionAndLoad() }
+        .onAppear { viewModel.sleepGoal = currentGoals.sleepGoalHours }
+        .onChange(of: userGoalsList.first?.sleepGoalHours) { _, newValue in
+            viewModel.sleepGoal = newValue ?? 8.0
+        }
     }
 
     // MARK: - Main Scroll Content

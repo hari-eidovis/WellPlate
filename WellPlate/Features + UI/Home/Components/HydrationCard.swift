@@ -8,8 +8,7 @@ struct HydrationCard: View {
 
     @Binding var glassesConsumed: Int
     let totalGlasses: Int
-
-    @State private var animatingIndex: Int? = nil
+    var cupSizeML: Int = 250
 
     var body: some View {
         VStack(spacing: 16) {
@@ -20,7 +19,6 @@ struct HydrationCard: View {
                         .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
 
-                    // Shuttle animation: count slides up on increment, down on decrement.
                     HStack(spacing: 2) {
                         Text("\(glassesConsumed)")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -28,9 +26,15 @@ struct HydrationCard: View {
                             .contentTransition(.numericText(countsDown: false))
                             .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)
 
-                        Text("of \(totalGlasses) glasses")
+                        Text("of \(totalGlasses) cups")
                             .font(.system(size: 13, weight: .regular, design: .rounded))
                             .foregroundStyle(.secondary)
+
+                        Text("· \(glassesConsumed * cupSizeML) mL")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color(hue: 0.58, saturation: 0.50, brightness: 0.70))
+                            .contentTransition(.numericText(countsDown: false))
+                            .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)
                     }
                 } // end VStack(alignment: .leading)
 
@@ -56,13 +60,10 @@ struct HydrationCard: View {
             // Glass icons
             HStack(spacing: 8) {
                 ForEach(0..<totalGlasses, id: \.self) { index in
-                    GlassIcon(
-                        isFilled: index < glassesConsumed,
-                        isAnimating: animatingIndex == index
-                    )
-                    .onTapGesture {
-                        toggleGlass(at: index)
-                    }
+                    GlassIcon(isFilled: index < glassesConsumed)
+                        .onTapGesture {
+                            toggleGlass(at: index)
+                        }
                 }
             }
         }
@@ -78,34 +79,18 @@ struct HydrationCard: View {
 
     private func addGlass() {
         guard glassesConsumed < totalGlasses else { return }
-        let newIndex = glassesConsumed
         HapticService.impact(.light)
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
-            glassesConsumed += 1
-        }
-        triggerBounce(at: newIndex)
+        SoundService.playConfirmation()
+        glassesConsumed += 1
     }
 
     private func toggleGlass(at index: Int) {
         HapticService.impact(.light)
-        let newCount: Int
+        SoundService.playConfirmation()
         if index < glassesConsumed {
-            // Tap a filled glass → remove from this index onwards
-            newCount = index
+            glassesConsumed = index
         } else {
-            // Tap an empty glass → fill up to this index
-            newCount = index + 1
-        }
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
-            glassesConsumed = newCount
-        }
-        triggerBounce(at: index)
-    }
-
-    private func triggerBounce(at index: Int) {
-        animatingIndex = index
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-            animatingIndex = nil
+            glassesConsumed = index + 1
         }
     }
 }
@@ -114,7 +99,6 @@ struct HydrationCard: View {
 
 private struct GlassIcon: View {
     let isFilled: Bool
-    let isAnimating: Bool
 
     private let filledColor = Color(hue: 0.58, saturation: 0.65, brightness: 0.82)
     private let emptyColor  = Color(hue: 0.58, saturation: 0.15, brightness: 0.88)
@@ -123,8 +107,6 @@ private struct GlassIcon: View {
         Image(systemName: "drop.fill")
             .font(.system(size: 22))
             .foregroundStyle(isFilled ? filledColor : emptyColor)
-            .scaleEffect(isAnimating ? 1.22 : 1.0)
-            .animation(.spring(response: 0.26, dampingFraction: 0.52), value: isAnimating)
             .animation(.easeInOut(duration: 0.18), value: isFilled)
             .frame(maxWidth: .infinity)
     }

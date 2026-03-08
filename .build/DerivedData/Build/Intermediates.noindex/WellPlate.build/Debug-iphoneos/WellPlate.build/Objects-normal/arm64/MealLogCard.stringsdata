@@ -1,0 +1,80 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/MealLogCard.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "Today's Meals",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 13
+        }
+      },
+      {
+        "comment": "",
+        "key": "Meals",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 13
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Again",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld kcal",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "No meals logged yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start typing above to log your first meal!",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 108
+        }
+      }
+    ]
+  },
+  "version": 1
+}

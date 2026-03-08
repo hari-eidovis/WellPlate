@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import WidgetKit
 
 // MARK: - Widget size selection
@@ -47,16 +48,23 @@ enum FoodWidgetSize: String, CaseIterable, Identifiable {
 // MARK: - Profile View
 
 struct ProfilePlaceholderView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var userGoalsList: [UserGoals]
     @State private var selectedSize: FoodWidgetSize = .medium
     @State private var isWidgetInstalled            = false
     @State private var showInstructions             = false
+    @State private var showGoals                    = false
     @Namespace private var sizeNamespace
+
+    private var currentGoals: UserGoals {
+        userGoalsList.first ?? UserGoals.defaults()
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // ── Profile placeholder ──────────────────────────
+                    // ── Profile header ──────────────────────────
                     VStack(spacing: 12) {
                         Image(systemName: "person.crop.circle.fill")
                             .font(.system(size: 56))
@@ -64,13 +72,15 @@ struct ProfilePlaceholderView: View {
 
                         Text("Profile")
                             .font(.r(.title2, .bold))
-
-                        Text("Goals, preferences & settings\ncoming soon.")
-                            .font(.r(.subheadline, .regular))
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
                     }
                     .padding(.top, 16)
+
+                    // ── Goals card ─────────────────────────────
+                    GoalsNavigationCard(goals: currentGoals) {
+                        HapticService.impact(.light)
+                        showGoals = true
+                    }
+                    .padding(.horizontal, 16)
 
                     // ── Widget setup card ────────────────────────────
                     WidgetSetupCard(
@@ -87,6 +97,9 @@ struct ProfilePlaceholderView: View {
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
             .onAppear(perform: checkWidgetStatus)
+            .navigationDestination(isPresented: $showGoals) {
+                GoalsView(viewModel: GoalsViewModel(modelContext: modelContext))
+            }
             .sheet(isPresented: $showInstructions) {
                 WidgetInstructionsSheet(size: selectedSize)
                     .presentationDetents([.medium, .large])
@@ -628,6 +641,56 @@ private struct InstructionRow: View {
         }
     }
 }
+// MARK: - Goals Navigation Card
+
+private struct GoalsNavigationCard: View {
+    let goals: UserGoals
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.orange.opacity(0.12))
+                        .frame(width: 42, height: 42)
+                    Image(systemName: "target")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Goals")
+                        .font(.r(.headline, .semibold))
+                        .foregroundStyle(.primary)
+
+                    Text(goalSummary)
+                        .font(.r(.caption, .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.06), radius: 15, x: 0, y: 5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var goalSummary: String {
+        "\(goals.calorieGoal) cal · \(goals.waterDailyCups) cups · \(goals.todayWorkoutGoal) min"
+    }
+}
+
 #Preview {
     ProfilePlaceholderView()
 }

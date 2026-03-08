@@ -43,10 +43,11 @@ final class SleepViewModel: ObservableObject {
 
     // MARK: - Computed — Summaries
 
-    var sleepGoal: Double { 8.0 }
+    @Published var sleepGoal: Double = 8.0
 
     var sleepGoalProgress: Double {
-        min(totalHoursLastNight / sleepGoal, 1.0)
+        guard sleepGoal > 0 else { return 0 }
+        return min(totalHoursLastNight / sleepGoal, 1.0)
     }
 
     var weekAvgHours: String {

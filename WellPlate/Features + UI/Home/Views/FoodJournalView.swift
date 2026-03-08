@@ -7,6 +7,7 @@ import SwiftData
 struct FoodJournalView: View {
     @Environment(\.modelContext) private var modelContext
     @ObservedObject var viewModel: HomeViewModel
+    @Query private var userGoalsList: [UserGoals]
 
     @State private var selectedDate = Date()
     @State private var showDatePicker = false
@@ -16,6 +17,10 @@ struct FoodJournalView: View {
 
     /// Static query — no dynamic predicate in init to avoid re-render loops.
     @Query(sort: \FoodLogEntry.createdAt, order: .reverse) private var foodLogs: [FoodLogEntry]
+
+    private var currentGoals: UserGoals {
+        userGoalsList.first ?? UserGoals.defaults()
+    }
 
     // MARK: - Computed Properties
 
@@ -79,7 +84,7 @@ struct FoodJournalView: View {
                     // 2. Calorie Hero Card
                     CalorieHeroCard(
                         currentNutrition: aggregatedNutrition,
-                        dailyGoals: .default
+                        dailyGoals: DailyGoals(from: currentGoals)
                     )
 
                     // 3. Quick-Add Input

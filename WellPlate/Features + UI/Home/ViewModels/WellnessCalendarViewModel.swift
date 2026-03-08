@@ -6,21 +6,35 @@ import Combine
 @MainActor
 final class WellnessCalendarViewModel: ObservableObject {
 
+    struct DailyActivitySnapshot {
+        let day: Date
+        let exerciseMinutes: Int
+        let caloriesBurned: Int
+        let steps: Int
+    }
+
     // MARK: - Published State
 
     @Published var selectedDate: Date = Date()
     @Published var currentMonth: Date = Date()
     @Published var dayLog: WellnessDayLog?
     @Published var foodEntries: [FoodLogEntry] = []
+    @Published private(set) var healthKitActivity: DailyActivitySnapshot?
 
     private var modelContext: ModelContext?
+    private var activityTask: Task<Void, Never>?
+    private let healthService: HealthKitServiceProtocol
+
+    init(healthService: HealthKitServiceProtocol = HealthKitService()) {
+        self.healthService = healthService
+    }
 
     // MARK: - Init
 
     func bind(_ context: ModelContext) {
-        guard modelContext == nil else { return }
-        modelContext = context
-        seedSampleDataIfNeeded()
+        if modelContext == nil {
+            modelContext = context
+        }
         loadData(for: selectedDate)
     }
 
@@ -44,6 +58,12 @@ final class WellnessCalendarViewModel: ObservableObject {
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         foodEntries = (try? ctx.fetch(foodDescriptor)) ?? []
+
+        activityTask?.cancel()
+        healthKitActivity = nil
+        activityTask = Task { [weak self] in
+            await self?.loadHealthKitActivity(for: startOfDay)
+        }
     }
 
     // MARK: - Computed
@@ -62,6 +82,31 @@ final class WellnessCalendarViewModel: ObservableObject {
 
     var totalFat: Double {
         foodEntries.reduce(0.0) { $0 + $1.fat }
+    }
+
+    var hasHealthKitActivityData: Bool {
+        guard let snapshot = healthKitActivity,
+              Calendar.current.isDate(snapshot.day, inSameDayAs: selectedDate)
+        else { return false }
+        return snapshot.exerciseMinutes > 0 || snapshot.caloriesBurned > 0 || snapshot.steps > 0
+    }
+
+    func resolvedActivity(for log: WellnessDayLog?) -> (exerciseMinutes: Int, caloriesBurned: Int, steps: Int) {
+        let logExercise = log?.exerciseMinutes ?? 0
+        let logCalories = log?.caloriesBurned ?? 0
+        let logSteps = log?.steps ?? 0
+
+        guard let snapshot = healthKitActivity,
+              Calendar.current.isDate(snapshot.day, inSameDayAs: selectedDate)
+        else {
+            return (logExercise, logCalories, logSteps)
+        }
+
+        return (
+            logExercise > 0 ? logExercise : snapshot.exerciseMinutes,
+            logCalories > 0 ? logCalories : snapshot.caloriesBurned,
+            logSteps > 0 ? logSteps : snapshot.steps
+        )
     }
 
     // MARK: - Calendar Helpers
@@ -111,43 +156,50 @@ final class WellnessCalendarViewModel: ObservableObject {
     func hasData(for date: Date) -> Bool {
         guard let ctx = modelContext else { return false }
         let startOfDay = Calendar.current.startOfDay(for: date)
-        let descriptor = FetchDescriptor<WellnessDayLog>(
+        let logDescriptor = FetchDescriptor<WellnessDayLog>(
             predicate: #Predicate { $0.day == startOfDay }
         )
-        return ((try? ctx.fetchCount(descriptor)) ?? 0) > 0
-    }
-
-    // MARK: - Sample Data (Demo)
-
-    private func seedSampleDataIfNeeded() {
-        guard let ctx = modelContext else { return }
-
-        // Check if we already have data
-        let count = (try? ctx.fetchCount(FetchDescriptor<WellnessDayLog>())) ?? 0
-        guard count == 0 else { return }
-
-        let cal = Calendar.current
-        let moods: [Int] = [4, 3, 2, 3, 4, 1, 3, 4, 2, 3, 4, 3, 2, 4]
-        let waters: [Int] = [6, 7, 5, 8, 4, 3, 7, 6, 8, 5, 7, 6, 4, 7]
-        let exercises: [Int] = [30, 45, 0, 60, 20, 0, 35, 50, 15, 40, 25, 0, 55, 32]
-        let cals: [Int] = [220, 340, 0, 450, 150, 0, 260, 380, 100, 300, 180, 0, 420, 280]
-        let stepsList: [Int] = [6200, 8400, 3200, 10200, 5600, 2100, 7800, 9200, 4300, 7100, 5900, 2800, 8900, 6430]
-        let stresses: [String?] = ["Low", "Medium", "High", "Low", "Medium", nil, "Low", "Low", "High", "Medium", "Low", nil, "Medium", "Low"]
-
-        for i in 0..<14 {
-            guard let date = cal.date(byAdding: .day, value: -(13 - i), to: Date()) else { continue }
-            let log = WellnessDayLog(
-                day: date,
-                moodRaw: moods[i],
-                waterGlasses: waters[i],
-                exerciseMinutes: exercises[i],
-                caloriesBurned: cals[i],
-                steps: stepsList[i],
-                stressLevel: stresses[i]
-            )
-            ctx.insert(log)
+        if ((try? ctx.fetchCount(logDescriptor)) ?? 0) > 0 {
+            return true
         }
 
-        try? ctx.save()
+        let foodDescriptor = FetchDescriptor<FoodLogEntry>(
+            predicate: #Predicate { $0.day == startOfDay }
+        )
+        return ((try? ctx.fetchCount(foodDescriptor)) ?? 0) > 0
+    }
+
+    // MARK: - HealthKit Activity Fallback
+
+    private func loadHealthKitActivity(for day: Date) async {
+        guard HealthKitService.isAvailable else { return }
+        guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: day) else { return }
+        let range = DateInterval(start: day, end: endOfDay)
+
+        do {
+            async let stepsTask = healthService.fetchSteps(for: range)
+            async let caloriesTask = healthService.fetchActiveEnergy(for: range)
+            async let exerciseTask = healthService.fetchExerciseMinutes(for: range)
+
+            let (stepsSamples, caloriesSamples, exerciseSamples) = try await (stepsTask, caloriesTask, exerciseTask)
+            guard !Task.isCancelled else { return }
+
+            let snapshot = DailyActivitySnapshot(
+                day: day,
+                exerciseMinutes: Int(value(on: day, from: exerciseSamples).rounded()),
+                caloriesBurned: Int(value(on: day, from: caloriesSamples).rounded()),
+                steps: Int(value(on: day, from: stepsSamples).rounded())
+            )
+
+            guard Calendar.current.isDate(selectedDate, inSameDayAs: day) else { return }
+            healthKitActivity = snapshot
+        } catch {
+            guard Calendar.current.isDate(selectedDate, inSameDayAs: day) else { return }
+            healthKitActivity = nil
+        }
+    }
+
+    private func value(on day: Date, from samples: [DailyMetricSample]) -> Double {
+        samples.first(where: { Calendar.current.isDate($0.date, inSameDayAs: day) })?.value ?? 0
     }
 }

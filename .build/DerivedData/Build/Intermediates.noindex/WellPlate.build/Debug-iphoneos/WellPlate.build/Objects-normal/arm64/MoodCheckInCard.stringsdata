@@ -1,0 +1,24 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Shared/Components/MoodCheckInCard.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "How are you feeling today?",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap to check in with yourself",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 60
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,48 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/App/SplashScreenView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "made simple!",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 50
+        }
+      },
+      {
+        "comment": "",
+        "key": "Well",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 19
+        }
+      },
+      {
+        "comment": "",
+        "key": "Plate",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Track your",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "nutrition",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 36
+        }
+      }
+    ]
+  },
+  "version": 1
+}

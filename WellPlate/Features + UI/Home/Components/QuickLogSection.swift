@@ -14,13 +14,14 @@ struct QuickLogItem: Identifiable {
 
 struct QuickLogSection: View {
 
+    let showsMoodLog: Bool
     let onLogMeal: () -> Void
     let onLogWater: () -> Void
     let onExercise: () -> Void
     let onMood: () -> Void
 
     private var items: [QuickLogItem] {
-        [
+        var baseItems: [QuickLogItem] = [
             QuickLogItem(
                 label: "Log Meal",
                 symbol: "fork.knife",
@@ -34,22 +35,22 @@ struct QuickLogSection: View {
                 tint: Color(hue: 0.58, saturation: 0.68, brightness: 0.88),
                 background: Color(hue: 0.58, saturation: 0.22, brightness: 0.97),
                 action: onLogWater
-            ),
-            QuickLogItem(
-                label: "Exercise",
-                symbol: "figure.run",
-                tint: Color(hue: 0.40, saturation: 0.58, brightness: 0.72),
-                background: Color(hue: 0.40, saturation: 0.22, brightness: 0.96),
-                action: onExercise
-            ),
-            QuickLogItem(
-                label: "Mood",
-                symbol: "face.smiling",
-                tint: Color(hue: 0.76, saturation: 0.45, brightness: 0.78),
-                background: Color(hue: 0.76, saturation: 0.18, brightness: 0.97),
-                action: onMood
             )
         ]
+
+        if showsMoodLog {
+            baseItems.append(
+                QuickLogItem(
+                    label: "Mood",
+                    symbol: "face.smiling",
+                    tint: Color(hue: 0.76, saturation: 0.45, brightness: 0.78),
+                    background: Color(hue: 0.76, saturation: 0.18, brightness: 0.97),
+                    action: onMood
+                )
+            )
+        }
+
+        return baseItems
     }
 
     private let columns = [
@@ -78,78 +79,37 @@ private struct QuickLogTile: View {
 
     let item: QuickLogItem
 
-    // Press-scale state (existing)
     @State private var isPressed = false
-
-    // Confirmation animation state
-    @State private var bounceSymbol   = false
-    @State private var showCheck      = false
-    @State private var showIncrement  = false
-    @State private var incrementOffset: CGFloat = 0
-    @State private var incrementOpacity: Double = 0
 
     var body: some View {
         Button {
             HapticService.impact(.light)
+            SoundService.playConfirmation()
             item.action()
-            runConfirmation()
         } label: {
-            ZStack(alignment: .topTrailing) {
-                VStack(alignment: .leading, spacing: 12) {
-                    // Icon container
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(item.tint.opacity(0.18))
-                            .frame(width: 42, height: 42)
+            VStack(alignment: .leading, spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(item.tint.opacity(0.18))
+                        .frame(width: 42, height: 42)
 
-                        // Primary icon — bounces on tap
-                        Image(systemName: item.symbol)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(item.tint)
-                            .symbolEffect(.bounce, value: bounceSymbol)
-
-                        // Checkmark flash overlay
-                        if showCheck {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundStyle(item.tint)
-                                .transition(
-                                    .scale(scale: 0.4)
-                                    .combined(with: .opacity)
-                                )
-                        }
-                    }
-
-                    Text(item.label)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.primary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(item.background)
-                        .shadow(color: item.tint.opacity(0.12), radius: 8, x: 0, y: 4)
-                )
-
-                // Floating "+1" counter
-                if showIncrement {
-                    Text("+1")
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                    Image(systemName: item.symbol)
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(item.tint)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(
-                            Capsule().fill(item.tint.opacity(0.14))
-                        )
-                        .offset(y: incrementOffset)
-                        .opacity(incrementOpacity)
-                        .padding(.top, 6)
-                        .padding(.trailing, 10)
-                        .allowsHitTesting(false)
                 }
+
+                Text(item.label)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(item.background)
+                    .shadow(color: item.tint.opacity(0.12), radius: 8, x: 0, y: 4)
+            )
         }
         .buttonStyle(.plain)
         .scaleEffect(isPressed ? 0.94 : 1.0)
@@ -158,48 +118,13 @@ private struct QuickLogTile: View {
             isPressed = pressing
         }, perform: {})
     }
-
-    // MARK: - Animation Sequence
-
-    private func runConfirmation() {
-        // 1. Bounce the icon symbol
-        bounceSymbol.toggle()
-
-        // 2. Flash checkmark for 450 ms
-        withAnimation(.spring(response: 0.22, dampingFraction: 0.6)) {
-            showCheck = true
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-            withAnimation(.easeOut(duration: 0.18)) {
-                showCheck = false
-            }
-        }
-
-        // 3. Float "+1" upward and fade out
-        showIncrement  = true
-        incrementOffset  = 0
-        incrementOpacity = 0
-
-        withAnimation(.easeOut(duration: 0.15)) {
-            incrementOpacity = 1
-        }
-        withAnimation(.easeOut(duration: 0.55).delay(0.1)) {
-            incrementOffset  = -28
-        }
-        withAnimation(.easeIn(duration: 0.25).delay(0.35)) {
-            incrementOpacity = 0
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-            showIncrement  = false
-            incrementOffset  = 0
-        }
-    }
 }
 
 // MARK: - Preview
 
 #Preview {
     QuickLogSection(
+        showsMoodLog: true,
         onLogMeal: {},
         onLogWater: {},
         onExercise: {},

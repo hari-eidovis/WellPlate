@@ -1,0 +1,24 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Burn/Components/ProgressRingView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld%%",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "goal",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 45
+        }
+      }
+    ]
+  },
+  "version": 1
+}

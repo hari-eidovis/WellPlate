@@ -1,0 +1,88 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Views/StreakDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Streaks",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "day streak",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 184
+        }
+      },
+      {
+        "comment": "",
+        "key": "Today logged",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log today to keep it going",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "Calendar",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 245
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 318
+        }
+      },
+      {
+        "comment": "",
+        "key": "Past Streaks",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 329
+        }
+      },
+      {
+        "comment": "",
+        "key": "No past streaks yet",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 333
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld day%@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 350
+        }
+      }
+    ]
+  },
+  "version": 1
+}

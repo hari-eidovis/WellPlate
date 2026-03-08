@@ -1,0 +1,16 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/QuickLogSection.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Quick Log",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 63
+        }
+      }
+    ]
+  },
+  "version": 1
+}

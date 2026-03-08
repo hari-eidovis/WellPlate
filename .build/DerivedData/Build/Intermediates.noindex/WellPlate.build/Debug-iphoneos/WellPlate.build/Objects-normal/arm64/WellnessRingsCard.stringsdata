@@ -1,0 +1,24 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/WellnessRingsCard.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Today's Wellness",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld%% Complete",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 36
+        }
+      }
+    ]
+  },
+  "version": 1
+}

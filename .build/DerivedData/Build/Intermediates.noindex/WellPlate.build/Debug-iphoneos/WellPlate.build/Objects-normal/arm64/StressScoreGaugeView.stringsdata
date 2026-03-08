@@ -1,0 +1,16 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Stress/Views/StressScoreGaugeView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 60
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -5,7 +5,7 @@ let package = Package(
     name: "WellPlatePlaygrounds",
     defaultLocalization: "en",
     platforms: [
-        .iOS(.v18_1),
+        .iOS("18.1"),
         .macOS(.v13),
     ],
     products: [

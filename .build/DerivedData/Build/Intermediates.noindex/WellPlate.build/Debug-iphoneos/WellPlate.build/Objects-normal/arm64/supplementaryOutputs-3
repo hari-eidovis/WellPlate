@@ -1,0 +1,79 @@
+{
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Goals/Views/GoalsView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalsView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalsView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalsView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalsView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalsView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/ActivityCard.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ActivityCard.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ActivityCard.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ActivityCard.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ActivityCard.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ActivityCard.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/CalorieHeroCard.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/CalorieHeroCard.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/CalorieHeroCard.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/CalorieHeroCard.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/CalorieHeroCard.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/CalorieHeroCard.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/ExpandableFAB.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ExpandableFAB.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ExpandableFAB.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ExpandableFAB.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ExpandableFAB.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/ExpandableFAB.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/GoalExpandableView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/GoalExpandableView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/HomeHeaderView.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeHeaderView.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeHeaderView.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeHeaderView.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeHeaderView.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HomeHeaderView.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/HydrationCard.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HydrationCard.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HydrationCard.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HydrationCard.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HydrationCard.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/HydrationCard.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/MealLogCard.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealLogCard.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealLogCard.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealLogCard.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealLogCard.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/MealLogCard.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/QuickAddCard.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickAddCard.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickAddCard.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickAddCard.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickAddCard.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickAddCard.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/QuickLogSection.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickLogSection.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickLogSection.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickLogSection.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickLogSection.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/QuickLogSection.swiftdeps"
+  },
+  "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Home/Components/StressInsightCard.swift" : {
+    "const-values" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/StressInsightCard.swiftconstvalues",
+    "dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/StressInsightCard.d",
+    "diagnostics" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/StressInsightCard.dia",
+    "object" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/StressInsightCard.o",
+    "swift-dependencies" : "/Users/hariom/Desktop/WellPlate/.build/DerivedData/Build/Intermediates.noindex/WellPlate.build/Debug-iphoneos/WellPlate.build/Objects-normal/arm64/StressInsightCard.swiftdeps"
+  }
+}

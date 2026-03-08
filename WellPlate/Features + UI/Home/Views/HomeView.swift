@@ -7,15 +7,22 @@ import SwiftData
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
+    @Query private var userGoalsList: [UserGoals]
 
     // MARK: - State
 
     @State private var selectedMood: MoodOption?
-    @State private var hydrationGlasses: Int = 5
+    @State private var hasLoggedMoodToday = false
+    @State private var hydrationGlasses: Int = 0
     @State private var showLogMeal = false
     @State private var showWellnessCalendar = false
     @State private var showProgressInsights = false
     @StateObject private var foodJournalViewModel = HomeViewModel()
+
+    private var currentGoals: UserGoals {
+        userGoalsList.first ?? UserGoals.defaults()
+    }
 
     // MARK: - Body
 
@@ -39,12 +46,12 @@ struct HomeView: View {
 
                     // 3. Quick Log
                     QuickLogSection(
+                        showsMoodLog: !hasLoggedMoodToday,
                         onLogMeal: {
                             showLogMeal = true
                         },
                         onLogWater: {
-                            HapticService.impact(.light)
-                            if hydrationGlasses < 8 { hydrationGlasses += 1 }
+                            if hydrationGlasses < currentGoals.waterDailyCups { hydrationGlasses += 1 }
                         },
                         onExercise: { /* TODO: navigate to exercise log */ },
                         onMood:     { /* scroll handled by section below */ }
@@ -52,13 +59,16 @@ struct HomeView: View {
                     .padding(.horizontal, 16)
 
                     // 4. Mood Check-In
-                    MoodCheckInCard(selectedMood: $selectedMood)
-                        .padding(.horizontal, 16)
+                    if !hasLoggedMoodToday {
+                        MoodCheckInCard(selectedMood: $selectedMood)
+                            .padding(.horizontal, 16)
+                    }
 
                     // 5. Hydration
                     HydrationCard(
                         glassesConsumed: $hydrationGlasses,
-                        totalGlasses: 8
+                        totalGlasses: currentGoals.waterDailyCups,
+                        cupSizeML: currentGoals.waterCupSizeML
                     )
                     .padding(.horizontal, 16)
 
@@ -90,6 +100,20 @@ struct HomeView: View {
         .onAppear {
             // Inject the model context into the VM once the environment is available.
             foodJournalViewModel.bindContext(modelContext)
+            refreshTodayMoodState()
+            refreshTodayHydrationState()
+        }
+        .onChange(of: selectedMood) { _, mood in
+            guard let mood else { return }
+            logMoodForTodayIfNeeded(mood)
+        }
+        .onChange(of: hydrationGlasses) { _, cups in
+            updateHydrationForToday(cups)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            refreshTodayMoodState()
+            refreshTodayHydrationState()
         }
     }
 
@@ -147,10 +171,13 @@ struct HomeView: View {
     // MARK: - Wellness Rings Data
 
     private var wellnessRings: [WellnessRingItem] {
-        [
+        let cupGoal = currentGoals.waterDailyCups
+        let workoutGoal = currentGoals.todayWorkoutGoal
+
+        return [
             WellnessRingItem(
                 label: "Calories",
-                sublabel: "/ 2000",
+                sublabel: "/ \(currentGoals.calorieGoal)",
                 value: "1420",
                 progress: 0.71,
                 color: .orange,
@@ -158,15 +185,15 @@ struct HomeView: View {
             ),
             WellnessRingItem(
                 label: "Water",
-                sublabel: "/ 8 cups",
+                sublabel: "/ \(cupGoal) cups",
                 value: "\(hydrationGlasses)",
-                progress: CGFloat(hydrationGlasses) / 8.0,
+                progress: cupGoal > 0 ? CGFloat(hydrationGlasses) / CGFloat(cupGoal) : 0,
                 color: Color(hue: 0.58, saturation: 0.68, brightness: 0.82),
                 emojiOrSymbol: nil
             ),
             WellnessRingItem(
                 label: "Exercise",
-                sublabel: "/ 45 min",
+                sublabel: workoutGoal > 0 ? "/ \(workoutGoal) min" : "Rest day",
                 value: "32",
                 progress: 0.71,
                 color: Color(hue: 0.40, saturation: 0.62, brightness: 0.70),
@@ -203,13 +230,90 @@ struct HomeView: View {
     private var motivationalSubtitle: String {
         "Every mindful choice counts ✨"
     }
+
+    // MARK: - Mood Logging
+
+    private func refreshTodayMoodState() {
+        guard let log = fetchTodayWellnessLog() else {
+            hasLoggedMoodToday = false
+            selectedMood = nil
+            return
+        }
+
+        if let mood = log.mood {
+            hasLoggedMoodToday = true
+            selectedMood = mood
+        } else {
+            hasLoggedMoodToday = false
+            selectedMood = nil
+        }
+    }
+
+    private func logMoodForTodayIfNeeded(_ mood: MoodOption) {
+        guard !hasLoggedMoodToday else { return }
+
+        let todayLog = fetchOrCreateTodayWellnessLog()
+        if todayLog.moodRaw != nil {
+            hasLoggedMoodToday = true
+            selectedMood = todayLog.mood
+            return
+        }
+
+        todayLog.moodRaw = mood.rawValue
+        do {
+            try modelContext.save()
+            hasLoggedMoodToday = true
+        } catch {
+            hasLoggedMoodToday = false
+            selectedMood = nil
+            print("HomeView mood save failed: \(error.localizedDescription)")
+        }
+    }
+
+    private func refreshTodayHydrationState() {
+        hydrationGlasses = fetchTodayWellnessLog()?.waterGlasses ?? 0
+    }
+
+    private func updateHydrationForToday(_ cups: Int) {
+        let safeCups = max(cups, 0)
+        let todayLog = fetchOrCreateTodayWellnessLog()
+        guard todayLog.waterGlasses != safeCups else { return }
+
+        todayLog.waterGlasses = safeCups
+        do {
+            try modelContext.save()
+        } catch {
+            print("HomeView hydration save failed: \(error.localizedDescription)")
+        }
+    }
+
+    private func fetchTodayWellnessLog() -> WellnessDayLog? {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<WellnessDayLog>(
+            predicate: #Predicate { $0.day == today }
+        )
+        return try? modelContext.fetch(descriptor).first
+    }
+
+    private func fetchOrCreateTodayWellnessLog() -> WellnessDayLog {
+        if let existing = fetchTodayWellnessLog() {
+            return existing
+        }
+
+        let newLog = WellnessDayLog(day: Date())
+        modelContext.insert(newLog)
+        return newLog
+    }
 }
 
 // MARK: - Preview
 
 #Preview("Home Dashboard") {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: FoodLogEntry.self, configurations: config)
+    let container = try! ModelContainer(
+        for: FoodLogEntry.self, WellnessDayLog.self, UserGoals.self,
+        configurations: config
+    )
     return HomeView()
         .modelContainer(container)
 }

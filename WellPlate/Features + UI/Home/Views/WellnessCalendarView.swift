@@ -6,9 +6,11 @@ import SwiftData
 struct WellnessCalendarView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query private var userGoalsList: [UserGoals]
     @StateObject private var viewModel = WellnessCalendarViewModel()
 
     private let weekdaySymbols = Calendar.current.veryShortWeekdaySymbols
+    private var currentGoals: UserGoals { userGoalsList.first ?? UserGoals.defaults() }
 
     var body: some View {
         ScrollView {
@@ -130,13 +132,19 @@ struct WellnessCalendarView: View {
             }
             .padding(.horizontal, 4)
 
+            moodCard(viewModel.dayLog)
+
             if let log = viewModel.dayLog {
-                moodCard(log)
                 hydrationCard(log)
                 activityCard(log)
                 stressCard(log)
             } else {
-                emptyDayCard
+                if viewModel.hasHealthKitActivityData {
+                    activityCard(nil)
+                }
+                if !viewModel.hasHealthKitActivityData && viewModel.foodEntries.isEmpty {
+                    emptyDayCard
+                }
             }
 
             foodCard
@@ -145,9 +153,9 @@ struct WellnessCalendarView: View {
 
     // MARK: - Mood Card
 
-    private func moodCard(_ log: WellnessDayLog) -> some View {
+    private func moodCard(_ log: WellnessDayLog?) -> some View {
         detailCard(icon: "face.smiling", iconColor: moodColor(log), title: "Mood") {
-            if let mood = log.mood {
+            if let mood = log?.mood {
                 HStack(spacing: 14) {
                     Text(mood.emoji)
                         .font(.system(size: 44))
@@ -175,13 +183,14 @@ struct WellnessCalendarView: View {
         }
     }
 
-    private func moodColor(_ log: WellnessDayLog) -> Color {
-        log.mood?.accentColor ?? Color(hue: 0.76, saturation: 0.45, brightness: 0.78)
+    private func moodColor(_ log: WellnessDayLog?) -> Color {
+        log?.mood?.accentColor ?? Color(hue: 0.76, saturation: 0.45, brightness: 0.78)
     }
 
     // MARK: - Hydration Card
 
     private func hydrationCard(_ log: WellnessDayLog) -> some View {
+        let hydrationGoal = max(currentGoals.waterDailyCups, 1)
         let waterColor = Color(hue: 0.58, saturation: 0.65, brightness: 0.82)
         return detailCard(icon: "drop.fill", iconColor: waterColor, title: "Hydration") {
             VStack(spacing: 12) {
@@ -190,14 +199,14 @@ struct WellnessCalendarView: View {
                         .font(.system(size: 32, weight: .heavy, design: .rounded))
                         .foregroundStyle(waterColor)
 
-                    Text("/ 8 glasses")
+                    Text("/ \(hydrationGoal) glasses")
                         .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
 
                     Spacer()
 
                     // Percentage
-                    Text("\(Int(Double(log.waterGlasses) / 8.0 * 100))%")
+                    Text("\(Int(Double(log.waterGlasses) / Double(hydrationGoal) * 100))%")
                         .font(.system(size: 14, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 10)
@@ -207,7 +216,7 @@ struct WellnessCalendarView: View {
 
                 // Mini drop icons
                 HStack(spacing: 6) {
-                    ForEach(0..<8, id: \.self) { index in
+                    ForEach(0..<hydrationGoal, id: \.self) { index in
                         Image(systemName: "drop.fill")
                             .font(.system(size: 18))
                             .foregroundStyle(
@@ -224,34 +233,44 @@ struct WellnessCalendarView: View {
 
     // MARK: - Activity Card
 
-    private func activityCard(_ log: WellnessDayLog) -> some View {
+    private func activityCard(_ log: WellnessDayLog?) -> some View {
         let exerciseColor = Color(hue: 0.40, saturation: 0.62, brightness: 0.70)
         let calorieColor = Color(hue: 0.07, saturation: 0.75, brightness: 0.90)
         let stepColor = Color(hue: 0.76, saturation: 0.50, brightness: 0.75)
+        let activity = viewModel.resolvedActivity(for: log)
+        let activityDay = log?.day ?? viewModel.selectedDate
+        let weekday = Calendar.current.component(.weekday, from: activityDay)
+        let exerciseGoal = max(currentGoals.workoutMinutes(for: weekday), 0)
+        let calorieGoal = max(currentGoals.activeEnergyGoalKcal, 1)
+        let stepsGoal = max(currentGoals.dailyStepsGoal, 1)
+        let exerciseProgress: CGFloat = {
+            guard exerciseGoal > 0 else { return activity.exerciseMinutes > 0 ? 1.0 : 0.0 }
+            return min(CGFloat(activity.exerciseMinutes) / CGFloat(exerciseGoal), 1.0)
+        }()
 
         return detailCard(icon: "figure.run", iconColor: exerciseColor, title: "Activity") {
             VStack(spacing: 14) {
                 activityRow(
                     icon: "timer",
                     label: "Exercise",
-                    value: "\(log.exerciseMinutes) min",
-                    progress: min(CGFloat(log.exerciseMinutes) / 45.0, 1.0),
+                    value: "\(activity.exerciseMinutes) min",
+                    progress: exerciseProgress,
                     color: exerciseColor
                 )
                 activityRow(
                     icon: "flame.fill",
                     label: "Calories Burned",
-                    value: "\(log.caloriesBurned) cal",
-                    progress: min(CGFloat(log.caloriesBurned) / 500.0, 1.0),
+                    value: "\(activity.caloriesBurned) cal",
+                    progress: min(CGFloat(activity.caloriesBurned) / CGFloat(calorieGoal), 1.0),
                     color: calorieColor
                 )
                 activityRow(
                     icon: "figure.walk",
                     label: "Steps",
                     value: NumberFormatter.localizedString(
-                        from: NSNumber(value: log.steps), number: .decimal
+                        from: NSNumber(value: activity.steps), number: .decimal
                     ),
-                    progress: min(CGFloat(log.steps) / 10000.0, 1.0),
+                    progress: min(CGFloat(activity.steps) / CGFloat(stepsGoal), 1.0),
                     color: stepColor
                 )
             }
@@ -545,7 +564,7 @@ private struct CalendarDayCell: View {
 #Preview("Wellness Calendar") {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(
-        for: WellnessDayLog.self, FoodLogEntry.self, FoodCache.self,
+        for: WellnessDayLog.self, FoodLogEntry.self, FoodCache.self, UserGoals.self,
         configurations: config
     )
     return NavigationStack {

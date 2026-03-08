@@ -1,0 +1,396 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.WellPlatePlaygrounds-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/sources",
+      "importPath" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/AboutPlaygroundView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/IntakePlaygroundView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlatformColors.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundRootView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellPlatePlaygroundsApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellnessPlaygroundView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "WellPlatePlaygrounds",
+      "moduleOutputPath" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/Modules/WellPlatePlaygrounds.swiftmodule",
+      "objects" : [
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/AboutPlaygroundView.swift.o",
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/IntakePlaygroundView.swift.o",
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlatformColors.swift.o",
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundModels.swift.o",
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundRootView.swift.o",
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundStore.swift.o",
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellPlatePlaygroundsApp.swift.o",
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellnessPlaygroundView.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "WellPlatePlaygrounds_main",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "wellplate"
+      ],
+      "outputFileMapPath" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/AboutPlaygroundView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/IntakePlaygroundView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlatformColors.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundRootView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellPlatePlaygroundsApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellnessPlaygroundView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/Modules/WellPlatePlaygrounds.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/AboutPlaygroundView.swift",
+        "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/IntakePlaygroundView.swift",
+        "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlatformColors.swift",
+        "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundModels.swift",
+        "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundRootView.swift",
+        "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundStore.swift",
+        "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellPlatePlaygroundsApp.swift",
+        "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellnessPlaygroundView.swift"
+      ],
+      "tempsPath" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "WellPlatePlaygrounds" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "WellPlatePlaygrounds",
+      "-package-name",
+      "wellplate",
+      "-c",
+      "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/AboutPlaygroundView.swift",
+      "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/IntakePlaygroundView.swift",
+      "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlatformColors.swift",
+      "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundModels.swift",
+      "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundRootView.swift",
+      "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundStore.swift",
+      "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellPlatePlaygroundsApp.swift",
+      "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellnessPlaygroundView.swift",
+      "-I",
+      "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "WellPlatePlaygrounds_main",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "wellplate",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "WellPlatePlaygrounds" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds-entitlement.plist" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<entitlement-plist>"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<com.apple.security.get-task-allow>"
+        }
+      ],
+      "outputFilePath" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds-entitlement.plist"
+    },
+    "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/AboutPlaygroundView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/IntakePlaygroundView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlatformColors.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundRootView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/PlaygroundStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellPlatePlaygroundsApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/PlaygroundsSupport/Sources/WellnessPlaygroundView.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/sources"
+    },
+    "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/AboutPlaygroundView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/IntakePlaygroundView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlatformColors.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundRootView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/PlaygroundStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellPlatePlaygroundsApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.build/WellnessPlaygroundView.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/WellPlatePlaygrounds.product/Objects.LinkFileList"
+    },
+    "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/hariom/Desktop/WellPlate/.build/swiftpm/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

@@ -327,6 +327,28 @@ struct DailyGoals {
         fiber: 30,
         sodium: 2300
     )
+
+    init(calories: Int, carbs: Int, protein: Int, fat: Int, sugar: Int, fiber: Int, sodium: Int) {
+        self.calories = calories
+        self.carbs = carbs
+        self.protein = protein
+        self.fat = fat
+        self.sugar = sugar
+        self.fiber = fiber
+        self.sodium = sodium
+    }
+
+    init(from userGoals: UserGoals) {
+        self.init(
+            calories: userGoals.calorieGoal,
+            carbs: userGoals.carbsGoalGrams,
+            protein: userGoals.proteinGoalGrams,
+            fat: userGoals.fatGoalGrams,
+            sugar: userGoals.sugarGoalGrams,
+            fiber: userGoals.fiberGoalGrams,
+            sodium: userGoals.sodiumGoalMG
+        )
+    }
 }
 
 // MARK: - Preview

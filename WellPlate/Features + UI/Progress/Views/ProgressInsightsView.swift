@@ -10,6 +10,11 @@ struct ProgressInsightsView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     @Query private var allFoodLogs: [FoodLogEntry]
+    @Query private var userGoalsList: [UserGoals]
+
+    private var currentGoals: UserGoals {
+        userGoalsList.first ?? UserGoals.defaults()
+    }
 
     @State private var selectedTimeRange: TimeRange = .week
     @State private var selectedMetric: NutritionMetric = .calories
@@ -400,7 +405,7 @@ struct ProgressInsightsView: View {
             }
 
             if selectedMetric == .calories {
-                RuleMark(y: .value("Goal", DailyGoals.default.calories))
+                RuleMark(y: .value("Goal", currentGoals.calorieGoal))
                     .foregroundStyle(Color.green.opacity(0.6))
                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
                     .annotation(position: .top, alignment: .trailing) {
@@ -590,11 +595,11 @@ struct ProgressInsightsView: View {
         VStack(alignment: .leading, spacing: 18) {
             SectionHeader(title: "Smart Insights", subtitle: "based on your data")
             VStack(spacing: 10) {
-                if currentPeriodStats.avgCalories > Double(DailyGoals.default.calories) {
+                if currentPeriodStats.avgCalories > Double(currentGoals.calorieGoal) {
                     insightRow(icon: "exclamationmark.triangle.fill",
                                gradientColors: [Color(hex: "FF6B35"), Color(hex: "FFA500")],
                                title: "Above Calorie Goal",
-                               description: "\(Int(currentPeriodStats.avgCalories - Double(DailyGoals.default.calories))) kcal over your daily target on average")
+                               description: "\(Int(currentPeriodStats.avgCalories - Double(currentGoals.calorieGoal))) kcal over your daily target on average")
                 } else {
                     insightRow(icon: "checkmark.circle.fill",
                                gradientColors: [Color(hex: "34C759"), Color(hex: "30D158")],

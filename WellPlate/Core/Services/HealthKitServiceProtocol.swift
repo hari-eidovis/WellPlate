@@ -25,6 +25,9 @@ protocol HealthKitServiceProtocol {
     /// Daily active energy burned (kcal) sums over the given interval.
     func fetchActiveEnergy(for range: DateInterval) async throws -> [DailyMetricSample]
 
+    /// Daily Apple Exercise Time (minutes) sums over the given interval.
+    func fetchExerciseMinutes(for range: DateInterval) async throws -> [DailyMetricSample]
+
     /// Sleep sessions (hours) over the given interval.
     func fetchSleep(for range: DateInterval) async throws -> [SleepSample]
 

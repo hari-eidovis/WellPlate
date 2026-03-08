@@ -1,0 +1,256 @@
+{
+  "source": "/Users/hariom/Desktop/WellPlate/WellPlate/Features + UI/Tab/ProfileView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Profile",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Profile",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Widget",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Widget Active — Add Another",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Active",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 231
+        }
+      },
+      {
+        "comment": "",
+        "key": "Not added",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 231
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld cal left",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 367
+        }
+      },
+      {
+        "comment": "",
+        "key": "Today",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 344
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 361
+        }
+      },
+      {
+        "comment": "",
+        "key": "cal",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 362
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Food",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 372
+        }
+      },
+      {
+        "comment": "",
+        "key": "Today",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 393
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 405
+        }
+      },
+      {
+        "comment": "",
+        "key": "cal",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 406
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recent",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 484
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nutrition",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 445
+        }
+      },
+      {
+        "comment": "",
+        "key": "Today",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 447
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 453
+        }
+      },
+      {
+        "comment": "",
+        "key": "/ %lld cal",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 456
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 491
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Food",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 500
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lldg",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 527
+        }
+      },
+      {
+        "comment": "",
+        "key": "How to Add Widget",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 607
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add the Food Widget",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 565
+        }
+      },
+      {
+        "comment": "",
+        "key": "Follow these steps to add the %@ widget to your Home Screen.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 567
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tip: Once the widget is on your Home Screen, it refreshes automatically whenever you log food in the app.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 611
+        }
+      },
+      {
+        "comment": "",
+        "key": "Step %lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 634
+        }
+      },
+      {
+        "comment": "",
+        "key": "Goals",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 663
+        }
+      }
+    ]
+  },
+  "version": 1
+}
