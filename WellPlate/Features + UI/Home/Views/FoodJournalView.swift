@@ -243,14 +243,16 @@ struct FoodJournalView: View {
     // MARK: - Date Picker Sheet
 
     private var datePickerSheet: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 DatePicker(
                     "Select Date",
                     selection: $selectedDate,
+                    in: ...Date(),
                     displayedComponents: [.date]
                 )
                 .datePickerStyle(.graphical)
+                .tint(.orange)
                 .padding()
 
                 Spacer()

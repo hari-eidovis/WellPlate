@@ -24,6 +24,12 @@ struct MealLogCard: View {
                 }
 
                 Spacer()
+
+                if !foodLogs.isEmpty {
+                    Text("\(totalCalories) kcal total")
+                        .font(.r(.caption, .medium))
+                        .foregroundColor(.secondary)
+                }
             }
             .padding(.horizontal, 16)
 
@@ -58,7 +64,7 @@ struct MealLogCard: View {
 
                 if index < foodLogs.count - 1 {
                     Divider()
-                        .padding(.leading, 16)
+                        .padding(.leading, 60)
                 }
             }
         }
@@ -71,17 +77,48 @@ struct MealLogCard: View {
     }
 
     private func mealRow(entry: FoodLogEntry) -> some View {
-        HStack {
-            Text(entry.foodName)
-                .font(.r(15, .regular))
-                .foregroundColor(.primary)
-                .lineLimit(1)
+        HStack(spacing: 12) {
+            // Time + color accent
+            VStack(spacing: 3) {
+                Text(timeString(from: entry.createdAt))
+                    .font(.r(10, .regular))
+                    .foregroundColor(.secondary)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(mealTimeColor(for: entry.createdAt))
+                    .frame(width: 3, height: 28)
+            }
+            .frame(width: 32)
 
-            Spacer()
+            // Food info
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(entry.foodName)
+                        .font(.r(15, .medium))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
 
-            Text("\(entry.calories) kcal")
-                .font(.r(14, .regular))
-                .foregroundColor(.secondary)
+                    Spacer()
+
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(entry.calories)")
+                            .font(.r(15, .semibold))
+                            .foregroundColor(.primary)
+                        Text("kcal")
+                            .font(.r(11, .regular))
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                // Macro chips
+                HStack(spacing: 5) {
+                    macroPill("\(Int(entry.protein))g P", color: Color(red: 0.85, green: 0.25, blue: 0.25))
+                    macroPill("\(Int(entry.carbs))g C", color: .blue)
+                    macroPill("\(Int(entry.fat))g F", color: .orange)
+                    if entry.fiber > 0.5 {
+                        macroPill("\(Int(entry.fiber))g F·ib", color: .green)
+                    }
+                }
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -93,6 +130,42 @@ struct MealLogCard: View {
                 Label("Delete", systemImage: "trash")
             }
         }
+    }
+
+    // MARK: - Macro Pill
+
+    private func macroPill(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.r(10, .medium))
+            .foregroundColor(color)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(color.opacity(0.12))
+            )
+    }
+
+    // MARK: - Helpers
+
+    private func timeString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm"
+        return formatter.string(from: date)
+    }
+
+    private func mealTimeColor(for date: Date) -> Color {
+        let hour = Calendar.current.component(.hour, from: date)
+        switch hour {
+        case 5..<11:  return .orange   // breakfast
+        case 11..<15: return .blue     // lunch
+        case 15..<19: return .purple   // afternoon
+        default:      return .indigo   // evening / late night
+        }
+    }
+
+    private var totalCalories: Int {
+        foodLogs.reduce(0) { $0 + $1.calories }
     }
 
     // MARK: - Empty State

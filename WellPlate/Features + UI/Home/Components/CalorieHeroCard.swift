@@ -11,31 +11,47 @@ struct CalorieHeroCard: View {
             showAllMacros = true
         }) {
             VStack(spacing: 16) {
-                // Calorie progress
-                VStack(spacing: 8) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("\(currentCalories)")
-                            .font(.r(36, .bold))
-                            .foregroundColor(.primary)
-                        Text("/ \(dailyGoals.calories) kcal")
-                            .font(.r(.subheadline, .medium))
+                // Calorie header
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text("\(currentCalories)")
+                                .font(.r(38, .bold))
+                                .foregroundColor(.primary)
+                                .contentTransition(.numericText())
+                            Text("kcal")
+                                .font(.r(.subheadline, .medium))
+                                .foregroundColor(.secondary)
+                        }
+                        Text("of \(dailyGoals.calories) daily goal")
+                            .font(.r(.caption, .regular))
                             .foregroundColor(.secondary)
-                        Spacer()
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.orange)
                     }
 
-                    // Wide progress bar
+                    Spacer()
+
+                    ZStack {
+                        Circle()
+                            .fill(Color.orange.opacity(0.12))
+                            .frame(width: 48, height: 48)
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.orange)
+                    }
+                }
+
+                // Progress bar + remaining label
+                VStack(alignment: .trailing, spacing: 5) {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(Color.gray.opacity(0.12))
-
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.orange, Color.orange.opacity(0.75)],
+                                        colors: isOverCalories
+                                            ? [Color.red, Color.orange.opacity(0.8)]
+                                            : [Color.orange, Color.orange.opacity(0.75)],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
@@ -44,32 +60,47 @@ struct CalorieHeroCard: View {
                         }
                     }
                     .frame(height: 10)
+
+                    Text(remainingText)
+                        .font(.r(.caption2, .medium))
+                        .foregroundColor(isOverCalories ? .red : .secondary)
                 }
 
-                // 3 macro mini-rings
-//                HStack(spacing: 0) {
-//                    macroRing(
-//                        value: currentCarbs,
-//                        goal: dailyGoals.carbs,
-//                        label: "Carbs",
-//                        unit: "g",
-//                        color: .blue
-//                    )
-//                    macroRing(
-//                        value: currentProtein,
-//                        goal: dailyGoals.protein,
-//                        label: "Protein",
-//                        unit: "g",
-//                        color: .red
-//                    )
-//                    macroRing(
-//                        value: currentFat,
-//                        goal: dailyGoals.fat,
-//                        label: "Fat",
-//                        unit: "g",
-//                        color: .yellow
-//                    )
-//                }
+                // Macro columns
+                HStack(spacing: 0) {
+                    macroColumn(
+                        label: "Protein",
+                        value: currentProtein,
+                        goal: dailyGoals.protein,
+                        unit: "g",
+                        color: Color(red: 0.85, green: 0.25, blue: 0.25)
+                    )
+
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(width: 1, height: 44)
+
+                    macroColumn(
+                        label: "Carbs",
+                        value: currentCarbs,
+                        goal: dailyGoals.carbs,
+                        unit: "g",
+                        color: .blue
+                    )
+
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(width: 1, height: 44)
+
+                    macroColumn(
+                        label: "Fat",
+                        value: currentFat,
+                        goal: dailyGoals.fat,
+                        unit: "g",
+                        color: .orange
+                    )
+                }
+                .padding(.top, 2)
             }
             .padding(20)
             .background(
@@ -86,31 +117,36 @@ struct CalorieHeroCard: View {
         }
     }
 
-    // MARK: - Macro Ring
+    // MARK: - Macro Column
 
-    private func macroRing(value: Int, goal: Int, label: String, unit: String, color: Color) -> some View {
+    private func macroColumn(label: String, value: Int, goal: Int, unit: String, color: Color) -> some View {
         let progress = goal > 0 ? min(CGFloat(value) / CGFloat(goal), 1.0) : 0
-        let ringColor = value <= goal ? color : .red
+        let isOver = value > goal
 
-        return VStack(spacing: 4) {
-            ZStack {
-                Circle()
-                    .stroke(Color.gray.opacity(0.12), lineWidth: 5)
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(ringColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
+        return VStack(spacing: 5) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text("\(value)")
-                    .font(.r(14, .bold))
-                    .foregroundColor(.primary)
+                    .font(.r(17, .semibold))
+                    .foregroundColor(isOver ? .red : .primary)
+                Text(unit)
+                    .font(.r(10, .regular))
+                    .foregroundColor(.secondary)
             }
-            .frame(width: 50, height: 50)
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.gray.opacity(0.12))
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(isOver ? Color.red.opacity(0.7) : color)
+                        .frame(width: min(geo.size.width * progress, geo.size.width))
+                }
+            }
+            .frame(height: 4)
+            .padding(.horizontal, 12)
 
             Text(label)
                 .font(.r(11, .medium))
-                .foregroundColor(.primary)
-            Text("\(value)/\(goal)\(unit)")
-                .font(.r(9, .regular))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -119,7 +155,7 @@ struct CalorieHeroCard: View {
     // MARK: - All Macros Sheet
 
     private var allMacrosSheet: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 16) {
                 // Calories bar (repeated at top of sheet)
                 VStack(alignment: .leading, spacing: 6) {
@@ -226,5 +262,18 @@ struct CalorieHeroCard: View {
     private var caloriesProgress: CGFloat {
         guard dailyGoals.calories > 0 else { return 0 }
         return CGFloat(currentCalories) / CGFloat(dailyGoals.calories)
+    }
+
+    private var isOverCalories: Bool { currentCalories > dailyGoals.calories }
+
+    private var remainingText: String {
+        let remaining = dailyGoals.calories - currentCalories
+        if remaining > 0 {
+            return "\(remaining) kcal remaining"
+        } else if remaining == 0 {
+            return "Goal reached!"
+        } else {
+            return "\(-remaining) kcal over goal"
+        }
     }
 }
