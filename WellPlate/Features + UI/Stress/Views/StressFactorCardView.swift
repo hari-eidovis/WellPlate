@@ -56,32 +56,34 @@ struct StressFactorCardView: View {
                     }
                 }
 
-                // Status text (main info line)
-                Text(factor.statusText)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
+                if factor.hasValidData {
+                    // Status text (main info line)
+                    Text(factor.statusText)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
 
-                // Slim progress bar
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color(.systemGray5))
-                            .frame(height: 5)
-                        Capsule()
-                            .fill(factor.accentColor)
-                            .frame(width: max(0, geo.size.width * factor.progress), height: 5)
-                            .animation(.spring(response: 0.7, dampingFraction: 0.75), value: factor.progress)
+                    // Slim progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color(.systemGray5))
+                                .frame(height: 5)
+                            Capsule()
+                                .fill(factor.accentColor)
+                                .frame(width: max(0, geo.size.width * factor.progress), height: 5)
+                                .animation(.spring(response: 0.7, dampingFraction: 0.75), value: factor.progress)
+                        }
                     }
-                }
-                .frame(height: 5)
+                    .frame(height: 5)
 
-                // Tip text
-                if !inlineTip.isEmpty {
-                    Text(inlineTip)
-                        .font(.system(size: 12, weight: .regular, design: .rounded))
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
+                    // Tip text
+                    if !inlineTip.isEmpty {
+                        Text(inlineTip)
+                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
                 }
             }
         }

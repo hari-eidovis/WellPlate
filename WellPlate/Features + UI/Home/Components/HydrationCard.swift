@@ -18,18 +18,18 @@ struct HydrationCard: View {
                     Text("Hydration")
                         .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
-
+                    
                     HStack(spacing: 2) {
                         Text("\(glassesConsumed)")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(Color(hue: 0.58, saturation: 0.65, brightness: 0.75))
                             .contentTransition(.numericText(countsDown: false))
                             .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)
-
+                        
                         Text("of \(totalGlasses) cups")
                             .font(.system(size: 13, weight: .regular, design: .rounded))
                             .foregroundStyle(.secondary)
-
+                        
                         Text("· \(glassesConsumed * cupSizeML) mL")
                             .font(.system(size: 13, weight: .medium, design: .rounded))
                             .foregroundStyle(Color(hue: 0.58, saturation: 0.50, brightness: 0.70))
@@ -37,26 +37,27 @@ struct HydrationCard: View {
                             .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)
                     }
                 } // end VStack(alignment: .leading)
-
+                
                 Spacer()
-
-                // + button
-                Button {
-                    addGlass()
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(hue: 0.58, saturation: 0.65, brightness: 0.82))
-                        .frame(width: 36, height: 36)
-                        .background(
-                            Circle()
-                                .fill(Color(hue: 0.58, saturation: 0.22, brightness: 0.96))
-                        )
+                
+                if glassesConsumed < totalGlasses {
+                    // + button
+                    Button {
+                        addGlass()
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color(hue: 0.58, saturation: 0.65, brightness: 0.82))
+                            .frame(width: 36, height: 36)
+                            .background(
+                                Circle()
+                                    .fill(Color(hue: 0.58, saturation: 0.22, brightness: 0.96))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(glassesConsumed >= totalGlasses)
                 }
-                .buttonStyle(.plain)
-                .disabled(glassesConsumed >= totalGlasses)
             }
-
             // Glass icons
             HStack(spacing: 8) {
                 ForEach(0..<totalGlasses, id: \.self) { index in
