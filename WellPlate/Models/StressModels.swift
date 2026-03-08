@@ -81,32 +81,57 @@ struct StressFactorResult: Identifiable {
     /// true  → exercise / sleep / diet  (high score = good = green)
     /// false → screen time              (high score = bad  = red)
     let higherIsBetter: Bool
+    /// false when this factor has no valid input for the current day.
+    let hasValidData: Bool
+
+    init(
+        title: String,
+        score: Double,
+        maxScore: Double,
+        icon: String,
+        statusText: String,
+        detailText: String,
+        higherIsBetter: Bool,
+        hasValidData: Bool = true
+    ) {
+        self.title = title
+        self.score = score
+        self.maxScore = maxScore
+        self.icon = icon
+        self.statusText = statusText
+        self.detailText = detailText
+        self.higherIsBetter = higherIsBetter
+        self.hasValidData = hasValidData
+    }
 
     var progress: Double { score / maxScore }
 
     /// How much this factor contributes to total stress (0–25).
     var stressContribution: Double {
-        higherIsBetter ? (maxScore - score) : score
+        guard hasValidData else { return 0 }
+        return higherIsBetter ? (maxScore - score) : score
     }
 
     /// Green = healthy end, Red = stressed end — direction depends on `higherIsBetter`.
     var accentColor: Color {
+        guard hasValidData else { return Color(.systemGray3) }
         let t = min(max(score / maxScore, 0), 1)
         // stressRatio: 0 → green, 1 → red
         let stressRatio = higherIsBetter ? (1.0 - t) : t
         return Color(hue: 0.33 * (1.0 - stressRatio), saturation: 0.75, brightness: 0.80)
     }
 
-    /// Neutral factor when no data is available (defaults to midpoint 12.5).
+    /// Default factor when no data is available (does not contribute to stress).
     static func neutral(title: String, icon: String, higherIsBetter: Bool) -> StressFactorResult {
         StressFactorResult(
             title: title,
-            score: 12.5,
+            score: 0,
             maxScore: 25,
             icon: icon,
             statusText: "No data",
-            detailText: "Using neutral estimate",
-            higherIsBetter: higherIsBetter
+            detailText: "Waiting for data",
+            higherIsBetter: higherIsBetter,
+            hasValidData: false
         )
     }
 }

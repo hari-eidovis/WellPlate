@@ -38,6 +38,10 @@ struct StressView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var activeSheet: StressSheet? = nil
     @State private var pendingManualHours: Double = 0
+    #if DEBUG
+    @State private var debugScreenTimeHours: Double = 0
+    @State private var didSeedDebugScreenTimeHours = false
+    #endif
     private let refreshTicker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -71,6 +75,9 @@ struct StressView: View {
         .onAppear {
             viewModel.refreshDietFactor()
             viewModel.refreshScreenTimeOnly()
+            #if DEBUG
+            seedDebugScreenTimeInputIfNeeded()
+            #endif
         }
         .onReceive(refreshTicker) { _ in
             guard viewModel.isAuthorized else { return }
@@ -168,6 +175,12 @@ struct StressView: View {
                 factorsSection
                     .padding(.horizontal, 16)
                     .padding(.top, 28)
+
+                #if DEBUG
+                debugScreenTimeSection
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                #endif
 
                 // ── Timeline ──────────────────────────────────
                 timelineSection
@@ -350,7 +363,7 @@ struct StressView: View {
 
     private struct FactorItem {
         let factor: StressFactorResult
-        let sheet: StressSheet
+        let sheet: StressSheet?
     }
 
     private var sortedFactors: [FactorItem] {
@@ -358,7 +371,7 @@ struct StressView: View {
             FactorItem(factor: viewModel.exerciseFactor,   sheet: .exercise),
             FactorItem(factor: viewModel.sleepFactor,      sheet: .sleep),
             FactorItem(factor: viewModel.dietFactor,       sheet: .diet),
-            FactorItem(factor: viewModel.screenTimeFactor, sheet: .screenTimeDetail),
+            FactorItem(factor: viewModel.screenTimeFactor, sheet: nil),
         ]
         .sorted { $0.factor.stressContribution > $1.factor.stressContribution }
     }
@@ -368,11 +381,87 @@ struct StressView: View {
             sectionLabel("STRESS FACTORS")
             VStack(spacing: 10) {
                 ForEach(sortedFactors, id: \.factor.id) { item in
-                    StressFactorCardView(factor: item.factor, onTap: { activeSheet = item.sheet })
+                    if let sheet = item.sheet {
+                        StressFactorCardView(factor: item.factor, onTap: { activeSheet = sheet })
+                    } else {
+                        StressFactorCardView(factor: item.factor)
+                    }
                 }
             }
         }
     }
+
+    #if DEBUG
+    private var debugScreenTimeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("DEBUG · SCREEN TIME")
+
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Manual override")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    Spacer()
+                    Text(String(format: "%.2f h", debugScreenTimeHours))
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(.cyan)
+                }
+
+                Slider(value: $debugScreenTimeHours, in: 0...24, step: 0.25)
+                    .tint(.cyan)
+
+                HStack {
+                    Text("0h")
+                    Spacer()
+                    Text("24h")
+                }
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+
+                HStack(spacing: 10) {
+                    Button("Apply") {
+                        let rounded = (debugScreenTimeHours * 4).rounded() / 4
+                        debugScreenTimeHours = rounded
+                        viewModel.setManualScreenTime(rounded)
+                        viewModel.setDebugManualScreenTimeOverride(rounded)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.cyan)
+
+                    Button("Use Auto") {
+                        viewModel.clearDebugManualScreenTimeOverride()
+                        viewModel.refreshScreenTimeOnly()
+                    }
+                    .buttonStyle(.bordered)
+                }
+
+                if viewModel.debugManualScreenTimeOverrideHours != nil {
+                    Text("Debug override is active.")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground).opacity(0.88))
+                    .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
+            )
+        }
+    }
+
+    private func seedDebugScreenTimeInputIfNeeded() {
+        guard !didSeedDebugScreenTimeHours else { return }
+        if let debugOverride = viewModel.debugManualScreenTimeOverrideHours {
+            debugScreenTimeHours = debugOverride
+        } else if let auto = screenTimeManager.currentAutoDetectedReading?.rawHours {
+            debugScreenTimeHours = auto
+        } else {
+            debugScreenTimeHours = viewModel.currentManualHours
+        }
+        didSeedDebugScreenTimeHours = true
+    }
+    #endif
 
     // MARK: - Timeline Section
 

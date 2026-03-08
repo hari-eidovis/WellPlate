@@ -31,6 +31,9 @@ final class StressViewModel: ObservableObject {
     @Published var isAuthorized = false
     @Published var errorMessage: String? = nil
     @Published var screenTimeSource: ScreenTimeSource = .none
+    #if DEBUG
+    @Published var debugManualScreenTimeOverrideHours: Double? = nil
+    #endif
 
     // MARK: - Today's Vitals (display-only)
 
@@ -124,6 +127,18 @@ final class StressViewModel: ObservableObject {
         UserDefaults.standard.set(fmt.string(from: Date()), forKey: Self.manualDateKey)
         refreshScreenTimeFactor()
     }
+
+    #if DEBUG
+    func setDebugManualScreenTimeOverride(_ hours: Double) {
+        debugManualScreenTimeOverrideHours = max(0, min(24, hours))
+        refreshScreenTimeFactor()
+    }
+
+    func clearDebugManualScreenTimeOverride() {
+        debugManualScreenTimeOverrideHours = nil
+        refreshScreenTimeFactor()
+    }
+    #endif
 
     // MARK: - Dependencies
 
@@ -441,30 +456,33 @@ final class StressViewModel: ObservableObject {
     // MARK: - Factor Builders
 
     private func buildExerciseFactor(score: Double, steps: Double?, energy: Double?) -> StressFactorResult {
+        let hasData = steps != nil || energy != nil
         let stepsStr = steps.map { NumberFormatter.localizedString(from: NSNumber(value: Int($0)), number: .decimal) } ?? "—"
         let energyStr = energy.map { "\(Int($0)) kcal" } ?? "—"
 
         let status: String
-        if steps != nil && energy != nil {
+        if !hasData {
+            status = "No data"
+        } else if steps != nil && energy != nil {
             status = "\(stepsStr) steps · \(energyStr)"
         } else if let _ = steps {
             status = "\(stepsStr) steps"
-        } else if let _ = energy {
-            status = energyStr
         } else {
-            status = "No data"
+            status = energyStr
         }
 
         let detail: String
-        if score >= 18 { detail = "Great activity level!" }
+        if !hasData { detail = "No activity data yet" }
+        else if score >= 18 { detail = "Great activity level!" }
         else if score >= 10 { detail = "Moderate activity today" }
         else { detail = "Try to move more today" }
 
-        return StressFactorResult(title: "Exercise", score: score, maxScore: 25, icon: "figure.run",
-                                  statusText: status, detailText: detail, higherIsBetter: true)
+        return StressFactorResult(title: "Exercise", score: hasData ? score : 0, maxScore: 25, icon: "figure.run",
+                                  statusText: status, detailText: detail, higherIsBetter: true, hasValidData: hasData)
     }
 
     private func buildSleepFactor(score: Double, summary: DailySleepSummary?) -> StressFactorResult {
+        let hasData = summary != nil
         let status: String
         if let s = summary {
             status = String(format: "%.1fh total · %.1fh deep", s.totalHours, s.deepHours)
@@ -473,17 +491,19 @@ final class StressViewModel: ObservableObject {
         }
 
         let detail: String
-        if score >= 18 { detail = "Well rested!" }
+        if !hasData { detail = "No sleep data yet" }
+        else if score >= 18 { detail = "Well rested!" }
         else if score >= 10 { detail = "Decent sleep" }
         else { detail = "Try to sleep more tonight" }
 
-        return StressFactorResult(title: "Sleep", score: score, maxScore: 25, icon: "moon.fill",
-                                  statusText: status, detailText: detail, higherIsBetter: true)
+        return StressFactorResult(title: "Sleep", score: hasData ? score : 0, maxScore: 25, icon: "moon.fill",
+                                  statusText: status, detailText: detail, higherIsBetter: true, hasValidData: hasData)
     }
 
     private func buildDietFactor(score: Double, logs: [FoodLogEntry]) -> StressFactorResult {
+        let hasData = !logs.isEmpty
         let status: String
-        if logs.isEmpty {
+        if !hasData {
             status = "No food logged"
         } else {
             let protein = Int(logs.map(\.protein).reduce(0, +))
@@ -492,24 +512,36 @@ final class StressViewModel: ObservableObject {
         }
 
         let detail: String
-        if logs.isEmpty { detail = "Log meals for an accurate score" }
+        if !hasData { detail = "No diet data yet" }
         else if score >= 18 { detail = "Balanced diet today!" }
         else if score >= 10 { detail = "Fair nutritional balance" }
         else { detail = "Consider healthier choices" }
 
-        return StressFactorResult(title: "Diet", score: score, maxScore: 25, icon: "leaf.fill",
-                                  statusText: status, detailText: detail, higherIsBetter: true)
+        return StressFactorResult(title: "Diet", score: hasData ? score : 0, maxScore: 25, icon: "leaf.fill",
+                                  statusText: status, detailText: detail, higherIsBetter: true, hasValidData: hasData)
     }
 
     private func refreshScreenTimeFactor() {
         let autoReading  = ScreenTimeManager.shared.currentAutoDetectedReading
         let manualHours  = storedManualHours
+        let debugOverrideHours: Double?
+        #if DEBUG
+        debugOverrideHours = debugManualScreenTimeOverrideHours
+        #else
+        debugOverrideHours = nil
+        #endif
 
         let scoreHours: Double?
         let status: String
         let detail: String
 
-        if let reading = autoReading {
+        if let debugHours = debugOverrideHours {
+            screenTimeSource = .manual
+            scoreHours = debugHours
+            status = String(format: "%.1fh debug manual override", debugHours)
+            let s = computeScreenTimeScore(hours: debugHours)
+            detail = s < 8 ? "Low screen time 👍" : s < 16 ? "Moderate screen usage" : "Consider reducing screen time"
+        } else if let reading = autoReading {
             screenTimeSource = .auto
             scoreHours = reading.rawHours
             status = "\(reading.displayRoundedHours)h detected (±15m)"
@@ -527,12 +559,13 @@ final class StressViewModel: ObservableObject {
             screenTimeSource = .none
             scoreHours = nil
             status = "Under 15 min today"
-            detail = "Tap to enter screen time manually"
+            detail = "No screen time detected yet"
         }
 
         let score = computeScreenTimeScore(hours: scoreHours)
+        let hasData = scoreHours != nil
         screenTimeFactor = StressFactorResult(title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
-                                              statusText: status, detailText: detail, higherIsBetter: false)
+                                              statusText: status, detailText: detail, higherIsBetter: false, hasValidData: hasData)
 
         #if DEBUG
         let rawHoursStr = scoreHours.map { String(format: "%.3f h", $0) } ?? "nil"
