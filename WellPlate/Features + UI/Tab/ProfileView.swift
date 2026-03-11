@@ -55,6 +55,10 @@ struct ProfilePlaceholderView: View {
     @State private var showInstructions             = false
     @State private var showGoals                    = false
     @Namespace private var sizeNamespace
+    #if DEBUG
+    @State private var mockModeEnabled: Bool = AppConfig.shared.mockMode
+    @State private var hasGroqAPIKey: Bool = AppConfig.shared.hasGroqAPIKey
+    #endif
 
     private var currentGoals: UserGoals {
         userGoalsList.first ?? UserGoals.defaults()
@@ -90,13 +94,32 @@ struct ProfilePlaceholderView: View {
                         onAddTapped:       { showInstructions = true }
                     )
                     .padding(.horizontal, 16)
+
+                    #if DEBUG
+                    NutritionSourceDebugCard(
+                        isMockMode: $mockModeEnabled,
+                        hasGroqAPIKey: hasGroqAPIKey
+                    )
+                    .padding(.horizontal, 16)
+                    #endif
                 }
                 .padding(.bottom, 32)
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
-            .onAppear(perform: checkWidgetStatus)
+            .onAppear {
+                checkWidgetStatus()
+                #if DEBUG
+                refreshDebugNutritionState()
+                #endif
+            }
+            #if DEBUG
+            .onChange(of: mockModeEnabled) { _, newValue in
+                AppConfig.shared.mockMode = newValue
+                refreshDebugNutritionState()
+            }
+            #endif
             .navigationDestination(isPresented: $showGoals) {
                 GoalsView(viewModel: GoalsViewModel(modelContext: modelContext))
             }
@@ -119,7 +142,54 @@ struct ProfilePlaceholderView: View {
             }
         }
     }
+
+    #if DEBUG
+    private func refreshDebugNutritionState() {
+        mockModeEnabled = AppConfig.shared.mockMode
+        hasGroqAPIKey = AppConfig.shared.hasGroqAPIKey
+    }
+    #endif
 }
+
+#if DEBUG
+private struct NutritionSourceDebugCard: View {
+    @Binding var isMockMode: Bool
+    let hasGroqAPIKey: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Nutrition Mode")
+                .font(.r(.headline, .semibold))
+                .foregroundStyle(.primary)
+
+            Toggle("Use Mock Nutrition", isOn: $isMockMode)
+                .font(.r(.subheadline, .semibold))
+                .tint(AppColors.brand)
+
+            if isMockMode {
+                Text("Using local deterministic nutrition JSON responses.")
+                    .font(.r(.caption, .medium))
+                    .foregroundStyle(.secondary)
+            } else {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(hasGroqAPIKey ? Color.green : Color.orange)
+                        .frame(width: 8, height: 8)
+                    Text(hasGroqAPIKey ? "GROQ_API_KEY detected in Secrets.plist" : "GROQ_API_KEY missing. Add WellPlate/Resources/Secrets.plist")
+                        .font(.r(.caption, .medium))
+                        .foregroundStyle(hasGroqAPIKey ? Color.green : Color.orange)
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
+        )
+    }
+}
+#endif
 
 // MARK: - Widget Setup Card
 

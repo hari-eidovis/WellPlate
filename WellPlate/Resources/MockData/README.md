@@ -1,6 +1,6 @@
 # Mock Data Files
 
-This directory contains JSON files used by `MockAPIClient` for offline development and testing.
+This directory contains JSON files used by mock nutrition flows for offline development and testing.
 
 ## 📁 Directory Purpose
 
@@ -66,6 +66,21 @@ register(path: "/api/users/{id}", method: .get, mockFile: "mock_user_detail")
 - `mock_user_detail.json` - Example single user
 - `mock_user_create.json` - Example created user response
 - `mock_user_delete.json` - Example delete confirmation
+- `mock_nutrition_biryani.json` - Nutrition mock for biryani-like input
+- `mock_nutrition_paratha.json` - Nutrition mock for paratha-like input
+- `mock_nutrition_salad.json` - Nutrition mock for salad-like input
+- `mock_nutrition_default.json` - Nutrition fallback for all other meal input
+
+## 🧠 Nutrition Mock Selection Rules
+
+`MockNutritionProvider` picks a file using simple keyword routing:
+
+- Input contains `salad` → `mock_nutrition_salad.json`
+- Input contains `paratha` → `mock_nutrition_paratha.json`
+- Input contains `biryani` → `mock_nutrition_biryani.json`
+- Else → `mock_nutrition_default.json`
+
+This keeps mock mode deterministic while still feeling realistic across common meal types.
 
 ## ⚠️ Important Notes
 
@@ -118,7 +133,8 @@ Console output will show:
 
 ## 📚 Related Files
 
-- `MockAPIClient.swift` - Mock API client implementation
+- `MockAPIClient.swift` - Generic mock API client implementation
+- `MockNutritionProvider.swift` - Nutrition-specific mock provider with keyword routing
 - `MockDataLoader.swift` - JSON file loading utility
 - `MockResponseRegistry.swift` - URL → filename mapping
 - `APIClientFactory.swift` - Factory for creating clients

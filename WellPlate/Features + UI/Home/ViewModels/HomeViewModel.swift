@@ -80,7 +80,8 @@ final class HomeViewModel: ObservableObject {
 
         do {
             // 3) Cache lookup
-            if let cached = try fetchCache(key: key) {
+            // Real mode bypasses cache so we don't reuse stale mock values.
+            if AppConfig.shared.mockMode, let cached = try fetchCache(key: key) {
                 insertLog(from: cached, day: day, typedName: canonicalName, key: key, context: context)
                 nutritionalInfo = NutritionalInfo(
                     foodName: cached.displayName,
@@ -112,7 +113,10 @@ final class HomeViewModel: ObservableObject {
             try modelContext.save()
             refreshWidget(for: day)
         } catch {
-            showErrorMessage("Failed to log food. Please try again.")
+            #if DEBUG
+            print("❌ [HomeViewModel] logFood failed: \(error)")
+            #endif
+            showErrorMessage(userFacingErrorMessage(for: error))
         }
     }
 
@@ -193,6 +197,38 @@ final class HomeViewModel: ObservableObject {
     private func showErrorMessage(_ message: String) {
         errorMessage = message
         showError = true
+    }
+
+    private func userFacingErrorMessage(for error: Error) -> String {
+        if let providerError = error as? NutritionProviderError {
+            switch providerError {
+            case .missingAPIKey:
+                return "Groq API key is missing. Add GROQ_API_KEY in Secrets.plist."
+            case .timeout:
+                return "Nutrition request timed out. Please try again."
+            case .invalidModelOutput, .invalidResponseShape:
+                return "Couldn't parse nutrition details. Please try another wording."
+            case .requestFailed:
+                return "Nutrition service is unavailable right now. Please try again."
+            case .invalidURL, .network:
+                return "Network error while fetching nutrition. Please try again."
+            }
+        }
+
+        if let urlError = error as? URLError, urlError.code == .timedOut {
+            return "Nutrition request timed out. Please try again."
+        }
+
+        if let apiError = error as? APIError {
+            switch apiError {
+            case .networkError:
+                return "Network error while fetching nutrition. Please try again."
+            default:
+                return "Failed to log food. Please try again."
+            }
+        }
+
+        return "Failed to log food. Please try again."
     }
 
     // MARK: - Widget Refresh

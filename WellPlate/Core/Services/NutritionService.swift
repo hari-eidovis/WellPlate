@@ -7,55 +7,65 @@
 
 import Foundation
 
-/// Implementation of NutritionServiceProtocol using APIClient
+/// Implementation of NutritionServiceProtocol using switchable providers
 class NutritionService: NutritionServiceProtocol {
-    private let apiClient: APIClientProtocol
+    private let liveProvider: NutritionProvider
+    private let mockProvider: NutritionProvider
 
-    /// Initialize with dependency injection
-    /// - Parameter apiClient: The API client to use (defaults to shared instance)
-    init(apiClient: APIClientProtocol = APIClientFactory.shared) {
-        self.apiClient = apiClient
+    /// Initialize with provider injection for testing
+    init(
+        liveProvider: NutritionProvider = GroqNutritionProvider(),
+        mockProvider: NutritionProvider = MockNutritionProvider()
+    ) {
+        self.liveProvider = liveProvider
+        self.mockProvider = mockProvider
     }
 
     /// Analyze food and return nutritional information
     func analyzeFood(request: NutritionAnalysisRequest) async throws -> NutritionalInfo {
-        // Prepare URL
-        let endpoint = "/api/nutrition/analyze"
-        guard let url = URL(string: "https://api.wellplate.com\(endpoint)") else {
-            throw APIError.invalidURL
-        }
-
         #if DEBUG
-        print("🔍 [NutritionService] Analyzing food: \(request.foodDescription)")
+        let startTime = CFAbsoluteTimeGetCurrent()
+        let source = AppConfig.shared.mockMode ? "MOCK" : "LIVE (Groq)"
+        print("┌─── 🔍 NUTRITION SERVICE ─────────────────────────")
+        print("│ Action: Analyze Food")
+        print("│ Food: \"\(request.foodDescription)\"")
+        print("│ Provider: \(source)")
+        print("└──────────────────────────────────────────────────")
         #endif
 
-        // Encode request body
-        let bodyData = try apiClient.encodeBody(request)
-
-        // Make API request
-        let response: NutritionAnalysisResponse = try await apiClient.request(
-            url: url,
-            method: .post,
-            headers: nil,
-            body: bodyData,
-            responseType: NutritionAnalysisResponse.self
-        )
-
-        // Check response success
-        guard response.success else {
-            #if DEBUG
-            print("❌ [NutritionService] API returned success=false: \(response.message)")
-            #endif
-            throw APIError.serverError(statusCode: 400, message: response.message)
+        let nutritionalInfo: NutritionalInfo
+        if AppConfig.shared.mockMode {
+            nutritionalInfo = try await mockProvider.analyze(request)
+        } else {
+            do {
+                nutritionalInfo = try await liveProvider.analyze(request)
+            } catch let providerError as NutritionProviderError where Self.shouldFallbackToMock(for: providerError) {
+                #if DEBUG
+                print("┌─── ⚠️ NUTRITION SERVICE FALLBACK ────────────────")
+                print("│ Reason: Groq rate-limit (HTTP 429)")
+                print("│ Action: Falling back to mock provider")
+                print("└──────────────────────────────────────────────────")
+                #endif
+                nutritionalInfo = try await mockProvider.analyze(request)
+            }
         }
 
-        // Convert to domain model
-        let nutritionalInfo = response.toNutritionalInfo()
-
         #if DEBUG
-        print("✅ [NutritionService] Analysis complete: \(nutritionalInfo.foodName)")
+        let elapsed = String(format: "%.0fms", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+        print("┌─── ✅ NUTRITION SERVICE COMPLETE ─────────────────")
+        print("│ Result: \(nutritionalInfo.foodName)")
+        print("│ Calories: \(nutritionalInfo.calories) kcal")
+        print("│ Total Time: \(elapsed)")
+        print("└──────────────────────────────────────────────────")
         #endif
 
         return nutritionalInfo
+    }
+
+    private static func shouldFallbackToMock(for error: NutritionProviderError) -> Bool {
+        guard case .requestFailed(let statusCode, _) = error else {
+            return false
+        }
+        return statusCode == 429
     }
 }

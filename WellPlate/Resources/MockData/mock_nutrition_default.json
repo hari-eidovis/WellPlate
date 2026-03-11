@@ -1,0 +1,16 @@
+{
+  "success": true,
+  "message": "Nutrition analysis completed successfully",
+  "data": {
+    "foodName": "Mixed Home Meal",
+    "servingSize": "1 serving",
+    "nutrition": {
+      "calories": 320,
+      "protein": 14.0,
+      "carbohydrates": 36.0,
+      "fat": 12.0,
+      "fiber": 5.0
+    },
+    "confidence": 0.84
+  }
+}
