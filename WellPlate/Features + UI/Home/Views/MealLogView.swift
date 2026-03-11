@@ -423,17 +423,24 @@ struct MealLogView: View {
 struct MealLogSheetContent: View {
     let homeViewModel: HomeViewModel
     let selectedDate: Date
+    var didSave: Binding<Bool>?
     @StateObject private var mealLogViewModel: MealLogViewModel
 
-    init(homeViewModel: HomeViewModel, selectedDate: Date) {
+    init(homeViewModel: HomeViewModel, selectedDate: Date, didSave: Binding<Bool>? = nil) {
         self.homeViewModel = homeViewModel
         self.selectedDate = selectedDate
+        self.didSave = didSave
         _mealLogViewModel = StateObject(wrappedValue: MealLogViewModel(homeViewModel: homeViewModel, selectedDate: selectedDate))
     }
 
     var body: some View {
         NavigationStack {
             MealLogView(viewModel: mealLogViewModel, selectedDate: selectedDate)
+        }
+        .onChange(of: mealLogViewModel.shouldDismiss) { _, shouldDismiss in
+            if shouldDismiss {
+                didSave?.wrappedValue = true
+            }
         }
     }
 }

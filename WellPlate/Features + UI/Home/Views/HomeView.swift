@@ -20,6 +20,8 @@ struct HomeView: View {
     @State private var showLogMeal = false
     @State private var showWellnessCalendar = false
     @State private var showProgressInsights = false
+    @State private var showMealLogFromDrag = false
+    @State private var mealSavedFromDrag = false
     @StateObject private var foodJournalViewModel = HomeViewModel()
 
     private var currentGoals: UserGoals {
@@ -89,6 +91,12 @@ struct HomeView: View {
                 }
                 .padding(.bottom, 32)
             }
+            .safeAreaInset(edge: .bottom) {
+                DragToLogOverlay {
+                    showMealLogFromDrag = true
+                }
+                .padding(.bottom, 4)
+            }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .scrollIndicators(.hidden)
             // Navigation destination for Log Meal
@@ -97,6 +105,20 @@ struct HomeView: View {
             }
             .navigationDestination(isPresented: $showWellnessCalendar) {
                 WellnessCalendarView()
+            }
+            .sheet(isPresented: $showMealLogFromDrag, onDismiss: {
+                if mealSavedFromDrag {
+                    mealSavedFromDrag = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        if !showLogMeal { showLogMeal = true }
+                    }
+                }
+            }) {
+                MealLogSheetContent(
+                    homeViewModel: foodJournalViewModel,
+                    selectedDate: Date(),
+                    didSave: $mealSavedFromDrag
+                )
             }
             .navigationBarHidden(true)
         }
