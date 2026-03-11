@@ -11,27 +11,27 @@ struct HydrationCard: View {
     var cupSizeML: Int = 250
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             // Header
             HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Hydration")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                     
                     HStack(spacing: 2) {
                         Text("\(glassesConsumed)")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundStyle(Color(hue: 0.58, saturation: 0.65, brightness: 0.75))
                             .contentTransition(.numericText(countsDown: false))
                             .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)
                         
                         Text("of \(totalGlasses) cups")
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.system(size: 12, weight: .regular, design: .rounded))
                             .foregroundStyle(.secondary)
                         
                         Text("· \(glassesConsumed * cupSizeML) mL")
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
                             .foregroundStyle(Color(hue: 0.58, saturation: 0.50, brightness: 0.70))
                             .contentTransition(.numericText(countsDown: false))
                             .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)

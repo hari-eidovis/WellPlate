@@ -30,11 +30,10 @@ struct WellnessRingsCard: View {
     @State private var animate = false
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 32) {
 
             // Header row
             HStack {
-
                 Spacer()
 
                 Text("Tap a ring to explore")

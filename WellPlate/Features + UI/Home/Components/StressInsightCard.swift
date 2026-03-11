@@ -47,7 +47,7 @@ struct StressInsightCard: View {
                     .foregroundStyle(.primary)
 
                 Text(tip)
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.system(size: 12, weight: .regular, design: .rounded))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)

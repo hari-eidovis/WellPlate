@@ -92,12 +92,12 @@ struct HomeView: View {
 //                        .padding(.horizontal, 16)
 
                     // 7. Stress Insight
-                    StressInsightCard(
-                        stressLevel: "Low",
-                        tip: "Try a 5-min breathing exercise to stay centered 🧘",
-                        onStart: { /* TODO: navigate to stress / breathing */ }
-                    )
-                    .padding(.horizontal, 16)
+//                    StressInsightCard(
+//                        stressLevel: "Low",
+//                        tip: "Try a 5-min breathing exercise to stay centered 🧘",
+//                        onStart: { /* TODO: navigate to stress / breathing */ }
+//                    )
+//                    .padding(.horizontal, 16)
                 }
                 .padding(.bottom, 32)
             }
@@ -177,16 +177,12 @@ struct HomeView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(todayString)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.system(size: 12, weight: .regular, design: .rounded))
                     .foregroundStyle(.secondary)
 
                 Text(greeting)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
-
-                Text(motivationalSubtitle)
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
-                    .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -339,10 +335,6 @@ struct HomeView: View {
         case 12..<17: return "Good Afternoon, Alex"
         default:      return "Good Evening, Alex"
         }
-    }
-
-    private var motivationalSubtitle: String {
-        "Every mindful choice counts ✨"
     }
 
     // MARK: - Mood Logging
