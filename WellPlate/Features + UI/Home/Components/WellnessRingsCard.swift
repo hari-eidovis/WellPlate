@@ -26,15 +26,11 @@ struct WellnessRingsCard: View {
 
             // Header row
             HStack {
-                Text("Today's Wellness")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-
+                
                 Spacer()
 
-                // Completion pill
                 Text("\(completionPercent)% Complete")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -118,7 +114,7 @@ private struct WellnessRingView: View {
                     .foregroundStyle(.primary)
 
                 Text(ring.sublabel)
-                    .font(.system(size: 11, weight: .regular, design: .rounded))
+                    .font(.system(size: 8, weight: .regular, design: .rounded))
                     .foregroundStyle(.secondary)
             }
         }

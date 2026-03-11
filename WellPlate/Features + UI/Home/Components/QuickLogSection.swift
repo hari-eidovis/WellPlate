@@ -1,20 +1,20 @@
 import SwiftUI
 
 // MARK: - QuickLogSection
-// 2×2 grid of tappable coloured tiles for rapid logging actions.
-
 struct QuickLogItem: Identifiable {
     let id = UUID()
     let label: String
     let symbol: String
     let tint: Color
     let background: Color
+    var isCompleted: Bool = false
     let action: () -> Void
 }
 
 struct QuickLogSection: View {
 
     let showsMoodLog: Bool
+    var waterGoalReached: Bool = false
     let onLogMeal: () -> Void
     let onLogWater: () -> Void
     let onExercise: () -> Void
@@ -31,9 +31,10 @@ struct QuickLogSection: View {
             ),
             QuickLogItem(
                 label: "Log Water",
-                symbol: "drop.fill",
-                tint: Color(hue: 0.58, saturation: 0.68, brightness: 0.88),
-                background: Color(hue: 0.58, saturation: 0.22, brightness: 0.97),
+                symbol:"drop.fill",
+                tint:Color(hue: 0.58, saturation: 0.68, brightness: 0.88),
+                background:Color(hue: 0.58, saturation: 0.22, brightness: 0.97),
+                isCompleted: waterGoalReached,
                 action: onLogWater
             )
         ]
@@ -60,10 +61,6 @@ struct QuickLogSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Log")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-
             LazyVGrid(columns: columns, spacing: 14) {
                 ForEach(items) { item in
                     QuickLogTile(item: item)
@@ -84,23 +81,32 @@ private struct QuickLogTile: View {
     var body: some View {
         Button {
             HapticService.impact(.light)
-            SoundService.playConfirmation()
+            if !item.isCompleted { SoundService.playConfirmation() }
             item.action()
         } label: {
             VStack(alignment: .leading, spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(item.tint.opacity(0.18))
+                        .fill(item.tint.opacity(item.isCompleted ? 0.22 : 0.18))
                         .frame(width: 42, height: 42)
 
                     Image(systemName: item.symbol)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(item.tint)
+                        .symbolEffect(.bounce, value: item.isCompleted)
                 }
 
-                Text(item.label)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.label)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(item.isCompleted ? item.tint : .primary)
+
+                    if item.isCompleted {
+                        Text("Daily goal met")
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundStyle(item.tint.opacity(0.8))
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
@@ -108,7 +114,11 @@ private struct QuickLogTile: View {
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(item.background)
-                    .shadow(color: item.tint.opacity(0.12), radius: 8, x: 0, y: 4)
+                    .shadow(color: item.tint.opacity(item.isCompleted ? 0.18 : 0.12), radius: 8, x: 0, y: 4)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(item.tint.opacity(item.isCompleted ? 0.35 : 0), lineWidth: 1.5)
             )
         }
         .buttonStyle(.plain)

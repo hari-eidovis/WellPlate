@@ -13,6 +13,7 @@ struct FoodJournalView: View {
     @State private var showDatePicker = false
     @State private var showProgressInsights = false
     @State private var showStreak = false
+    @State private var showMealLog = false
     @FocusState private var isTextEditorFocused: Bool
 
     /// Static query — no dynamic predicate in init to avoid re-render loops.
@@ -39,6 +40,16 @@ struct FoodJournalView: View {
             fiber: filteredLogs.reduce(0.0) { $0 + $1.fiber },
             confidence: nil
         )
+    }
+
+    private var navDateText: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(selectedDate) { return "Today" }
+        if calendar.isDateInYesterday(selectedDate) { return "Yesterday" }
+        if calendar.isDateInTomorrow(selectedDate) { return "Tomorrow" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: selectedDate)
     }
 
     private var currentStreak: Int {
@@ -72,28 +83,19 @@ struct FoodJournalView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
-                    // 1. Header
-                    HomeHeaderView(
-                        selectedDate: selectedDate,
-                        currentStreak: currentStreak,
-                        onDateTap: { showDatePicker = true },
-                        onStreakTap: { showStreak = true },
-                        onChartTap: { showProgressInsights = true }
-                    )
-
-                    // 2. Calorie Hero Card
+                    // 1. Calorie Hero Card
                     CalorieHeroCard(
                         currentNutrition: aggregatedNutrition,
                         dailyGoals: DailyGoals(from: currentGoals)
                     )
 
                     // 3. Quick-Add Input
-                    QuickAddCard(
-                        foodDescription: $viewModel.foodDescription,
-                        isLoading: viewModel.isLoading,
-                        isFocused: $isTextEditorFocused,
-                        onSubmit: triggerAnalysis
-                    )
+//                    QuickAddCard(
+//                        foodDescription: $viewModel.foodDescription,
+//                        isLoading: viewModel.isLoading,
+//                        isFocused: $isTextEditorFocused,
+//                        onSubmit: triggerAnalysis
+//                    )
 
                     // 4. Today's Meals
                     MealLogCard(
@@ -120,17 +122,32 @@ struct FoodJournalView: View {
                     }
             )
 
-            // Expandable FAB
+            // Plus button — opens MealLogView (mic/camera/notepad moved into that sheet)
             if !isTextEditorFocused {
                 VStack {
                     Spacer()
                     HStack {
                         Spacer()
-                        ExpandableFAB(
-                            onMicTap: { /* TODO */ },
-                            onCameraTap: { /* TODO */ },
-                            onNotepadTap: { isTextEditorFocused = true }
-                        )
+                        Button {
+                            HapticService.impact(.medium)
+                            showMealLog = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 52, height: 52)
+                                .background(
+                                    Circle().fill(
+                                        LinearGradient(
+                                            colors: [.orange, .orange.opacity(0.8)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                )
+                                .shadow(color: .orange.opacity(0.35), radius: 10, x: 0, y: 5)
+                        }
+                        .buttonStyle(.plain)
                         .padding(.trailing, 20)
                         .padding(.bottom, 8)
                     }
@@ -172,8 +189,44 @@ struct FoodJournalView: View {
                 .zIndex(10)
             }
         }
-        .navigationTitle("Food Journal")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Button(action: {
+                    HapticService.impact(.light)
+                    showDatePicker = true
+                }) {
+                    HStack(spacing: 4) {
+                        Text(navDateText)
+                            .font(.r(.headline, .semibold))
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button(action: {
+                    HapticService.impact(.light)
+                    showStreak = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.orange)
+                        Text("\(currentStreak)")
+                            .font(.r(15, .semibold))
+                            .foregroundColor(.primary)
+                    }
+                }
+                Button(action: {
+                    HapticService.impact(.light)
+                    showProgressInsights = true
+                }) {
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.system(size: 16))
+                        .foregroundColor(.orange)
+                }
+            }
+        }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -190,6 +243,9 @@ struct FoodJournalView: View {
         }
         .fullScreenCover(isPresented: $showProgressInsights) {
             ProgressInsightsView()
+        }
+        .sheet(isPresented: $showMealLog) {
+            MealLogSheetContent(homeViewModel: viewModel, selectedDate: selectedDate)
         }
     }
 

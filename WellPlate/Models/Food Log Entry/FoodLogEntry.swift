@@ -18,6 +18,13 @@ final class FoodLogEntry {
     var fiber: Double
     var confidence: Double?
 
+    // Optional meal context (from MealLogView)
+    var mealType: String?
+    var eatingTriggers: [String]?
+    var hungerLevel: Double?
+    var presenceLevel: Double?
+    var reflection: String?
+
     init(day: Date,
          foodName: String,
          key: String,
@@ -28,7 +35,12 @@ final class FoodLogEntry {
          fat: Double,
          fiber: Double,
          confidence: Double?,
-         createdAt: Date = .now) {
+         createdAt: Date = .now,
+         mealType: String? = nil,
+         eatingTriggers: [String]? = nil,
+         hungerLevel: Double? = nil,
+         presenceLevel: Double? = nil,
+         reflection: String? = nil) {
         self.id = UUID()
         self.day = day
         self.foodName = foodName
@@ -41,5 +53,10 @@ final class FoodLogEntry {
         self.fiber = fiber
         self.confidence = confidence
         self.createdAt = createdAt
+        self.mealType = mealType
+        self.eatingTriggers = eatingTriggers
+        self.hungerLevel = hungerLevel
+        self.presenceLevel = presenceLevel
+        self.reflection = reflection
     }
 }

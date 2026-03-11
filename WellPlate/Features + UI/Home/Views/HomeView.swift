@@ -9,6 +9,8 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Query private var userGoalsList: [UserGoals]
+    @Query(sort: \FoodLogEntry.createdAt, order: .forward) private var allFoodLogs: [FoodLogEntry]
+    @Query private var allWellnessDayLogs: [WellnessDayLog]
 
     // MARK: - State
 
@@ -39,24 +41,25 @@ struct HomeView: View {
                     // 2. Wellness Rings Card
                     WellnessRingsCard(
                         rings: wellnessRings,
-                        completionPercent: 71,
+                        completionPercent: wellnessCompletionPercent,
                         onTap: { showWellnessCalendar = true }
                     )
                     .padding(.horizontal, 16)
 
                     // 3. Quick Log
-                    QuickLogSection(
-                        showsMoodLog: !hasLoggedMoodToday,
-                        onLogMeal: {
-                            showLogMeal = true
-                        },
-                        onLogWater: {
-                            if hydrationGlasses < currentGoals.waterDailyCups { hydrationGlasses += 1 }
-                        },
-                        onExercise: { /* TODO: navigate to exercise log */ },
-                        onMood:     { /* scroll handled by section below */ }
-                    )
-                    .padding(.horizontal, 16)
+//                    QuickLogSection(
+//                        showsMoodLog: !hasLoggedMoodToday,
+//                        waterGoalReached: hydrationGlasses >= currentGoals.waterDailyCups,
+//                        onLogMeal: {
+//                            showLogMeal = true
+//                        },
+//                        onLogWater: {
+//                            if hydrationGlasses < currentGoals.waterDailyCups { hydrationGlasses += 1 }
+//                        },
+//                        onExercise: { /* TODO: navigate to exercise log */ },
+//                        onMood:     { /* scroll handled by section below */ }
+//                    )
+//                    .padding(.horizontal, 16)
 
                     // 4. Mood Check-In
                     if !hasLoggedMoodToday {
@@ -73,8 +76,8 @@ struct HomeView: View {
                     .padding(.horizontal, 16)
 
                     // 6. Activity
-                    ActivityCard.sample()
-                        .padding(.horizontal, 16)
+//                    ActivityCard.sample()
+//                        .padding(.horizontal, 16)
 
                     // 7. Stress Insight
                     StressInsightCard(
@@ -123,15 +126,15 @@ struct HomeView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(todayString)
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
 
                 Text(greeting)
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
 
                 Text(motivationalSubtitle)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.system(size: 12, weight: .regular, design: .rounded))
                     .foregroundStyle(.secondary)
             }
 
@@ -156,8 +159,8 @@ struct HomeView: View {
                         )
                         .frame(width: 44, height: 44)
 
-                    Text("A")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                    Image(systemName: "chart.xyaxis.line")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                 }
             }
@@ -170,16 +173,40 @@ struct HomeView: View {
 
     // MARK: - Wellness Rings Data
 
+    private var todayStart: Date {
+        Calendar.current.startOfDay(for: Date())
+    }
+
+    private var todayWellnessLog: WellnessDayLog? {
+        allWellnessDayLogs.first { Calendar.current.isDate($0.day, inSameDayAs: Date()) }
+    }
+
+    private var todayCalories: Int {
+        allFoodLogs.filter { $0.day == todayStart }.reduce(0) { $0 + $1.calories }
+    }
+
     private var wellnessRings: [WellnessRingItem] {
         let cupGoal = currentGoals.waterDailyCups
         let workoutGoal = currentGoals.todayWorkoutGoal
+        let calorieGoal = currentGoals.calorieGoal
+        let log = todayWellnessLog
+
+        let calorieProgress: CGFloat = calorieGoal > 0
+            ? min(1.0, CGFloat(todayCalories) / CGFloat(calorieGoal))
+            : 0
+        let waterProgress = cupGoal > 0 ? min(1.0, CGFloat(hydrationGlasses) / CGFloat(cupGoal)) : 0
+        let exerciseMinutes = log?.exerciseMinutes ?? 0
+        let exerciseProgress: CGFloat = workoutGoal > 0
+            ? min(1.0, CGFloat(exerciseMinutes) / CGFloat(workoutGoal))
+            : 0
+        let stressProgress = stressProgressFromLevel(log?.stressLevel)
 
         return [
             WellnessRingItem(
                 label: "Calories",
-                sublabel: "/ \(currentGoals.calorieGoal)",
-                value: "1420",
-                progress: 0.71,
+                sublabel: "/ \(calorieGoal)",
+                value: "\(todayCalories)",
+                progress: calorieProgress,
                 color: .orange,
                 emojiOrSymbol: nil
             ),
@@ -187,27 +214,61 @@ struct HomeView: View {
                 label: "Water",
                 sublabel: "/ \(cupGoal) cups",
                 value: "\(hydrationGlasses)",
-                progress: cupGoal > 0 ? CGFloat(hydrationGlasses) / CGFloat(cupGoal) : 0,
+                progress: waterProgress,
                 color: Color(hue: 0.58, saturation: 0.68, brightness: 0.82),
                 emojiOrSymbol: nil
             ),
             WellnessRingItem(
                 label: "Exercise",
                 sublabel: workoutGoal > 0 ? "/ \(workoutGoal) min" : "Rest day",
-                value: "32",
-                progress: 0.71,
+                value: "\(exerciseMinutes)",
+                progress: exerciseProgress,
                 color: Color(hue: 0.40, saturation: 0.62, brightness: 0.70),
                 emojiOrSymbol: nil
             ),
             WellnessRingItem(
                 label: "Stress",
-                sublabel: "Low",
+                sublabel: log?.stressLevel ?? "—",
                 value: "",
-                progress: 0.25,
+                progress: stressProgress,
                 color: Color(hue: 0.76, saturation: 0.50, brightness: 0.75),
-                emojiOrSymbol: "😌"
+                emojiOrSymbol: stressEmojiFromLevel(log?.stressLevel)
             )
         ]
+    }
+
+    private var wellnessCompletionPercent: Int {
+        let cupGoal = currentGoals.waterDailyCups
+        let workoutGoal = currentGoals.todayWorkoutGoal
+        let calorieGoal = currentGoals.calorieGoal
+        let log = todayWellnessLog
+
+        let calorieProgress = calorieGoal > 0 ? min(1.0, CGFloat(todayCalories) / CGFloat(calorieGoal)) : 0
+        let waterProgress = cupGoal > 0 ? min(1.0, CGFloat(hydrationGlasses) / CGFloat(cupGoal)) : 0
+        let exerciseMinutes = log?.exerciseMinutes ?? 0
+        let exerciseProgress = workoutGoal > 0 ? min(1.0, CGFloat(exerciseMinutes) / CGFloat(workoutGoal)) : 0
+        let stressProgress = stressProgressFromLevel(log?.stressLevel)
+
+        let average = (calorieProgress + waterProgress + exerciseProgress + stressProgress) / 4
+        return min(100, Int(round(average * 100)))
+    }
+
+    private func stressProgressFromLevel(_ level: String?) -> CGFloat {
+        switch level?.lowercased() {
+        case "low": return 0.25
+        case "medium": return 0.5
+        case "high": return 0.75
+        default: return 0
+        }
+    }
+
+    private func stressEmojiFromLevel(_ level: String?) -> String? {
+        switch level?.lowercased() {
+        case "low": return "😌"
+        case "medium": return "😐"
+        case "high": return "😣"
+        default: return "—"
+        }
     }
 
     // MARK: - Helpers

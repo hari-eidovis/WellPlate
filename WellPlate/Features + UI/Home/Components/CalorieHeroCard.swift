@@ -12,59 +12,59 @@ struct CalorieHeroCard: View {
         }) {
             VStack(spacing: 16) {
                 // Calorie header
-                HStack(alignment: .center) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text("\(currentCalories)")
-                                .font(.r(38, .bold))
-                                .foregroundColor(.primary)
-                                .contentTransition(.numericText())
-                            Text("kcal")
-                                .font(.r(.subheadline, .medium))
-                                .foregroundColor(.secondary)
-                        }
-                        Text("of \(dailyGoals.calories) daily goal")
-                            .font(.r(.caption, .regular))
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer()
-
-                    ZStack {
-                        Circle()
-                            .fill(Color.orange.opacity(0.12))
-                            .frame(width: 48, height: 48)
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.orange)
-                    }
-                }
-
-                // Progress bar + remaining label
-                VStack(alignment: .trailing, spacing: 5) {
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.gray.opacity(0.12))
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(
-                                    LinearGradient(
-                                        colors: isOverCalories
-                                            ? [Color.red, Color.orange.opacity(0.8)]
-                                            : [Color.orange, Color.orange.opacity(0.75)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: min(geo.size.width * caloriesProgress, geo.size.width))
-                        }
-                    }
-                    .frame(height: 10)
-
-                    Text(remainingText)
-                        .font(.r(.caption2, .medium))
-                        .foregroundColor(isOverCalories ? .red : .secondary)
-                }
+//                HStack(alignment: .center) {
+//                    VStack(alignment: .leading, spacing: 2) {
+//                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+//                            Text("\(currentCalories)")
+//                                .font(.r(38, .bold))
+//                                .foregroundColor(.primary)
+//                                .contentTransition(.numericText())
+//                            Text("kcal")
+//                                .font(.r(.subheadline, .medium))
+//                                .foregroundColor(.secondary)
+//                        }
+//                        Text("of \(dailyGoals.calories) daily goal")
+//                            .font(.r(.caption, .regular))
+//                            .foregroundColor(.secondary)
+//                    }
+//
+//                    Spacer()
+//
+//                    ZStack {
+//                        Circle()
+//                            .fill(Color.orange.opacity(0.12))
+//                            .frame(width: 48, height: 48)
+//                        Image(systemName: "flame.fill")
+//                            .font(.system(size: 20))
+//                            .foregroundColor(.orange)
+//                    }
+//                }
+//
+//                // Progress bar + remaining label
+//                VStack(alignment: .trailing, spacing: 5) {
+//                    GeometryReader { geo in
+//                        ZStack(alignment: .leading) {
+//                            RoundedRectangle(cornerRadius: 6)
+//                                .fill(Color.gray.opacity(0.12))
+//                            RoundedRectangle(cornerRadius: 6)
+//                                .fill(
+//                                    LinearGradient(
+//                                        colors: isOverCalories
+//                                            ? [Color.red, Color.orange.opacity(0.8)]
+//                                            : [Color.orange, Color.orange.opacity(0.75)],
+//                                        startPoint: .leading,
+//                                        endPoint: .trailing
+//                                    )
+//                                )
+//                                .frame(width: min(geo.size.width * caloriesProgress, geo.size.width))
+//                        }
+//                    }
+//                    .frame(height: 10)
+//
+//                    Text(remainingText)
+//                        .font(.r(.caption2, .medium))
+//                        .foregroundColor(isOverCalories ? .red : .secondary)
+//                }
 
                 // Macro columns
                 HStack(spacing: 0) {

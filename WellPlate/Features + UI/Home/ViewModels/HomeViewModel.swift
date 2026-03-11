@@ -43,7 +43,7 @@ final class HomeViewModel: ObservableObject {
         modelContext = context
     }
 
-    func logFood(on date: Date, coachOverride: String? = nil) async {
+    func logFood(on date: Date, coachOverride: String? = nil, context: MealContext? = nil) async {
         let rawInput = foodDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !rawInput.isEmpty else { showErrorMessage("Please enter a food description"); return }
 
@@ -81,7 +81,7 @@ final class HomeViewModel: ObservableObject {
         do {
             // 3) Cache lookup
             if let cached = try fetchCache(key: key) {
-                insertLog(from: cached, day: day, typedName: canonicalName, key: key)
+                insertLog(from: cached, day: day, typedName: canonicalName, key: key, context: context)
                 nutritionalInfo = NutritionalInfo(
                     foodName: cached.displayName,
                     servingSize: cached.servingSize,
@@ -107,7 +107,7 @@ final class HomeViewModel: ObservableObject {
 
             // 5) Upsert cache + insert log
             try upsertCache(from: result, key: key, displayName: canonicalName)
-            insertLog(from: result, day: day, typedName: canonicalName, key: key)
+            insertLog(from: result, day: day, typedName: canonicalName, key: key, context: context)
 
             try modelContext.save()
             refreshWidget(for: day)
@@ -148,7 +148,7 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    private func insertLog(from cache: FoodCache, day: Date, typedName: String, key: String) {
+    private func insertLog(from cache: FoodCache, day: Date, typedName: String, key: String, context: MealContext? = nil) {
         let entry = FoodLogEntry(
             day: day,
             foodName: typedName,
@@ -159,12 +159,17 @@ final class HomeViewModel: ObservableObject {
             carbs: cache.carbs,
             fat: cache.fat,
             fiber: cache.fiber,
-            confidence: cache.confidence
+            confidence: cache.confidence,
+            mealType: context?.mealType?.rawValue,
+            eatingTriggers: context?.eatingTriggers.isEmpty == false ? context?.eatingTriggers.map(\.rawValue) : nil,
+            hungerLevel: context?.hungerLevel,
+            presenceLevel: context?.presenceLevel,
+            reflection: context?.reflection?.isEmpty == false ? context?.reflection : nil
         )
         modelContext.insert(entry)
     }
 
-    private func insertLog(from info: NutritionalInfo, day: Date, typedName: String, key: String) {
+    private func insertLog(from info: NutritionalInfo, day: Date, typedName: String, key: String, context: MealContext? = nil) {
         let entry = FoodLogEntry(
             day: day,
             foodName: typedName,
@@ -175,7 +180,12 @@ final class HomeViewModel: ObservableObject {
             carbs: info.carbs,
             fat: info.fat,
             fiber: info.fiber,
-            confidence: info.confidence
+            confidence: info.confidence,
+            mealType: context?.mealType?.rawValue,
+            eatingTriggers: context?.eatingTriggers.isEmpty == false ? context?.eatingTriggers.map(\.rawValue) : nil,
+            hungerLevel: context?.hungerLevel,
+            presenceLevel: context?.presenceLevel,
+            reflection: context?.reflection?.isEmpty == false ? context?.reflection : nil
         )
         modelContext.insert(entry)
     }
