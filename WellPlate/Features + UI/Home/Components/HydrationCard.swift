@@ -9,6 +9,7 @@ struct HydrationCard: View {
     @Binding var glassesConsumed: Int
     let totalGlasses: Int
     var cupSizeML: Int = 250
+    var onTap: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 24) {
@@ -74,6 +75,10 @@ struct HydrationCard: View {
                 .fill(Color(.systemBackground))
                 .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 5)
         )
+        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .onTapGesture {
+            onTap?()
+        }
     }
 
     // MARK: - Actions

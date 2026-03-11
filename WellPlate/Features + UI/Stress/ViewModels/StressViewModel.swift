@@ -247,6 +247,9 @@ final class StressViewModel: ObservableObject {
         // Refresh screen time from persisted value
         refreshScreenTimeFactor()
 
+        // ── Persist snapshot to WellnessDayLog so HomeView rings update ──
+        persistTodayWellnessSnapshot(steps: steps, energy: energy)
+
         #if DEBUG
         log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         log("📊 Stress summary:")
@@ -321,6 +324,56 @@ final class StressViewModel: ObservableObject {
     func refreshScreenTimeOnly() {
         refreshScreenTimeFactor()
     }
+
+    // MARK: - WellnessDayLog Sync
+
+    /// Writes the current stress level and computed exercise minutes into today's
+    /// `WellnessDayLog` so that HomeView's wellness rings stay in sync without
+    /// requiring any shared ViewModel state.
+    private func persistTodayWellnessSnapshot(steps: Double?, energy: Double?) {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<WellnessDayLog>(
+            predicate: #Predicate { $0.day == today }
+        )
+        let wellnessLog: WellnessDayLog
+        if let existing = (try? modelContext.fetch(descriptor))?.first {
+            wellnessLog = existing
+        } else {
+            let newLog = WellnessDayLog(day: Date())
+            modelContext.insert(newLog)
+            wellnessLog = newLog
+        }
+
+        // Stress level — derive from the just-computed totalScore.
+        wellnessLog.stressLevel = stressLevel.label
+
+        // Exercise minutes — estimate from active energy (~10 kcal per minute
+        // of moderate-intensity exercise). Falls back to a steps-based estimate
+        // (100 steps ≈ 1 min of walking) when energy data is unavailable.
+        let estimatedMinutes: Int
+        if let kcal = energy, kcal > 0 {
+            estimatedMinutes = max(0, Int(kcal / 10.0))
+        } else if let s = steps, s > 0 {
+            estimatedMinutes = max(0, Int(s / 100.0))
+        } else {
+            estimatedMinutes = 0
+        }
+        wellnessLog.exerciseMinutes = estimatedMinutes
+        wellnessLog.steps = Int(steps ?? 0)
+        wellnessLog.caloriesBurned = Int(energy ?? 0)
+
+        try? modelContext.save()
+
+        #if DEBUG
+        log_debug("💾 WellnessDayLog synced → stressLevel='\(stressLevel.label)'  exerciseMinutes=\(estimatedMinutes)")
+        #endif
+    }
+
+    #if DEBUG
+    private func log_debug(_ message: String) {
+        print("[StressVM] \(message)")
+    }
+    #endif
 
     // MARK: - Private: Safe Fetchers (return nil on error)
 

@@ -83,7 +83,8 @@ struct HomeView: View {
                     HydrationCard(
                         glassesConsumed: $hydrationGlasses,
                         totalGlasses: currentGoals.waterDailyCups,
-                        cupSizeML: currentGoals.waterCupSizeML
+                        cupSizeML: currentGoals.waterCupSizeML,
+                        onTap: { showWaterDetail = true }
                     )
                     .padding(.horizontal, 16)
 
@@ -232,7 +233,7 @@ struct HomeView: View {
 
     private var wellnessRings: [WellnessRingItem] {
         let cupGoal = currentGoals.waterDailyCups
-        let workoutGoal = currentGoals.todayWorkoutGoal
+        let energyGoal = currentGoals.activeEnergyGoalKcal
         let calorieGoal = currentGoals.calorieGoal
         let log = todayWellnessLog
 
@@ -240,9 +241,9 @@ struct HomeView: View {
             ? min(1.0, CGFloat(todayCalories) / CGFloat(calorieGoal))
             : 0
         let waterProgress = cupGoal > 0 ? min(1.0, CGFloat(hydrationGlasses) / CGFloat(cupGoal)) : 0
-        let exerciseMinutes = log?.exerciseMinutes ?? 0
-        let exerciseProgress: CGFloat = workoutGoal > 0
-            ? min(1.0, CGFloat(exerciseMinutes) / CGFloat(workoutGoal))
+        let burnedKcal = log?.caloriesBurned ?? 0
+        let exerciseProgress: CGFloat = energyGoal > 0
+            ? min(1.0, CGFloat(burnedKcal) / CGFloat(energyGoal))
             : 0
         let stressProgress = stressProgressFromLevel(log?.stressLevel)
 
@@ -267,8 +268,8 @@ struct HomeView: View {
             ),
             WellnessRingItem(
                 label: "Exercise",
-                sublabel: workoutGoal > 0 ? "/ \(workoutGoal) min" : "Rest day",
-                value: "\(exerciseMinutes)",
+                sublabel: "/ \(energyGoal) kcal",
+                value: "\(burnedKcal)",
                 progress: exerciseProgress,
                 color: Color(hue: 0.50, saturation: 0.62, brightness: 0.70),
                 emojiOrSymbol: nil,
@@ -288,14 +289,14 @@ struct HomeView: View {
 
     private var wellnessCompletionPercent: Int {
         let cupGoal = currentGoals.waterDailyCups
-        let workoutGoal = currentGoals.todayWorkoutGoal
+        let energyGoal = currentGoals.activeEnergyGoalKcal
         let calorieGoal = currentGoals.calorieGoal
         let log = todayWellnessLog
 
         let calorieProgress = calorieGoal > 0 ? min(1.0, CGFloat(todayCalories) / CGFloat(calorieGoal)) : 0
         let waterProgress = cupGoal > 0 ? min(1.0, CGFloat(hydrationGlasses) / CGFloat(cupGoal)) : 0
-        let exerciseMinutes = log?.exerciseMinutes ?? 0
-        let exerciseProgress = workoutGoal > 0 ? min(1.0, CGFloat(exerciseMinutes) / CGFloat(workoutGoal)) : 0
+        let burnedKcal = log?.caloriesBurned ?? 0
+        let exerciseProgress = energyGoal > 0 ? min(1.0, CGFloat(burnedKcal) / CGFloat(energyGoal)) : 0
         let stressProgress = stressProgressFromLevel(log?.stressLevel)
 
         let average = (calorieProgress + waterProgress + exerciseProgress + stressProgress) / 4
@@ -304,19 +305,23 @@ struct HomeView: View {
 
     private func stressProgressFromLevel(_ level: String?) -> CGFloat {
         switch level?.lowercased() {
-        case "low": return 0.25
-        case "medium": return 0.5
-        case "high": return 0.75
-        default: return 0
+        case "excellent": return 0.05
+        case "good":      return 0.25
+        case "moderate":  return 0.50
+        case "high":      return 0.75
+        case "very high": return 1.0
+        default:          return 0
         }
     }
 
     private func stressEmojiFromLevel(_ level: String?) -> String? {
         switch level?.lowercased() {
-        case "low": return "😌"
-        case "medium": return "😐"
-        case "high": return "😣"
-        default: return "—"
+        case "excellent": return "😄"
+        case "good":      return "😌"
+        case "moderate":  return "😐"
+        case "high":      return "😣"
+        case "very high": return "😰"
+        default:          return "—"
         }
     }
 

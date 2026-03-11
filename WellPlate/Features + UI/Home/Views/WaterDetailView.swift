@@ -64,6 +64,7 @@ struct WaterDetailView: View {
                     }
                     .disabled(glassesConsumed >= totalGlasses)
                 }
+                .padding(.horizontal,8)
             }
         }
     }

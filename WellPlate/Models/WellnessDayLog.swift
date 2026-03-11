@@ -25,7 +25,7 @@ final class WellnessDayLog {
     /// Step count.
     var steps: Int
 
-    /// Stress level label, e.g. "Low", "Medium", "High". `nil` = not logged.
+    /// Stress level label, e.g. "Excellent", "Good", "Moderate", "High", "Very High". `nil` = not logged.
     var stressLevel: String?
 
     var createdAt: Date
