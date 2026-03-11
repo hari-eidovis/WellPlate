@@ -2,6 +2,27 @@ import Foundation
 import SwiftData
 import Combine
 
+// MARK: - QuantityUnit
+
+/// Unit for user-entered meal quantity. Drives the g / ml toggle in MealLogView.
+enum QuantityUnit: String, CaseIterable, Identifiable {
+    case grams = "g"
+    case millilitres = "ml"
+
+    var id: String { rawValue }
+
+    var label: String { rawValue }
+
+    var sfSymbol: String {
+        switch self {
+        case .grams: return "scalemass"
+        case .millilitres: return "drop"
+        }
+    }
+}
+
+// MARK: - MealLogViewModel
+
 @MainActor
 final class MealLogViewModel: ObservableObject {
     // MARK: - Form state
@@ -12,6 +33,12 @@ final class MealLogViewModel: ObservableObject {
     @Published var presenceLevel: Double = 0.5
     @Published var reflection: String = ""
     @Published var showMoreContext: Bool = false
+
+    // MARK: - Quantity state
+    /// Numeric amount entered by the user (e.g. "250"). Empty string means not specified.
+    @Published var quantity: String = ""
+    /// Unit for the quantity — g for solid food, ml for drinks/liquids.
+    @Published var quantityUnit: QuantityUnit = .grams
 
     // MARK: - Save flow state
     @Published var isLoading: Bool = false
@@ -28,13 +55,22 @@ final class MealLogViewModel: ObservableObject {
         !foodDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    /// Formatted serving passed to the API, e.g. "250 ml". Nil when quantity field is blank.
+    var formattedServing: String? {
+        let trimmed = quantity.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return "\(trimmed) \(quantityUnit.rawValue)"
+    }
+
     var currentMealContext: MealContext {
         MealContext(
             mealType: selectedMealType,
             eatingTriggers: Array(selectedTriggers),
             hungerLevel: hungerLevel,
             presenceLevel: presenceLevel,
-            reflection: reflection.isEmpty ? nil : reflection
+            reflection: reflection.isEmpty ? nil : reflection,
+            quantity: quantity.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : quantity.trimmingCharacters(in: .whitespacesAndNewlines),
+            quantityUnit: quantity.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : quantityUnit.rawValue
         )
     }
 

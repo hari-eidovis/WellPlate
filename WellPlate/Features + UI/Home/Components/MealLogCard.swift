@@ -111,6 +111,12 @@ struct MealLogCard: View {
 
                 // Macro chips
                 HStack(spacing: 5) {
+                    // Quantity pill — show user-entered amount when available, else API serving
+                    if let qty = entry.quantity, !qty.isEmpty, let unit = entry.quantityUnit {
+                        macroPill("\(qty)\(unit)", color: AppColors.primary)
+                    } else if let serving = entry.servingSize, !serving.isEmpty {
+                        macroPill(serving, color: AppColors.primary)
+                    }
                     macroPill("\(Int(entry.protein))g P", color: Color(red: 0.85, green: 0.25, blue: 0.25))
                     macroPill("\(Int(entry.carbs))g C", color: .blue)
                     macroPill("\(Int(entry.fat))g F", color: .orange)

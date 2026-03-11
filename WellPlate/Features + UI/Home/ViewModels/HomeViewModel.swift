@@ -99,9 +99,16 @@ final class HomeViewModel: ObservableObject {
             }
 
             // 4) API call using canonical name
+            // Serving priority: user-entered quantity from MealContext > HomeViewModel.servingSize field
+            let resolvedServing: String?
+            if let contextServing = context?.formattedServing {
+                resolvedServing = contextServing
+            } else {
+                resolvedServing = servingSize.isEmpty ? nil : servingSize
+            }
             let request = NutritionAnalysisRequest(
                 foodDescription: canonicalName,
-                servingSize: servingSize.isEmpty ? nil : servingSize
+                servingSize: resolvedServing
             )
             let result = try await nutritionService.analyzeFood(request: request)
             nutritionalInfo = result
@@ -168,7 +175,9 @@ final class HomeViewModel: ObservableObject {
             eatingTriggers: context?.eatingTriggers.isEmpty == false ? context?.eatingTriggers.map(\.rawValue) : nil,
             hungerLevel: context?.hungerLevel,
             presenceLevel: context?.presenceLevel,
-            reflection: context?.reflection?.isEmpty == false ? context?.reflection : nil
+            reflection: context?.reflection?.isEmpty == false ? context?.reflection : nil,
+            quantity: context?.quantity,
+            quantityUnit: context?.quantityUnit
         )
         modelContext.insert(entry)
     }
@@ -189,7 +198,9 @@ final class HomeViewModel: ObservableObject {
             eatingTriggers: context?.eatingTriggers.isEmpty == false ? context?.eatingTriggers.map(\.rawValue) : nil,
             hungerLevel: context?.hungerLevel,
             presenceLevel: context?.presenceLevel,
-            reflection: context?.reflection?.isEmpty == false ? context?.reflection : nil
+            reflection: context?.reflection?.isEmpty == false ? context?.reflection : nil,
+            quantity: context?.quantity,
+            quantityUnit: context?.quantityUnit
         )
         modelContext.insert(entry)
     }

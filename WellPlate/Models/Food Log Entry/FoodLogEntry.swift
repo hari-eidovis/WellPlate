@@ -24,6 +24,10 @@ final class FoodLogEntry {
     var hungerLevel: Double?
     var presenceLevel: Double?
     var reflection: String?
+    /// User-entered quantity amount, e.g. "250"
+    var quantity: String?
+    /// User-entered unit, either "g" or "ml"
+    var quantityUnit: String?
 
     init(day: Date,
          foodName: String,
@@ -40,7 +44,9 @@ final class FoodLogEntry {
          eatingTriggers: [String]? = nil,
          hungerLevel: Double? = nil,
          presenceLevel: Double? = nil,
-         reflection: String? = nil) {
+         reflection: String? = nil,
+         quantity: String? = nil,
+         quantityUnit: String? = nil) {
         self.id = UUID()
         self.day = day
         self.foodName = foodName
@@ -58,5 +64,7 @@ final class FoodLogEntry {
         self.hungerLevel = hungerLevel
         self.presenceLevel = presenceLevel
         self.reflection = reflection
+        self.quantity = quantity
+        self.quantityUnit = quantityUnit
     }
 }

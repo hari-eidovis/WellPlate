@@ -11,6 +11,7 @@ struct MealLogView: View {
     let selectedDate: Date
     @FocusState private var isFoodFieldFocused: Bool
     @FocusState private var isReflectionFieldFocused: Bool
+    @FocusState private var isQuantityFieldFocused: Bool
 
     private static var timeFormatter: DateFormatter {
         let f = DateFormatter()
@@ -29,6 +30,7 @@ struct MealLogView: View {
                         headerSection
                         mealTypePicker
                         foodInputSection
+                        quantitySection
                         quickActionRow
                         eatingTriggersSection
                         voiceNoteSection
@@ -156,6 +158,44 @@ struct MealLogView: View {
         )
     }
 
+    // MARK: - Quantity Section
+
+    private var quantitySection: some View {
+        HStack(spacing: 12) {
+            // Icon
+            Image(systemName: viewModel.quantityUnit == .millilitres ? "drop.fill" : "scalemass.fill")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(AppColors.primary.opacity(0.6))
+                .frame(width: 20)
+
+            // Numeric input
+            TextField("Amount", text: $viewModel.quantity)
+                .font(.r(15, .regular))
+                .keyboardType(.decimalPad)
+                .textFieldStyle(.plain)
+                .focused($isQuantityFieldFocused)
+                .disabled(viewModel.isLoading)
+                .tint(AppColors.primary)
+
+            // Unit toggle — g / ml
+            Picker("", selection: $viewModel.quantityUnit) {
+                ForEach(QuantityUnit.allCases) { unit in
+                    Text(unit.label).tag(unit)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 90)
+            .disabled(viewModel.isLoading)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 15, y: 5)
+        )
+    }
+
     // MARK: - Quick Action Row
 
     private var quickActionRow: some View {
@@ -256,7 +296,7 @@ struct MealLogView: View {
                 Text("Add a voice note")
                     .font(.r(.subheadline, .semibold))
                     .foregroundColor(AppColors.textPrimary)
-                Text("30 sec • Optional • Only you can hear this")
+                Text("30 sec • Only you can hear this")
                     .font(.r(.caption2, .regular))
                     .foregroundColor(AppColors.textSecondary)
             }
