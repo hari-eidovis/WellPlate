@@ -29,16 +29,7 @@ struct WellnessRingsCard: View {
                 
                 Spacer()
                 
-                //                Text("\(completionPercent)% Complete")
-                //                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                //                    .foregroundStyle(.secondary)
-                //                    .padding(.horizontal, 12)
-                //                    .padding(.vertical, 6)
-                //                    .background(
-                //                        Capsule()
-                //                            .fill(Color(.tertiarySystemFill))
-                //                    )
-                
+
                 Text("Tap to expand")
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
@@ -112,7 +103,7 @@ private struct WellnessRingView: View {
                         .font(.system(size: 22))
                 } else {
                     Text(ring.value)
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
                         .contentTransition(.numericText())
                 }

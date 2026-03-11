@@ -91,6 +91,16 @@ struct HomeView: View {
                 }
                 .padding(.bottom, 32)
             }
+            .onScrollGeometryChange(for: Bool.self) { geo in
+                // True when user has overscrolled past the bottom by 60pt+
+                let overscroll = geo.contentOffset.y + geo.containerSize.height - geo.contentSize.height - geo.contentInsets.bottom
+                return overscroll > 60
+            } action: { _, isPastBottom in
+                if isPastBottom && !showMealLogFromDrag {
+                    HapticService.impact(.medium)
+                    showMealLogFromDrag = true
+                }
+            }
             .safeAreaInset(edge: .bottom) {
                 DragToLogOverlay {
                     showMealLogFromDrag = true
