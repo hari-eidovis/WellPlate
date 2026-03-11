@@ -14,22 +14,32 @@ struct WellnessRingItem: Identifiable {
 }
 
 struct WellnessRingsCard: View {
-
+    
     let rings: [WellnessRingItem]
     let completionPercent: Int
     var onTap: () -> Void = {}
-
+    
     @State private var animate = false
-
+    
     var body: some View {
         VStack(spacing: 16) {
-
+            
             // Header row
             HStack {
                 
                 Spacer()
-
-                Text("\(completionPercent)% Complete")
+                
+                //                Text("\(completionPercent)% Complete")
+                //                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                //                    .foregroundStyle(.secondary)
+                //                    .padding(.horizontal, 12)
+                //                    .padding(.vertical, 6)
+                //                    .background(
+                //                        Capsule()
+                //                            .fill(Color(.tertiarySystemFill))
+                //                    )
+                
+                Text("Tap to expand")
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 12)
@@ -39,7 +49,7 @@ struct WellnessRingsCard: View {
                             .fill(Color(.tertiarySystemFill))
                     )
             }
-
+            
             // Rings row
             HStack(spacing: 0) {
                 ForEach(rings) { ring in
@@ -70,10 +80,10 @@ struct WellnessRingsCard: View {
 // MARK: - WellnessRingView
 
 private struct WellnessRingView: View {
-
+    
     let ring: WellnessRingItem
     let animate: Bool
-
+    
     var body: some View {
         VStack(spacing: 10) {
             ZStack {
@@ -81,7 +91,7 @@ private struct WellnessRingView: View {
                 Circle()
                     .stroke(ring.color.opacity(0.15), lineWidth: 7)
                     .frame(width: 64, height: 64)
-
+                
                 // Progress arc
                 Circle()
                     .trim(from: 0, to: animate ? ring.progress : 0)
@@ -95,7 +105,7 @@ private struct WellnessRingView: View {
                         .spring(response: 1.1, dampingFraction: 0.72).delay(0.15),
                         value: animate
                     )
-
+                
                 // Center: emoji or numeric value
                 if let emoji = ring.emojiOrSymbol {
                     Text(emoji)
@@ -107,12 +117,12 @@ private struct WellnessRingView: View {
                         .contentTransition(.numericText())
                 }
             }
-
+            
             VStack(spacing: 2) {
                 Text(ring.label)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
                     .foregroundStyle(.primary)
-
+                
                 Text(ring.sublabel)
                     .font(.system(size: 8, weight: .regular, design: .rounded))
                     .foregroundStyle(.secondary)
