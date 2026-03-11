@@ -156,7 +156,7 @@ struct GoalsExpandableView: View {
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.orange, Color.orange.opacity(0.8)],
+                                        colors: [AppColors.brand, AppColors.brand.opacity(0.8)],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )

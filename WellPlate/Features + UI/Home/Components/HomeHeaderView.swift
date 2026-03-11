@@ -37,7 +37,7 @@ struct HomeHeaderView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "flame.fill")
                             .font(.system(size: 14))
-                            .foregroundColor(.orange)
+                            .foregroundColor(AppColors.brand)
                         Text("\(currentStreak)")
                             .font(.r(16, .semibold))
                             .foregroundColor(.primary)
@@ -50,7 +50,7 @@ struct HomeHeaderView: View {
                 }) {
                     Image(systemName: "chart.bar.xaxis")
                         .font(.system(size: 16))
-                        .foregroundColor(.orange)
+                        .foregroundColor(AppColors.brand)
                 }
             }
             .padding(.horizontal, 8)

@@ -139,13 +139,13 @@ struct FoodJournalView: View {
                                 .background(
                                     Circle().fill(
                                         LinearGradient(
-                                            colors: [.orange, .orange.opacity(0.8)],
+                                            colors: [AppColors.brand, AppColors.brand.opacity(0.8)],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
                                     )
                                 )
-                                .shadow(color: .orange.opacity(0.35), radius: 10, x: 0, y: 5)
+                                .shadow(color: AppColors.brand.opacity(0.35), radius: 10, x: 0, y: 5)
                         }
                         .buttonStyle(.plain)
                         .padding(.trailing, 20)
@@ -211,7 +211,7 @@ struct FoodJournalView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "flame.fill")
                             .font(.system(size: 14))
-                            .foregroundColor(.orange)
+                            .foregroundColor(AppColors.brand)
                         Text("\(currentStreak)")
                             .font(.r(15, .semibold))
                             .foregroundColor(.primary)
@@ -223,7 +223,7 @@ struct FoodJournalView: View {
                 }) {
                     Image(systemName: "chart.bar.xaxis")
                         .font(.system(size: 16))
-                        .foregroundColor(.orange)
+                        .foregroundColor(AppColors.brand)
                 }
             }
         }
@@ -308,7 +308,7 @@ struct FoodJournalView: View {
                     displayedComponents: [.date]
                 )
                 .datePickerStyle(.graphical)
-                .tint(.orange)
+                .tint(AppColors.brand)
                 .padding()
 
                 Spacer()
@@ -320,7 +320,7 @@ struct FoodJournalView: View {
                     Button("Today") {
                         selectedDate = Date()
                     }
-                    .foregroundColor(.orange)
+                    .foregroundColor(AppColors.brand)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {

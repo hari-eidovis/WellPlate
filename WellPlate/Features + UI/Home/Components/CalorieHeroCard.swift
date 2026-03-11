@@ -163,7 +163,7 @@ struct CalorieHeroCard: View {
                         HStack(spacing: 4) {
                             Image(systemName: "flame.fill")
                                 .font(.system(size: 13))
-                                .foregroundColor(.orange)
+                                .foregroundColor(AppColors.brand)
                             Text("Calories")
                                 .font(.r(13, .medium))
                         }
@@ -180,7 +180,7 @@ struct CalorieHeroCard: View {
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.orange, Color.orange.opacity(0.8)],
+                                        colors: [AppColors.brand, AppColors.brand.opacity(0.8)],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )

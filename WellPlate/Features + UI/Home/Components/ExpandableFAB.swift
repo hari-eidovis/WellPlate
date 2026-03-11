@@ -66,13 +66,13 @@ struct ExpandableFAB: View {
                         Circle()
                             .fill(
                                 LinearGradient(
-                                    colors: [.orange, .orange.opacity(0.8)],
+                                    colors: [AppColors.brand, AppColors.brand.opacity(0.8)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
                     )
-                    .shadow(color: .orange.opacity(0.35), radius: 10, x: 0, y: 5)
+                    .shadow(color: AppColors.brand.opacity(0.35), radius: 10, x: 0, y: 5)
             }
             .buttonStyle(.plain)
         }

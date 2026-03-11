@@ -27,7 +27,6 @@ struct DragToLogOverlay: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .padding(.horizontal, 20)
-        .padding(.bottom,8)
         .offset(y: min(0, dragOffset))
         .scaleEffect(
             1 + min(0.04, max(0, -dragOffset) / dragThreshold * 0.04),

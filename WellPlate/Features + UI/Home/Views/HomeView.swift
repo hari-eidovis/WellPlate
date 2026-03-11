@@ -12,12 +12,15 @@ struct HomeView: View {
     @Query(sort: \FoodLogEntry.createdAt, order: .forward) private var allFoodLogs: [FoodLogEntry]
     @Query private var allWellnessDayLogs: [WellnessDayLog]
 
+    @Binding var selectedTab: Int
+
     // MARK: - State
 
     @State private var selectedMood: MoodOption?
     @State private var hasLoggedMoodToday = false
     @State private var hydrationGlasses: Int = 0
     @State private var showLogMeal = false
+    @State private var showWaterDetail = false
     @State private var showWellnessCalendar = false
     @State private var showProgressInsights = false
     @State private var showMealLogFromDrag = false
@@ -44,7 +47,14 @@ struct HomeView: View {
                     WellnessRingsCard(
                         rings: wellnessRings,
                         completionPercent: wellnessCompletionPercent,
-                        onTap: { showWellnessCalendar = true }
+                        onRingTap: { destination in
+                            switch destination {
+                            case .calories: showLogMeal = true
+                            case .water:    showWaterDetail = true
+                            case .exercise: selectedTab = 1
+                            case .stress:   selectedTab = 2
+                            }
+                        }
                     )
                     .padding(.horizontal, 16)
 
@@ -113,6 +123,12 @@ struct HomeView: View {
             .navigationDestination(isPresented: $showLogMeal) {
                 FoodJournalView(viewModel: foodJournalViewModel)
             }
+            .navigationDestination(isPresented: $showWaterDetail) {
+                WaterDetailView(
+                    totalGlasses: currentGoals.waterDailyCups,
+                    cupSizeML: currentGoals.waterCupSizeML
+                )
+            }
             .navigationDestination(isPresented: $showWellnessCalendar) {
                 WellnessCalendarView()
             }
@@ -137,6 +153,9 @@ struct HomeView: View {
             foodJournalViewModel.bindContext(modelContext)
             refreshTodayMoodState()
             refreshTodayHydrationState()
+        }
+        .onChange(of: showWaterDetail) { _, showing in
+            if !showing { refreshTodayHydrationState() }
         }
         .onChange(of: selectedMood) { _, mood in
             guard let mood else { return }
@@ -172,34 +191,32 @@ struct HomeView: View {
 
             Spacer()
 
-            // Avatar circle
+            // Calendar button
             Button {
                 HapticService.impact(.light)
-                showProgressInsights = true
+                showWellnessCalendar = true
             } label: {
                 ZStack {
                     Circle()
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(hue: 0.40, saturation: 0.50, brightness: 0.84),
-                                    Color(hue: 0.40, saturation: 0.40, brightness: 0.72)
+                                    AppColors.brand.opacity(0.85),
+                                    AppColors.brand
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 44, height: 44)
+                        .shadow(color: AppColors.brand.opacity(0.3), radius: 6, x: 0, y: 3)
 
-                    Image(systemName: "chart.xyaxis.line")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                    Image(systemName: "calendar")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                 }
             }
             .buttonStyle(.plain)
-            .fullScreenCover(isPresented: $showProgressInsights) {
-                ProgressInsightsView()
-            }
         }
     }
 
@@ -239,8 +256,9 @@ struct HomeView: View {
                 sublabel: "/ \(calorieGoal)",
                 value: "\(todayCalories)",
                 progress: calorieProgress,
-                color: .orange,
-                emojiOrSymbol: nil
+                color: AppColors.brand,
+                emojiOrSymbol: nil,
+                destination: .calories
             ),
             WellnessRingItem(
                 label: "Water",
@@ -248,15 +266,17 @@ struct HomeView: View {
                 value: "\(hydrationGlasses)",
                 progress: waterProgress,
                 color: Color(hue: 0.58, saturation: 0.68, brightness: 0.82),
-                emojiOrSymbol: nil
+                emojiOrSymbol: nil,
+                destination: .water
             ),
             WellnessRingItem(
                 label: "Exercise",
                 sublabel: workoutGoal > 0 ? "/ \(workoutGoal) min" : "Rest day",
                 value: "\(exerciseMinutes)",
                 progress: exerciseProgress,
-                color: Color(hue: 0.40, saturation: 0.62, brightness: 0.70),
-                emojiOrSymbol: nil
+                color: Color(hue: 0.50, saturation: 0.62, brightness: 0.70),
+                emojiOrSymbol: nil,
+                destination: .exercise
             ),
             WellnessRingItem(
                 label: "Stress",
@@ -264,7 +284,8 @@ struct HomeView: View {
                 value: "",
                 progress: stressProgress,
                 color: Color(hue: 0.76, saturation: 0.50, brightness: 0.75),
-                emojiOrSymbol: stressEmojiFromLevel(log?.stressLevel)
+                emojiOrSymbol: stressEmojiFromLevel(log?.stressLevel),
+                destination: .stress
             )
         ]
     }
@@ -407,6 +428,6 @@ struct HomeView: View {
         for: FoodLogEntry.self, WellnessDayLog.self, UserGoals.self,
         configurations: config
     )
-    return HomeView()
+    return HomeView(selectedTab: .constant(0))
         .modelContainer(container)
 }

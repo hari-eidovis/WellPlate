@@ -24,11 +24,11 @@ struct DisambiguationChipsView: View {
                 HStack(spacing: 10) {
                     ZStack {
                         Circle()
-                            .fill(Color.orange.opacity(0.15))
+                            .fill(AppColors.brand.opacity(0.15))
                             .frame(width: 36, height: 36)
                         Image(systemName: "questionmark.bubble.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.orange)
+                            .foregroundColor(AppColors.brand)
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Did you mean…")
@@ -54,12 +54,12 @@ struct DisambiguationChipsView: View {
                                 Spacer()
                                 Text("~\(option.calorieEstimate) kcal")
                                     .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(AppColors.brand)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 4)
                                     .background(
                                         Capsule()
-                                            .fill(Color.orange.opacity(0.12))
+                                            .fill(AppColors.brand.opacity(0.12))
                                     )
                             }
                             .padding(.horizontal, 16)

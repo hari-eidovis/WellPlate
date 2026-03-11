@@ -50,7 +50,7 @@ struct MiniLineChartView: View {
         let date = Calendar.current.date(byAdding: .day, value: -i, to: Date())!
         return DailyMetricSample(date: date, value: Double.random(in: 200...600))
     }
-    MiniLineChartView(samples: samples.reversed(), color: .orange)
+    MiniLineChartView(samples: samples.reversed(), color: AppColors.brand)
         .frame(height: 50)
         .padding()
 }

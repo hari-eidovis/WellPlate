@@ -31,12 +31,8 @@ struct WellnessCalendarView: View {
                 Button {
                     dismiss()
                 } label: {
-                    HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
-                        Text("Home")
-                            .font(.system(size: 16, weight: .medium))
-                    }
                     .foregroundStyle(Color(hue: 0.40, saturation: 0.55, brightness: 0.72))
                 }
             }
@@ -399,7 +395,7 @@ struct WellnessCalendarView: View {
                 VStack(spacing: 12) {
                     // Macro summary row
                     HStack(spacing: 0) {
-                        macroChip(label: "Cal", value: "\(viewModel.totalCalories)", color: .orange)
+                        macroChip(label: "Cal", value: "\(viewModel.totalCalories)", color: AppColors.brand)
                         macroChip(label: "Protein", value: String(format: "%.0fg", viewModel.totalProtein), color: .red)
                         macroChip(label: "Carbs", value: String(format: "%.0fg", viewModel.totalCarbs), color: .blue)
                         macroChip(label: "Fat", value: String(format: "%.0fg", viewModel.totalFat), color: .yellow)
@@ -423,7 +419,7 @@ struct WellnessCalendarView: View {
                             Spacer()
                             Text("\(entry.calories) cal")
                                 .font(.system(size: 14, weight: .bold, design: .rounded))
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(AppColors.brand)
                                 .monospacedDigit()
                         }
                         .padding(.vertical, 2)

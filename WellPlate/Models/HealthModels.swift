@@ -133,7 +133,7 @@ enum BurnMetric: String, CaseIterable, Identifiable {
 
     var accentColor: Color {
         switch self {
-        case .activeEnergy: return .orange
+        case .activeEnergy: return AppColors.brand
         case .steps:        return .green
         }
     }

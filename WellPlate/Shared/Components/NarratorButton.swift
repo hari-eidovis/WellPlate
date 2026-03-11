@@ -20,7 +20,7 @@ struct NarratorButton: View {
                 // Glow ring — visible when speaking
                 if isSpeaking {
                     Circle()
-                        .stroke(Color.orange.opacity(0.25), lineWidth: 6)
+                        .stroke(AppColors.brand.opacity(0.25), lineWidth: 6)
                         .scaleEffect(pulsing ? 1.35 : 1.0)
                         .opacity(pulsing ? 0 : 0.8)
                         .animation(
@@ -34,7 +34,7 @@ struct NarratorButton: View {
                     .fill(
                         LinearGradient(
                             colors: isSpeaking
-                                ? [Color.orange, Color.orange.opacity(0.75)]
+                                ? [AppColors.brand, AppColors.brand.opacity(0.75)]
                                 : [Color(.secondarySystemBackground), Color(.secondarySystemBackground)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -42,7 +42,7 @@ struct NarratorButton: View {
                     )
                     .frame(width: 44, height: 44)
                     .shadow(
-                        color: isSpeaking ? .orange.opacity(0.35) : .clear,
+                        color: isSpeaking ? AppColors.brand.opacity(0.35) : .clear,
                         radius: 8, x: 0, y: 4
                     )
 

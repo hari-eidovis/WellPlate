@@ -85,7 +85,7 @@ struct BurnView: View {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text("\(Int(viewModel.todayActiveEnergy))")
                             .font(.r(48, .heavy))
-                            .foregroundColor(.orange)
+                            .foregroundColor(AppColors.brand)
                             .monospacedDigit()
                         Text("kcal")
                             .font(.r(.title3, .semibold))
@@ -99,7 +99,7 @@ struct BurnView: View {
                 Spacer()
                 ProgressRingView(
                     progress: viewModel.activeEnergyProgress,
-                    color: .orange,
+                    color: AppColors.brand,
                     size: 86
                 )
             }
@@ -116,7 +116,7 @@ struct BurnView: View {
                 statPill(
                     label: "7D Avg",
                     value: "\(viewModel.weekAvgEnergy) kcal",
-                    color: .orange
+                    color: AppColors.brand
                 )
                 Divider().frame(height: 32)
                 statPill(
@@ -257,7 +257,7 @@ struct BurnView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.4)
-                .tint(.orange)
+                .tint(AppColors.brand)
             Text("Loading health data…")
                 .font(.r(.subheadline, .regular))
                 .foregroundColor(.secondary)

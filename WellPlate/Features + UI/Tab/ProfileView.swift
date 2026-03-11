@@ -68,7 +68,7 @@ struct ProfilePlaceholderView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "person.crop.circle.fill")
                             .font(.system(size: 56))
-                            .foregroundStyle(.orange.opacity(0.85))
+                            .foregroundStyle(AppColors.brand.opacity(0.85))
 
                         Text("Profile")
                             .font(.r(.title2, .bold))
@@ -137,7 +137,7 @@ private struct WidgetSetupCard: View {
             HStack(spacing: 10) {
                 Image(systemName: "rectangle.3.group.fill")
                     .font(.title3)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(AppColors.brand)
                 Text("Widget")
                     .font(.r(.headline, .semibold))
                 Spacer()
@@ -198,7 +198,7 @@ private struct WidgetSetupCard: View {
                         RoundedRectangle(cornerRadius: 14)
                             .fill(
                                 LinearGradient(
-                                    colors: [.orange.opacity(0.85)],
+                                    colors: [AppColors.brand.opacity(0.85)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -253,7 +253,7 @@ private struct SizePill: View {
         ZStack {
             if isSelected {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.orange)
+                    .fill(AppColors.brand)
                     .matchedGeometryEffect(id: "pill", in: namespace)
             }
 
@@ -336,22 +336,22 @@ private struct SmallPreview: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(.systemBackground), Color.orange.opacity(0.07)],
+            LinearGradient(colors: [Color(.systemBackground), AppColors.brand.opacity(0.07)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
 
             VStack(spacing: 0) {
                 HStack {
                     Text("Today").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
                     Spacer()
-                    Image(systemName: "fork.knife").font(.system(size: 9)).foregroundStyle(.orange)
+                    Image(systemName: "fork.knife").font(.system(size: 9)).foregroundStyle(AppColors.brand)
                 }
                 Spacer(minLength: 4)
                 // Mini ring
                 ZStack {
-                    Circle().stroke(Color.orange.opacity(0.18), lineWidth: 7)
+                    Circle().stroke(AppColors.brand.opacity(0.18), lineWidth: 7)
                     Circle()
                         .trim(from: 0, to: fraction)
-                        .stroke(AngularGradient(colors: [.orange, .pink],
+                        .stroke(AngularGradient(colors: [AppColors.brand, .pink],
                                                center: .center,
                                                startAngle: .degrees(-90),
                                                endAngle: .degrees(270)),
@@ -368,11 +368,11 @@ private struct SmallPreview: View {
                     .font(.system(size: 8, weight: .medium)).foregroundStyle(.secondary)
                 Spacer(minLength: 6)
                 HStack(spacing: 3) {
-                    Image(systemName: "plus.circle.fill").font(.system(size: 8)).foregroundStyle(.orange)
+                    Image(systemName: "plus.circle.fill").font(.system(size: 8)).foregroundStyle(AppColors.brand)
                     Text("Add Food").font(.system(size: 8, weight: .semibold))
                 }
                 .padding(.horizontal, 9).padding(.vertical, 4)
-                .background(Capsule().fill(Color.orange.opacity(0.12)))
+                .background(Capsule().fill(AppColors.brand.opacity(0.12)))
             }
             .padding(10)
         }
@@ -386,16 +386,16 @@ private struct MediumPreview: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(.systemBackground), Color.orange.opacity(0.06)],
+            LinearGradient(colors: [Color(.systemBackground), AppColors.brand.opacity(0.06)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             HStack(spacing: 0) {
                 VStack(spacing: 4) {
                     Text("Today").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
                     ZStack {
-                        Circle().stroke(Color.orange.opacity(0.18), lineWidth: 7)
+                        Circle().stroke(AppColors.brand.opacity(0.18), lineWidth: 7)
                         Circle()
                             .trim(from: 0, to: fraction)
-                            .stroke(AngularGradient(colors: [.orange, .pink],
+                            .stroke(AngularGradient(colors: [AppColors.brand, .pink],
                                                    center: .center,
                                                    startAngle: .degrees(-90),
                                                    endAngle: .degrees(270)),
@@ -408,8 +408,8 @@ private struct MediumPreview: View {
                     }
                     .frame(width: 60, height: 60)
                     HStack(spacing: 2) {
-                        Image(systemName: "plus.circle.fill").font(.system(size: 7)).foregroundStyle(.orange)
-                        Text("Add").font(.system(size: 8, weight: .semibold)).foregroundStyle(.orange)
+                        Image(systemName: "plus.circle.fill").font(.system(size: 7)).foregroundStyle(AppColors.brand)
+                        Text("Add").font(.system(size: 8, weight: .semibold)).foregroundStyle(AppColors.brand)
                     }
                 }
                 .frame(width: 88)
@@ -436,12 +436,12 @@ private struct LargePreview: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(.systemBackground), Color.orange.opacity(0.06)],
+            LinearGradient(colors: [Color(.systemBackground), AppColors.brand.opacity(0.06)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             VStack(alignment: .leading, spacing: 0) {
                 // Header
                 HStack(spacing: 4) {
-                    Image(systemName: "fork.knife.circle.fill").font(.system(size: 12)).foregroundStyle(.orange)
+                    Image(systemName: "fork.knife.circle.fill").font(.system(size: 12)).foregroundStyle(AppColors.brand)
                     Text("Nutrition").font(.system(size: 11, weight: .bold))
                     Spacer()
                     Text("Today").font(.system(size: 9)).foregroundStyle(.secondary)
@@ -452,7 +452,7 @@ private struct LargePreview: View {
                 HStack(alignment: .lastTextBaseline, spacing: 3) {
                     Text("\(data.totalCalories)")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(AppColors.brand)
                     Text("/ \(data.calorieGoal) cal")
                         .font(.system(size: 9)).foregroundStyle(.secondary)
                 }
@@ -461,9 +461,9 @@ private struct LargePreview: View {
                 // Calorie progress bar
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 3).fill(Color.orange.opacity(0.15)).frame(height: 6)
+                        RoundedRectangle(cornerRadius: 3).fill(AppColors.brand.opacity(0.15)).frame(height: 6)
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing))
+                            .fill(LinearGradient(colors: [AppColors.brand, .pink], startPoint: .leading, endPoint: .trailing))
                             .frame(width: geo.size.width * fraction, height: 6)
                     }
                 }
@@ -485,7 +485,7 @@ private struct LargePreview: View {
                 VStack(spacing: 4) {
                     ForEach(data.recentFoods.prefix(3)) { food in
                         HStack(spacing: 5) {
-                            Circle().fill(Color.orange.opacity(0.35)).frame(width: 5, height: 5)
+                            Circle().fill(AppColors.brand.opacity(0.35)).frame(width: 5, height: 5)
                             Text(food.name).font(.system(size: 9)).lineLimit(1)
                             Spacer()
                             Text("\(food.calories)").font(.system(size: 9, weight: .medium)).foregroundStyle(.secondary)
@@ -503,7 +503,7 @@ private struct LargePreview: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 7)
-                .background(Capsule().fill(LinearGradient(colors: [.orange, .pink.opacity(0.85)],
+                .background(Capsule().fill(LinearGradient(colors: [AppColors.brand, .pink.opacity(0.85)],
                                                           startPoint: .leading, endPoint: .trailing)))
             }
             .padding(12)
@@ -547,7 +547,7 @@ private struct WidgetInstructionsSheet: View {
     private let steps: [(icon: String, color: Color, text: String)] = [
         ("hand.tap.fill",               .blue,   "Long-press any empty area on your Home Screen until icons jiggle."),
         ("plus.circle.fill",            .green,  "Tap the  +  button in the top-left corner."),
-        ("magnifyingglass",             .orange, "Search for WellPlate in the widget gallery."),
+        ("magnifyingglass",             AppColors.brand, "Search for WellPlate in the widget gallery."),
         ("rectangle.3.group.fill",      .purple, "Swipe to choose your preferred size, then tap Add Widget."),
         ("arrow.up.left.and.arrow.down.right", .pink, "Drag the widget wherever you like and tap Done.")
     ]
@@ -561,7 +561,7 @@ private struct WidgetInstructionsSheet: View {
                     VStack(spacing: 10) {
                         Image(systemName: "rectangle.3.group.fill")
                             .font(.system(size: 48))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(AppColors.brand)
                         Text("Add the Food Widget")
                             .font(.r(.title3, .bold))
                         Text("Follow these steps to add the \(size.rawValue) widget to your Home Screen.")
@@ -652,11 +652,11 @@ private struct GoalsNavigationCard: View {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.orange.opacity(0.12))
+                        .fill(AppColors.brand.opacity(0.12))
                         .frame(width: 42, height: 42)
                     Image(systemName: "target")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(AppColors.brand)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {

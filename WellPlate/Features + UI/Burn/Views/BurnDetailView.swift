@@ -52,7 +52,7 @@ struct BurnDetailView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
                         .fontWeight(.semibold)
-                        .foregroundColor(.orange)
+                        .foregroundColor(AppColors.brand)
                 }
             }
         }

@@ -79,7 +79,7 @@ struct GoalsView: View {
     // MARK: - Nutrition Section
 
     private var nutritionSection: some View {
-        GoalCard(icon: "flame.fill", iconColor: .orange, title: "Nutrition") {
+        GoalCard(icon: "flame.fill", iconColor: AppColors.brand, title: "Nutrition") {
             VStack(spacing: 16) {
                 GoalStepperRow(
                     label: "Calories",
@@ -330,7 +330,7 @@ private struct GoalStepperRow: View {
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundStyle(value <= range.lowerBound ? Color.gray.opacity(0.3) : .orange)
+                        .foregroundStyle(value <= range.lowerBound ? Color.gray.opacity(0.3) : AppColors.brand)
                 }
                 .buttonStyle(.plain)
                 .disabled(value <= range.lowerBound)
@@ -347,7 +347,7 @@ private struct GoalStepperRow: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundStyle(value >= range.upperBound ? Color.gray.opacity(0.3) : .orange)
+                        .foregroundStyle(value >= range.upperBound ? Color.gray.opacity(0.3) : AppColors.brand)
                 }
                 .buttonStyle(.plain)
                 .disabled(value >= range.upperBound)
@@ -399,7 +399,7 @@ private struct WorkoutDayRow: View {
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundStyle(isRestDay ? Color.gray.opacity(0.3) : .orange)
+                        .foregroundStyle(isRestDay ? Color.gray.opacity(0.3) : AppColors.brand)
                 }
                 .buttonStyle(.plain)
                 .disabled(isRestDay)
@@ -410,7 +410,7 @@ private struct WorkoutDayRow: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundStyle(minutes >= 480 ? Color.gray.opacity(0.3) : .orange)
+                        .foregroundStyle(minutes >= 480 ? Color.gray.opacity(0.3) : AppColors.brand)
                 }
                 .buttonStyle(.plain)
                 .disabled(minutes >= 480)

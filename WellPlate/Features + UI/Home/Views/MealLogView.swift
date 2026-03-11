@@ -380,7 +380,7 @@ struct MealLogView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            colors: [Color.orange, Color.orange.opacity(0.8)],
+                            colors: [AppColors.brand, AppColors.brand.opacity(0.8)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )

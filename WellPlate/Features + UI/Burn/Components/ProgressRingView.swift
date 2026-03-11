@@ -52,6 +52,6 @@ struct ProgressRingView: View {
 }
 
 #Preview {
-    ProgressRingView(progress: 0.72, color: .orange, size: 90)
+    ProgressRingView(progress: 0.72, color: AppColors.brand, size: 90)
         .padding()
 }

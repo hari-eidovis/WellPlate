@@ -173,7 +173,7 @@ struct StreakDetailView: View {
         VStack(spacing: 10) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 60))
-                .foregroundColor(.orange)
+                .foregroundColor(AppColors.brand)
                 .symbolEffect(.variableColor.iterative, options: .repeating)
 
             Text("\(streakData.currentStreak)")
@@ -187,7 +187,7 @@ struct StreakDetailView: View {
 
             HStack(spacing: 6) {
                 Circle()
-                    .fill(streakData.isActiveToday ? Color.green : Color.orange)
+                    .fill(streakData.isActiveToday ? Color.green : Color.yellow)
                     .frame(width: 8, height: 8)
                 Text(streakData.isActiveToday ? "Today logged" : "Log today to keep it going")
                     .font(.r(.caption, .regular))
@@ -303,12 +303,12 @@ struct StreakDetailView: View {
         return ZStack {
             if isToday {
                 Circle()
-                    .stroke(Color.orange, lineWidth: 2)
+                    .stroke(AppColors.brand, lineWidth: 2)
                     .frame(width: 34, height: 34)
             }
             if isLogged {
                 Circle()
-                    .fill(Color.orange)
+                    .fill(AppColors.brand)
                     .frame(width: 30, height: 30)
             } else if !isToday {
                 Circle()
@@ -346,7 +346,7 @@ struct StreakDetailView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "flame.fill")
                                 .font(.r(.subheadline, .regular))
-                                .foregroundColor(.orange)
+                                .foregroundColor(AppColors.brand)
                             Text("\(period.length) day\(period.length == 1 ? "" : "s")")
                                 .font(.r(.subheadline, .semibold))
                             Spacer()

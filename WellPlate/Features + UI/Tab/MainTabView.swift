@@ -15,7 +15,7 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             // MARK: - Home
             Tab(value: 0) {
-                HomeView()
+                HomeView(selectedTab: $selectedTab)
             } label: {
                 Label("Home", systemImage: "house.fill")
             }
@@ -42,7 +42,7 @@ struct MainTabView: View {
             }
         }
        // .tabViewStyle(.sidebarAdaptable)
-        .tint(.orange)
+        .tint(AppColors.brand)
         .sensoryFeedback(.selection, trigger: selectedTab)
     }
 }

@@ -2,9 +2,10 @@ import SwiftUI
 
 enum AppColors {
     // MARK: - Brand / Primary
-    static let primary = Color("AppPrimary")
-    static let primaryContainer = Color("PrimaryContainer")  // softer orange background
-    static let onPrimary = Color("OnPrimary")                // text/icons on primary
+    static let brand             = Color("AppPrimary")           // adaptive: reads light/dark from AppPrimary.colorset
+    static let primary           = Color("AppPrimary")
+    static let primaryContainer  = Color("PrimaryContainer")     // soft green background
+    static let onPrimary         = Color("OnPrimary")            // text/icons on primary
 
     // MARK: - Surfaces / Borders / Text
     static let surface = Color("Surface")

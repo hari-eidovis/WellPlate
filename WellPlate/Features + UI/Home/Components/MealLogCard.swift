@@ -20,7 +20,7 @@ struct MealLogCard: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
-                        .background(Capsule().fill(Color.orange))
+                        .background(Capsule().fill(AppColors.brand))
                 }
 
                 Spacer()
