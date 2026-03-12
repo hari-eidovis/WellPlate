@@ -54,11 +54,20 @@ struct ProfilePlaceholderView: View {
     @State private var isWidgetInstalled            = false
     @State private var showInstructions             = false
     @State private var showGoals                    = false
+    @State private var showEditName                 = false
+    @State private var showEditWeight               = false
+    @State private var showEditHeight               = false
+    @State private var editedName                   = UserProfileManager.shared.userName
+    @State private var editedWeight                 = UserProfileManager.shared.weightKg
+    @State private var editedHeight                 = UserProfileManager.shared.heightCm
+    @State private var editWeightUnit               = UserProfileManager.shared.weightUnit
     @Namespace private var sizeNamespace
     #if DEBUG
     @State private var mockModeEnabled: Bool = AppConfig.shared.mockMode
     @State private var hasGroqAPIKey: Bool = AppConfig.shared.hasGroqAPIKey
     #endif
+
+    private let profile = UserProfileManager.shared
 
     private var currentGoals: UserGoals {
         userGoalsList.first ?? UserGoals.defaults()
@@ -67,17 +76,24 @@ struct ProfilePlaceholderView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 20) {
                     // ── Profile header ──────────────────────────
-                    VStack(spacing: 12) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.system(size: 56))
-                            .foregroundStyle(AppColors.brand.opacity(0.85))
+                    ProfileHeaderSection(
+                        name: profile.userName,
+                        statsText: "\(profile.formattedWeight) · \(profile.formattedHeight)"
+                    )
+                    .padding(.top, 12)
 
-                        Text("Profile")
-                            .font(.r(.title2, .bold))
-                    }
-                    .padding(.top, 16)
+                    // ── Personal info card ─────────────────────
+                    PersonalInfoCard(
+                        name: profile.userName.isEmpty ? "Not set" : profile.userName,
+                        weight: profile.formattedWeight,
+                        height: profile.formattedHeight,
+                        onNameTap: { showEditName = true },
+                        onWeightTap: { showEditWeight = true },
+                        onHeightTap: { showEditHeight = true }
+                    )
+                    .padding(.horizontal, 16)
 
                     // ── Goals card ─────────────────────────────
                     GoalsNavigationCard(goals: currentGoals) {
@@ -95,6 +111,10 @@ struct ProfilePlaceholderView: View {
                     )
                     .padding(.horizontal, 16)
 
+                    // ── App info card ──────────────────────────
+                    AppInfoCard()
+                        .padding(.horizontal, 16)
+
                     #if DEBUG
                     NutritionSourceDebugCard(
                         isMockMode: $mockModeEnabled,
@@ -109,6 +129,7 @@ struct ProfilePlaceholderView: View {
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
+                refreshProfileData()
                 checkWidgetStatus()
                 #if DEBUG
                 refreshDebugNutritionState()
@@ -128,6 +149,35 @@ struct ProfilePlaceholderView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+            .alert("Edit Name", isPresented: $showEditName) {
+                TextField("Name", text: $editedName)
+                Button("Save") {
+                    profile.userName = editedName
+                }
+                Button("Cancel", role: .cancel) {
+                    editedName = profile.userName
+                }
+            }
+            .alert("Edit Weight (kg)", isPresented: $showEditWeight) {
+                TextField("Weight", value: $editedWeight, format: .number)
+                    .keyboardType(.decimalPad)
+                Button("Save") {
+                    profile.weightKg = editedWeight
+                }
+                Button("Cancel", role: .cancel) {
+                    editedWeight = profile.weightKg
+                }
+            }
+            .alert("Edit Height (cm)", isPresented: $showEditHeight) {
+                TextField("Height", value: $editedHeight, format: .number)
+                    .keyboardType(.decimalPad)
+                Button("Save") {
+                    profile.heightCm = editedHeight
+                }
+                Button("Cancel", role: .cancel) {
+                    editedHeight = profile.heightCm
+                }
+            }
         }
     }
 
@@ -143,12 +193,199 @@ struct ProfilePlaceholderView: View {
         }
     }
 
+    private func refreshProfileData() {
+        editedName = profile.userName
+        editedWeight = profile.weightKg
+        editedHeight = profile.heightCm
+        editWeightUnit = profile.weightUnit
+    }
+
     #if DEBUG
     private func refreshDebugNutritionState() {
         mockModeEnabled = AppConfig.shared.mockMode
         hasGroqAPIKey = AppConfig.shared.hasGroqAPIKey
     }
     #endif
+}
+
+// MARK: - Profile Header
+
+private struct ProfileHeaderSection: View {
+    let name: String
+    let statsText: String
+
+    var body: some View {
+        VStack(spacing: 10) {
+            // Avatar with gradient ring
+            ZStack {
+                Circle()
+                    .stroke(
+                        AngularGradient(
+                            colors: [AppColors.brand, AppColors.brand.opacity(0.4), AppColors.brand],
+                            center: .center
+                        ),
+                        lineWidth: 3
+                    )
+                    .frame(width: 72, height: 72)
+
+                Image(systemName: "person.crop.circle.fill")
+                    .font(.system(size: 56))
+                    .foregroundStyle(AppColors.brand.opacity(0.75))
+                    .symbolRenderingMode(.hierarchical)
+            }
+
+            VStack(spacing: 4) {
+                Text(name.isEmpty ? "Your Profile" : name)
+                    .font(.r(.title3, .bold))
+                    .foregroundStyle(.primary)
+
+                if !statsText.isEmpty && statsText != "0 kg · 0 cm" {
+                    Text(statsText)
+                        .font(.r(.subheadline, .medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Personal Info Card
+
+private struct PersonalInfoCard: View {
+    let name: String
+    let weight: String
+    let height: String
+    let onNameTap: () -> Void
+    let onWeightTap: () -> Void
+    let onHeightTap: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Image(systemName: "person.text.rectangle.fill")
+                    .font(.title3)
+                    .foregroundStyle(AppColors.brand)
+                Text("Personal Info")
+                    .font(.r(.headline, .semibold))
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
+            ProfileInfoRow(icon: "person.fill", label: "Name", value: name, action: onNameTap)
+            Divider().padding(.leading, 52)
+            ProfileInfoRow(icon: "scalemass.fill", label: "Weight", value: weight, action: onWeightTap)
+            Divider().padding(.leading, 52)
+            ProfileInfoRow(icon: "ruler.fill", label: "Height", value: height, action: onHeightTap)
+        }
+        .padding(.bottom, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.06), radius: 15, x: 0, y: 5)
+        )
+    }
+}
+
+private struct ProfileInfoRow: View {
+    let icon: String
+    let label: String
+    let value: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: {
+            HapticService.impact(.light)
+            action()
+        }) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 13))
+                    .foregroundStyle(AppColors.brand.opacity(0.7))
+                    .frame(width: 24)
+
+                Text(label)
+                    .font(.r(.subheadline, .medium))
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                Text(value)
+                    .font(.r(.subheadline, .regular))
+                    .foregroundStyle(.secondary)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - App Info Card
+
+private struct AppInfoCard: View {
+    private let items: [(icon: String, title: String, detail: String?)] = [
+        ("info.circle.fill", "About WellPlate", nil),
+        ("lock.shield.fill", "Privacy Policy", nil),
+        ("star.fill", "Rate Us", nil),
+        ("gearshape.fill", "Version", Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Image(systemName: "ellipsis.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(AppColors.brand)
+                Text("App")
+                    .font(.r(.headline, .semibold))
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
+            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                HStack(spacing: 12) {
+                    Image(systemName: item.icon)
+                        .font(.system(size: 13))
+                        .foregroundStyle(AppColors.brand.opacity(0.7))
+                        .frame(width: 24)
+
+                    Text(item.title)
+                        .font(.r(.subheadline, .medium))
+                        .foregroundStyle(.primary)
+
+                    Spacer()
+
+                    if let detail = item.detail {
+                        Text(detail)
+                            .font(.r(.subheadline, .regular))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+
+                if index < items.count - 1 {
+                    Divider().padding(.leading, 52)
+                }
+            }
+        }
+        .padding(.bottom, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.06), radius: 15, x: 0, y: 5)
+        )
+    }
 }
 
 #if DEBUG
