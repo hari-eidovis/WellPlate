@@ -48,8 +48,20 @@ final class MealLogViewModel: ObservableObject {
     /// Set to true on successful save so the view can dismiss the sheet.
     @Published var shouldDismiss: Bool = false
 
+    // MARK: - Transcription state
+    @Published var isTranscribing: Bool = false
+    @Published var liveTranscript: String = ""
+    @Published var showTranscriptionPermissionAlert: Bool = false
+
     private let mealCoach = MealCoachService()
     private weak var homeViewModel: HomeViewModel?
+    // Injected service (tests pass a mock). Lazily falls back to AppleSpeechTranscriptionService
+    // on first use. The lazy pattern avoids calling a @MainActor init as a default parameter value,
+    // which would be evaluated in a nonisolated context and fail to compile.
+    private var _injectedSpeechService: (any SpeechTranscriptionServiceProtocol)?
+    private lazy var speechService: any SpeechTranscriptionServiceProtocol = {
+        _injectedSpeechService ?? AppleSpeechTranscriptionService()
+    }()
 
     var isValid: Bool {
         !foodDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -74,9 +86,14 @@ final class MealLogViewModel: ObservableObject {
         )
     }
 
-    init(homeViewModel: HomeViewModel?, selectedDate: Date = Date()) {
+    init(
+        homeViewModel: HomeViewModel?,
+        selectedDate: Date = Date(),
+        speechService: (any SpeechTranscriptionServiceProtocol)? = nil
+    ) {
         self.homeViewModel = homeViewModel
         self.selectedMealType = MealType.current(for: selectedDate)
+        self._injectedSpeechService = speechService
     }
 
     /// Call from view when user taps "Save & Reflect". Handles extraction, disambiguation, and final log.
@@ -162,8 +179,163 @@ final class MealLogViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Transcription
+
+    func startMealTranscription() {
+        guard !isLoading else { return }
+
+        if isTranscribing {
+            stopMealTranscription()
+            return
+        }
+
+        Task {
+            if !speechService.hasPermission {
+                do {
+                    try await speechService.requestPermissions()
+                } catch {
+                    showTranscriptionPermissionAlert = true
+                    return
+                }
+            }
+
+            do {
+                isTranscribing = true
+                liveTranscript = ""
+                try speechService.startTranscription(
+                    onPartial: { [weak self] partial in
+                        self?.liveTranscript = partial
+                    },
+                    onFinal: { [weak self] final in
+                        guard let self else { return }
+                        self.applyTranscriptToFoodDescription(final)
+                        // Reset recording state. These may already be false/empty if the user
+                        // tapped stop (stopMealTranscription resets immediately), but the
+                        // double-assignment is intentional and harmless — it ensures the UI is
+                        // consistent even if onFinal fires after a manual stop.
+                        self.liveTranscript = ""
+                        self.isTranscribing = false
+                    },
+                    onError: { [weak self] error in
+                        guard let self else { return }
+                        self.liveTranscript = ""
+                        self.isTranscribing = false
+
+                        if case .noSpeechDetected = error {
+                            return
+                        }
+
+                        self.handleSpeechTranscriptionError(error)
+                    }
+                )
+            } catch let error as SpeechTranscriptionError {
+                isTranscribing = false
+                liveTranscript = ""
+                handleSpeechTranscriptionError(error)
+            } catch {
+                isTranscribing = false
+                liveTranscript = ""
+                showErrorMessage(error.localizedDescription)
+            }
+        }
+    }
+
+    func stopMealTranscription() {
+        speechService.stopTranscription()
+        isTranscribing = false
+        liveTranscript = ""
+    }
+
+    // MARK: - Voice Auto-Log
+
+    /// Starts transcription; when speech finalises, sets `foodDescription` and auto-saves
+    /// with whatever context values are currently set (all defaults for a fresh ViewModel).
+    func startVoiceAutoLog(selectedDate: Date) {
+        guard !isLoading else { return }
+
+        Task {
+            if !speechService.hasPermission {
+                do {
+                    try await speechService.requestPermissions()
+                } catch {
+                    showTranscriptionPermissionAlert = true
+                    return
+                }
+            }
+            do {
+                isTranscribing = true
+                liveTranscript = ""
+                foodDescription = ""
+                try speechService.startTranscription(
+                    onPartial: { [weak self] partial in
+                        self?.liveTranscript = partial
+                    },
+                    onFinal: { [weak self] final in
+                        guard let self else { return }
+                        self.isTranscribing = false
+                        self.liveTranscript = ""
+                        let trimmed = final.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !trimmed.isEmpty else { return }
+                        self.foodDescription = trimmed
+                        Task { await self.saveMeal(selectedDate: selectedDate) }
+                    },
+                    onError: { [weak self] error in
+                        guard let self else { return }
+                        self.liveTranscript = ""
+                        self.isTranscribing = false
+                        if case .noSpeechDetected = error { return }
+                        self.handleSpeechTranscriptionError(error)
+                    }
+                )
+            } catch let error as SpeechTranscriptionError {
+                isTranscribing = false
+                liveTranscript = ""
+                handleSpeechTranscriptionError(error)
+            } catch {
+                isTranscribing = false
+                liveTranscript = ""
+                showErrorMessage(error.localizedDescription)
+            }
+        }
+    }
+
+    /// Signals the end of audio input — the recognizer will finalise and fire `onFinal`,
+    /// which applies the transcript and calls `saveMeal` automatically.
+    func stopVoiceAutoLog() {
+        speechService.stopTranscription()
+    }
+
+    /// Cancels the voice log without saving.
+    func cancelVoiceAutoLog() {
+        speechService.cancelTranscription()
+        isTranscribing = false
+        liveTranscript = ""
+        foodDescription = ""
+    }
+
+    func applyTranscriptToFoodDescription(_ transcript: String) {
+        let trimmedTranscript = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTranscript.isEmpty else { return }
+
+        let existingDescription = foodDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        if existingDescription.isEmpty {
+            foodDescription = trimmedTranscript
+        } else {
+            foodDescription = existingDescription + " " + trimmedTranscript
+        }
+    }
+
     private func showErrorMessage(_ message: String) {
         errorMessage = message
         showError = true
+    }
+
+    private func handleSpeechTranscriptionError(_ error: SpeechTranscriptionError) {
+        if case .permissionDenied = error {
+            showTranscriptionPermissionAlert = true
+            return
+        }
+
+        showErrorMessage(error.localizedDescription ?? "Transcription failed.")
     }
 }

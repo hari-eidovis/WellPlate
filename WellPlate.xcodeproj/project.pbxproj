@@ -17,6 +17,7 @@
 		BF53DC472F49D20600423F77 /* ScreenTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF53DC462F49D20600423F77 /* ScreenTime.framework */; };
 		BF76276B2F49170700984E8E /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF76276A2F49170700984E8E /* HealthKit.framework */; };
 		BF76276D2F49170F00984E8E /* HealthKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF76276C2F49170F00984E8E /* HealthKitUI.framework */; };
+		BF9000022F70000100984E8E /* Speech.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF9000012F70000100984E8E /* Speech.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +69,7 @@
 		BF53DC462F49D20600423F77 /* ScreenTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScreenTime.framework; path = System/Library/Frameworks/ScreenTime.framework; sourceTree = SDKROOT; };
 		BF76276A2F49170700984E8E /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		BF76276C2F49170F00984E8E /* HealthKitUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKitUI.framework; path = System/Library/Frameworks/HealthKitUI.framework; sourceTree = SDKROOT; };
+		BF9000012F70000100984E8E /* Speech.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Speech.framework; path = System/Library/Frameworks/Speech.framework; sourceTree = SDKROOT; };
 		BFD33EC22F27DF8100D93897 /* WellPlate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WellPlate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -158,6 +160,7 @@
 				BF76276B2F49170700984E8E /* HealthKit.framework in Frameworks */,
 				BF53DC452F49D20100423F77 /* FamilyControls.framework in Frameworks */,
 				BF76276D2F49170F00984E8E /* HealthKitUI.framework in Frameworks */,
+				BF9000022F70000100984E8E /* Speech.framework in Frameworks */,
 				BF53DC472F49D20600423F77 /* ScreenTime.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -180,6 +183,7 @@
 				BF53DC442F49D20100423F77 /* FamilyControls.framework */,
 				BF76276C2F49170F00984E8E /* HealthKitUI.framework */,
 				BF76276A2F49170700984E8E /* HealthKit.framework */,
+				BF9000012F70000100984E8E /* Speech.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -440,7 +444,7 @@
 				DEVELOPMENT_TEAM = 26HBC2PDLM;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenTimeMonitor/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -464,7 +468,7 @@
 				DEVELOPMENT_TEAM = 26HBC2PDLM;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenTimeMonitor/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -488,7 +492,7 @@
 				DEVELOPMENT_TEAM = 26HBC2PDLM;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenTimeReport/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -512,7 +516,7 @@
 				DEVELOPMENT_TEAM = 26HBC2PDLM;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenTimeReport/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -536,7 +540,7 @@
 				DEVELOPMENT_TEAM = 26HBC2PDLM;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WellPlateWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -560,7 +564,7 @@
 				DEVELOPMENT_TEAM = 26HBC2PDLM;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WellPlateWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -714,13 +718,16 @@
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Please allow this to fetch your health data in this app";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "WellPlate reads your activity and health data to show Burn and Sleep insights alongside your nutrition.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Please allow this to fetch your health data in this app";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WellPlate uses the microphone so you can speak meal entries instead of typing them.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Please allow library access to pick photos";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need permission to access photos";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "WellPlate converts your speech into text to help you log meals faster.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -760,13 +767,16 @@
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Please allow this to fetch your health data in this app";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "WellPlate reads your activity and health data to show Burn and Sleep insights alongside your nutrition.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Please allow this to fetch your health data in this app";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WellPlate uses the microphone so you can speak meal entries instead of typing them.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Please allow library access to pick photos";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need permission to access photos";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "WellPlate converts your speech into text to help you log meals faster.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

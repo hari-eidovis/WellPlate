@@ -1,11 +1,13 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 // MARK: - MealLogView
 // Rich meal-logging form presented as a sheet from FoodJournalView when user taps the plus button.
 
 struct MealLogView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @ObservedObject var viewModel: MealLogViewModel
 
     let selectedDate: Date
@@ -13,11 +15,11 @@ struct MealLogView: View {
     @FocusState private var isReflectionFieldFocused: Bool
     @FocusState private var isQuantityFieldFocused: Bool
 
-    private static var timeFormatter: DateFormatter {
+    private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "h:mm a"
         return f
-    }
+    }()
 
     var body: some View {
         ZStack {
@@ -29,7 +31,7 @@ struct MealLogView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         headerSection
                         mealTypePicker
-                        foodInputSection
+                        foodInputGroup
                         quantitySection
                         quickActionRow
                         eatingTriggersSection
@@ -54,6 +56,9 @@ struct MealLogView: View {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
                     HapticService.impact(.light)
+                    if viewModel.isTranscribing {
+                        viewModel.stopMealTranscription()
+                    }
                     dismiss()
                 } label: {
                     Image(systemName: "chevron.left")
@@ -67,6 +72,15 @@ struct MealLogView: View {
         } message: {
             Text(viewModel.errorMessage)
         }
+        .alert("Microphone Access Required", isPresented: $viewModel.showTranscriptionPermissionAlert) {
+            Button("Open Settings") {
+                guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                openURL(url)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("WellPlate needs microphone and speech recognition access to transcribe your meal. Enable both in Settings > Privacy.")
+        }
         .onChange(of: viewModel.showError) { _, isError in
             if isError { HapticService.notify(.error) }
         }
@@ -75,6 +89,11 @@ struct MealLogView: View {
                 HapticService.notify(.success)
                 SoundService.playConfirmation()
                 dismiss()
+            }
+        }
+        .onDisappear {
+            if viewModel.isTranscribing {
+                viewModel.stopMealTranscription()
             }
         }
     }
@@ -136,6 +155,38 @@ struct MealLogView: View {
     }
 
     // MARK: - Food Input
+
+    private var foodInputGroup: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            foodInputSection
+
+            if viewModel.isTranscribing {
+                HStack(spacing: 6) {
+                    Image(systemName: "waveform")
+                        .font(.system(size: 11))
+                        .foregroundColor(AppColors.primary)
+                    Text(viewModel.liveTranscript.isEmpty
+                         ? "Say the food and amount if you know it..."
+                         : viewModel.liveTranscript)
+                        .font(.r(.caption, .regular))
+                        .foregroundColor(viewModel.liveTranscript.isEmpty
+                                         ? AppColors.textSecondary
+                                         : AppColors.textPrimary)
+                        .lineLimit(2)
+                }
+                .padding(.horizontal, 16)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(
+                    viewModel.liveTranscript.isEmpty
+                        ? "Listening for speech"
+                        : "Live transcript: \(viewModel.liveTranscript)"
+                )
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isTranscribing)
+        .animation(.easeInOut(duration: 0.15), value: viewModel.liveTranscript)
+    }
 
     private var foodInputSection: some View {
         HStack(spacing: 12) {
@@ -202,7 +253,46 @@ struct MealLogView: View {
         HStack(spacing: 16) {
             quickActionButton(icon: "camera.fill", label: "Add photo") { /* TODO */ }
             quickActionButton(icon: "barcode.viewfinder", label: "Scan barcode") { /* TODO */ }
-            quickActionButton(icon: "mic.fill", label: "Voice note") { /* TODO */ }
+            speakMealButton
+        }
+    }
+
+    private var speakMealButton: some View {
+        Button {
+            HapticService.impact(.light)
+            viewModel.startMealTranscription()
+        } label: {
+            HStack(spacing: 6) {
+                speakMealIcon
+                Text(viewModel.isTranscribing ? "Listening..." : "Speak meal")
+                    .font(.r(.caption, .medium))
+            }
+            .foregroundColor(viewModel.isTranscribing ? AppColors.primary : AppColors.textSecondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(viewModel.isTranscribing
+                          ? AppColors.primaryContainer
+                          : Color(.secondarySystemBackground))
+            )
+            .animation(.easeInOut(duration: 0.2), value: viewModel.isTranscribing)
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isLoading)
+        .accessibilityLabel(viewModel.isTranscribing ? "Stop recording" : "Speak your meal")
+        .accessibilityHint(viewModel.isTranscribing ? "Tap to stop and apply transcript" : "Tap to speak instead of typing")
+    }
+
+    @ViewBuilder
+    private var speakMealIcon: some View {
+        if #available(iOS 17, *) {
+            Image(systemName: viewModel.isTranscribing ? "waveform" : "mic.fill")
+                .font(.system(size: 14))
+                .symbolEffect(.variableColor.iterative, isActive: viewModel.isTranscribing)
+        } else {
+            Image(systemName: viewModel.isTranscribing ? "waveform" : "mic.fill")
+                .font(.system(size: 14))
         }
     }
 
@@ -428,8 +518,8 @@ struct MealLogView: View {
             )
         }
         .buttonStyle(.plain)
-        .disabled(!viewModel.isValid || viewModel.isLoading)
-        .opacity(viewModel.isValid && !viewModel.isLoading ? 1 : AppOpacity.disabled)
+        .disabled(!viewModel.isValid || viewModel.isLoading || viewModel.isTranscribing)
+        .opacity(viewModel.isValid && !viewModel.isLoading && !viewModel.isTranscribing ? 1 : AppOpacity.disabled)
         .padding(.horizontal, 16)
         .padding(.bottom, 24)
         .padding(.top, 12)
@@ -458,6 +548,90 @@ struct MealLogView: View {
     }
 }
 
+// MARK: - Entry Mode
+
+enum MealLogEntryMode: Hashable {
+    case notepad
+    case mic
+    case barcode
+}
+
+// MARK: - Mode Picker
+
+struct MealLogModePickerView: View {
+    @Environment(\.dismiss) private var dismiss
+    let onSelect: (MealLogEntryMode) -> Void
+
+    var body: some View {
+        ZStack {
+            Color(.systemGroupedBackground).ignoresSafeArea()
+
+            VStack(spacing: 40) {
+                VStack(spacing: 6) {
+                    Text("Log a Meal")
+                        .font(.r(.title2, .semibold))
+                        .foregroundColor(AppColors.textPrimary)
+                    Text("How would you like to log?")
+                        .font(.r(.subheadline, .regular))
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                .padding(.top, 16)
+
+                HStack(spacing: 16) {
+                    modeButton(mode: .notepad, icon: "square.and.pencil", label: "Type")
+                    modeButton(mode: .mic,     icon: "mic.fill",           label: "Voice")
+                    modeButton(mode: .barcode, icon: "barcode.viewfinder", label: "Barcode")
+                }
+                .padding(.horizontal, 24)
+
+                Spacer()
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    HapticService.impact(.light)
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(AppColors.textSecondary)
+                }
+            }
+        }
+    }
+
+    private func modeButton(mode: MealLogEntryMode, icon: String, label: String) -> some View {
+        Button {
+            HapticService.selectionChanged()
+            onSelect(mode)
+        } label: {
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(AppColors.primaryContainer)
+                        .frame(width: 68, height: 68)
+                    Image(systemName: icon)
+                        .font(.system(size: 26, weight: .medium))
+                        .foregroundColor(AppColors.primary)
+                }
+                Text(label)
+                    .font(.r(.subheadline, .semibold))
+                    .foregroundColor(AppColors.textPrimary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(.systemBackground))
+                    .appShadow(radius: 15, y: 5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - Sheet Content (creates ViewModel once per presentation)
 
 struct MealLogSheetContent: View {
@@ -465,6 +639,7 @@ struct MealLogSheetContent: View {
     let selectedDate: Date
     var didSave: Binding<Bool>?
     @StateObject private var mealLogViewModel: MealLogViewModel
+    @State private var navigationPath = NavigationPath()
 
     init(homeViewModel: HomeViewModel, selectedDate: Date, didSave: Binding<Bool>? = nil) {
         self.homeViewModel = homeViewModel
@@ -474,8 +649,22 @@ struct MealLogSheetContent: View {
     }
 
     var body: some View {
-        NavigationStack {
-            MealLogView(viewModel: mealLogViewModel, selectedDate: selectedDate)
+        NavigationStack(path: $navigationPath) {
+            MealLogModePickerView { mode in
+                navigationPath.append(mode)
+            }
+            .navigationDestination(for: MealLogEntryMode.self) { mode in
+                switch mode {
+                case .notepad:
+                    MealLogView(viewModel: mealLogViewModel, selectedDate: selectedDate)
+                case .mic:
+                    VoiceMealLogView(viewModel: mealLogViewModel, selectedDate: selectedDate)
+                case .barcode:
+                    // TODO: barcode scanner
+                    Text("Barcode scanner coming soon")
+                        .foregroundColor(AppColors.textSecondary)
+                }
+            }
         }
         .onChange(of: mealLogViewModel.shouldDismiss) { _, shouldDismiss in
             if shouldDismiss {
