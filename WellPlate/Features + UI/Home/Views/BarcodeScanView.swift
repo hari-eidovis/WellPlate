@@ -65,11 +65,16 @@ struct BarcodeScanView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { cancelToolbarItem }
-        .onChange(of: phase) { _, newPhase in
-            if case .confirmProduct(let product, _) = newPhase {
-                confirmedQuantity = product.servingSizeG.map { "\(Int($0))" } ?? "100"
-                confirmedUnit = .grams
-            }
+        .onChange(of: phase) { oldPhase, newPhase in
+            guard case .confirmProduct(let product, _) = newPhase else { return }
+            // Only initialise once when first entering confirmProduct.
+            // Without this guard, every re-render (e.g. user typing in the
+            // quantity field) would fire onChange because BarcodeProduct is not
+            // Equatable, so two .confirmProduct values always compare unequal,
+            // resetting the quantity the user just typed back to "100".
+            if case .confirmProduct = oldPhase { return }
+            confirmedQuantity = product.servingSizeG.map { "\(Int($0))" } ?? "100"
+            confirmedUnit = .grams
         }
         .onDisappear {
             lookupTask?.cancel()
@@ -114,21 +119,15 @@ struct BarcodeScanView: View {
         }
         phase = .resolving(barcode: barcode)
         print("[BarcodeScan] phase → .resolving, starting lookup task")
+        lookupTask?.cancel()
         lookupTask = Task {
             do {
                 print("[BarcodeScan] calling productService.lookupProduct(\(barcode))")
-                let product = try await withThrowingTaskGroup(of: BarcodeProduct?.self) { group in
-                    group.addTask { try await self.productService.lookupProduct(barcode: barcode) }
-                    group.addTask {
-                        try await Task.sleep(for: .seconds(10))
-                        throw BarcodeProductError.networkError(URLError(.timedOut))
-                    }
-                    guard let result = try await group.next() else {
-                        throw BarcodeProductError.decodingError
-                    }
-                    group.cancelAll()
-                    return result
-                }
+                // Direct call — no competing timeout task. URLSession's own timeout
+                // (60 s) is the safety net. A racing sleep-then-throw task group was
+                // causing a race condition where the timer could win at the exact
+                // moment a slow network response arrived, discarding a valid product.
+                let product = try await productService.lookupProduct(barcode: barcode)
 
                 guard !Task.isCancelled else {
                     print("[BarcodeScan] task cancelled after lookup — skipping phase update")
@@ -148,15 +147,15 @@ struct BarcodeScanView: View {
                     print("[BarcodeScan] phase → .confirmProduct | cal: \(nutrition.calories) | hasNutrition: \(product.isComplete)")
                     phase = .confirmProduct(product, nutrition)
                 } else {
-                    print("[BarcodeScan] product not found — fallback with empty prefill")
-                    showToast("Product not found. Type your meal instead.")
-                    scheduleApplyFallback(prefill: "")
+                    print("[BarcodeScan] product not found — resetting to scanning")
+                    showToast("Product not found. Try scanning again or type your meal.")
+                    phase = .scanning
                 }
             } catch {
                 guard !Task.isCancelled else { return }
                 print("[BarcodeScan] ❌ lookup error: \(error)")
-                showToast("Couldn't reach product database. Type your meal instead.")
-                scheduleApplyFallback(prefill: "")
+                showToast("Couldn't reach product database. Try again.")
+                phase = .scanning
             }
         }
     }
@@ -284,17 +283,6 @@ struct BarcodeScanView: View {
     }
 
     // MARK: - Fallback
-
-    /// Waits for the toast to be readable, then pops back to the mode picker
-    /// with foodDescription pre-filled. Called directly (not via onChange) to
-    /// avoid the unreliable dismiss()-inside-onChange pattern.
-    private func scheduleApplyFallback(prefill: String) {
-        lookupTask = Task {
-            try? await Task.sleep(for: .seconds(1.5))
-            guard !Task.isCancelled else { return }
-            applyFallback(prefill: prefill)
-        }
-    }
 
     private func applyFallback(prefill: String) {
         viewModel.foodDescription = prefill

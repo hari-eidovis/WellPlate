@@ -130,7 +130,7 @@ final class MealLogViewModel: ObservableObject {
             home: home,
             selectedDate: selectedDate,
             canonicalName: extraction.foodName,
-            coachOverride: nil
+            coachOverride: extraction.foodName
         )
     }
 
