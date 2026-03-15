@@ -22,9 +22,6 @@ struct HomeView: View {
     @State private var showLogMeal = false
     @State private var showWaterDetail = false
     @State private var showWellnessCalendar = false
-    @State private var showProgressInsights = false
-    @State private var showMealLogFromDrag = false
-    @State private var mealSavedFromDrag = false
     @StateObject private var foodJournalViewModel = HomeViewModel()
 
     private var currentGoals: UserGoals {
@@ -102,19 +99,21 @@ struct HomeView: View {
                 }
                 .padding(.bottom, 32)
             }
-            .onScrollGeometryChange(for: Bool.self) { geo in
-                // True when user has overscrolled past the bottom by 60pt+
-                let overscroll = geo.contentOffset.y + geo.containerSize.height - geo.contentSize.height - geo.contentInsets.bottom
-                return overscroll > 60
-            } action: { _, isPastBottom in
-                if isPastBottom && !showMealLogFromDrag {
-                    HapticService.impact(.medium)
-                    showMealLogFromDrag = true
-                }
-            }
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 20)
+                    .onEnded { value in
+                        let hAmt = value.translation.width
+                        let vAmt = abs(value.translation.height)
+                        // Right swipe: clearly horizontal and to the right
+                        if hAmt > 80 && hAmt > vAmt * 1.5 {
+                            HapticService.impact(.medium)
+                            showLogMeal = true
+                        }
+                    }
+            )
             .safeAreaInset(edge: .bottom) {
                 DragToLogOverlay {
-                    showMealLogFromDrag = true
+                    showLogMeal = true
                 }
                 .padding(.bottom, 4)
             }
@@ -132,20 +131,6 @@ struct HomeView: View {
             }
             .navigationDestination(isPresented: $showWellnessCalendar) {
                 WellnessCalendarView()
-            }
-            .sheet(isPresented: $showMealLogFromDrag, onDismiss: {
-                if mealSavedFromDrag {
-                    mealSavedFromDrag = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                        if !showLogMeal { showLogMeal = true }
-                    }
-                }
-            }) {
-                MealLogSheetContent(
-                    homeViewModel: foodJournalViewModel,
-                    selectedDate: Date(),
-                    didSave: $mealSavedFromDrag
-                )
             }
             .navigationBarHidden(true)
         }

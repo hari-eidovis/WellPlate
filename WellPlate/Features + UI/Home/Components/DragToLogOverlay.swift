@@ -5,49 +5,68 @@ struct DragToLogOverlay: View {
 
     @State private var dragOffset: CGFloat = 0
     @State private var hasTickedHalf = false
-    @State private var isVisible = false
-    @State private var pulseOpacity: Double = 0.5
+    @State private var isPressed = false
 
-    private let dragThreshold: CGFloat = 100
+    private let dragThreshold: CGFloat = 80
 
     var body: some View {
-        VStack(spacing: 8) {
-            
-            Image(systemName: "chevron.compact.up")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(AppColors.primary.opacity(0.7))
-            
-            HStack(spacing: 6) {
-                Text("Log a meal")
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .opacity(pulseOpacity)
+        Button(action: {
+            HapticService.impact(.medium)
+            onTrigger()
+        }) {
+            HStack(spacing: 12) {
+                // Left: icon
+                ZStack {
+                    Circle()
+                        .fill(AppColors.brand.opacity(0.12))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "fork.knife")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(AppColors.brand)
+                }
+
+                // Center: labels
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Log a Meal")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
+                    Text("Swipe right anytime to open")
+                        .font(.system(size: 11, weight: .regular, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                // Right: swipe hint arrow
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.tertiary)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: -4)
+            )
+            .padding(.horizontal, 16)
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .offset(y: min(0, dragOffset))
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 20)
-        .offset(y: min(0, dragOffset))
-        .scaleEffect(
-            1 + min(0.04, max(0, -dragOffset) / dragThreshold * 0.04),
-            anchor: .bottom
-        )
+        .buttonStyle(.plain)
         .highPriorityGesture(
             DragGesture(minimumDistance: 10)
                 .onChanged { value in
                     let t = value.translation
                     guard t.height < 0, abs(t.width) < abs(t.height) else { return }
-
                     dragOffset = t.height
-
                     if !hasTickedHalf && -t.height >= dragThreshold / 2 {
                         HapticService.selectionChanged()
                         hasTickedHalf = true
                     }
                 }
                 .onEnded { value in
-                    let t = value.translation.height
-                    if -t >= dragThreshold {
+                    if -value.translation.height >= dragThreshold {
                         HapticService.impact(.medium)
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             dragOffset = 0
@@ -61,23 +80,10 @@ struct DragToLogOverlay: View {
                     hasTickedHalf = false
                 }
         )
-        .onTapGesture {
-            HapticService.impact(.medium)
-            onTrigger()
-        }
         .accessibilityLabel("Log a meal")
-        .accessibilityHint("Opens the meal logging form")
+        .accessibilityHint("Opens the food journal")
         .accessibilityAddTraits(.isButton)
-        .onAppear {
-            isVisible = true
-            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
-                pulseOpacity = 1.0
-            }
-        }
-        .onDisappear {
-            isVisible = false
-            pulseOpacity = 0.5
-        }
+        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isPressed)
     }
 }
 
@@ -85,6 +91,7 @@ struct DragToLogOverlay: View {
     ZStack(alignment: .bottom) {
         Color(.systemGroupedBackground).ignoresSafeArea()
         DragToLogOverlay {}
+            .padding(.bottom, 8)
     }
 }
 
@@ -92,6 +99,7 @@ struct DragToLogOverlay: View {
     ZStack(alignment: .bottom) {
         Color(.systemGroupedBackground).ignoresSafeArea()
         DragToLogOverlay {}
+            .padding(.bottom, 8)
     }
     .preferredColorScheme(.dark)
 }
