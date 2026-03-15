@@ -182,7 +182,10 @@ final class HomeViewModel: ObservableObject {
         modelContext.insert(entry)
     }
 
-    private func insertLog(from info: NutritionalInfo, day: Date, typedName: String, key: String, context: MealContext? = nil) {
+    private func insertLog(from info: NutritionalInfo, day: Date, typedName: String, key: String,
+                           context: MealContext? = nil,
+                           barcodeValue: String? = nil,
+                           logSource: String? = nil) {
         let entry = FoodLogEntry(
             day: day,
             foodName: typedName,
@@ -200,9 +203,50 @@ final class HomeViewModel: ObservableObject {
             presenceLevel: context?.presenceLevel,
             reflection: context?.reflection?.isEmpty == false ? context?.reflection : nil,
             quantity: context?.quantity,
-            quantityUnit: context?.quantityUnit
+            quantityUnit: context?.quantityUnit,
+            barcodeValue: barcodeValue,
+            logSource: logSource
         )
         modelContext.insert(entry)
+    }
+
+    // MARK: - Barcode direct save
+
+    /// Direct packaged-food save path — skips MealCoachService and NutritionService.
+    /// Called by BarcodeScanView after a successful barcode lookup.
+    func logFoodDirectly(
+        nutrition: NutritionalInfo,
+        barcode: String? = nil,
+        on date: Date,
+        context: MealContext? = nil
+    ) async {
+        print("[HomeViewModel] logFoodDirectly called — food: '\(nutrition.foodName)', barcode: \(barcode ?? "nil"), cal: \(nutrition.calories)")
+        isLoading = true
+        showError = false
+        errorMessage = ""
+        defer { isLoading = false }
+
+        let key = normalizeFoodKey(nutrition.foodName)
+        let day = Calendar.current.startOfDay(for: date)
+
+        do {
+            try upsertCache(from: nutrition, key: key, displayName: nutrition.foodName)
+            insertLog(
+                from: nutrition,
+                day: day,
+                typedName: nutrition.foodName,
+                key: key,
+                context: context,
+                barcodeValue: barcode,
+                logSource: "barcode"
+            )
+            try modelContext.save()
+            refreshWidget(for: day)
+            print("[HomeViewModel] ✅ logFoodDirectly saved successfully")
+        } catch {
+            print("❌ [HomeViewModel] logFoodDirectly failed: \(error)")
+            showErrorMessage(userFacingErrorMessage(for: error))
+        }
     }
 
     private func showErrorMessage(_ message: String) {

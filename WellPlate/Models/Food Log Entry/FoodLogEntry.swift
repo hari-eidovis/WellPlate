@@ -29,6 +29,10 @@ final class FoodLogEntry {
     /// User-entered unit, either "g" or "ml"
     var quantityUnit: String?
 
+    // Barcode provenance (nil for voice/text entries)
+    var barcodeValue: String?   // raw scanned barcode string (e.g. "0049000028911")
+    var logSource: String?      // "barcode", "voice", or "text"
+
     init(day: Date,
          foodName: String,
          key: String,
@@ -46,7 +50,9 @@ final class FoodLogEntry {
          presenceLevel: Double? = nil,
          reflection: String? = nil,
          quantity: String? = nil,
-         quantityUnit: String? = nil) {
+         quantityUnit: String? = nil,
+         barcodeValue: String? = nil,
+         logSource: String? = nil) {
         self.id = UUID()
         self.day = day
         self.foodName = foodName
@@ -66,5 +72,7 @@ final class FoodLogEntry {
         self.reflection = reflection
         self.quantity = quantity
         self.quantityUnit = quantityUnit
+        self.barcodeValue = barcodeValue
+        self.logSource = logSource
     }
 }

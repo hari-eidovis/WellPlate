@@ -11,6 +11,7 @@ struct MealLogView: View {
     @ObservedObject var viewModel: MealLogViewModel
 
     let selectedDate: Date
+    var onBarcodeTap: (() -> Void)? = nil
     @FocusState private var isFoodFieldFocused: Bool
     @FocusState private var isReflectionFieldFocused: Bool
     @FocusState private var isQuantityFieldFocused: Bool
@@ -252,7 +253,7 @@ struct MealLogView: View {
     private var quickActionRow: some View {
         HStack(spacing: 16) {
             quickActionButton(icon: "camera.fill", label: "Add photo") { /* TODO */ }
-            quickActionButton(icon: "barcode.viewfinder", label: "Scan barcode") { /* TODO */ }
+            quickActionButton(icon: "barcode.viewfinder", label: "Scan barcode") { onBarcodeTap?() }
             speakMealButton
         }
     }
@@ -640,6 +641,7 @@ struct MealLogSheetContent: View {
     var didSave: Binding<Bool>?
     @StateObject private var mealLogViewModel: MealLogViewModel
     @State private var navigationPath = NavigationPath()
+    @Environment(\.dismiss) private var dismiss
 
     init(homeViewModel: HomeViewModel, selectedDate: Date, didSave: Binding<Bool>? = nil) {
         self.homeViewModel = homeViewModel
@@ -656,19 +658,26 @@ struct MealLogSheetContent: View {
             .navigationDestination(for: MealLogEntryMode.self) { mode in
                 switch mode {
                 case .notepad:
-                    MealLogView(viewModel: mealLogViewModel, selectedDate: selectedDate)
+                    MealLogView(
+                        viewModel: mealLogViewModel,
+                        selectedDate: selectedDate,
+                        onBarcodeTap: { navigationPath.append(MealLogEntryMode.barcode) }
+                    )
                 case .mic:
                     VoiceMealLogView(viewModel: mealLogViewModel, selectedDate: selectedDate)
                 case .barcode:
-                    // TODO: barcode scanner
-                    Text("Barcode scanner coming soon")
-                        .foregroundColor(AppColors.textSecondary)
+                    BarcodeScanView(
+                        viewModel: mealLogViewModel,
+                        homeViewModel: homeViewModel,
+                        selectedDate: selectedDate
+                    )
                 }
             }
         }
         .onChange(of: mealLogViewModel.shouldDismiss) { _, shouldDismiss in
             if shouldDismiss {
                 didSave?.wrappedValue = true
+                dismiss()
             }
         }
     }
