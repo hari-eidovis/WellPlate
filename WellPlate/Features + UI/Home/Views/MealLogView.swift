@@ -53,21 +53,6 @@ struct MealLogView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button {
-                    HapticService.impact(.light)
-                    if viewModel.isTranscribing {
-                        viewModel.stopMealTranscription()
-                    }
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(AppColors.primary)
-                }
-            }
-        }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -677,6 +662,7 @@ struct MealLogSheetContent: View {
         .onChange(of: mealLogViewModel.shouldDismiss) { _, shouldDismiss in
             if shouldDismiss {
                 didSave?.wrappedValue = true
+                mealLogViewModel.resetDismissState()
                 dismiss()
             }
         }

@@ -13,6 +13,10 @@ struct VoiceMealLogView: View {
 
     @State private var pulseScale: CGFloat = 1.0
 
+    private var canFinalizeVoiceLog: Bool {
+        !viewModel.liveTranscript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea()
@@ -227,6 +231,8 @@ struct VoiceMealLogView: View {
                     )
             }
             .buttonStyle(.plain)
+            .disabled(!canFinalizeVoiceLog)
+            .opacity(canFinalizeVoiceLog ? 1 : AppOpacity.disabled)
         }
     }
 }

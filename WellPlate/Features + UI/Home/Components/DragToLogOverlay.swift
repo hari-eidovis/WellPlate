@@ -15,40 +15,20 @@ struct DragToLogOverlay: View {
             onTrigger()
         }) {
             HStack(spacing: 12) {
-                // Left: icon
-                ZStack {
-                    Circle()
-                        .fill(AppColors.brand.opacity(0.12))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: "fork.knife")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(AppColors.brand)
-                }
-
-                // Center: labels
-                VStack(alignment: .leading, spacing: 2) {
+                    Spacer()
+                VStack(spacing: 6){
+                    Image(systemName: "chevron.up")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.tertiary)
                     Text("Log a Meal")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
-                    Text("Swipe right anytime to open")
-                        .font(.system(size: 11, weight: .regular, design: .rounded))
-                        .foregroundStyle(.secondary)
                 }
-
-                Spacer()
-
-                // Right: swipe hint arrow
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.tertiary)
+                    Spacer()
+         
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: -4)
-            )
             .padding(.horizontal, 16)
             .scaleEffect(isPressed ? 0.97 : 1.0)
             .offset(y: min(0, dragOffset))

@@ -98,6 +98,7 @@ final class MealLogViewModel: ObservableObject {
 
     /// Call from view when user taps "Save & Reflect". Handles extraction, disambiguation, and final log.
     func saveMeal(selectedDate: Date) async {
+        shouldDismiss = false
         let rawInput = foodDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !rawInput.isEmpty else {
             showErrorMessage("Please enter what you ate.")
@@ -311,6 +312,10 @@ final class MealLogViewModel: ObservableObject {
         isTranscribing = false
         liveTranscript = ""
         foodDescription = ""
+    }
+
+    func resetDismissState() {
+        shouldDismiss = false
     }
 
     func applyTranscriptToFoodDescription(_ transcript: String) {

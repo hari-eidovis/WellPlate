@@ -64,7 +64,6 @@ struct BarcodeScanView: View {
             toastOverlay
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { cancelToolbarItem }
         .onChange(of: phase) { oldPhase, newPhase in
             guard case .confirmProduct(let product, _) = newPhase else { return }
             // Only initialise once when first entering confirmProduct.
@@ -532,22 +531,5 @@ struct BarcodeScanView: View {
         }
         .allowsHitTesting(false)
         .animation(.easeInOut(duration: 0.25), value: toastMessage)
-    }
-
-    // MARK: - Toolbar
-
-    private var cancelToolbarItem: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
-            Button {
-                HapticService.impact(.light)
-                lookupTask?.cancel()
-                saveTask?.cancel()
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(AppColors.primary)
-            }
-        }
     }
 }

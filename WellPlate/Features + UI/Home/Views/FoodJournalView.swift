@@ -243,6 +243,13 @@ struct FoodJournalView: View {
                 selectedDate: selectedDate
             )
         }
+        .onChange(of: mealLogViewModel.shouldDismiss) { _, shouldDismiss in
+            guard shouldDismiss else { return }
+            showNotepad = false
+            showVoice = false
+            showBarcode = false
+            mealLogViewModel.resetDismissState()
+        }
     }
 
     // MARK: - Actions
