@@ -3,7 +3,6 @@ import SwiftData
 import UIKit
 
 // MARK: - MealLogView
-// Rich meal-logging form presented as a sheet from FoodJournalView when user taps the plus button.
 
 struct MealLogView: View {
     @Environment(\.dismiss) private var dismiss
@@ -24,24 +23,21 @@ struct MealLogView: View {
 
     var body: some View {
         ZStack {
-            Color(.systemGroupedBackground)
-                .ignoresSafeArea()
+            Color(.systemGroupedBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 24) {
                         headerSection
                         mealTypePicker
-                        foodInputGroup
-                        quantitySection
-                        quickActionRow
-                        eatingTriggersSection
-                        voiceNoteSection
-                        addMoreContextSection
+                        foodInputCard
+                        triggersSection
+                        reflectionField
+                        moreContextSection
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 28)
                 }
                 .scrollDismissesKeyboard(.interactively)
 
@@ -87,23 +83,19 @@ struct MealLogView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: 4) {
-            Text("Log a Meal")
-                .font(.r(.headline, .semibold))
+        HStack(alignment: .firstTextBaseline) {
+            Text("Log a meal")
+                .font(.r(.title3, .semibold))
                 .foregroundColor(AppColors.textPrimary)
+            Spacer()
             HStack(spacing: 4) {
-                Image(systemName: "clock")
-                    .font(.r(.caption2, .medium))
                 Text(Calendar.current.isDateInToday(selectedDate) ? "Today" : shortDate(selectedDate))
-                    .font(.r(.caption, .regular))
-                Text("•")
+                Text("·")
                 Text(Self.timeFormatter.string(from: Date()))
-                    .font(.r(.caption, .regular))
             }
+            .font(.r(.footnote, .regular))
             .foregroundColor(AppColors.textSecondary)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
     }
 
     private func shortDate(_ date: Date) -> String {
@@ -115,44 +107,66 @@ struct MealLogView: View {
     // MARK: - Meal Type Picker
 
     private var mealTypePicker: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             ForEach(MealType.allCases) { type in
+                let isSelected = viewModel.selectedMealType == type
                 Button {
                     HapticService.selectionChanged()
                     viewModel.selectedMealType = type
                 } label: {
-                    Text(type.displayName)
-                        .font(.r(.subheadline, .semibold))
-                        .foregroundColor(viewModel.selectedMealType == type ? AppColors.onPrimary : AppColors.textSecondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(
-                            Capsule()
-                                .fill(viewModel.selectedMealType == type ? AppColors.primary : Color.clear)
-                        )
-                        .overlay(
-                            Capsule()
-                                .stroke(AppColors.borderSubtle, lineWidth: viewModel.selectedMealType == type ? 0 : 1)
-                        )
+                    HStack(spacing: 5) {
+                        Image(systemName: type.icon)
+                            .font(.system(size: 11, weight: .medium))
+                        Text(type.displayName)
+                            .font(.r(.caption, .semibold))
+                    }
+                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(
+                        Capsule()
+                            .fill(isSelected
+                                  ? AppColors.primaryContainer
+                                  : Color(.secondarySystemBackground))
+                    )
                 }
                 .buttonStyle(.plain)
+                .animation(.easeInOut(duration: 0.15), value: isSelected)
             }
         }
     }
 
-    // MARK: - Food Input
+    // MARK: - Food Input Card
 
-    private var foodInputGroup: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            foodInputSection
+    private var foodInputCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Food description field with trailing actions
+            HStack(alignment: .center, spacing: 10) {
+                TextField("What did you eat?", text: $viewModel.foodDescription, axis: .vertical)
+                    .font(.r(16, .regular))
+                    .textFieldStyle(.plain)
+                    .focused($isFoodFieldFocused)
+                    .disabled(viewModel.isLoading)
+                    .tint(AppColors.primary)
+                    .lineLimit(1...3)
 
+                HStack(spacing: 2) {
+                    micButton
+                    barcodeButton
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+
+            // Live transcript hint
             if viewModel.isTranscribing {
+                Divider().padding(.horizontal, 16)
                 HStack(spacing: 6) {
                     Image(systemName: "waveform")
-                        .font(.system(size: 11))
+                        .font(.system(size: 10))
                         .foregroundColor(AppColors.primary)
                     Text(viewModel.liveTranscript.isEmpty
-                         ? "Say the food and amount if you know it..."
+                         ? "Listening…"
                          : viewModel.liveTranscript)
                         .font(.r(.caption, .regular))
                         .foregroundColor(viewModel.liveTranscript.isEmpty
@@ -161,315 +175,261 @@ struct MealLogView: View {
                         .lineLimit(2)
                 }
                 .padding(.horizontal, 16)
+                .padding(.vertical, 10)
                 .transition(.opacity.combined(with: .move(edge: .top)))
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel(
-                    viewModel.liveTranscript.isEmpty
-                        ? "Listening for speech"
-                        : "Live transcript: \(viewModel.liveTranscript)"
-                )
             }
+
+            Divider().padding(.horizontal, 16)
+
+            // Quantity row
+            HStack(spacing: 10) {
+                Image(systemName: viewModel.quantityUnit == .millilitres ? "drop" : "scalemass")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(AppColors.textSecondary)
+                    .frame(width: 16)
+
+                TextField("Amount", text: $viewModel.quantity)
+                    .font(.r(15, .regular))
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(.plain)
+                    .focused($isQuantityFieldFocused)
+                    .disabled(viewModel.isLoading)
+                    .tint(AppColors.primary)
+                    .foregroundColor(AppColors.textPrimary)
+
+                Picker("", selection: $viewModel.quantityUnit) {
+                    ForEach(QuantityUnit.allCases) { unit in
+                        Text(unit.label).tag(unit)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 84)
+                .disabled(viewModel.isLoading)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 12, y: 4)
+        )
         .animation(.easeInOut(duration: 0.2), value: viewModel.isTranscribing)
         .animation(.easeInOut(duration: 0.15), value: viewModel.liveTranscript)
     }
 
-    private var foodInputSection: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "fork.knife")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(AppColors.primary.opacity(0.6))
-            TextField("e.g. avocado toast, leftover pasta...", text: $viewModel.foodDescription)
-                .font(.r(15, .regular))
-                .textFieldStyle(.plain)
-                .focused($isFoodFieldFocused)
-                .disabled(viewModel.isLoading)
-                .tint(AppColors.primary)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
-    }
-
-    // MARK: - Quantity Section
-
-    private var quantitySection: some View {
-        HStack(spacing: 12) {
-            // Icon
-            Image(systemName: viewModel.quantityUnit == .millilitres ? "drop.fill" : "scalemass.fill")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(AppColors.primary.opacity(0.6))
-                .frame(width: 20)
-
-            // Numeric input
-            TextField("Amount", text: $viewModel.quantity)
-                .font(.r(15, .regular))
-                .keyboardType(.decimalPad)
-                .textFieldStyle(.plain)
-                .focused($isQuantityFieldFocused)
-                .disabled(viewModel.isLoading)
-                .tint(AppColors.primary)
-
-            // Unit toggle — g / ml
-            Picker("", selection: $viewModel.quantityUnit) {
-                ForEach(QuantityUnit.allCases) { unit in
-                    Text(unit.label).tag(unit)
-                }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 90)
-            .disabled(viewModel.isLoading)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
-    }
-
-    // MARK: - Quick Action Row
-
-    private var quickActionRow: some View {
-        HStack(spacing: 16) {
-            quickActionButton(icon: "camera.fill", label: "Add photo") { /* TODO */ }
-            quickActionButton(icon: "barcode.viewfinder", label: "Scan barcode") { onBarcodeTap?() }
-            speakMealButton
-        }
-    }
-
-    private var speakMealButton: some View {
+    private var micButton: some View {
         Button {
             HapticService.impact(.light)
             viewModel.startMealTranscription()
         } label: {
-            HStack(spacing: 6) {
-                speakMealIcon
-                Text(viewModel.isTranscribing ? "Listening..." : "Speak meal")
-                    .font(.r(.caption, .medium))
-            }
-            .foregroundColor(viewModel.isTranscribing ? AppColors.primary : AppColors.textSecondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(viewModel.isTranscribing
-                          ? AppColors.primaryContainer
-                          : Color(.secondarySystemBackground))
-            )
-            .animation(.easeInOut(duration: 0.2), value: viewModel.isTranscribing)
+            micIcon
+                .frame(width: 34, height: 34)
+                .background(
+                    Circle()
+                        .fill(viewModel.isTranscribing
+                              ? AppColors.primaryContainer
+                              : Color.clear)
+                )
         }
         .buttonStyle(.plain)
         .disabled(viewModel.isLoading)
-        .accessibilityLabel(viewModel.isTranscribing ? "Stop recording" : "Speak your meal")
-        .accessibilityHint(viewModel.isTranscribing ? "Tap to stop and apply transcript" : "Tap to speak instead of typing")
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isTranscribing)
+        .accessibilityLabel(viewModel.isTranscribing ? "Stop recording" : "Speak meal")
     }
 
     @ViewBuilder
-    private var speakMealIcon: some View {
+    private var micIcon: some View {
+        let color = viewModel.isTranscribing ? AppColors.primary : AppColors.textSecondary
         if #available(iOS 17, *) {
-            Image(systemName: viewModel.isTranscribing ? "waveform" : "mic.fill")
-                .font(.system(size: 14))
+            Image(systemName: viewModel.isTranscribing ? "waveform" : "mic")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(color)
                 .symbolEffect(.variableColor.iterative, isActive: viewModel.isTranscribing)
         } else {
-            Image(systemName: viewModel.isTranscribing ? "waveform" : "mic.fill")
-                .font(.system(size: 14))
+            Image(systemName: viewModel.isTranscribing ? "waveform" : "mic")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(color)
         }
     }
 
-    private func quickActionButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: {
+    private var barcodeButton: some View {
+        Button {
             HapticService.impact(.light)
-            action()
-        }) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 14))
-                Text(label)
-                    .font(.r(.caption, .medium))
-            }
-            .foregroundColor(AppColors.textSecondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.secondarySystemBackground))
-            )
+            onBarcodeTap?()
+        } label: {
+            Image(systemName: "barcode.viewfinder")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(AppColors.textSecondary)
+                .frame(width: 34, height: 34)
         }
         .buttonStyle(.plain)
+        .disabled(viewModel.isLoading)
+        .accessibilityLabel("Scan barcode")
     }
 
     // MARK: - Eating Triggers
 
-    private var eatingTriggersSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 6) {
-                Text("💛")
-                Text("What brought you here?")
-                    .font(.r(.title3, .semibold))
-                    .foregroundColor(AppColors.textPrimary)
-            }
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                ForEach(EatingTrigger.allCases) { trigger in
-                    let isSelected = viewModel.selectedTriggers.contains(trigger)
-                    Button {
-                        HapticService.selectionChanged()
-                        if viewModel.selectedTriggers.contains(trigger) {
-                            viewModel.selectedTriggers.remove(trigger)
-                        } else {
-                            viewModel.selectedTriggers.insert(trigger)
-                        }
-                    } label: {
-                        VStack(spacing: 6) {
-                            Text(trigger.emoji)
-                                .font(.system(size: 24))
-                            Text(trigger.displayName)
-                                .font(.r(.caption, .semibold))
-                                .foregroundColor(AppColors.textPrimary)
-                                .lineLimit(1)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(isSelected ? AppColors.primaryContainer : Color(.secondarySystemBackground))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(isSelected ? AppColors.primary : Color.clear, lineWidth: 2)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(trigger.displayName), eating trigger")
-                    .accessibilityAddTraits(isSelected ? .isSelected : [])
-                }
-            }
-            Text("No judgment — this helps us spot your patterns over time.")
-                .font(.r(.caption, .regular))
-                .italic()
+    private var triggersSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("What brought you here?")
+                .font(.r(.caption, .semibold))
                 .foregroundColor(AppColors.textSecondary)
+                .textCase(.uppercase)
+                .kerning(0.4)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(EatingTrigger.allCases) { trigger in
+                        let isSelected = viewModel.selectedTriggers.contains(trigger)
+                        Button {
+                            HapticService.selectionChanged()
+                            if isSelected {
+                                viewModel.selectedTriggers.remove(trigger)
+                            } else {
+                                viewModel.selectedTriggers.insert(trigger)
+                            }
+                        } label: {
+                            HStack(spacing: 5) {
+                                Text(trigger.emoji)
+                                    .font(.system(size: 13))
+                                Text(trigger.displayName)
+                                    .font(.r(.caption, .medium))
+                            }
+                            .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 7)
+                            .background(
+                                Capsule()
+                                    .fill(isSelected
+                                          ? AppColors.primaryContainer
+                                          : Color(.secondarySystemBackground))
+                            )
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(
+                                        isSelected ? AppColors.primary.opacity(0.35) : Color.clear,
+                                        lineWidth: 1
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .animation(.easeInOut(duration: 0.15), value: isSelected)
+                        .accessibilityLabel("\(trigger.displayName)")
+                        .accessibilityAddTraits(isSelected ? .isSelected : [])
+                    }
+                }
+                .padding(.horizontal, 1)
+            }
         }
     }
 
-    // MARK: - Voice Note Section
+    // MARK: - Reflection Field
 
-    private var voiceNoteSection: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(AppColors.primaryContainer)
-                    .frame(width: 56, height: 56)
-                Image(systemName: "mic.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(AppColors.primary)
-            }
-            VStack(spacing: 2) {
-                Text("Add a voice note")
-                    .font(.r(.subheadline, .semibold))
-                    .foregroundColor(AppColors.textPrimary)
-                Text("30 sec • Only you can hear this")
-                    .font(.r(.caption2, .regular))
-                    .foregroundColor(AppColors.textSecondary)
-            }
+    private var reflectionField: some View {
+        TextField("Any thoughts or feelings? (optional)", text: $viewModel.reflection, axis: .vertical)
+            .font(.r(15, .regular))
+            .textFieldStyle(.plain)
+            .focused($isReflectionFieldFocused)
+            .lineLimit(2...5)
+            .foregroundColor(AppColors.textPrimary)
+            .tint(AppColors.primary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color(.systemBackground))
+                    .appShadow(radius: 12, y: 4)
+            )
+    }
+
+    // MARK: - More Context (Expandable)
+
+    private var moreContextSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
             Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    viewModel.showMoreContext.toggle()
+                }
                 HapticService.impact(.light)
-                // TODO: voice recording v2
             } label: {
-                Text("Coming soon")
-                    .font(.r(.caption, .medium))
-                    .foregroundColor(AppColors.textSecondary)
+                HStack {
+                    Text("More context")
+                        .font(.r(.subheadline, .medium))
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(AppColors.textSecondary)
+                        .rotationEffect(.degrees(viewModel.showMoreContext ? 90 : 0))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
             }
-            .padding(.top, 4)
-            TextField("Or type a reflection...", text: $viewModel.reflection, axis: .vertical)
-                .font(.r(15, .regular))
-                .textFieldStyle(.plain)
-                .focused($isReflectionFieldFocused)
-                .lineLimit(3...6)
-                .padding(12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.tertiarySystemFill))
-                )
+            .buttonStyle(.plain)
+
+            if viewModel.showMoreContext {
+                Divider().padding(.horizontal, 16)
+
+                VStack(alignment: .leading, spacing: 20) {
+                    sliderRow(
+                        label: "Hunger",
+                        leftEmoji: "🙂", rightEmoji: "😩",
+                        leftLabel: "Not hungry", rightLabel: "Starving",
+                        value: $viewModel.hungerLevel
+                    )
+                    .accessibilityValue("\(Int(viewModel.hungerLevel * 100))% hungry")
+
+                    sliderRow(
+                        label: "Mindfulness",
+                        leftEmoji: "🤦‍♀️", rightEmoji: "🧘‍♀️",
+                        leftLabel: "Distracted", rightLabel: "Fully present",
+                        value: $viewModel.presenceLevel
+                    )
+                    .accessibilityValue("\(Int(viewModel.presenceLevel * 100))% present")
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 18)
                 .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
+                .appShadow(radius: 12, y: 4)
         )
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
-    // MARK: - Add More Context (Expandable)
+    private func sliderRow(
+        label: String,
+        leftEmoji: String, rightEmoji: String,
+        leftLabel: String, rightLabel: String,
+        value: Binding<Double>
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.r(.footnote, .semibold))
+                .foregroundColor(AppColors.textSecondary)
+                .textCase(.uppercase)
+                .kerning(0.4)
 
-    private var addMoreContextSection: some View {
-        DisclosureGroup(isExpanded: $viewModel.showMoreContext) {
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Hunger Level")
-                        .font(.r(.subheadline, .semibold))
-                        .foregroundColor(AppColors.textPrimary)
-                    HStack {
-                        Text("🙂")
-                        Slider(value: $viewModel.hungerLevel, in: 0...1)
-                            .tint(AppColors.primary)
-                        Text("😩")
-                    }
-                    HStack {
-                        Text("Not hungry")
-                            .font(.r(.caption2, .regular))
-                            .foregroundColor(AppColors.textSecondary)
-                        Spacer()
-                        Text("Starving")
-                            .font(.r(.caption2, .regular))
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityValue("\(Int(viewModel.hungerLevel * 100))% hungry")
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("How present were you?")
-                        .font(.r(.subheadline, .semibold))
-                        .foregroundColor(AppColors.textPrimary)
-                    HStack {
-                        Text("🤦‍♀️")
-                        Slider(value: $viewModel.presenceLevel, in: 0...1)
-                            .tint(AppColors.primary)
-                        Text("🧘‍♀️")
-                    }
-                    HStack {
-                        Text("Distracted")
-                            .font(.r(.caption2, .regular))
-                            .foregroundColor(AppColors.textSecondary)
-                        Spacer()
-                        Text("Fully present")
-                            .font(.r(.caption2, .regular))
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityValue("\(Int(viewModel.presenceLevel * 100))% present")
+            HStack(spacing: 8) {
+                Text(leftEmoji).font(.system(size: 14))
+                Slider(value: value, in: 0...1)
+                    .tint(AppColors.primary)
+                Text(rightEmoji).font(.system(size: 14))
             }
-            .padding(.top, 8)
-        } label: {
+
             HStack {
-                Text("+ Add more context")
-                    .font(.r(.subheadline, .semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                Text(leftLabel)
+                Spacer()
+                Text(rightLabel)
             }
+            .font(.r(.caption2, .regular))
+            .foregroundColor(AppColors.textSecondary.opacity(0.7))
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Save Button
@@ -485,28 +445,22 @@ struct MealLogView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    Text("Save & Reflect")
+                    Text("Save")
                         .font(.btn)
                         .foregroundColor(.white)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(.vertical, 15)
             .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [AppColors.brand, AppColors.brand.opacity(0.8)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(AppColors.brand)
             )
         }
         .buttonStyle(.plain)
         .disabled(!viewModel.isValid || viewModel.isLoading || viewModel.isTranscribing)
         .opacity(viewModel.isValid && !viewModel.isLoading && !viewModel.isTranscribing ? 1 : AppOpacity.disabled)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 20)
         .padding(.bottom, 24)
         .padding(.top, 12)
     }
@@ -552,23 +506,24 @@ struct MealLogModePickerView: View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
-            VStack(spacing: 40) {
-                VStack(spacing: 6) {
-                    Text("Log a Meal")
+            VStack(spacing: 0) {
+                VStack(spacing: 4) {
+                    Text("Log a meal")
                         .font(.r(.title2, .semibold))
                         .foregroundColor(AppColors.textPrimary)
                     Text("How would you like to log?")
                         .font(.r(.subheadline, .regular))
                         .foregroundColor(AppColors.textSecondary)
                 }
-                .padding(.top, 16)
+                .padding(.top, 24)
+                .padding(.bottom, 36)
 
-                HStack(spacing: 16) {
+                HStack(spacing: 12) {
                     modeButton(mode: .notepad, icon: "square.and.pencil", label: "Type")
-                    modeButton(mode: .mic,     icon: "mic.fill",           label: "Voice")
+                    modeButton(mode: .mic,     icon: "mic",               label: "Voice")
                     modeButton(mode: .barcode, icon: "barcode.viewfinder", label: "Barcode")
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
 
                 Spacer()
             }
@@ -581,8 +536,10 @@ struct MealLogModePickerView: View {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(AppColors.textSecondary)
+                        .padding(7)
+                        .background(Circle().fill(Color(.secondarySystemBackground)))
                 }
             }
         }
@@ -593,25 +550,24 @@ struct MealLogModePickerView: View {
             HapticService.selectionChanged()
             onSelect(mode)
         } label: {
-            VStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(AppColors.primaryContainer)
-                        .frame(width: 68, height: 68)
-                    Image(systemName: icon)
-                        .font(.system(size: 26, weight: .medium))
-                        .foregroundColor(AppColors.primary)
-                }
+            VStack(spacing: 14) {
+                Image(systemName: icon)
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundColor(AppColors.primary)
+                    .frame(width: 48, height: 48)
+                    .background(
+                        Circle().fill(AppColors.primaryContainer)
+                    )
                 Text(label)
-                    .font(.r(.subheadline, .semibold))
+                    .font(.r(.footnote, .semibold))
                     .foregroundColor(AppColors.textPrimary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
+            .padding(.vertical, 22)
             .background(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 18)
                     .fill(Color(.systemBackground))
-                    .appShadow(radius: 15, y: 5)
+                    .appShadow(radius: 12, y: 4)
             )
         }
         .buttonStyle(.plain)
