@@ -42,7 +42,7 @@ struct StressView: View {
     @State private var debugScreenTimeHours: Double = 0
     @State private var didSeedDebugScreenTimeHours = false
     #endif
-    private let refreshTicker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
+    private let refreshTicker   = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
         NavigationStack {
@@ -70,11 +70,16 @@ struct StressView: View {
             await ScreenTimeManager.shared.requestAuthorization()
             ScreenTimeManager.shared.startMonitoring()
             await viewModel.requestPermissionAndLoad()
-            viewModel.refreshScreenTimeOnly()
+            if viewModel.isAuthorized {
+                viewModel.refreshScreenTimeOnly()
+                viewModel.loadReadings()
+            }
         }
         .onAppear {
-            viewModel.refreshDietFactor()
-            viewModel.refreshScreenTimeOnly()
+            if viewModel.isAuthorized {
+                viewModel.refreshDietFactorAndLogIfNeeded()
+                viewModel.refreshScreenTimeOnly()
+            }
             #if DEBUG
             seedDebugScreenTimeInputIfNeeded()
             #endif
@@ -84,8 +89,8 @@ struct StressView: View {
             viewModel.refreshScreenTimeOnly()
         }
         .onChange(of: scenePhase) { phase in
-            guard phase == .active else { return }
-            viewModel.refreshScreenTimeOnly()
+            guard phase == .active, viewModel.isAuthorized else { return }
+            Task { await viewModel.loadData() }
         }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
@@ -165,6 +170,10 @@ struct StressView: View {
                 // ── Contextual comparison blurb ───────────────
                 comparisonBadge
                     .padding(.top, 2)
+
+                // ── Auto Logging Note ─────────────────────────
+                autoLoggingNote
+                    .padding(.top, 10)
                     .padding(.bottom, 28)
 
                 // ── Quick Vitals ──────────────────────────────
@@ -192,6 +201,7 @@ struct StressView: View {
         .refreshable {
             await viewModel.loadData()
             viewModel.refreshScreenTimeOnly()
+            viewModel.loadReadings()
         }
     }
 
@@ -463,63 +473,42 @@ struct StressView: View {
     }
     #endif
 
-    // MARK: - Timeline Section
+    // MARK: - Auto Logging Note
+
+    private var autoLoggingNote: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "clock.badge.checkmark")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(viewModel.stressLevel.color)
+            Text("Stress is logged automatically with time and value whenever it changes.")
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            Capsule()
+                .fill(Color(.systemBackground).opacity(0.85))
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
+        )
+    }
+
+    // MARK: - Timeline Section (Real Charts)
 
     private var timelineSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionLabel("STRESS THROUGH THE DAY")
-            hourlyTimeline
-        }
-    }
-
-    /// A simplified hourly bar timeline using the four factor contributions
-    /// as a proxy for different parts of the day — purely visual / illustrative.
-    private var hourlyTimeline: some View {
-        let slots: [(label: String, color: Color)] = hourlySlots
-        return HStack(alignment: .bottom, spacing: 0) {
-            ForEach(Array(slots.enumerated()), id: \.offset) { idx, slot in
-                VStack(spacing: 6) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(slot.color)
-                        .frame(width: 28, height: 10)
-                    Text(slot.label)
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity)
+        VStack(alignment: .leading, spacing: 24) {
+            // ── Today's intraday chart ──
+            VStack(alignment: .leading, spacing: 10) {
+                sectionLabel("STRESS THROUGH THE DAY")
+                StressDayChartView(readings: viewModel.todayReadings)
             }
-        }
-        .padding(.vertical, 8)
-    }
 
-    /// Build time-slotted color bars using live factor data as rough proxies.
-    private var hourlySlots: [(label: String, color: Color)] {
-        let hour = Calendar.current.component(.hour, from: Date())
-
-        // Simplified: 6 fixed time labels covering the day
-        let labels = ["6a", "9a", "12p", "3p", "6p", "9p"]
-
-        // Use factor stress contributions to tint each slot
-        let contribs: [Double] = [
-            // Morning (sleep quality drives early stress)
-            viewModel.sleepFactor.stressContribution,
-            // Late morning (exercise)
-            viewModel.exerciseFactor.stressContribution,
-            // Midday (diet)
-            viewModel.dietFactor.stressContribution,
-            // Afternoon (screen time)
-            viewModel.screenTimeFactor.stressContribution,
-            // Evening (exercise recovery)
-            viewModel.exerciseFactor.stressContribution * 0.6,
-            // Night (sleep building)
-            viewModel.sleepFactor.stressContribution * 0.5
-        ]
-
-        // Map contribution 0–25 → hue green→red
-        return zip(labels, contribs).map { label, contrib in
-            let t = min(max(contrib / 25.0, 0), 1)
-            let color = Color(hue: 0.33 * (1 - t), saturation: 0.75, brightness: 0.78)
-            return (label: label, color: color)
+            // ── 7-day trend ──
+            VStack(alignment: .leading, spacing: 10) {
+                sectionLabel("7-DAY TREND")
+                StressWeekChartView(readings: viewModel.weekReadings)
+            }
         }
     }
 
@@ -623,7 +612,7 @@ struct StressView: View {
 #Preview {
     StressView(
         viewModel: StressViewModel(
-            modelContext: try! ModelContainer(for: FoodLogEntry.self).mainContext
+            modelContext: try! ModelContainer(for: FoodLogEntry.self, StressReading.self).mainContext
         )
     )
 }

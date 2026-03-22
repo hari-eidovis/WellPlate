@@ -56,6 +56,14 @@ final class StressViewModel: ObservableObject {
     @Published var diastolicBPHistory: [DailyMetricSample] = []
     @Published var respiratoryRateHistory: [DailyMetricSample] = []
 
+    // MARK: - Intraday Stress Readings (for charts)
+
+    /// All `StressReading` rows captured today — drives the day chart.
+    @Published var todayReadings: [StressReading] = []
+
+    /// `StressReading` rows from the last 7 days — drives the week trend chart.
+    @Published var weekReadings: [StressReading] = []
+
     // MARK: - Diet Log Cache
 
     @Published var currentDayLogs: [FoodLogEntry] = []
@@ -126,6 +134,7 @@ final class StressViewModel: ObservableObject {
         UserDefaults.standard.set(hours, forKey: Self.manualHoursKey)
         UserDefaults.standard.set(fmt.string(from: Date()), forKey: Self.manualDateKey)
         refreshScreenTimeFactor()
+        logCurrentStress(source: "manual")
     }
 
     #if DEBUG
@@ -249,6 +258,7 @@ final class StressViewModel: ObservableObject {
 
         // ── Persist snapshot to WellnessDayLog so HomeView rings update ──
         persistTodayWellnessSnapshot(steps: steps, energy: energy)
+        logCurrentStress(source: "auto")
 
         #if DEBUG
         log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -321,8 +331,76 @@ final class StressViewModel: ObservableObject {
         #endif
     }
 
+    func refreshDietFactorAndLogIfNeeded() {
+        refreshDietFactor()
+        logCurrentStress(source: "auto")
+    }
+
     func refreshScreenTimeOnly() {
         refreshScreenTimeFactor()
+        logCurrentStress(source: "auto")
+    }
+
+    // MARK: - Stress Reading Logging
+
+    /// Persists the current computed stress score as a `StressReading` snapshot.
+    /// Dedup guard: skips unless the latest reading from today has a different
+    /// rounded score or level label.
+    func logCurrentStress(source: String = "auto") {
+        guard isAuthorized else {
+            #if DEBUG
+            log("[skip] logCurrentStress(\(source)) — HealthKit not authorized yet")
+            #endif
+            return
+        }
+
+        let scoreToLog = roundedLoggedStressScore(totalScore)
+        if let latestReading = latestReadingForToday(),
+           roundedLoggedStressScore(latestReading.score) == scoreToLog,
+           latestReading.levelLabel == stressLevel.label {
+            #if DEBUG
+            log("[skip] logCurrentStress(\(source)) — latest reading already matches score=\(fmt2(scoreToLog)) level=\(stressLevel.label)")
+            #endif
+            return
+        }
+
+        let reading = StressReading(
+            timestamp: Date(),
+            score: scoreToLog,
+            levelLabel: stressLevel.label,
+            source: source
+        )
+        modelContext.insert(reading)
+        try? modelContext.save()
+
+        // Refresh published arrays so charts update immediately.
+        loadReadings()
+
+        #if DEBUG
+        log("[log] StressReading saved -> score=\(fmt2(scoreToLog))  level=\(stressLevel.label)  source=\(source)")
+        #endif
+    }
+
+    /// Fetches `StressReading` rows from SwiftData for today and the last 7 days.
+    func loadReadings() {
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfToday = calendar.startOfDay(for: now)
+        let startOfWeek = calendar.date(byAdding: .day, value: -6, to: startOfToday) ?? startOfToday
+
+        // Today's readings
+        let todayDescriptor = FetchDescriptor<StressReading>(
+            predicate: #Predicate { $0.timestamp >= startOfToday },
+            sortBy: [SortDescriptor(\.timestamp)]
+        )
+        todayReadings = (try? modelContext.fetch(todayDescriptor)) ?? []
+
+        // Last 7 days readings
+        let weekDescriptor = FetchDescriptor<StressReading>(
+            predicate: #Predicate { $0.timestamp >= startOfWeek },
+            sortBy: [SortDescriptor(\.timestamp)]
+        )
+        weekReadings = (try? modelContext.fetch(weekDescriptor)) ?? []
     }
 
     // MARK: - WellnessDayLog Sync
@@ -374,6 +452,7 @@ final class StressViewModel: ObservableObject {
         print("[StressVM] \(message)")
     }
     #endif
+
 
     // MARK: - Private: Safe Fetchers (return nil on error)
 
@@ -631,6 +710,19 @@ final class StressViewModel: ObservableObject {
         log("📱 ScrnTime  → rawHours=\(rawHoursStr)  source=\(sourceStr)")
         log("             → score=\(fmt2(score))/25  stressContrib=\(fmt2(screenTimeFactor.stressContribution))/25  [\(detail)]")
         #endif
+    }
+
+    private func latestReadingForToday() -> StressReading? {
+        let startOfToday = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<StressReading>(
+            predicate: #Predicate { $0.timestamp >= startOfToday },
+            sortBy: [SortDescriptor(\.timestamp)]
+        )
+        return (try? modelContext.fetch(descriptor))?.last
+    }
+
+    private func roundedLoggedStressScore(_ value: Double) -> Double {
+        (value * 10).rounded() / 10
     }
 
     // MARK: - Helpers
