@@ -20,11 +20,7 @@ final class GroqNutritionProvider: NutritionProvider {
 
     func analyze(_ request: NutritionAnalysisRequest) async throws -> NutritionalInfo {
         guard let apiKey = apiKeyProvider(), !apiKey.isEmpty else {
-            #if DEBUG
-            print("┌─── ❌ GROQ PROVIDER ──────────────────────────────")
-            print("│ Error: API key is missing or empty")
-            print("└──────────────────────────────────────────────────")
-            #endif
+            WPLogger.nutrition.error("Groq API key is missing or empty")
             throw NutritionProviderError.missingAPIKey
         }
 
@@ -76,14 +72,13 @@ final class GroqNutritionProvider: NutritionProvider {
 
         #if DEBUG
         let startTime = CFAbsoluteTimeGetCurrent()
-        print("┌─── 🤖 GROQ REQUEST ──────────────────────────────")
-        print("│ Endpoint: POST \(url.absoluteString)")
-        print("│ Model: \(modelProvider())")
-        print("│ Timeout: \(timeoutProvider())s")
-        print("│ Food: \"\(request.foodDescription)\"")
-        print("│ Serving: \(servingText?.isEmpty == false ? servingText! : "not specified")")
-        print("│ Body Size: \(urlRequest.httpBody?.count ?? 0) bytes")
-        print("└──────────────────────────────────────────────────")
+        WPLogger.nutrition.block(emoji: "🤖", title: "GROQ REQUEST", lines: [
+            "POST \(url.absoluteString)",
+            "Model   : \(modelProvider())   Timeout: \(timeoutProvider())s",
+            "Food    : \"\(request.foodDescription)\"",
+            "Serving : \(servingText?.isEmpty == false ? servingText! : "not specified")",
+            "Body    : \(urlRequest.httpBody?.count ?? 0) bytes"
+        ])
         #endif
 
         do {
@@ -92,10 +87,10 @@ final class GroqNutritionProvider: NutritionProvider {
             guard let httpResponse = response as? HTTPURLResponse else {
                 #if DEBUG
                 let elapsed = String(format: "%.0fms", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
-                print("┌─── ❌ GROQ ERROR ────────────────────────────────")
-                print("│ Error: Non-HTTP response received")
-                print("│ Latency: \(elapsed)")
-                print("└──────────────────────────────────────────────────")
+                WPLogger.nutrition.block(emoji: "❌", title: "GROQ ERROR", lines: [
+                    "Non-HTTP response received",
+                    "Latency: \(elapsed)"
+                ])
                 #endif
                 throw NutritionProviderError.invalidResponseShape
             }
@@ -104,17 +99,13 @@ final class GroqNutritionProvider: NutritionProvider {
                 let envelope = try? JSONDecoder().decode(GroqErrorEnvelope.self, from: data)
                 #if DEBUG
                 let elapsed = String(format: "%.0fms", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
-                print("┌─── ❌ GROQ ERROR ────────────────────────────────")
-                print("│ Status: \(httpResponse.statusCode) \(HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode))")
-                print("│ Latency: \(elapsed)")
-                if let errMsg = envelope?.error.message {
-                    print("│ Groq Message: \(errMsg)")
-                }
-                if let rawBody = String(data: data, encoding: .utf8) {
-                    let truncated = String(rawBody.prefix(300))
-                    print("│ Raw Response: \(truncated)")
-                }
-                print("└──────────────────────────────────────────────────")
+                var lines = [
+                    "Status  : \(httpResponse.statusCode) \(HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode))",
+                    "Latency : \(elapsed)"
+                ]
+                if let errMsg = envelope?.error.message { lines.append("Message : \(errMsg)") }
+                if let raw = String(data: data, encoding: .utf8) { lines.append("Body    : \(String(raw.prefix(200)))") }
+                WPLogger.nutrition.block(emoji: "❌", title: "GROQ ERROR", lines: lines)
                 #endif
                 throw NutritionProviderError.requestFailed(
                     statusCode: httpResponse.statusCode,
@@ -129,11 +120,11 @@ final class GroqNutritionProvider: NutritionProvider {
             else {
                 #if DEBUG
                 let elapsed = String(format: "%.0fms", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
-                print("┌─── ❌ GROQ ERROR ────────────────────────────────")
-                print("│ Error: No choices or content in response")
-                print("│ Latency: \(elapsed)")
-                print("│ Raw Data: \(String(data: data, encoding: .utf8) ?? "<binary>")")
-                print("└──────────────────────────────────────────────────")
+                WPLogger.nutrition.block(emoji: "❌", title: "GROQ ERROR", lines: [
+                    "No choices or content in response",
+                    "Latency : \(elapsed)",
+                    "Raw     : \(String(data: data, encoding: .utf8)?.prefix(200) ?? "<binary>")"
+                ])
                 #endif
                 throw NutritionProviderError.invalidResponseShape
             }
@@ -141,10 +132,10 @@ final class GroqNutritionProvider: NutritionProvider {
             let normalizedJSON = Self.stripCodeFencesIfNeeded(jsonText)
             guard let jsonData = normalizedJSON.data(using: .utf8) else {
                 #if DEBUG
-                print("┌─── ❌ GROQ ERROR ────────────────────────────────")
-                print("│ Error: Could not convert model output to UTF-8")
-                print("│ Raw Output: \(jsonText.prefix(200))")
-                print("└──────────────────────────────────────────────────")
+                WPLogger.nutrition.block(emoji: "❌", title: "GROQ ERROR", lines: [
+                    "Could not convert model output to UTF-8",
+                    "Output  : \(jsonText.prefix(200))"
+                ])
                 #endif
                 throw NutritionProviderError.invalidModelOutput
             }
@@ -154,22 +145,14 @@ final class GroqNutritionProvider: NutritionProvider {
 
             #if DEBUG
             let elapsed = String(format: "%.0fms", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
-            print("┌─── ✅ GROQ RESPONSE ─────────────────────────────")
-            print("│ Status: \(httpResponse.statusCode) OK")
-            print("│ Latency: \(elapsed)")
-            print("│ Response Size: \(data.count) bytes")
-            print("│ ── Parsed Nutrition ──")
-            print("│ Food: \(result.foodName)")
-            print("│ Serving: \(result.servingSize ?? "N/A")")
-            print("│ Calories: \(result.calories) kcal")
-            print("│ Protein: \(String(format: "%.1f", result.protein))g")
-            print("│ Carbs: \(String(format: "%.1f", result.carbs))g")
-            print("│ Fat: \(String(format: "%.1f", result.fat))g")
-            print("│ Fiber: \(String(format: "%.1f", result.fiber))g")
-            if let confidence = result.confidence {
-                print("│ Confidence: \(String(format: "%.0f%%", confidence * 100))")
-            }
-            print("└──────────────────────────────────────────────────")
+            WPLogger.nutrition.block(emoji: "✅", title: "GROQ RESPONSE", lines: [
+                "Status  : \(httpResponse.statusCode) OK   Latency: \(elapsed)   Size: \(data.count) bytes",
+                "Food    : \(result.foodName)",
+                "Serving : \(result.servingSize ?? "N/A")",
+                "Calories: \(result.calories) kcal   Protein: \(String(format: "%.1f", result.protein))g",
+                "Carbs   : \(String(format: "%.1f", result.carbs))g   Fat: \(String(format: "%.1f", result.fat))g   Fiber: \(String(format: "%.1f", result.fiber))g",
+                result.confidence.map { "Confidence: \(String(format: "%.0f%%", $0 * 100))" } ?? "Confidence: n/a"
+            ])
             #endif
 
             return result
@@ -178,14 +161,12 @@ final class GroqNutritionProvider: NutritionProvider {
         } catch let urlError as URLError {
             #if DEBUG
             let elapsed = String(format: "%.0fms", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
-            print("┌─── ❌ GROQ NETWORK ERROR ────────────────────────")
-            print("│ URLError Code: \(urlError.code.rawValue)")
-            print("│ Description: \(urlError.localizedDescription)")
-            print("│ Latency: \(elapsed)")
-            if urlError.code == .timedOut {
-                print("│ Note: Request exceeded \(timeoutProvider())s timeout")
-            }
-            print("└──────────────────────────────────────────────────")
+            var lines = [
+                "URLError \(urlError.code.rawValue) — \(urlError.localizedDescription)",
+                "Latency : \(elapsed)"
+            ]
+            if urlError.code == .timedOut { lines.append("Note    : exceeded \(timeoutProvider())s timeout") }
+            WPLogger.nutrition.block(emoji: "❌", title: "GROQ NETWORK ERROR", lines: lines)
             #endif
             if urlError.code == .timedOut {
                 throw NutritionProviderError.timeout
@@ -194,11 +175,11 @@ final class GroqNutritionProvider: NutritionProvider {
         } catch {
             #if DEBUG
             let elapsed = String(format: "%.0fms", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
-            print("┌─── ❌ GROQ UNEXPECTED ERROR ─────────────────────")
-            print("│ Error: \(error.localizedDescription)")
-            print("│ Type: \(type(of: error))")
-            print("│ Latency: \(elapsed)")
-            print("└──────────────────────────────────────────────────")
+            WPLogger.nutrition.block(emoji: "❌", title: "GROQ UNEXPECTED ERROR", lines: [
+                "Error   : \(error.localizedDescription)",
+                "Type    : \(type(of: error))",
+                "Latency : \(elapsed)"
+            ])
             #endif
             throw NutritionProviderError.invalidModelOutput
         }

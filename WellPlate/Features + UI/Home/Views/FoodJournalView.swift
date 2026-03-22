@@ -260,7 +260,7 @@ struct FoodJournalView: View {
             do {
                 try modelContext.save()
             } catch {
-                print("Error deleting food entry: \(error)")
+                WPLogger.home.error("Delete food entry failed: \(error)")
             }
         }
     }

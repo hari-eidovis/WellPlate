@@ -7,7 +7,6 @@ struct BreathingLogoLoader: View {
     
     init(size: CGFloat = 80) {
         self.size = size
-        print("🎨 Initializing BreathingLogoLoader with size: \(size)")
     }
     
     var body: some View {
@@ -23,7 +22,6 @@ struct BreathingLogoLoader: View {
                 value: isAnimating
             )
             .onAppear {
-                print("✨ BreathingLogoLoader appeared - starting animation")
                 isAnimating = true
             }
     }
@@ -36,7 +34,6 @@ struct RotatingLogoLoader: View {
     
     init(size: CGFloat = 40) {
         self.size = size
-        print("🎨 Initializing RotatingLogoLoader with size: \(size)")
     }
     
     var body: some View {
@@ -51,7 +48,6 @@ struct RotatingLogoLoader: View {
                 value: isRotating
             )
             .onAppear {
-                print("✨ RotatingLogoLoader appeared - starting rotation")
                 isRotating = true
             }
     }
@@ -64,7 +60,6 @@ struct ShimmerLogoLoader: View {
     
     init(size: CGFloat = 80) {
         self.size = size
-        print("🎨 Initializing ShimmerLogoLoader with size: \(size)")
     }
     
     var body: some View {
@@ -91,7 +86,6 @@ struct ShimmerLogoLoader: View {
                 )
             )
             .onAppear {
-                print("✨ ShimmerLogoLoader appeared - starting shimmer")
                 withAnimation(
                     .linear(duration: 2.0)
                     .repeatForever(autoreverses: false)
@@ -109,7 +103,6 @@ struct PulsingLogoLoader: View {
     
     init(size: CGFloat = 80) {
         self.size = size
-        print("🎨 Initializing PulsingLogoLoader with size: \(size)")
     }
     
     var body: some View {
@@ -154,7 +147,6 @@ struct PulsingLogoLoader: View {
             value: isPulsing
         )
         .onAppear {
-            print("✨ PulsingLogoLoader appeared - starting pulse")
             isPulsing = true
         }
     }
@@ -168,7 +160,6 @@ struct LogoProgressBar: View {
     init(progress: Double, size: CGFloat = 80) {
         self.progress = min(max(progress, 0.0), 1.0)
         self.size = size
-        print("🎨 Initializing LogoProgressBar - progress: \(Int(progress * 100))%")
     }
     
     var body: some View {
@@ -207,9 +198,7 @@ struct LogoProgressBar: View {
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.secondary)
         }
-        .onChange(of: progress) { oldValue, newValue in
-            print("📊 Progress updated: \(Int(oldValue * 100))% → \(Int(newValue * 100))%")
-        }
+        .onChange(of: progress) { _, _ in }
     }
 }
 
@@ -220,7 +209,6 @@ struct SpinningArcLoader: View {
     
     init(size: CGFloat = 80) {
         self.size = size
-        print("🎨 Initializing SpinningArcLoader with size: \(size)")
     }
     
     var body: some View {
@@ -251,7 +239,6 @@ struct SpinningArcLoader: View {
                 .frame(width: size * 0.6, height: size * 0.6)
         }
         .onAppear {
-            print("✨ SpinningArcLoader appeared - starting spin")
             isRotating = true
         }
     }
@@ -264,7 +251,6 @@ struct ThreeDotsLoader: View {
     
     init(size: CGFloat = 80) {
         self.size = size
-        print("🎨 Initializing ThreeDotsLoader with size: \(size)")
     }
     
     var body: some View {
@@ -291,7 +277,6 @@ struct ThreeDotsLoader: View {
             }
         }
         .onAppear {
-            print("✨ ThreeDotsLoader appeared - starting dots animation")
             startAnimation()
         }
     }
@@ -321,7 +306,6 @@ struct FullScreenLogoLoader: View {
     init(type: LoaderType = .breathing, message: String? = nil) {
         self.loaderType = type
         self.message = message
-        print("🎨 Initializing FullScreenLogoLoader - type: \(type), message: \(message ?? "none")")
     }
     
     var body: some View {

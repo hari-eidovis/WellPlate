@@ -200,7 +200,7 @@ class APIClient: APIClientProtocol {
             }
         }
         lines.append("└──────────────────────────────────────────────────")
-        print(lines.joined(separator: "\n"))
+        WPLogger.network.block(emoji: "📤", title: "REQUEST", id: id, lines: Array(lines.dropFirst().dropLast()))
     }
 
     private func logResponse(id: String, method: HTTPMethod, url: URL, statusCode: Int, dataSize: Int, elapsed: CFAbsoluteTime) {
@@ -212,7 +212,7 @@ class APIClient: APIClientProtocol {
         lines.append("│ Latency: \(latency)")
         lines.append("│ Body Size: \(Self.formattedByteCount(dataSize))")
         lines.append("└──────────────────────────────────────────────────")
-        print(lines.joined(separator: "\n"))
+        WPLogger.network.block(emoji: emoji, title: "RESPONSE", id: id, lines: Array(lines.dropFirst().dropLast()))
     }
 
     private func logError(
@@ -241,7 +241,7 @@ class APIClient: APIClientProtocol {
             }
         }
         lines.append("└──────────────────────────────────────────────────")
-        print(lines.joined(separator: "\n"))
+        WPLogger.network.block(emoji: "❌", title: "ERROR", id: id, lines: Array(lines.dropFirst().dropLast()))
     }
 
     private func logDecodingError<T>(id: String, type: T.Type, error: Error, rawBody: String?) {
@@ -260,7 +260,7 @@ class APIClient: APIClientProtocol {
             }
         }
         lines.append("└──────────────────────────────────────────────────")
-        print(lines.joined(separator: "\n"))
+        WPLogger.network.block(emoji: "🔴", title: "DECODE ERROR", id: id, lines: Array(lines.dropFirst().dropLast()))
     }
 
     // MARK: - Formatting Helpers

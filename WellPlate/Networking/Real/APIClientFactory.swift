@@ -20,20 +20,16 @@ enum APIClientFactory {
         let client: APIClientProtocol
 
         if AppConfig.shared.mockMode {
-            #if DEBUG
-            print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-            print("🎭 [APIClientFactory] Creating MockAPIClient")
-            print("   Using offline mock data from bundle")
-            print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-            #endif
+            WPLogger.network.block(emoji: "🎭", title: "API CLIENT · MOCK", lines: [
+                "Mode: Offline — serving bundle JSON files",
+                "Toggle: AppConfig.shared.mockMode = false → restart"
+            ])
             client = MockAPIClient.shared
         } else {
-            #if DEBUG
-            print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-            print("🌐 [APIClientFactory] Creating Real APIClient")
-            print("   Making actual network requests")
-            print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-            #endif
+            WPLogger.network.block(emoji: "🌐", title: "API CLIENT · REAL", lines: [
+                "Mode: Live — making actual network requests",
+                "Toggle: AppConfig.shared.mockMode = true → restart"
+            ])
             client = APIClient.shared
         }
 
@@ -58,7 +54,7 @@ enum APIClientFactory {
     /// - Parameter instance: Custom APIClient implementation or nil to reset
     static func setTestInstance(_ instance: APIClientProtocol?) {
         _testInstance = instance
-        print("🧪 [APIClientFactory] Test instance set: \(instance != nil ? "Custom" : "Reset")")
+        WPLogger.network.info("Test instance set: \(instance != nil ? "Custom" : "Reset")")
     }
 
     /// Get testable instance - returns test instance if set, otherwise shared

@@ -13,9 +13,7 @@ class MockAPIClient: APIClientProtocol {
     static let shared = MockAPIClient()
 
     private init() {
-        #if DEBUG
-        print("🎭 [MockAPIClient] Initialized")
-        #endif
+        WPLogger.network.debug("MockAPIClient initialized — serving bundle JSON")
     }
 
     // MARK: - Generic Request Method
@@ -27,39 +25,27 @@ class MockAPIClient: APIClientProtocol {
         body: Data? = nil,
         responseType: T.Type
     ) async throws -> T {
-        #if DEBUG
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print("🎭 [MockAPIClient] \(method.rawValue) \(url.absoluteString)")
-        if let headers = headers {
-            print("   Headers: \(headers)")
-        }
-        if let body = body, let bodyString = String(data: body, encoding: .utf8) {
-            print("   Body: \(bodyString)")
-        }
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        #endif
+        WPLogger.network.block(emoji: "🎭", title: "MOCK REQUEST", lines: [
+            "\(method.rawValue) \(url.absoluteString)",
+            headers.map { "Headers: \($0)" } ?? "Headers: none",
+            body.flatMap { String(data: $0, encoding: .utf8) }.map { "Body: \($0.prefix(200))" } ?? "Body: none"
+        ])
 
         // Simulate network delay for realistic testing
         try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
 
         // Get mock filename from registry
         guard let mockFileName = MockResponseRegistry.shared.mockFile(for: url, method: method) else {
-            #if DEBUG
-            print("⚠️ [MockAPIClient] No mock mapping found for \(url.path)")
-            #endif
+            WPLogger.network.warning("No mock mapping found for \(url.path)")
             throw APIError.noData
         }
 
         do {
             let result: T = try MockDataLoader.load(mockFileName)
-            #if DEBUG
-            print("✅ [MockAPIClient] Request completed successfully")
-            #endif
+            WPLogger.network.info("Mock response served: \(mockFileName).json")
             return result
         } catch {
-            #if DEBUG
-            print("❌ [MockAPIClient] Failed to load mock data: \(error.localizedDescription)")
-            #endif
+            WPLogger.network.error("Failed to load mock data: \(error.localizedDescription)")
             throw APIError.noData
         }
     }
@@ -70,16 +56,10 @@ class MockAPIClient: APIClientProtocol {
         headers: [String: String]? = nil,
         body: Data? = nil
     ) async throws {
-        #if DEBUG
-        print("🎭 [MockAPIClient] \(method.rawValue) \(url.absoluteString) (void)")
-        #endif
-
+        WPLogger.network.debug("Mock void: \(method.rawValue) \(url.absoluteString)")
         // For void responses, just simulate delay and return
         try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-
-        #if DEBUG
-        print("✅ [MockAPIClient] Void request completed")
-        #endif
+        WPLogger.network.info("Mock void request completed")
     }
 
     // MARK: - Convenience Methods

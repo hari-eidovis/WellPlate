@@ -52,15 +52,11 @@ class MockDataLoader {
     /// - Returns: Decoded object of type T
     /// - Throws: MockDataError if file not found or decoding fails
     static func load<T: Decodable>(_ filename: String, bundle: Bundle = .main) throws -> T {
-        #if DEBUG
-        print("📦 [MockDataLoader] Loading: \(filename).json")
-        #endif
+        WPLogger.network.debug("MockDataLoader loading: \(filename).json")
 
         guard let url = bundle.url(forResource: filename, withExtension: "json") else {
             let error = MockDataError.fileNotFound(filename)
-            #if DEBUG
-            print(error.localizedDescription)
-            #endif
+            WPLogger.network.error("File not found in bundle: \(filename).json")
             throw error
         }
 
@@ -76,18 +72,11 @@ class MockDataLoader {
             // decoder.keyDecodingStrategy = .convertFromSnakeCase
 
             let decoded = try decoder.decode(T.self, from: data)
-
-            #if DEBUG
-            print("✅ [MockDataLoader] Successfully loaded \(filename).json")
-            #endif
-
+            WPLogger.network.info("Loaded \(filename).json ✅")
             return decoded
         } catch {
             let mockError = MockDataError.decodingFailed(error)
-            #if DEBUG
-            print(mockError.localizedDescription)
-            print("Decoding error details: \(error)")
-            #endif
+            WPLogger.network.error("Decode failed for \(filename).json — \(error)")
             throw mockError
         }
     }

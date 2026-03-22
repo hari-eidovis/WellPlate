@@ -26,11 +26,10 @@ class NutritionService: NutritionServiceProtocol {
         #if DEBUG
         let startTime = CFAbsoluteTimeGetCurrent()
         let source = AppConfig.shared.mockMode ? "MOCK" : "LIVE (Groq)"
-        print("┌─── 🔍 NUTRITION SERVICE ─────────────────────────")
-        print("│ Action: Analyze Food")
-        print("│ Food: \"\(request.foodDescription)\"")
-        print("│ Provider: \(source)")
-        print("└──────────────────────────────────────────────────")
+        WPLogger.nutrition.block(emoji: "🔍", title: "NUTRITION SERVICE", lines: [
+            "Food    : \"\(request.foodDescription)\"",
+            "Provider: \(source)"
+        ])
         #endif
 
         let nutritionalInfo: NutritionalInfo
@@ -40,23 +39,21 @@ class NutritionService: NutritionServiceProtocol {
             do {
                 nutritionalInfo = try await liveProvider.analyze(request)
             } catch let providerError as NutritionProviderError where Self.shouldFallbackToMock(for: providerError) {
-                #if DEBUG
-                print("┌─── ⚠️ NUTRITION SERVICE FALLBACK ────────────────")
-                print("│ Reason: Groq rate-limit (HTTP 429)")
-                print("│ Action: Falling back to mock provider")
-                print("└──────────────────────────────────────────────────")
-                #endif
+                WPLogger.nutrition.block(emoji: "⚠️", title: "NUTRITION FALLBACK", lines: [
+                    "Reason: Groq rate-limit (HTTP 429)",
+                    "Action: Falling back to mock provider"
+                ])
                 nutritionalInfo = try await mockProvider.analyze(request)
             }
         }
 
         #if DEBUG
         let elapsed = String(format: "%.0fms", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
-        print("┌─── ✅ NUTRITION SERVICE COMPLETE ─────────────────")
-        print("│ Result: \(nutritionalInfo.foodName)")
-        print("│ Calories: \(nutritionalInfo.calories) kcal")
-        print("│ Total Time: \(elapsed)")
-        print("└──────────────────────────────────────────────────")
+        WPLogger.nutrition.block(emoji: "✅", title: "NUTRITION COMPLETE", lines: [
+            "Food    : \(nutritionalInfo.foodName)",
+            "Calories: \(nutritionalInfo.calories) kcal",
+            "Time    : \(elapsed)"
+        ])
         #endif
 
         return nutritionalInfo

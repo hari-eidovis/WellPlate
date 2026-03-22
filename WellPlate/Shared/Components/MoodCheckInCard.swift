@@ -196,9 +196,7 @@ private struct MoodPill: View {
         var body: some View {
             ZStack {
                 Color(.systemGroupedBackground).ignoresSafeArea()
-                MoodCheckInCard(selectedMood: $mood) { confirmed in
-                    print("Confirmed: \(confirmed.label)")
-                }
+                MoodCheckInCard(selectedMood: $mood) { _ in }
                 .padding(.horizontal, 16)
             }
         }

@@ -111,17 +111,17 @@ struct BarcodeScanView: View {
     // MARK: - Scan handling
 
     private func handleScan(barcode: String) {
-        print("[BarcodeScan] handleScan called — barcode: \(barcode), phase: \(phase)")
+        WPLogger.barcode.debug("handleScan — barcode: \(barcode), phase: \(phase)")
         guard case .scanning = phase else {
-            print("[BarcodeScan] ignoring scan — phase is not .scanning")
+            WPLogger.barcode.debug("Ignoring scan — phase is not .scanning")
             return
         }
         phase = .resolving(barcode: barcode)
-        print("[BarcodeScan] phase → .resolving, starting lookup task")
+        WPLogger.barcode.info("Phase → .resolving — starting lookup")
         lookupTask?.cancel()
         lookupTask = Task {
             do {
-                print("[BarcodeScan] calling productService.lookupProduct(\(barcode))")
+                WPLogger.barcode.debug("Calling productService.lookupProduct(\(barcode))")
                 // Direct call — no competing timeout task. URLSession's own timeout
                 // (60 s) is the safety net. A racing sleep-then-throw task group was
                 // causing a race condition where the timer could win at the exact
@@ -129,30 +129,22 @@ struct BarcodeScanView: View {
                 let product = try await productService.lookupProduct(barcode: barcode)
 
                 guard !Task.isCancelled else {
-                    print("[BarcodeScan] task cancelled after lookup — skipping phase update")
+                    WPLogger.barcode.debug("Task cancelled after lookup — skipping phase update")
                     return
                 }
 
                 if let product {
-                    print("[BarcodeScan] product found: '\(product.productName)' | isComplete: \(product.isComplete) | per100g calories: \(product.nutritionPer100g?.calories as Any) | perServing calories: \(product.nutritionPerServing?.calories as Any)")
-                } else {
-                    print("[BarcodeScan] product nil — not found in OFF")
-                }
-
-                if let product {
-                    // Show confirmation immediately with whatever OFF has.
-                    // If nutrition is missing, GROQ will be called when user taps "Log This Food".
                     let nutrition = buildNutritionalInfo(from: product)
-                    print("[BarcodeScan] phase → .confirmProduct | cal: \(nutrition.calories) | hasNutrition: \(product.isComplete)")
+                    WPLogger.barcode.info("Phase → .confirmProduct — \(product.productName) | cal: \(nutrition.calories) | complete: \(product.isComplete)")
                     phase = .confirmProduct(product, nutrition)
                 } else {
-                    print("[BarcodeScan] product not found — resetting to scanning")
+                    WPLogger.barcode.warning("Product not found — resetting to .scanning")
                     showToast("Product not found. Try scanning again or type your meal.")
                     phase = .scanning
                 }
             } catch {
                 guard !Task.isCancelled else { return }
-                print("[BarcodeScan] ❌ lookup error: \(error)")
+                WPLogger.barcode.error("Lookup error: \(error)")
                 showToast("Couldn't reach product database. Try again.")
                 phase = .scanning
             }
@@ -220,7 +212,7 @@ struct BarcodeScanView: View {
                 // OFF had no calorie data — ask GROQ using the product name + user's quantity.
                 let query = [product.productName, product.brandName].compactMap { $0 }.joined(separator: " ")
                 let serving = qty.isEmpty ? nil : "\(qty) \(unit.rawValue)"
-                print("[BarcodeScan] OFF incomplete — querying GROQ for '\(query)', serving: \(serving ?? "nil")")
+                WPLogger.barcode.info("OFF incomplete — querying GROQ for '\(query)', serving: \(serving ?? "nil")")
                 do {
                     let groqResult = try await nutritionService.analyzeFood(
                         request: NutritionAnalysisRequest(foodDescription: query, servingSize: serving)
@@ -236,9 +228,9 @@ struct BarcodeScanView: View {
                         fiber:       groqResult.fiber,
                         confidence:  groqResult.confidence
                     )
-                    print("[BarcodeScan] GROQ nutrition | cal: \(finalNutrition.calories) protein: \(finalNutrition.protein) carbs: \(finalNutrition.carbs) fat: \(finalNutrition.fat)")
+                    WPLogger.barcode.info("GROQ nutrition — cal: \(finalNutrition.calories) protein: \(finalNutrition.protein)g carbs: \(finalNutrition.carbs)g fat: \(finalNutrition.fat)g")
                 } catch {
-                    print("[BarcodeScan] GROQ failed: \(error) — logging with 0 values")
+                    WPLogger.barcode.error("GROQ failed: \(error) — logging with 0 values")
                     finalNutrition = nutrition
                 }
             } else if product.nutritionPerServing == nil,

@@ -38,7 +38,7 @@ final class AppConfig {
         set {
             #if DEBUG
             UserDefaults.standard.set(newValue, forKey: Keys.mockMode)
-            print("🔧 [AppConfig] Mock Mode changed to: \(newValue)")
+            WPLogger.app.info("Mock Mode → \(newValue ? "ENABLED" : "DISABLED")")
             #endif
         }
     }
@@ -114,13 +114,11 @@ final class AppConfig {
 
     /// Log current configuration.
     func logCurrentMode() {
-        #if DEBUG
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print("🔧 [AppConfig] Mock Mode: \(mockMode ? "ENABLED ✅" : "DISABLED ❌")")
-        print("🧠 [AppConfig] Nutrition Source: \(nutritionSourceLabel)")
-        print("🔐 [AppConfig] Groq API Key: \(hasGroqAPIKey ? "PRESENT ✅" : "MISSING ❌")")
-        print("🤖 [AppConfig] Groq Model: \(groqModel)")
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        #endif
+        WPLogger.app.block(emoji: "🔧", title: "CONFIGURATION", lines: [
+            "Mock Mode   : \(mockMode ? "ENABLED ✅" : "DISABLED ❌")",
+            "Nutrition   : \(nutritionSourceLabel)",
+            "Groq API Key: \(hasGroqAPIKey ? "PRESENT ✅" : "MISSING ❌")",
+            "Groq Model  : \(groqModel)"
+        ])
     }
 }

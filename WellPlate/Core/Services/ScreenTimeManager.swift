@@ -108,7 +108,7 @@ final class ScreenTimeManager: ObservableObject {
                 events: events
             )
         } catch {
-            print("\(Self.logPrefix) Failed to start monitoring: \(error)")
+            WPLogger.stress.error("ScreenTimeManager failed to start monitoring: \(error)")
         }
     }
 
@@ -131,33 +131,27 @@ final class ScreenTimeManager: ObservableObject {
         let rawThreshold: String = defaults.object(forKey: Self.thresholdKey) != nil
             ? String(defaults.double(forKey: Self.thresholdKey))
             : "nil"
-        print("\(Self.logPrefix) snapshot thresholdDate=\(storedDate ?? "nil") thresholdRaw=\(rawThreshold) today=\(today)")
+        WPLogger.stress.debug("ScreenTime snapshot: thresholdDate=\(storedDate ?? "nil") raw=\(rawThreshold) today=\(today)")
         #endif
 
         // Clean stale data from a previous day
         if let storedDate, storedDate != today {
             defaults.removeObject(forKey: Self.thresholdKey)
             defaults.removeObject(forKey: Self.thresholdDateKey)
-            #if DEBUG
-            print("\(Self.logPrefix) cleaned stale threshold from \(storedDate)")
-            #endif
+            WPLogger.stress.debug("ScreenTime: cleaned stale threshold from \(storedDate)")
             return nil
         }
 
         guard let storedDate, storedDate == today,
               defaults.object(forKey: Self.thresholdKey) != nil else {
-            #if DEBUG
-            print("\(Self.logPrefix) no threshold data for today yet (user < 15 min usage)")
-            #endif
+            WPLogger.stress.debug("ScreenTime: no threshold data for today yet (user < 15 min usage)")
             return nil
         }
 
         let hours = max(0, defaults.double(forKey: Self.thresholdKey))
         guard hours > 0 else { return nil }
 
-        #if DEBUG
-        print("\(Self.logPrefix) fetched thresholdHours=\(hours)")
-        #endif
+        WPLogger.stress.debug("ScreenTime: fetched thresholdHours=\(hours)")
 
         return ScreenTimeReading(
             rawHours: hours,

@@ -449,7 +449,7 @@ final class StressViewModel: ObservableObject {
 
     #if DEBUG
     private func log_debug(_ message: String) {
-        print("[StressVM] \(message)")
+        WPLogger.stress.debug(message)
     }
     #endif
 
@@ -739,7 +739,7 @@ final class StressViewModel: ObservableObject {
 
     #if DEBUG
     private func log(_ message: String) {
-        print("[StressVM] \(message)")
+        WPLogger.stress.debug(message)
     }
     private func fmt2(_ v: Double) -> String { String(format: "%.2f", v) }
     private func fmt1(_ v: Double) -> String { String(format: "%.1f", v) }

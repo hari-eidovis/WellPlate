@@ -30,15 +30,15 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
         // Only start once — guard against repeated calls on every SwiftUI re-render.
         guard !context.coordinator.didStartScanning else { return }
         context.coordinator.didStartScanning = true
-        print("[BarcodeScanner] startScanning() called — isSupported: \(DataScannerViewController.isSupported)")
+        WPLogger.barcode.debug("startScanning() — isSupported: \(DataScannerViewController.isSupported)")
         do {
             try uiViewController.startScanning()
-            print("[BarcodeScanner] scanning started successfully")
+            WPLogger.barcode.info("DataScanner started successfully")
         } catch let error as DataScannerViewController.ScanningUnavailable {
-            print("[BarcodeScanner] startScanning() threw ScanningUnavailable: \(error)")
+            WPLogger.barcode.error("ScanningUnavailable: \(error)")
             context.coordinator.handleUnavailable(error)
         } catch {
-            print("[BarcodeScanner] startScanning() threw unexpected error: \(error)")
+            WPLogger.barcode.error("Unexpected startScanning error: \(error)")
         }
     }
 
@@ -64,16 +64,15 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
         func dataScanner(_ dataScanner: DataScannerViewController,
                          didAdd addedItems: [RecognizedItem],
                          allItems: [RecognizedItem]) {
-            print("[BarcodeScanner] didAdd items: \(addedItems.count), hasFired: \(hasFired)")
+            WPLogger.barcode.debug("didAdd items: \(addedItems.count), hasFired: \(hasFired)")
             guard !hasFired else { return }
             for item in addedItems {
                 if case .barcode(let barcode) = item {
                     let payload = barcode.payloadStringValue
-                    print("[BarcodeScanner] barcode item found — payload: \(payload ?? "nil")")
                     if let payload, !payload.isEmpty {
                         hasFired = true
                         dataScanner.stopScanning()
-                        print("[BarcodeScanner] firing onScan with payload: \(payload)")
+                        WPLogger.barcode.info("Firing onScan — payload: \(payload)")
                         onScan(payload)
                         return
                     }
@@ -89,7 +88,7 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
 
         /// Shared handler for both startup throws and runtime delegate errors.
         func handleUnavailable(_ error: DataScannerViewController.ScanningUnavailable) {
-            print("[BarcodeScanner] ⚠️ scanner unavailable: \(error)")
+            WPLogger.barcode.warning("Scanner unavailable: \(error)")
             switch error {
             case .cameraRestricted:
                 onError?("Camera access is required. Enable it in Settings.")

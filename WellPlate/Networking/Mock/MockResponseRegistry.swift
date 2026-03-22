@@ -40,10 +40,7 @@ class MockResponseRegistry {
     func register(path: String, method: HTTPMethod, mockFile: String) {
         let pattern = URLPattern(path, method: method)
         registry[pattern] = mockFile
-
-        #if DEBUG
-        print("📝 [MockRegistry] Registered: \(method.rawValue) \(path) → \(mockFile).json")
-        #endif
+        WPLogger.network.debug("MockRegistry registered: \(method.rawValue) \(path) → \(mockFile).json")
     }
 
     /// Get mock filename for URL and method
@@ -55,26 +52,20 @@ class MockResponseRegistry {
         // Try exact path match first
         let exactPattern = URLPattern(url.path, method: method)
         if let mockFile = registry[exactPattern] {
-            #if DEBUG
-            print("✅ [MockRegistry] Exact match: \(method.rawValue) \(url.path) → \(mockFile).json")
-            #endif
+            WPLogger.network.debug("MockRegistry exact match: \(method.rawValue) \(url.path) → \(mockFile).json")
             return mockFile
         }
 
         // Try pattern matching (e.g., /api/users/{id})
         for (pattern, mockFile) in registry {
             if matchesPattern(pattern.path, actualPath: url.path) && pattern.method == method {
-                #if DEBUG
-                print("✅ [MockRegistry] Pattern match: \(pattern.path) matched \(url.path) → \(mockFile).json")
-                #endif
+                WPLogger.network.debug("MockRegistry pattern match: \(pattern.path) → \(url.path)")
                 return mockFile
             }
         }
 
         // Fallback: generate filename from path
-        #if DEBUG
-        print("⚠️  [MockRegistry] No mapping found, using fallback for: \(method.rawValue) \(url.path)")
-        #endif
+        WPLogger.network.warning("MockRegistry no mapping, fallback: \(method.rawValue) \(url.path)")
         return generateDefaultFilename(for: url, method: method)
     }
 
@@ -118,11 +109,9 @@ class MockResponseRegistry {
     /// Setup default URL → mock file mappings
     /// Add your API endpoint mappings here
     private func setupDefaultMappings() {
-        #if DEBUG
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print("📋 [MockRegistry] Setting up default mappings")
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        #endif
+        WPLogger.network.block(emoji: "📋", title: "MOCK REGISTRY SETUP", lines: [
+            "Registering default URL → file mappings"
+        ])
 
         // Example mappings - customize for your API
         register(path: "/api/health", method: .get, mockFile: "mock_health_check")
@@ -134,9 +123,6 @@ class MockResponseRegistry {
         // Add your API endpoint mappings below:
         register(path: "/api/nutrition/analyze", method: .post, mockFile: "mock_nutrition_biryani")
 
-        #if DEBUG
-        print("✅ [MockRegistry] \(registry.count) mappings registered")
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        #endif
+        WPLogger.network.info("MockRegistry ready — \(registry.count) mappings registered")
     }
 }

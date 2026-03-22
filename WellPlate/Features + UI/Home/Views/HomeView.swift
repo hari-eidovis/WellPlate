@@ -362,7 +362,7 @@ struct HomeView: View {
         } catch {
             hasLoggedMoodToday = false
             selectedMood = nil
-            print("HomeView mood save failed: \(error.localizedDescription)")
+            WPLogger.home.error("Mood save failed: \(error.localizedDescription)")
         }
     }
 
@@ -379,7 +379,7 @@ struct HomeView: View {
         do {
             try modelContext.save()
         } catch {
-            print("HomeView hydration save failed: \(error.localizedDescription)")
+            WPLogger.home.error("Hydration save failed: \(error.localizedDescription)")
         }
     }
 

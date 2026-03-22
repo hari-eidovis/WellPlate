@@ -67,16 +67,16 @@ final class BarcodeProductService: BarcodeProductServiceProtocol {
     }
 
     func lookupProduct(barcode: String) async throws -> BarcodeProduct? {
-        print("[BarcodeProductService] lookupProduct: \(barcode)")
+        WPLogger.barcode.info("Lookup: \(barcode)")
         // Try original barcode first; if not found, try stripping leading zeros
         // to handle UPC-A / EAN-13 encoding variants.
         if let product = try await fetchProduct(barcode: barcode) { return product }
         let stripped = String(barcode.drop(while: { $0 == "0" }))
         if !stripped.isEmpty, stripped != barcode {
-            print("[BarcodeProductService] retrying with stripped barcode: \(stripped)")
+            WPLogger.barcode.info("Retrying with stripped barcode: \(stripped)")
             return try await fetchProduct(barcode: stripped)
         }
-        print("[BarcodeProductService] product not found after both attempts")
+        WPLogger.barcode.warning("Product not found after both attempts — barcode: \(barcode)")
         return nil
     }
 
@@ -84,36 +84,34 @@ final class BarcodeProductService: BarcodeProductServiceProtocol {
         guard let url = URL(string: "https://world.openfoodfacts.org/api/v2/product/\(barcode).json") else {
             throw BarcodeProductError.decodingError
         }
-        print("[BarcodeProductService] GET \(url)")
+        WPLogger.barcode.debug("GET \(url)")
         let data: Data
         let response: URLResponse
         do {
             (data, response) = try await session.data(from: url)
         } catch {
-            print("[BarcodeProductService] ❌ network error: \(error)")
+            WPLogger.barcode.error("Network error: \(error)")
             throw BarcodeProductError.networkError(error)
         }
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-        print("[BarcodeProductService] HTTP \(statusCode) — \(data.count) bytes")
+        WPLogger.barcode.debug("HTTP \(statusCode) — \(data.count) bytes")
         if statusCode == 404 {
-            print("[BarcodeProductService] 404 — returning nil")
+            WPLogger.barcode.info("HTTP 404 — product not found")
             return nil
         }
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            print("[BarcodeProductService] ❌ JSON parse failed")
+            WPLogger.barcode.error("JSON parse failed for barcode: \(barcode)")
             throw BarcodeProductError.decodingError
         }
         // OFF returns status 0 with no "product" key when not found (HTTP 200)
         let offStatus = json["status"] as? Int ?? -1
-        print("[BarcodeProductService] OFF status: \(offStatus)")
         guard let product = json["product"] as? [String: Any] else {
-            print("[BarcodeProductService] no 'product' key in response — not found")
+            WPLogger.barcode.warning("OFF status: \(offStatus) — no 'product' key in response")
             return nil
         }
         let name = (product["product_name"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        print("[BarcodeProductService] product_name: '\(name)'")
         guard !name.isEmpty else {
-            print("[BarcodeProductService] empty product name — returning nil")
+            WPLogger.barcode.warning("Empty product name — returning nil")
             return nil
         }
 
@@ -144,7 +142,13 @@ final class BarcodeProductService: BarcodeProductServiceProtocol {
             nutritionPerServing: perServing,
             imageURL:            (product["image_url"] as? String).flatMap(URL.init)
         )
-        print("[BarcodeProductService] ✅ parsed product: '\(name)' | brand: \(result.brandName ?? "nil") | isComplete: \(result.isComplete) | per100g.cal: \(per100g.calories as Any) | perServing.cal: \(perServing.calories as Any)")
+        WPLogger.barcode.block(emoji: "✅", title: "PRODUCT FOUND", lines: [
+            "Name   : \(name)",
+            "Brand  : \(result.brandName ?? "unknown")",
+            "Complete: \(result.isComplete ? "yes — has calorie data" : "no — missing nutrition")",
+            "Per 100g: \(per100g.calories.map { "\($0) kcal" } ?? "n/a")",
+            "Per Svng: \(perServing.calories.map { "\($0) kcal" } ?? "n/a")"
+        ])
         return result
     }
 

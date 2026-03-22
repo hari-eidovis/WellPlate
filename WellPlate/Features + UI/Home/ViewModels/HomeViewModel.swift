@@ -120,9 +120,7 @@ final class HomeViewModel: ObservableObject {
             try modelContext.save()
             refreshWidget(for: day)
         } catch {
-            #if DEBUG
-            print("❌ [HomeViewModel] logFood failed: \(error)")
-            #endif
+            WPLogger.home.error("logFood failed: \(error)")
             showErrorMessage(userFacingErrorMessage(for: error))
         }
     }
@@ -220,7 +218,7 @@ final class HomeViewModel: ObservableObject {
         on date: Date,
         context: MealContext? = nil
     ) async {
-        print("[HomeViewModel] logFoodDirectly called — food: '\(nutrition.foodName)', barcode: \(barcode ?? "nil"), cal: \(nutrition.calories)")
+        WPLogger.home.info("logFoodDirectly — food: '\(nutrition.foodName)', barcode: \(barcode ?? "nil"), cal: \(nutrition.calories)")
         isLoading = true
         showError = false
         errorMessage = ""
@@ -242,9 +240,9 @@ final class HomeViewModel: ObservableObject {
             )
             try modelContext.save()
             refreshWidget(for: day)
-            print("[HomeViewModel] ✅ logFoodDirectly saved successfully")
+            WPLogger.home.info("logFoodDirectly saved ✅")
         } catch {
-            print("❌ [HomeViewModel] logFoodDirectly failed: \(error)")
+            WPLogger.home.error("logFoodDirectly failed: \(error)")
             showErrorMessage(userFacingErrorMessage(for: error))
         }
     }
