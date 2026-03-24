@@ -28,6 +28,13 @@ final class WellnessDayLog {
     /// Stress level label, e.g. "Excellent", "Good", "Moderate", "High", "Very High". `nil` = not logged.
     var stressLevel: String?
 
+    /// Cups of coffee consumed today (0 = none logged).
+    var coffeeCups: Int = 0
+
+    /// Raw value of the `CoffeeType` chosen for today, e.g. "Latte".
+    /// nil = not chosen yet. Retained for the full day even if cups are decremented to 0.
+    var coffeeType: String? = nil
+
     var createdAt: Date
 
     // MARK: - Init
@@ -40,6 +47,8 @@ final class WellnessDayLog {
         caloriesBurned: Int = 0,
         steps: Int = 0,
         stressLevel: String? = nil,
+        coffeeCups: Int = 0,
+        coffeeType: String? = nil,
         createdAt: Date = .now
     ) {
         self.day = Calendar.current.startOfDay(for: day)
@@ -49,6 +58,8 @@ final class WellnessDayLog {
         self.caloriesBurned = caloriesBurned
         self.steps = steps
         self.stressLevel = stressLevel
+        self.coffeeCups = coffeeCups
+        self.coffeeType = coffeeType
         self.createdAt = createdAt
     }
 
@@ -58,5 +69,11 @@ final class WellnessDayLog {
     var mood: MoodOption? {
         guard let raw = moodRaw else { return nil }
         return MoodOption(rawValue: raw)
+    }
+
+    /// Resolved `CoffeeType` from the stored raw value.
+    var resolvedCoffeeType: CoffeeType? {
+        guard let raw = coffeeType else { return nil }
+        return CoffeeType(rawValue: raw)
     }
 }

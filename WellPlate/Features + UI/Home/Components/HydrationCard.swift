@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - HydrationCard
 // Shows a row of 8 water-glass icons; filled ones are tinted blue.
-// The user increments with the + button or decrements by tapping a filled glass.
+// The card background animates with a rising water-wave fill as cups are logged.
 
 struct HydrationCard: View {
 
@@ -11,65 +11,91 @@ struct HydrationCard: View {
     var cupSizeML: Int = 250
     var onTap: (() -> Void)? = nil
 
+    // MARK: - Wave animation state
+    @State private var wavePhase: Double = 0
+    @State private var isAnimating: Bool = false
+
+    private var fillFraction: Double {
+        totalGlasses > 0 ? min(1.0, Double(glassesConsumed) / Double(totalGlasses)) : 0
+    }
+
+    private let waveColor = Color(hue: 0.58, saturation: 0.65, brightness: 0.82)
+
     var body: some View {
-        VStack(spacing: 24) {
-            // Header
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Hydration")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-                    
-                    HStack(spacing: 2) {
-                        Text("\(glassesConsumed)")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color(hue: 0.58, saturation: 0.65, brightness: 0.75))
-                            .contentTransition(.numericText(countsDown: false))
-                            .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)
-                        
-                        Text("of \(totalGlasses) cups")
-                            .font(.system(size: 12, weight: .regular, design: .rounded))
-                            .foregroundStyle(.secondary)
-                        
-                        Text("· \(glassesConsumed * cupSizeML) mL")
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
-                            .foregroundStyle(Color(hue: 0.58, saturation: 0.50, brightness: 0.70))
-                            .contentTransition(.numericText(countsDown: false))
-                            .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)
-                    }
-                } // end VStack(alignment: .leading)
-                
-                Spacer()
-                
-                if glassesConsumed < totalGlasses {
-                    // + button
-                    Button {
-                        addGlass()
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Color(hue: 0.58, saturation: 0.65, brightness: 0.82))
-                            .frame(width: 36, height: 36)
-                            .background(
-                                Circle()
-                                    .fill(Color(hue: 0.58, saturation: 0.22, brightness: 0.96))
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(glassesConsumed >= totalGlasses)
-                }
+        // ZStack: wave fill on bottom, card content on top
+        ZStack {
+            // ── Water fill layer ──────────────────────────────────────────────
+            GeometryReader { geo in
+                WaterWaveShape(fillFraction: fillFraction, wavePhase: wavePhase)
+                    .fill(waveColor.opacity(0.13))
+                    .animation(
+                        .spring(response: 0.75, dampingFraction: 0.68),
+                        value: fillFraction
+                    )
             }
-            // Glass icons
-            HStack(spacing: 8) {
-                ForEach(0..<totalGlasses, id: \.self) { index in
-                    GlassIcon(isFilled: index < glassesConsumed)
-                        .onTapGesture {
-                            toggleGlass(at: index)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+
+            // ── Card content ──────────────────────────────────────────────────
+            VStack(spacing: 24) {
+                // Header
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Hydration")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+
+                        HStack(spacing: 2) {
+                            Text("\(glassesConsumed)")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(Color(hue: 0.58, saturation: 0.65, brightness: 0.75))
+                                .contentTransition(.numericText(countsDown: false))
+                                .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)
+
+                            Text("of \(totalGlasses) cups")
+                                .font(.system(size: 12, weight: .regular, design: .rounded))
+                                .foregroundStyle(.secondary)
+
+                            Text("· \(glassesConsumed * cupSizeML) mL")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundStyle(Color(hue: 0.58, saturation: 0.50, brightness: 0.70))
+                                .contentTransition(.numericText(countsDown: false))
+                                .animation(.spring(response: 0.32, dampingFraction: 0.72), value: glassesConsumed)
                         }
+                    }
+
+                    Spacer()
+
+                    if glassesConsumed < totalGlasses {
+                        // + button
+                        Button {
+                            addGlass()
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color(hue: 0.58, saturation: 0.65, brightness: 0.82))
+                                .frame(width: 36, height: 36)
+                                .background(
+                                    Circle()
+                                        .fill(Color(hue: 0.58, saturation: 0.22, brightness: 0.96))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(glassesConsumed >= totalGlasses)
+                    }
+                }
+
+                // Glass icons
+                HStack(spacing: 8) {
+                    ForEach(0..<totalGlasses, id: \.self) { index in
+                        GlassIcon(isFilled: index < glassesConsumed)
+                            .onTapGesture {
+                                toggleGlass(at: index)
+                            }
+                    }
                 }
             }
+            .padding(20)
         }
-        .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Color(.systemBackground))
@@ -78,6 +104,22 @@ struct HydrationCard: View {
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .onTapGesture {
             onTap?()
+        }
+        .onAppear {
+            startWaveAnimation()
+        }
+    }
+
+    // MARK: - Wave
+
+    private func startWaveAnimation() {
+        guard !isAnimating else { return }
+        isAnimating = true
+        withAnimation(
+            .linear(duration: 2.5)
+            .repeatForever(autoreverses: false)
+        ) {
+            wavePhase = .pi * 2
         }
     }
 

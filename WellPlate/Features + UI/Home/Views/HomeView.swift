@@ -19,9 +19,16 @@ struct HomeView: View {
     @State private var selectedMood: MoodOption?
     @State private var hasLoggedMoodToday = false
     @State private var hydrationGlasses: Int = 0
+    @State private var coffeeCups: Int = 0
     @State private var showLogMeal = false
     @State private var showWaterDetail = false
+    @State private var showCoffeeDetail = false
     @State private var showWellnessCalendar = false
+    @State private var showCoffeeTypePicker = false
+    @State private var showCoffeeWaterAlert = false
+    /// Handoff variable for the sheet→alert race-safe pattern.
+    /// Set by the picker closure, read by onChange(of: showCoffeeTypePicker).
+    @State private var pendingCoffeeType: CoffeeType? = nil
     @StateObject private var foodJournalViewModel = HomeViewModel()
 
     private var currentGoals: UserGoals {
@@ -85,7 +92,16 @@ struct HomeView: View {
                     )
                     .padding(.horizontal, 16)
 
-                    // 6. Activity
+                    // 6. Coffee
+                    CoffeeCard(
+                        cupsConsumed: $coffeeCups,
+                        totalCups: currentGoals.coffeeDailyCups,
+                        coffeeType: todayWellnessLog?.resolvedCoffeeType,
+                        onTap: { showCoffeeDetail = true }
+                    )
+                    .padding(.horizontal, 16)
+
+                    // 7. Activity
 //                    ActivityCard.sample()
 //                        .padding(.horizontal, 16)
 
@@ -129,6 +145,12 @@ struct HomeView: View {
                     cupSizeML: currentGoals.waterCupSizeML
                 )
             }
+            .navigationDestination(isPresented: $showCoffeeDetail) {
+                CoffeeDetailView(
+                    totalCups: currentGoals.coffeeDailyCups,
+                    coffeeType: todayWellnessLog?.resolvedCoffeeType
+                )
+            }
             .navigationDestination(isPresented: $showWellnessCalendar) {
                 WellnessCalendarView()
             }
@@ -139,9 +161,13 @@ struct HomeView: View {
             foodJournalViewModel.bindContext(modelContext)
             refreshTodayMoodState()
             refreshTodayHydrationState()
+            refreshTodayCoffeeState()
         }
         .onChange(of: showWaterDetail) { _, showing in
             if !showing { refreshTodayHydrationState() }
+        }
+        .onChange(of: showCoffeeDetail) { _, showing in
+            if !showing { refreshTodayCoffeeState() }
         }
         .onChange(of: selectedMood) { _, mood in
             guard let mood else { return }
@@ -150,10 +176,61 @@ struct HomeView: View {
         .onChange(of: hydrationGlasses) { _, cups in
             updateHydrationForToday(cups)
         }
+        .onChange(of: coffeeCups) { oldCups, newCups in
+            if newCups > oldCups {
+                // Addition path
+                if newCups == 1 && todayWellnessLog?.coffeeType == nil {
+                    // First cup, no type chosen — show picker.
+                    // Cup count is saved optimistically; type saved after picker selection.
+                    updateCoffeeForToday(cups: newCups, type: nil)
+                    showCoffeeTypePicker = true
+                    // Water alert fires in onChange(of: showCoffeeTypePicker) after sheet closes.
+                } else {
+                    // Subsequent cup or type already known.
+                    updateCoffeeForToday(cups: newCups, type: todayWellnessLog?.resolvedCoffeeType)
+                    showCoffeeWaterAlert = true
+                }
+            } else {
+                // Decrement — persist only, no water alert.
+                updateCoffeeForToday(cups: newCups, type: todayWellnessLog?.resolvedCoffeeType)
+            }
+        }
+        // Race-safe: alert fires only after the sheet animation has fully completed.
+        .onChange(of: showCoffeeTypePicker) { _, isShowing in
+            guard !isShowing else { return }
+            if let type = pendingCoffeeType {
+                // User selected a type — save it and show the water alert.
+                pendingCoffeeType = nil
+                updateCoffeeForToday(cups: coffeeCups, type: type)
+                showCoffeeWaterAlert = true
+            } else {
+                // User swiped picker away without selecting — revert the cup increment.
+                coffeeCups = max(0, coffeeCups - 1)
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             refreshTodayMoodState()
             refreshTodayHydrationState()
+            refreshTodayCoffeeState()
+        }
+        // Coffee type picker sheet
+        .sheet(isPresented: $showCoffeeTypePicker) {
+            CoffeeTypePickerSheet { type in
+                pendingCoffeeType = type
+                showCoffeeTypePicker = false
+            }
+        }
+        // Water nudge alert after every coffee addition
+        .alert("Stay Hydrated!", isPresented: $showCoffeeWaterAlert) {
+            Button("Log Water") {
+                if hydrationGlasses < currentGoals.waterDailyCups {
+                    hydrationGlasses += 1
+                }
+            }
+            Button("Skip", role: .cancel) {}
+        } message: {
+            Text("Coffee can cause dehydration. Want to log a glass of water too?")
         }
     }
 
@@ -380,6 +457,23 @@ struct HomeView: View {
             try modelContext.save()
         } catch {
             WPLogger.home.error("Hydration save failed: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Coffee Logging
+
+    private func refreshTodayCoffeeState() {
+        coffeeCups = fetchTodayWellnessLog()?.coffeeCups ?? 0
+    }
+
+    private func updateCoffeeForToday(cups: Int, type: CoffeeType?) {
+        let log = fetchOrCreateTodayWellnessLog()
+        log.coffeeCups = max(0, cups)
+        if let type { log.coffeeType = type.rawValue }
+        do {
+            try modelContext.save()
+        } catch {
+            WPLogger.home.error("Coffee save failed: \(error.localizedDescription)")
         }
     }
 

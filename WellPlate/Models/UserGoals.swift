@@ -8,6 +8,7 @@ final class UserGoals {
 
     var waterCupSizeML: Int
     var waterDailyCups: Int
+    var coffeeDailyCups: Int = 4
 
     // MARK: - Nutrition
 
@@ -40,6 +41,7 @@ final class UserGoals {
     init(
         waterCupSizeML: Int = 250,
         waterDailyCups: Int = 8,
+        coffeeDailyCups: Int = 4,
         calorieGoal: Int = 2000,
         carbsGoalGrams: Int = 220,
         proteinGoalGrams: Int = 150,
@@ -60,6 +62,7 @@ final class UserGoals {
     ) {
         self.waterCupSizeML = waterCupSizeML
         self.waterDailyCups = waterDailyCups
+        self.coffeeDailyCups = coffeeDailyCups
         self.calorieGoal = calorieGoal
         self.carbsGoalGrams = carbsGoalGrams
         self.proteinGoalGrams = proteinGoalGrams
@@ -143,6 +146,7 @@ extension UserGoals {
     func resetToDefaults() {
         waterCupSizeML = 250
         waterDailyCups = 8
+        coffeeDailyCups = 4
         calorieGoal = 2000
         carbsGoalGrams = 220
         proteinGoalGrams = 150
