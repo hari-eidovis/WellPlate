@@ -28,6 +28,7 @@ enum WPLogger {
     static let stress     = Channel(category: "Stress",   icon: "🧘")
     static let healthKit  = Channel(category: "HealthKit",icon: "❤️")
     static let ui         = Channel(category: "UI",       icon: "🎨")
+    static let speech     = Channel(category: "Speech",   icon: "🎙️")
 
     // MARK: - Box width constant
     private static let boxWidth = 62

@@ -224,7 +224,7 @@ final class StressViewModel: ObservableObject {
         #endif
 
         // Compute exercise factor
-        let exerciseScore = computeExerciseScore(steps: steps, energy: energy)
+        let exerciseScore = StressScoring.exerciseScore(steps: steps, energy: energy)
         exerciseFactor = buildExerciseFactor(score: exerciseScore, steps: steps, energy: energy)
 
         #if DEBUG
@@ -232,7 +232,7 @@ final class StressViewModel: ObservableObject {
         #endif
 
         // Compute sleep factor
-        let sleepScore = computeSleepScore(summary: sleepSummary)
+        let sleepScore = StressScoring.sleepScore(summary: sleepSummary)
         sleepFactor = buildSleepFactor(score: sleepScore, summary: sleepSummary)
 
         #if DEBUG
@@ -297,8 +297,12 @@ final class StressViewModel: ObservableObject {
     func refreshDietFactor() {
         if let snap = mockSnapshot {
             currentDayLogs = snap.currentDayLogs
-            let score = computeDietScore(logs: snap.currentDayLogs)
-            dietFactor = buildDietFactor(score: score, logs: snap.currentDayLogs)
+            let protein = snap.currentDayLogs.map(\.protein).reduce(0, +)
+            let fiber   = snap.currentDayLogs.map(\.fiber).reduce(0, +)
+            let fat     = snap.currentDayLogs.map(\.fat).reduce(0, +)
+            let carbs   = snap.currentDayLogs.map(\.carbs).reduce(0, +)
+            let score   = StressScoring.dietScore(protein: protein, fiber: fiber, fat: fat, carbs: carbs, hasLogs: !snap.currentDayLogs.isEmpty)
+            dietFactor  = buildDietFactor(score: score, logs: snap.currentDayLogs)
             return
         }
         let today = Calendar.current.startOfDay(for: Date())
@@ -307,19 +311,19 @@ final class StressViewModel: ObservableObject {
                 entry.day == today
             }
         )
-        let logs = (try? modelContext.fetch(descriptor)) ?? []
+        let logs    = (try? modelContext.fetch(descriptor)) ?? []
         currentDayLogs = logs
-        let score = computeDietScore(logs: logs)
-        dietFactor = buildDietFactor(score: score, logs: logs)
+        let protein = logs.map(\.protein).reduce(0, +)
+        let fiber   = logs.map(\.fiber).reduce(0, +)
+        let fat     = logs.map(\.fat).reduce(0, +)
+        let carbs   = logs.map(\.carbs).reduce(0, +)
+        let score   = StressScoring.dietScore(protein: protein, fiber: fiber, fat: fat, carbs: carbs, hasLogs: !logs.isEmpty)
+        dietFactor  = buildDietFactor(score: score, logs: logs)
 
         #if DEBUG
         if logs.isEmpty {
             log("🥗 Diet      → no food logged today  score=\(fmt2(score))/25  stressContrib=\(fmt2(dietFactor.stressContribution))/25")
         } else {
-            let protein = logs.map(\.protein).reduce(0, +)
-            let fiber   = logs.map(\.fiber).reduce(0, +)
-            let fat     = logs.map(\.fat).reduce(0, +)
-            let carbs   = logs.map(\.carbs).reduce(0, +)
             log("🥗 Diet      → \(logs.count) entries  protein=\(fmt1(protein))g  fiber=\(fmt1(fiber))g  fat=\(fmt1(fat))g  carbs=\(fmt1(carbs))g")
             log("             → score=\(fmt2(score))/25  stressContrib=\(fmt2(dietFactor.stressContribution))/25  [\(dietFactor.detailText)]")
         }
@@ -512,81 +516,6 @@ final class StressViewModel: ObservableObject {
         (try? await healthService.fetchRespiratoryRate(for: range)) ?? []
     }
 
-    // MARK: - Score Engines
-
-    // Higher score = more activity = better (green).
-    private func computeExerciseScore(steps: Double?, energy: Double?) -> Double {
-        guard steps != nil || energy != nil else { return 12.5 }
-
-        var scores: [Double] = []
-
-        if let s = steps {
-            scores.append(25.0 * clamp(s / 10_000.0))   // 10k steps → 25
-        }
-        if let e = energy {
-            scores.append(25.0 * clamp(e / 600.0))      // 600 kcal  → 25
-        }
-
-        return scores.reduce(0, +) / Double(scores.count)
-    }
-
-    // Higher score = better sleep quality = better (green).
-    private func computeSleepScore(summary: DailySleepSummary?) -> Double {
-        guard let s = summary else { return 12.5 }
-        let h = s.totalHours
-
-        // Base quality from total hours (0–20 pts) — peaks at 7–9 h
-        let baseScore: Double
-        switch h {
-        case ..<4:     baseScore = 0
-        case 4..<5:    baseScore = lerp(from: 0,  to: 5,  t: (h - 4) / 1)
-        case 5..<6:    baseScore = lerp(from: 5,  to: 12, t: (h - 5) / 1)
-        case 6..<7:    baseScore = lerp(from: 12, to: 18, t: (h - 6) / 1)
-        case 7..<9:    baseScore = lerp(from: 18, to: 20, t: (h - 7) / 2)
-        case 9..<10:   baseScore = lerp(from: 20, to: 16, t: (h - 9) / 1)
-        default:       baseScore = 14
-        }
-
-        // Deep sleep bonus (0–5 pts) — more deep sleep = higher score
-        let deepBonus: Double
-        if h > 0 {
-            let deepRatio = s.deepHours / h
-            deepBonus = clamp(deepRatio / 0.18) * 5
-        } else {
-            deepBonus = 2.5 // neutral
-        }
-
-        return min(25, baseScore + deepBonus)
-    }
-
-    private func computeDietScore(logs: [FoodLogEntry]) -> Double {
-        guard !logs.isEmpty else { return 12.5 }
-
-        let totalProtein = logs.map(\.protein).reduce(0, +)
-        let totalFiber   = logs.map(\.fiber).reduce(0, +)
-        let totalFat     = logs.map(\.fat).reduce(0, +)
-        let totalCarbs   = logs.map(\.carbs).reduce(0, +)
-
-        let proteinRatio = clamp(totalProtein / 60.0)
-        let fiberRatio   = clamp(totalFiber / 25.0)
-        let balancedScore = proteinRatio * 0.55 + fiberRatio * 0.45
-
-        let fatRatio  = clamp(totalFat / 65.0)
-        let carbRatio = clamp(totalCarbs / 225.0)
-        let excessScore = fatRatio * 0.45 + carbRatio * 0.55
-
-        let netBalance = clamp((balancedScore - excessScore * 0.6 + 0.5) / 1.0)
-
-        // Higher netBalance = better diet = higher score (green).
-        return 25.0 * netBalance
-    }
-
-    private func computeScreenTimeScore(hours: Double?) -> Double {
-        guard let h = hours else { return 0 }
-        // 2 points per hour, capped at 25
-        return min(25, h * 2.0)
-    }
-
     // MARK: - Factor Builders
 
     private func buildExerciseFactor(score: Double, steps: Double?, energy: Double?) -> StressFactorResult {
@@ -659,7 +588,7 @@ final class StressViewModel: ObservableObject {
         if let snap = mockSnapshot {
             screenTimeSource = .auto
             screenTimeDisplayHours = snap.screenTimeHours
-            let score = computeScreenTimeScore(hours: snap.screenTimeHours)
+            let score = StressScoring.screenTimeScore(hours: snap.screenTimeHours)
             let detail = score < 8 ? "Low screen time 👍" : score < 16 ? "Moderate screen usage" : "Consider reducing screen time"
             screenTimeFactor = StressFactorResult(
                 title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
@@ -672,7 +601,7 @@ final class StressViewModel: ObservableObject {
         if let reading = ScreenTimeManager.shared.currentAutoDetectedReading {
             screenTimeSource = .auto
             screenTimeDisplayHours = reading.rawHours
-            let score = computeScreenTimeScore(hours: reading.rawHours)
+            let score = StressScoring.screenTimeScore(hours: reading.rawHours)
             let detail = score < 8 ? "Low screen time 👍" : score < 16 ? "Moderate screen usage" : "Consider reducing screen time"
             screenTimeFactor = StressFactorResult(
                 title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
@@ -708,16 +637,6 @@ final class StressViewModel: ObservableObject {
 
     private func roundedLoggedStressScore(_ value: Double) -> Double {
         (value * 10).rounded() / 10
-    }
-
-    // MARK: - Helpers
-
-    private func clamp(_ value: Double, min lo: Double = 0, max hi: Double = 1) -> Double {
-        Swift.min(hi, Swift.max(lo, value))
-    }
-
-    private func lerp(from a: Double, to b: Double, t: Double) -> Double {
-        a + (b - a) * clamp(t)
     }
 
     // MARK: - Debug Logging

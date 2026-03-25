@@ -183,22 +183,38 @@ final class MealLogViewModel: ObservableObject {
     // MARK: - Transcription
 
     func startMealTranscription() {
-        guard !isLoading else { return }
+        guard !isLoading else {
+            WPLogger.speech.warning("startMealTranscription ignored — save already in progress")
+            return
+        }
 
         if isTranscribing {
+            WPLogger.speech.info("Mic tapped while recording — stopping active transcription")
             stopMealTranscription()
             return
         }
 
         Task {
             if !speechService.hasPermission {
+                WPLogger.speech.info("No permission yet — requesting before starting session")
                 do {
                     try await speechService.requestPermissions()
                 } catch {
+                    WPLogger.speech.error("Permission request failed — showing permission alert")
                     showTranscriptionPermissionAlert = true
                     return
                 }
             }
+
+            WPLogger.speech.block(
+                emoji: "🎙️",
+                title: "MEAL LOG — START",
+                lines: [
+                    "Mode:     Manual (MealLog sheet)",
+                    "Existing: \(foodDescription.isEmpty ? "(empty)" : "\"\(foodDescription)\"")",
+                    "Action:   Transcript will be appended on final result"
+                ]
+            )
 
             do {
                 isTranscribing = true
@@ -223,25 +239,30 @@ final class MealLogViewModel: ObservableObject {
                         self.isTranscribing = false
 
                         if case .noSpeechDetected = error {
+                            WPLogger.speech.info("No speech detected — recording stopped silently")
                             return
                         }
 
+                        WPLogger.speech.error("Transcription error in MealLog: \(error.localizedDescription ?? "unknown")")
                         self.handleSpeechTranscriptionError(error)
                     }
                 )
             } catch let error as SpeechTranscriptionError {
                 isTranscribing = false
                 liveTranscript = ""
+                WPLogger.speech.error("startTranscription threw SpeechTranscriptionError: \(error.localizedDescription ?? "unknown")")
                 handleSpeechTranscriptionError(error)
             } catch {
                 isTranscribing = false
                 liveTranscript = ""
+                WPLogger.speech.error("startTranscription threw unexpected error: \(error.localizedDescription)")
                 showErrorMessage(error.localizedDescription)
             }
         }
     }
 
     func stopMealTranscription() {
+        WPLogger.speech.info("Manual stop — resetting transcription state immediately")
         speechService.stopTranscription()
         isTranscribing = false
         liveTranscript = ""
@@ -252,17 +273,32 @@ final class MealLogViewModel: ObservableObject {
     /// Starts transcription; when speech finalises, sets `foodDescription` and auto-saves
     /// with whatever context values are currently set (all defaults for a fresh ViewModel).
     func startVoiceAutoLog(selectedDate: Date) {
-        guard !isLoading else { return }
+        guard !isLoading else {
+            WPLogger.speech.warning("startVoiceAutoLog ignored — save already in progress")
+            return
+        }
 
         Task {
             if !speechService.hasPermission {
+                WPLogger.speech.info("No permission yet — requesting before starting auto-log session")
                 do {
                     try await speechService.requestPermissions()
                 } catch {
+                    WPLogger.speech.error("Permission request failed — showing permission alert")
                     showTranscriptionPermissionAlert = true
                     return
                 }
             }
+
+            WPLogger.speech.block(
+                emoji: "🎙️",
+                title: "VOICE AUTO-LOG — START",
+                lines: [
+                    "Mode:   Auto-Log (Home drag target)",
+                    "Action: Transcript → foodDescription → saveMeal() automatically"
+                ]
+            )
+
             do {
                 isTranscribing = true
                 liveTranscript = ""
@@ -276,25 +312,42 @@ final class MealLogViewModel: ObservableObject {
                         self.isTranscribing = false
                         self.liveTranscript = ""
                         let trimmed = final.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { return }
+                        guard !trimmed.isEmpty else {
+                            WPLogger.speech.warning("Auto-log final transcript was empty — skipping save")
+                            return
+                        }
                         self.foodDescription = trimmed
+                        WPLogger.speech.block(
+                            emoji: "💾",
+                            title: "VOICE AUTO-LOG — SAVING",
+                            lines: [
+                                "Transcript: \"\(trimmed)\"",
+                                "→ Triggering saveMeal() automatically"
+                            ]
+                        )
                         Task { await self.saveMeal(selectedDate: selectedDate) }
                     },
                     onError: { [weak self] error in
                         guard let self else { return }
                         self.liveTranscript = ""
                         self.isTranscribing = false
-                        if case .noSpeechDetected = error { return }
+                        if case .noSpeechDetected = error {
+                            WPLogger.speech.info("No speech detected in auto-log — recording stopped silently")
+                            return
+                        }
+                        WPLogger.speech.error("Transcription error in auto-log: \(error.localizedDescription ?? "unknown")")
                         self.handleSpeechTranscriptionError(error)
                     }
                 )
             } catch let error as SpeechTranscriptionError {
                 isTranscribing = false
                 liveTranscript = ""
+                WPLogger.speech.error("startTranscription threw SpeechTranscriptionError in auto-log: \(error.localizedDescription ?? "unknown")")
                 handleSpeechTranscriptionError(error)
             } catch {
                 isTranscribing = false
                 liveTranscript = ""
+                WPLogger.speech.error("startTranscription threw unexpected error in auto-log: \(error.localizedDescription)")
                 showErrorMessage(error.localizedDescription)
             }
         }
@@ -303,11 +356,13 @@ final class MealLogViewModel: ObservableObject {
     /// Signals the end of audio input — the recognizer will finalise and fire `onFinal`,
     /// which applies the transcript and calls `saveMeal` automatically.
     func stopVoiceAutoLog() {
+        WPLogger.speech.info("Voice auto-log stop requested — awaiting final result from recognizer")
         speechService.stopTranscription()
     }
 
     /// Cancels the voice log without saving.
     func cancelVoiceAutoLog() {
+        WPLogger.speech.warning("Voice auto-log cancelled — no save will occur")
         speechService.cancelTranscription()
         isTranscribing = false
         liveTranscript = ""
@@ -325,8 +380,25 @@ final class MealLogViewModel: ObservableObject {
         let existingDescription = foodDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         if existingDescription.isEmpty {
             foodDescription = trimmedTranscript
+            WPLogger.speech.block(
+                emoji: "📝",
+                title: "APPLY TRANSCRIPT",
+                lines: [
+                    "Mode:   Set (field was empty)",
+                    "Result: \"\(trimmedTranscript)\""
+                ]
+            )
         } else {
             foodDescription = existingDescription + " " + trimmedTranscript
+            WPLogger.speech.block(
+                emoji: "📝",
+                title: "APPLY TRANSCRIPT",
+                lines: [
+                    "Mode:   Append (field had existing text)",
+                    "Before: \"\(existingDescription)\"",
+                    "After:  \"\(foodDescription)\""
+                ]
+            )
         }
     }
 

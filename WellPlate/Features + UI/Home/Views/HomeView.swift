@@ -29,7 +29,9 @@ struct HomeView: View {
     /// Handoff variable for the sheet→alert race-safe pattern.
     /// Set by the picker closure, read by onChange(of: showCoffeeTypePicker).
     @State private var pendingCoffeeType: CoffeeType? = nil
+    @State private var showAIInsight = false
     @StateObject private var foodJournalViewModel = HomeViewModel()
+    @StateObject private var insightService = StressInsightService()
 
     private var currentGoals: UserGoals {
         userGoalsList.first ?? UserGoals.defaults()
@@ -154,11 +156,15 @@ struct HomeView: View {
             .navigationDestination(isPresented: $showWellnessCalendar) {
                 WellnessCalendarView()
             }
+            .navigationDestination(isPresented: $showAIInsight) {
+                HomeAIInsightView(insightService: insightService)
+            }
             .navigationBarHidden(true)
         }
         .onAppear {
             // Inject the model context into the VM once the environment is available.
             foodJournalViewModel.bindContext(modelContext)
+            insightService.bindContext(modelContext)
             refreshTodayMoodState()
             refreshTodayHydrationState()
             refreshTodayCoffeeState()
@@ -249,6 +255,28 @@ struct HomeView: View {
             }
 
             Spacer()
+
+            // AI Insights pill
+            Button {
+                HapticService.impact(.light)
+                showAIInsight = true
+                Task { await insightService.generateInsight() }
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    Text("AI Insights")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                }
+                .foregroundStyle(AppColors.brand)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(
+                    Capsule()
+                        .fill(AppColors.brand.opacity(0.12))
+                )
+            }
+            .buttonStyle(.plain)
 
             // Calendar button
             Button {
