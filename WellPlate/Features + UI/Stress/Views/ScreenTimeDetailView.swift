@@ -12,6 +12,8 @@ struct ScreenTimeDetailView: View {
 
     let factor: StressFactorResult
     let source: ScreenTimeSource
+    /// Caller-supplied hours value; avoids direct ScreenTimeManager singleton reads.
+    var currentHours: Double? = nil
 
     var body: some View {
         NavigationStack {
@@ -91,12 +93,7 @@ struct ScreenTimeDetailView: View {
     private var currentHoursText: String {
         switch source {
         case .auto:
-            if let reading = ScreenTimeManager.shared.currentAutoDetectedReading {
-                return String(format: "%.1f", Double(reading.displayRoundedHours))
-            }
-            return "—"
-        case .manual:
-            return String(format: "%.1f", factor.score / 2.0)
+            return currentHours.map { String(format: "%.1f", $0) } ?? "—"
         case .none:
             return "< 0.25"
         }
@@ -112,13 +109,6 @@ struct ScreenTimeDetailView: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(Capsule().fill(.cyan))
-        case .manual:
-            Text("Manual")
-                .font(.r(.caption2, .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(Capsule().fill(.orange))
         case .none:
             Text("Under 15 min")
                 .font(.r(.caption2, .bold))

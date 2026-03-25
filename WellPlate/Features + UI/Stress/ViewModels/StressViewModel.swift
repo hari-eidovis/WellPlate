@@ -14,7 +14,6 @@ import Combine
 
 enum ScreenTimeSource {
     case auto        // from DeviceActivity threshold
-    case manual      // user-entered
     case none        // no data for today
 }
 
@@ -31,9 +30,6 @@ final class StressViewModel: ObservableObject {
     @Published var isAuthorized = false
     @Published var errorMessage: String? = nil
     @Published var screenTimeSource: ScreenTimeSource = .none
-    #if DEBUG
-    @Published var debugManualScreenTimeOverrideHours: Double? = nil
-    #endif
 
     // MARK: - Today's Vitals (display-only)
 
@@ -114,60 +110,53 @@ final class StressViewModel: ObservableObject {
         )
     }
 
-    // MARK: - Manual Screen Time Persistence
+    // MARK: - Screen Time Display (view-model-owned, avoids direct singleton reads in views)
 
-    private static let manualHoursKey = "wellplate.manualScreenTimeHours"
-    private static let manualDateKey  = "wellplate.manualScreenTimeDate"
+    /// The hours value currently used by the screen-time factor — nil when source is .none.
+    @Published var screenTimeDisplayHours: Double? = nil
 
-    /// The manually-entered hours for today, or 0 if none.
-    var currentManualHours: Double { storedManualHours ?? 0 }
-
-    private var storedManualHours: Double? {
-        let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd"
-        guard UserDefaults.standard.string(forKey: Self.manualDateKey) == fmt.string(from: Date()) else { return nil }
-        let h = UserDefaults.standard.double(forKey: Self.manualHoursKey)
-        return h > 0 ? h : nil
+    /// Auto-detected hours only; nil when source is .none.
+    var screenTimeAutoDetectedHours: Double? {
+        screenTimeSource == .auto ? screenTimeDisplayHours : nil
     }
-
-    func setManualScreenTime(_ hours: Double) {
-        let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd"
-        UserDefaults.standard.set(hours, forKey: Self.manualHoursKey)
-        UserDefaults.standard.set(fmt.string(from: Date()), forKey: Self.manualDateKey)
-        refreshScreenTimeFactor()
-        logCurrentStress(source: "manual")
-    }
-
-    #if DEBUG
-    func setDebugManualScreenTimeOverride(_ hours: Double) {
-        debugManualScreenTimeOverrideHours = max(0, min(24, hours))
-        refreshScreenTimeFactor()
-    }
-
-    func clearDebugManualScreenTimeOverride() {
-        debugManualScreenTimeOverrideHours = nil
-        refreshScreenTimeFactor()
-    }
-    #endif
 
     // MARK: - Dependencies
 
     private let healthService: HealthKitServiceProtocol
     private let modelContext: ModelContext
 
+    /// Non-nil when running in mock mode — drives all mock data paths.
+    private let mockSnapshot: StressMockSnapshot?
+
+    /// True when this view model is running with mock data injected.
+    var usesMockData: Bool { mockSnapshot != nil }
+
     // MARK: - Init
 
-    init(healthService: HealthKitServiceProtocol = HealthKitService(), modelContext: ModelContext) {
+    init(
+        healthService: HealthKitServiceProtocol = HealthKitService(),
+        modelContext: ModelContext,
+        mockSnapshot: StressMockSnapshot? = nil
+    ) {
         self.healthService = healthService
         self.modelContext = modelContext
+        self.mockSnapshot = mockSnapshot
 
-        if ScreenTimeManager.shared.currentAutoDetectedReading != nil {
-            self.screenTimeSource = .auto
+        if mockSnapshot == nil, ScreenTimeManager.shared.currentAutoDetectedReading != nil {
+            screenTimeSource = .auto
         }
     }
 
     // MARK: - Actions
 
     func requestPermissionAndLoad() async {
+        if usesMockData {
+            isLoading = true
+            defer { isLoading = false }
+            isAuthorized = true
+            await loadData()
+            return
+        }
         guard HealthKitService.isAvailable else { return }
         isLoading = true
         defer { isLoading = false }
@@ -306,6 +295,12 @@ final class StressViewModel: ObservableObject {
     }
 
     func refreshDietFactor() {
+        if let snap = mockSnapshot {
+            currentDayLogs = snap.currentDayLogs
+            let score = computeDietScore(logs: snap.currentDayLogs)
+            dietFactor = buildDietFactor(score: score, logs: snap.currentDayLogs)
+            return
+        }
         let today = Calendar.current.startOfDay(for: Date())
         let descriptor = FetchDescriptor<FoodLogEntry>(
             predicate: #Predicate<FoodLogEntry> { entry in
@@ -347,6 +342,7 @@ final class StressViewModel: ObservableObject {
     /// Dedup guard: skips unless the latest reading from today has a different
     /// rounded score or level label.
     func logCurrentStress(source: String = "auto") {
+        guard !usesMockData else { return }
         guard isAuthorized else {
             #if DEBUG
             log("[skip] logCurrentStress(\(source)) — HealthKit not authorized yet")
@@ -383,6 +379,11 @@ final class StressViewModel: ObservableObject {
 
     /// Fetches `StressReading` rows from SwiftData for today and the last 7 days.
     func loadReadings() {
+        if let snap = mockSnapshot {
+            todayReadings = snap.todayReadings
+            weekReadings  = snap.weekReadings
+            return
+        }
         let calendar = Calendar.current
         let now = Date()
         let startOfToday = calendar.startOfDay(for: now)
@@ -409,6 +410,7 @@ final class StressViewModel: ObservableObject {
     /// `WellnessDayLog` so that HomeView's wellness rings stay in sync without
     /// requiring any shared ViewModel state.
     private func persistTodayWellnessSnapshot(steps: Double?, energy: Double?) {
+        guard !usesMockData else { return }
         let today = Calendar.current.startOfDay(for: Date())
         let descriptor = FetchDescriptor<WellnessDayLog>(
             predicate: #Predicate { $0.day == today }
@@ -654,62 +656,45 @@ final class StressViewModel: ObservableObject {
     }
 
     private func refreshScreenTimeFactor() {
-        let autoReading  = ScreenTimeManager.shared.currentAutoDetectedReading
-        let manualHours  = storedManualHours
-        let debugOverrideHours: Double?
-        #if DEBUG
-        debugOverrideHours = debugManualScreenTimeOverrideHours
-        #else
-        debugOverrideHours = nil
-        #endif
-
-        let scoreHours: Double?
-        let status: String
-        let detail: String
-
-        if let debugHours = debugOverrideHours {
-            screenTimeSource = .manual
-            scoreHours = debugHours
-            status = String(format: "%.1fh debug manual override", debugHours)
-            let s = computeScreenTimeScore(hours: debugHours)
-            detail = s < 8 ? "Low screen time 👍" : s < 16 ? "Moderate screen usage" : "Consider reducing screen time"
-        } else if let reading = autoReading {
+        if let snap = mockSnapshot {
             screenTimeSource = .auto
-            scoreHours = reading.rawHours
-            status = "\(reading.displayRoundedHours)h detected (±15m)"
-            let s = computeScreenTimeScore(hours: reading.rawHours)
-            detail = s < 8 ? "Low screen time 👍" : s < 16 ? "Moderate screen usage" : "Consider reducing screen time"
+            screenTimeDisplayHours = snap.screenTimeHours
+            let score = computeScreenTimeScore(hours: snap.screenTimeHours)
+            let detail = score < 8 ? "Low screen time 👍" : score < 16 ? "Moderate screen usage" : "Consider reducing screen time"
+            screenTimeFactor = StressFactorResult(
+                title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
+                statusText: String(format: "%.1fh (mock)", snap.screenTimeHours),
+                detailText: detail, higherIsBetter: false, hasValidData: true
+            )
+            return
+        }
 
-        } else if let m = manualHours {
-            screenTimeSource = .manual
-            scoreHours = m
-            status = String(format: "%.1fh entered manually", m)
-            let s = computeScreenTimeScore(hours: m)
-            detail = s < 8 ? "Low screen time 👍" : s < 16 ? "Moderate screen usage" : "Consider reducing screen time"
-
+        if let reading = ScreenTimeManager.shared.currentAutoDetectedReading {
+            screenTimeSource = .auto
+            screenTimeDisplayHours = reading.rawHours
+            let score = computeScreenTimeScore(hours: reading.rawHours)
+            let detail = score < 8 ? "Low screen time 👍" : score < 16 ? "Moderate screen usage" : "Consider reducing screen time"
+            screenTimeFactor = StressFactorResult(
+                title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
+                statusText: "\(reading.displayRoundedHours)h detected (±15m)",
+                detailText: detail, higherIsBetter: false, hasValidData: true
+            )
+            #if DEBUG
+            log("📱 ScrnTime  → rawHours=\(String(format: "%.3f h", reading.rawHours))  source=auto")
+            log("             → score=\(fmt2(score))/25  stressContrib=\(fmt2(screenTimeFactor.stressContribution))/25  [\(detail)]")
+            #endif
         } else {
             screenTimeSource = .none
-            scoreHours = nil
-            status = "Under 15 min today"
-            detail = "No screen time detected yet"
+            screenTimeDisplayHours = nil
+            screenTimeFactor = StressFactorResult(
+                title: "Screen Time", score: 0, maxScore: 25, icon: "iphone",
+                statusText: "Under 15 min today",
+                detailText: "No screen time detected yet", higherIsBetter: false, hasValidData: false
+            )
+            #if DEBUG
+            log("📱 ScrnTime  → rawHours=nil  source=none (< 15 min)")
+            #endif
         }
-
-        let score = computeScreenTimeScore(hours: scoreHours)
-        let hasData = scoreHours != nil
-        screenTimeFactor = StressFactorResult(title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
-                                              statusText: status, detailText: detail, higherIsBetter: false, hasValidData: hasData)
-
-        #if DEBUG
-        let rawHoursStr = scoreHours.map { String(format: "%.3f h", $0) } ?? "nil"
-        let sourceStr: String
-        switch screenTimeSource {
-        case .auto:   sourceStr = "auto (DeviceActivity threshold)"
-        case .manual: sourceStr = "manual (user entered)"
-        case .none:   sourceStr = "none (< 15 min)"
-        }
-        log("📱 ScrnTime  → rawHours=\(rawHoursStr)  source=\(sourceStr)")
-        log("             → score=\(fmt2(score))/25  stressContrib=\(fmt2(screenTimeFactor.stressContribution))/25  [\(detail)]")
-        #endif
     }
 
     private func latestReadingForToday() -> StressReading? {

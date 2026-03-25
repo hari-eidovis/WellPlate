@@ -29,7 +29,19 @@ struct MainTabView: View {
 
             // MARK: - Stress
             Tab(value: 2) {
-                StressView(viewModel: StressViewModel(modelContext: modelContext))
+                StressView(viewModel: {
+                    #if DEBUG
+                    if AppConfig.shared.mockMode {
+                        let snap = StressMockSnapshot.default
+                        return StressViewModel(
+                            healthService: MockHealthKitService(snapshot: snap),
+                            modelContext: modelContext,
+                            mockSnapshot: snap
+                        )
+                    }
+                    #endif
+                    return StressViewModel(modelContext: modelContext)
+                }())
             } label: {
                 Label("Stress", systemImage: "brain.head.profile.fill")
             }

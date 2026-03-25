@@ -14,7 +14,6 @@ enum StressSheet: Identifiable {
     case sleep
     case diet
     case screenTimeDetail
-    case screenTimeEntry
     case vital(VitalMetric)
 
     var id: String {
@@ -23,7 +22,6 @@ enum StressSheet: Identifiable {
         case .sleep:            return "sleep"
         case .diet:             return "diet"
         case .screenTimeDetail: return "screenTimeDetail"
-        case .screenTimeEntry:  return "screenTimeEntry"
         case .vital(let m):     return "vital_\(m.id)"
         }
     }
@@ -34,10 +32,8 @@ enum StressSheet: Identifiable {
 struct StressView: View {
 
     @StateObject var viewModel: StressViewModel
-    @ObservedObject private var screenTimeManager = ScreenTimeManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var activeSheet: StressSheet? = nil
-    @State private var pendingManualHours: Double = 0
     @State private var showInsights = false
 
     // Entrance animation states
@@ -45,11 +41,6 @@ struct StressView: View {
     @State private var chartAppeared   = false
     @State private var weekAppeared    = false
     @State private var adviceAppeared  = false
-
-    #if DEBUG
-    @State private var debugScreenTimeHours: Double = 0
-    @State private var didSeedDebugScreenTimeHours = false
-    #endif
 
     private let refreshTicker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
@@ -59,7 +50,7 @@ struct StressView: View {
                 levelBackground.ignoresSafeArea()
 
                 Group {
-                    if !HealthKitService.isAvailable {
+                    if !HealthKitService.isAvailable && !viewModel.usesMockData {
                         unavailableView
                     } else if viewModel.isLoading {
                         loadingView
@@ -74,7 +65,7 @@ struct StressView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if HealthKitService.isAvailable && viewModel.isAuthorized && !viewModel.isLoading {
+                    if (HealthKitService.isAvailable || viewModel.usesMockData) && viewModel.isAuthorized && !viewModel.isLoading {
                         Button {
                             HapticService.impact(.light)
                             showInsights = true
@@ -88,8 +79,10 @@ struct StressView: View {
             }
         }
         .task {
-            await ScreenTimeManager.shared.requestAuthorization()
-            ScreenTimeManager.shared.startMonitoring()
+            if !viewModel.usesMockData {
+                await ScreenTimeManager.shared.requestAuthorization()
+                ScreenTimeManager.shared.startMonitoring()
+            }
             await viewModel.requestPermissionAndLoad()
             if viewModel.isAuthorized {
                 viewModel.refreshScreenTimeOnly()
@@ -101,9 +94,6 @@ struct StressView: View {
                 viewModel.refreshDietFactorAndLogIfNeeded()
                 viewModel.refreshScreenTimeOnly()
             }
-            #if DEBUG
-            seedDebugScreenTimeInputIfNeeded()
-            #endif
             triggerEntranceAnimations()
         }
         .onReceive(refreshTicker) { _ in
@@ -139,15 +129,9 @@ struct StressView: View {
             case .screenTimeDetail:
                 ScreenTimeDetailView(
                     factor: viewModel.screenTimeFactor,
-                    source: viewModel.screenTimeSource
+                    source: viewModel.screenTimeSource,
+                    currentHours: viewModel.screenTimeDisplayHours
                 )
-            case .screenTimeEntry:
-                ScreenTimeInputSheet(
-                    hours: $pendingManualHours,
-                    autoDetectedHours: ScreenTimeManager.shared.currentAutoDetectedReading.map { Double($0.displayRoundedHours) }
-                ) {
-                    viewModel.setManualScreenTime(pendingManualHours)
-                }
             case .vital(let metric):
                 VitalDetailView(
                     metric: metric,
@@ -496,12 +480,6 @@ struct StressView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 28)
 
-                    #if DEBUG
-                    debugScreenTimeSection
-                        .padding(.horizontal, 16)
-                        .padding(.top, 18)
-                    #endif
-
                     Spacer().frame(height: 40)
                 }
             }
@@ -676,80 +654,6 @@ struct StressView: View {
             .padding(.leading, 4)
     }
 
-    // MARK: - Debug (only inside Insights sheet)
-
-    #if DEBUG
-    private var debugScreenTimeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionLabel("DEBUG · SCREEN TIME")
-
-            VStack(spacing: 12) {
-                HStack {
-                    Text("Manual override")
-                        .font(.system(size: 13, weight: .semibold))
-                    Spacer()
-                    Text(String(format: "%.2f h", debugScreenTimeHours))
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(.cyan)
-                }
-
-                Slider(value: $debugScreenTimeHours, in: 0...24, step: 0.25)
-                    .tint(.cyan)
-
-                HStack {
-                    Text("0h")
-                    Spacer()
-                    Text("24h")
-                }
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.secondary)
-
-                HStack(spacing: 10) {
-                    Button("Apply") {
-                        let rounded = (debugScreenTimeHours * 4).rounded() / 4
-                        debugScreenTimeHours = rounded
-                        viewModel.setManualScreenTime(rounded)
-                        viewModel.setDebugManualScreenTimeOverride(rounded)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.cyan)
-
-                    Button("Use Auto") {
-                        viewModel.clearDebugManualScreenTimeOverride()
-                        viewModel.refreshScreenTimeOnly()
-                    }
-                    .buttonStyle(.bordered)
-                }
-
-                if viewModel.debugManualScreenTimeOverrideHours != nil {
-                    Text("Debug override is active.")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-            }
-            .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.systemBackground).opacity(0.88))
-                    .shadow(color: .black.opacity(0.06), radius: 32, x: 0, y: 16)
-            )
-        }
-    }
-
-    private func seedDebugScreenTimeInputIfNeeded() {
-        guard !didSeedDebugScreenTimeHours else { return }
-        if let debugOverride = viewModel.debugManualScreenTimeOverrideHours {
-            debugScreenTimeHours = debugOverride
-        } else if let auto = screenTimeManager.currentAutoDetectedReading?.rawHours {
-            debugScreenTimeHours = auto
-        } else {
-            debugScreenTimeHours = viewModel.currentManualHours
-        }
-        didSeedDebugScreenTimeHours = true
-    }
-    #endif
-
     // MARK: - State Views
 
     private var permissionView: some View {
@@ -835,9 +739,12 @@ struct StressView: View {
 // MARK: - Preview
 
 #Preview {
-    StressView(
+    let snap = StressMockSnapshot.default
+    return StressView(
         viewModel: StressViewModel(
-            modelContext: try! ModelContainer(for: FoodLogEntry.self, StressReading.self).mainContext
+            healthService: MockHealthKitService(snapshot: snap),
+            modelContext: try! ModelContainer(for: FoodLogEntry.self, StressReading.self).mainContext,
+            mockSnapshot: snap
         )
     )
 }
