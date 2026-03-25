@@ -30,6 +30,7 @@ struct HomeView: View {
     /// Set by the picker closure, read by onChange(of: showCoffeeTypePicker).
     @State private var pendingCoffeeType: CoffeeType? = nil
     @State private var showAIInsight = false
+    @State private var dragLogProgress: CGFloat = 0
     @StateObject private var foodJournalViewModel = HomeViewModel()
     @StateObject private var insightService = StressInsightService()
 
@@ -41,7 +42,8 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ZStack {
+              ScrollView {
                 LazyVStack(spacing: 16) {
 
                     // 1. Header
@@ -116,6 +118,13 @@ struct HomeView: View {
 //                    .padding(.horizontal, 16)
                 }
                 .padding(.bottom, 32)
+              }
+              .blur(radius: dragLogProgress * 14)
+              .overlay(
+                  Color.black.opacity(dragLogProgress * 0.25)
+                      .ignoresSafeArea()
+                      .allowsHitTesting(false)
+              )
             }
             .simultaneousGesture(
                 DragGesture(minimumDistance: 20)
@@ -130,9 +139,9 @@ struct HomeView: View {
                     }
             )
             .safeAreaInset(edge: .bottom) {
-                DragToLogOverlay {
+                DragToLogOverlay(onTrigger: {
                     showLogMeal = true
-                }
+                }, dragProgress: $dragLogProgress)
                 .padding(.bottom, 4)
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
@@ -262,19 +271,25 @@ struct HomeView: View {
                 showAIInsight = true
                 Task { await insightService.generateInsight() }
             } label: {
-                HStack(spacing: 5) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    AppColors.brand.opacity(0.65),
+                                    AppColors.brand.opacity(0.65)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+                        .shadow(color: AppColors.brand.opacity(0.12), radius: 6, x: 0, y: 3)
+
                     Image(systemName: "sparkles")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    Text("AI Insights")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
                 }
-                .foregroundStyle(AppColors.brand)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(
-                    Capsule()
-                        .fill(AppColors.brand.opacity(0.12))
-                )
             }
             .buttonStyle(.plain)
 
@@ -288,15 +303,15 @@ struct HomeView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    AppColors.brand.opacity(0.85),
-                                    AppColors.brand
+                                    AppColors.brand.opacity(0.65),
+                                    AppColors.brand.opacity(0.65)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 44, height: 44)
-                        .shadow(color: AppColors.brand.opacity(0.3), radius: 6, x: 0, y: 3)
+                        .shadow(color: AppColors.brand.opacity(0.12), radius: 6, x: 0, y: 3)
 
                     Image(systemName: "calendar")
                         .font(.system(size: 17, weight: .semibold, design: .rounded))

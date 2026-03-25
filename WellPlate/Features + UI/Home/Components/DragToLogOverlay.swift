@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DragToLogOverlay: View {
     let onTrigger: () -> Void
+    @Binding var dragProgress: CGFloat
 
     @State private var dragOffset: CGFloat = 0
     @State private var hasTickedHalf = false
@@ -47,6 +48,7 @@ struct DragToLogOverlay: View {
                     let t = value.translation
                     guard t.height < 0, abs(t.width) < abs(t.height) else { return }
                     dragOffset = t.height
+                    dragProgress = min(1.0, -t.height / dragThreshold)
                     if !hasTickedHalf && -t.height >= dragThreshold / 2 {
                         HapticService.selectionChanged()
                         hasTickedHalf = true
@@ -57,11 +59,13 @@ struct DragToLogOverlay: View {
                         HapticService.impact(.medium)
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             dragOffset = 0
+                            dragProgress = 0
                         }
                         onTrigger()
                     } else {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
                             dragOffset = 0
+                            dragProgress = 0
                         }
                     }
                     hasTickedHalf = false
@@ -77,7 +81,7 @@ struct DragToLogOverlay: View {
 #Preview("Drag Overlay") {
     ZStack(alignment: .bottom) {
         Color(.systemGroupedBackground).ignoresSafeArea()
-        DragToLogOverlay {}
+        DragToLogOverlay(onTrigger: {}, dragProgress: .constant(0))
             .padding(.bottom, 8)
     }
 }
@@ -85,7 +89,7 @@ struct DragToLogOverlay: View {
 #Preview("Drag Overlay - Dark") {
     ZStack(alignment: .bottom) {
         Color(.systemGroupedBackground).ignoresSafeArea()
-        DragToLogOverlay {}
+        DragToLogOverlay(onTrigger: {}, dragProgress: .constant(0))
             .padding(.bottom, 8)
     }
     .preferredColorScheme(.dark)

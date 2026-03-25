@@ -46,7 +46,6 @@ enum FoodWidgetSize: String, CaseIterable, Identifiable {
 }
 
 // MARK: - Profile View
-
 struct ProfilePlaceholderView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var userGoalsList: [UserGoals]
@@ -110,10 +109,6 @@ struct ProfilePlaceholderView: View {
                         onAddTapped:       { showInstructions = true }
                     )
                     .padding(.horizontal, 16)
-
-                    // ── App info card ──────────────────────────
-                    AppInfoCard()
-                        .padding(.horizontal, 16)
 
                     #if DEBUG
                     NutritionSourceDebugCard(
@@ -322,69 +317,6 @@ private struct ProfileInfoRow: View {
             .padding(.vertical, 12)
         }
         .buttonStyle(.plain)
-    }
-}
-
-// MARK: - App Info Card
-
-private struct AppInfoCard: View {
-    private let items: [(icon: String, title: String, detail: String?)] = [
-        ("info.circle.fill", "About WellPlate", nil),
-        ("lock.shield.fill", "Privacy Policy", nil),
-        ("star.fill", "Rate Us", nil),
-        ("gearshape.fill", "Version", Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
-    ]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 10) {
-                Image(systemName: "ellipsis.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(AppColors.brand)
-                Text("App")
-                    .font(.r(.headline, .semibold))
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-
-            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                HStack(spacing: 12) {
-                    Image(systemName: item.icon)
-                        .font(.system(size: 13))
-                        .foregroundStyle(AppColors.brand.opacity(0.7))
-                        .frame(width: 24)
-
-                    Text(item.title)
-                        .font(.r(.subheadline, .medium))
-                        .foregroundStyle(.primary)
-
-                    Spacer()
-
-                    if let detail = item.detail {
-                        Text(detail)
-                            .font(.r(.subheadline, .regular))
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-
-                if index < items.count - 1 {
-                    Divider().padding(.leading, 52)
-                }
-            }
-        }
-        .padding(.bottom, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.06), radius: 15, x: 0, y: 5)
-        )
     }
 }
 
