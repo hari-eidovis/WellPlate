@@ -7,6 +7,8 @@ struct WellnessCalendarView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var userGoalsList: [UserGoals]
+    @Query private var allWellnessDayLogs: [WellnessDayLog]
+    @Query private var allFoodEntries: [FoodLogEntry]
     @StateObject private var viewModel = WellnessCalendarViewModel()
 
     private let weekdaySymbols = Calendar.current.veryShortWeekdaySymbols
@@ -39,6 +41,12 @@ struct WellnessCalendarView: View {
         }
         .onAppear {
             viewModel.bind(modelContext)
+        }
+        .onChange(of: allWellnessDayLogs) {
+            viewModel.loadData(for: viewModel.selectedDate)
+        }
+        .onChange(of: allFoodEntries) {
+            viewModel.loadData(for: viewModel.selectedDate)
         }
     }
 
@@ -319,18 +327,22 @@ struct WellnessCalendarView: View {
     private func stressCard(_ log: WellnessDayLog) -> some View {
         let stressColor: Color = {
             switch log.stressLevel {
-            case "Low": return Color(hue: 0.38, saturation: 0.55, brightness: 0.75)
-            case "Medium": return Color(hue: 0.12, saturation: 0.65, brightness: 0.90)
-            case "High": return Color(hue: 0.0, saturation: 0.65, brightness: 0.85)
+            case "Excellent": return Color(hue: 0.38, saturation: 0.55, brightness: 0.75)
+            case "Good":      return Color(hue: 0.33, saturation: 0.50, brightness: 0.70)
+            case "Moderate":  return Color(hue: 0.12, saturation: 0.65, brightness: 0.90)
+            case "High":      return Color(hue: 0.06, saturation: 0.65, brightness: 0.85)
+            case "Very High": return Color(hue: 0.01, saturation: 0.70, brightness: 0.80)
             default: return .secondary
             }
         }()
 
         let stressEmoji: String = {
             switch log.stressLevel {
-            case "Low": return "😌"
-            case "Medium": return "😐"
-            case "High": return "😰"
+            case "Excellent": return "😌"
+            case "Good":      return "🙂"
+            case "Moderate":  return "😐"
+            case "High":      return "😰"
+            case "Very High": return "😱"
             default: return "—"
             }
         }()
@@ -367,9 +379,11 @@ struct WellnessCalendarView: View {
 
     private func stressTip(for level: String) -> String {
         switch level {
-        case "Low": return "Great work! Keep your calm routine going 🧘"
-        case "Medium": return "Consider a short breathing exercise to unwind"
-        case "High": return "High stress detected — try a walk or meditation 💆"
+        case "Excellent": return "Great work! Keep your calm routine going 🧘"
+        case "Good":      return "You're doing well — stay consistent!"
+        case "Moderate":  return "Consider a short breathing exercise to unwind"
+        case "High":      return "High stress detected — try a walk or meditation 💆"
+        case "Very High": return "Take a break — prioritize rest and self-care"
         default: return ""
         }
     }

@@ -18,11 +18,18 @@ struct DragToLogOverlay: View {
                     Spacer()
                 VStack(spacing: 6){
                     Image(systemName: "chevron.up")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.tertiary)
                     Text("Log a Meal")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
+                        .padding(.horizontal, 22)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color(.secondarySystemBackground))
+                                .shadow(color: Color.black.opacity(0.45), radius: 12, x: 0, y: 4)
+                        )
                 }
                     Spacer()
          

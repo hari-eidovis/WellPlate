@@ -1,4 +1,4 @@
-# Code Audit Report: MealLog Audio-to-Text Transcription — Implementation
+ # Code Audit Report: MealLog Audio-to-Text Transcription — Implementation
 
 **Audit Date**: 2026-03-14
 **Auditor**: code-reviewer agent
