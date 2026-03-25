@@ -39,11 +39,11 @@ enum StressLevel: String, CaseIterable {
 //    }
     var color: Color {
         switch self {
-        case .excellent: return Color(hue: 0.33, saturation: 0.75, brightness: 0.90) // green
-        case .good:      return Color(hue: 0.25, saturation: 0.80, brightness: 0.92) // lime
-        case .moderate:  return Color(hue: 0.14, saturation: 0.85, brightness: 0.95) // yellow
-        case .high:      return Color(hue: 0.07, saturation: 0.90, brightness: 0.92) // orange
-        case .veryHigh:  return Color(hue: 0.00, saturation: 0.85, brightness: 0.88) // red
+        case .excellent: return Color.primary.opacity(0.45)  // near-neutral, calm
+        case .good:      return Color.primary.opacity(0.55)  // slightly denser
+        case .moderate:  return Color(hue: 0.12, saturation: 0.55, brightness: 0.72) // amber
+        case .high:      return Color(hue: 0.06, saturation: 0.60, brightness: 0.70) // terracotta
+        case .veryHigh:  return Color(hue: 0.01, saturation: 0.65, brightness: 0.65) // rust
         }
     }
 

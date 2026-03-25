@@ -2,8 +2,7 @@
 //  StressWeekChartView.swift
 //  WellPlate
 //
-//  Renders a 7-day stress trend bar chart using SwiftCharts.
-//  Each bar shows the average stress score for that calendar day.
+//  7-day stress trend — minimal capsule bars, muted earth-tone palette.
 //
 
 import SwiftUI
@@ -13,7 +12,7 @@ import Charts
 
 private struct DayAverage: Identifiable {
     let id = UUID()
-    let day: Date          // start-of-day
+    let day: Date
     let averageScore: Double
     let dominantLevel: String
     let isToday: Bool
@@ -32,104 +31,116 @@ struct StressWeekChartView: View {
     private var dayAverages: [DayAverage] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-
-        // Build a dictionary: startOfDay → [readings]
         var groups: [Date: [StressReading]] = [:]
-        for reading in readings {
-            let d = reading.day
-            groups[d, default: []].append(reading)
+        for r in readings {
+            groups[r.day, default: []].append(r)
         }
-
-        // Build 7 slots (oldest → newest)
         return (0..<7).compactMap { offset -> DayAverage? in
             guard let day = calendar.date(byAdding: .day, value: -(6 - offset), to: today) else { return nil }
             let dayReadings = groups[day] ?? []
             let avg = dayReadings.isEmpty ? 0 : dayReadings.map(\.score).reduce(0, +) / Double(dayReadings.count)
             let dominant = dominantLevel(in: dayReadings) ?? "—"
-            return DayAverage(
-                day: day,
-                averageScore: avg,
-                dominantLevel: dominant,
-                isToday: calendar.isDateInToday(day)
-            )
+            return DayAverage(day: day, averageScore: avg, dominantLevel: dominant,
+                              isToday: calendar.isDateInToday(day))
         }
     }
 
     private func dominantLevel(in readings: [StressReading]) -> String? {
         guard !readings.isEmpty else { return nil }
-        let counts = Dictionary(grouping: readings, by: \.levelLabel).mapValues(\.count)
-        return counts.max(by: { $0.value < $1.value })?.key
+        return Dictionary(grouping: readings, by: \.levelLabel).mapValues(\.count)
+            .max(by: { $0.value < $1.value })?.key
     }
 
-    private func barColor(for avg: Double) -> Color {
-        guard avg > 0 else { return Color.secondary.opacity(0.15) }
+    /// Low stress (≤40%) → .primary at opacity; higher → amber → rust
+    private func barColor(for avg: Double, isToday: Bool) -> Color {
+        guard avg > 0 else {
+            return Color.secondary.opacity(isToday ? 0.18 : 0.10)
+        }
         let t = min(max(avg / 100.0, 0), 1)
-        return Color(hue: 0.33 * (1.0 - t), saturation: 0.70, brightness: 0.80)
+        if t <= 0.40 {
+            let base = 0.28 + t * 0.40
+            return Color.primary.opacity(isToday ? base + 0.10 : base)
+        }
+        let ht = (t - 0.40) / 0.60
+        return Color(
+            hue: 0.12 - ht * 0.11,
+            saturation: isToday ? (0.52 + ht * 0.18) : (0.40 + ht * 0.15),
+            brightness: isToday ? (0.70 - ht * 0.12) : (0.76 - ht * 0.10)
+        )
     }
 
     // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Summary line
-            HStack {
+
+            // Tooltip row — visible only while scrubbing
+            Group {
                 if let sel = selectedDay, sel.averageScore > 0 {
-                    Text(shortDayName(for: sel.day))
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    Text("avg \(Int(sel.averageScore))  ·  \(sel.dominantLevel)")
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("7-day average")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    if !readings.isEmpty {
-                        let overall = readings.map(\.score).reduce(0, +) / Double(readings.count)
-                        Text("\(Int(overall))")
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
-                            .foregroundStyle(barColor(for: overall))
+                    HStack(spacing: 5) {
+                        Text(sel.isToday ? "Today" : shortDayName(for: sel.day))
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        Text("·  avg \(Int(sel.averageScore))")
+                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .foregroundStyle(.secondary)
+                        Text("·  \(sel.dominantLevel)")
+                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .foregroundStyle(.secondary)
                     }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                } else {
+                    HStack {
+                        Text("this week")
+                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .foregroundStyle(Color.secondary.opacity(0.65))
+                        Spacer()
+                        if !readings.isEmpty {
+                            let overall = readings.map(\.score).reduce(0, +) / Double(readings.count)
+                            Text("avg \(Int(overall))")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .transition(.opacity)
                 }
             }
+            .animation(.easeOut(duration: 0.18), value: selectedDay?.id)
 
             Chart(dayAverages) { item in
                 BarMark(
                     x: .value("Day", shortDayName(for: item.day)),
-                    y: .value("Score", max(item.averageScore, item.averageScore == 0 ? 0 : 4))
+                    y: .value("Score", max(item.averageScore, item.averageScore == 0 ? 0 : 3)),
+                    width: .ratio(0.55)
                 )
-                .foregroundStyle(
-                    item.averageScore == 0
-                        ? Color.secondary.opacity(0.12)
-                        : barColor(for: item.averageScore)
-                )
-                .cornerRadius(6)
+                .foregroundStyle(barColor(for: item.averageScore, isToday: item.isToday))
+                .cornerRadius(5, style: .continuous)
+                // Subtle value label only for today or selected
                 .annotation(position: .top, alignment: .center) {
-                    if item.averageScore > 0 {
+                    if item.isToday && item.averageScore > 0 {
                         Text("\(Int(item.averageScore))")
-                            .font(.system(size: 9, weight: .bold, design: .rounded))
-                            .foregroundStyle(barColor(for: item.averageScore).opacity(0.85))
+                            .font(.system(size: 9, weight: .medium, design: .rounded))
+                            .foregroundStyle(barColor(for: item.averageScore, isToday: true).opacity(0.75))
                     }
                 }
             }
             .chartYAxis {
-                AxisMarks(values: [0, 25, 50, 75, 100]) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Color.secondary.opacity(0.15))
+                AxisMarks(values: [25, 50, 75]) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.4))
+                        .foregroundStyle(Color.secondary.opacity(0.10))
                     AxisValueLabel {
                         if let v = value.as(Int.self) {
                             Text("\(v)")
-                                .font(.system(size: 10, weight: .regular, design: .rounded))
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 9, weight: .regular, design: .rounded))
+                                .foregroundStyle(Color.secondary.opacity(0.45))
                         }
                     }
                 }
             }
             .chartXAxis {
-                AxisMarks { value in
+                AxisMarks { _ in
                     AxisValueLabel()
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 10, weight: .regular, design: .rounded))
+                        .foregroundStyle(Color.secondary.opacity(0.55))
                 }
             }
             .chartYScale(domain: 0...100)
@@ -142,48 +153,35 @@ struct StressWeekChartView: View {
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
                                     let origin = geo[proxy.plotAreaFrame].origin
-                                    let location = CGPoint(
-                                        x: value.location.x - origin.x,
-                                        y: value.location.y - origin.y
-                                    )
-                                    if let label: String = proxy.value(atX: location.x) {
-                                        selectedDay = dayAverages.first(where: { shortDayName(for: $0.day) == label })
+                                    let x = value.location.x - origin.x
+                                    if let label: String = proxy.value(atX: x) {
+                                        withAnimation(.easeOut(duration: 0.1)) {
+                                            selectedDay = dayAverages.first {
+                                                shortDayName(for: $0.day) == label
+                                            }
+                                        }
                                     }
                                 }
                                 .onEnded { _ in
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        selectedDay = nil
-                                    }
+                                    withAnimation(.easeOut(duration: 0.25)) { selectedDay = nil }
                                 }
                         )
                 }
             }
-            .frame(height: 160)
+            .frame(height: 140)
             .animation(.easeInOut(duration: 0.3), value: readings.count)
-
-            // Today indicator
-            HStack(spacing: 4) {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.6))
-                    .frame(width: 6, height: 6)
-                Text("Today is highlighted with a brighter bar")
-                    .font(.system(size: 11, weight: .regular, design: .rounded))
-                    .foregroundStyle(.secondary)
-            }
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 4)
+                .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 3)
         )
     }
 
     // MARK: - Helpers
 
     private func shortDayName(for date: Date) -> String {
-        let cal = Calendar.current
-        if cal.isDateInToday(date) { return "Today" }
         let fmt = DateFormatter()
         fmt.dateFormat = "EEE"
         return fmt.string(from: date)
@@ -198,16 +196,16 @@ struct StressWeekChartView: View {
     var samples: [StressReading] = []
     for dayOffset in 0..<7 {
         guard let day = cal.date(byAdding: .day, value: -(6 - dayOffset), to: now) else { continue }
-        let count = Int.random(in: 1...5)
+        let count = Int.random(in: 1...4)
         for _ in 0..<count {
-            let score = Double.random(in: 15...85)
+            let score = Double.random(in: 20...80)
             let level: String
             switch score {
             case ..<21:   level = "Excellent"
             case 21..<41: level = "Good"
             case 41..<61: level = "Moderate"
             case 61..<81: level = "High"
-            default:      level = "Very High"
+            default:       level = "Very High"
             }
             samples.append(StressReading(timestamp: day, score: score, levelLabel: level))
         }

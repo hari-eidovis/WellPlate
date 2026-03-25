@@ -10,10 +10,11 @@ struct StressScoreGaugeView: View {
     let score: Double
     let level: StressLevel
     var size: CGFloat = 230
+    var immersive: Bool = false
 
     @State private var animatedProgress: Double = 0
 
-    private let trackWidth: CGFloat = 18
+    private let trackWidth: CGFloat = 22
     // 270° arc: starts bottom-left, sweeps clockwise
     private let startAngle: Double = 135
     private let sweepAngle: Double = 270
@@ -22,12 +23,12 @@ struct StressScoreGaugeView: View {
         ZStack {
             // Outer glow halo — pulses with stress level color
             Circle()
-                .fill(level.color.opacity(0.13))
+                .fill(level.color.opacity(immersive ? 0.22 : 0.13))
                 .frame(width: size + 52, height: size + 52)
                 .blur(radius: 24)
 
             Circle()
-                .fill(level.color.opacity(0.07))
+                .fill(level.color.opacity(immersive ? 0.12 : 0.07))
                 .frame(width: size + 28, height: size + 28)
 
             // Track ring
@@ -59,7 +60,7 @@ struct StressScoreGaugeView: View {
 
                 Text("\(Int(score))")
                     .font(.system(size: size * 0.28, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
+                    .foregroundColor(immersive ? level.color : .primary)
                     .monospacedDigit()
                     .contentTransition(.numericText())
             }

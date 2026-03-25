@@ -3,7 +3,7 @@
 //  WellPlate
 //
 //  Renders an intraday stress score line chart using SwiftCharts.
-//  Each data point is a StressReading captured today.
+//  Aesthetic: minimal, editorial — single muted line, whisper-thin area fill.
 //
 
 import SwiftUI
@@ -31,38 +31,61 @@ struct StressDayChartView: View {
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 4)
+                .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 3)
         )
     }
 
     // MARK: - Chart
 
     private var chartContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Legend row
-            HStack(spacing: 16) {
-                legendDot(color: Color(hue: 0.33, saturation: 0.70, brightness: 0.80), label: "Low")
-                legendDot(color: Color(hue: 0.14, saturation: 0.85, brightness: 0.90), label: "Moderate")
-                legendDot(color: Color(hue: 0.00, saturation: 0.80, brightness: 0.85), label: "High")
-                Spacer()
-                if let sel = selectedReading {
-                    Text("\(sel.timestamp, format: .dateTime.hour().minute()) · \(Int(sel.score))")
+        VStack(alignment: .leading, spacing: 10) {
+
+            // Scrub tooltip — only shown while dragging
+            if let sel = selectedReading {
+                HStack(spacing: 6) {
+                    Text(sel.timestamp, format: .dateTime.hour().minute())
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Text("·")
+                        .foregroundStyle(.secondary)
+                    Text("\(Int(sel.score))")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(colorFor(score: sel.score))
-                        .transition(.opacity)
+                        .foregroundStyle(lineColor(for: sel.score))
+                    Text(sel.levelLabel)
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            } else {
+                // Static subtitle: current / last reading
+                if let last = readings.last {
+                    HStack(spacing: 4) {
+                        Text("now")
+                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .foregroundStyle(.secondary)
+                        Text("·")
+                            .foregroundStyle(Color.secondary.opacity(0.4))
+                        Text("\(Int(last.score))")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(lineColor(for: last.score))
+                    }
+                    .transition(.opacity)
                 }
             }
 
             Chart {
-                // Area fill
-                ForEach(readings) { reading in
+                // Whisper-thin area fill
+                ForEach(readings) { r in
                     AreaMark(
-                        x: .value("Time", reading.timestamp, unit: .hour),
-                        y: .value("Score", reading.score)
+                        x: .value("Time", r.timestamp, unit: .hour),
+                        y: .value("Score", r.score)
                     )
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [stressGradientColor(for: reading.score).opacity(0.30), .clear],
+                            colors: [
+                                lineColor(for: r.score).opacity(0.12),
+                                lineColor(for: r.score).opacity(0.0)
+                            ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -70,59 +93,51 @@ struct StressDayChartView: View {
                     .interpolationMethod(.catmullRom)
                 }
 
-                // Line
-                ForEach(readings) { reading in
+                // Main line — single muted stroke
+                ForEach(readings) { r in
                     LineMark(
-                        x: .value("Time", reading.timestamp, unit: .hour),
-                        y: .value("Score", reading.score)
+                        x: .value("Time", r.timestamp, unit: .hour),
+                        y: .value("Score", r.score)
                     )
-                    .foregroundStyle(stressGradientColor(for: reading.score))
-                    .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+                    .foregroundStyle(lineColor(for: r.score))
+                    .lineStyle(StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
                     .interpolationMethod(.catmullRom)
                 }
 
-                // Points
-                ForEach(readings) { reading in
-                    PointMark(
-                        x: .value("Time", reading.timestamp, unit: .hour),
-                        y: .value("Score", reading.score)
-                    )
-                    .symbolSize(selectedReading?.id == reading.id ? 120 : 60)
-                    .foregroundStyle(stressGradientColor(for: reading.score))
-                    .annotation(position: .top) {
-                        if selectedReading?.id == reading.id {
-                            annotationLabel(reading: reading)
-                        }
-                    }
-                }
-
-                // Rule mark at selected time
+                // Scrub rule
                 if let sel = selectedReading {
                     RuleMark(x: .value("Time", sel.timestamp, unit: .hour))
-                        .foregroundStyle(Color.secondary.opacity(0.25))
-                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
+                        .foregroundStyle(Color.secondary.opacity(0.18))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+
+                    PointMark(
+                        x: .value("Time", sel.timestamp, unit: .hour),
+                        y: .value("Score", sel.score)
+                    )
+                    .symbolSize(50)
+                    .foregroundStyle(lineColor(for: sel.score))
                 }
             }
             .chartYAxis {
-                AxisMarks(values: [0, 25, 50, 75, 100]) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Color.secondary.opacity(0.15))
+                AxisMarks(values: [25, 50, 75]) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.4))
+                        .foregroundStyle(Color.secondary.opacity(0.10))
                     AxisValueLabel {
                         if let v = value.as(Int.self) {
                             Text("\(v)")
-                                .font(.system(size: 10, weight: .regular, design: .rounded))
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 9, weight: .regular, design: .rounded))
+                                .foregroundStyle(Color.secondary.opacity(0.50))
                         }
                     }
                 }
             }
             .chartXAxis {
-                AxisMarks(values: .stride(by: .hour, count: 3)) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Color.secondary.opacity(0.10))
-                    AxisValueLabel(format: .dateTime.hour())
-                        .font(.system(size: 10, weight: .regular, design: .rounded))
-                        .foregroundStyle(.secondary)
+                AxisMarks(values: .stride(by: .hour, count: 3)) { _ in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.4))
+                        .foregroundStyle(Color.secondary.opacity(0.08))
+                    AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .abbreviated)))
+                        .font(.system(size: 9, weight: .regular, design: .rounded))
+                        .foregroundStyle(Color.secondary.opacity(0.55))
                 }
             }
             .chartYScale(domain: 0...100)
@@ -136,23 +151,22 @@ struct StressDayChartView: View {
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
                                     let origin = geo[proxy.plotAreaFrame].origin
-                                    let location = CGPoint(
-                                        x: value.location.x - origin.x,
-                                        y: value.location.y - origin.y
-                                    )
-                                    if let date: Date = proxy.value(atX: location.x) {
-                                        selectedReading = closestReading(to: date)
+                                    let x = value.location.x - origin.x
+                                    if let date: Date = proxy.value(atX: x) {
+                                        withAnimation(.easeOut(duration: 0.1)) {
+                                            selectedReading = closestReading(to: date)
+                                        }
                                     }
                                 }
                                 .onEnded { _ in
-                                    withAnimation(.easeOut(duration: 0.3)) {
+                                    withAnimation(.easeOut(duration: 0.25)) {
                                         selectedReading = nil
                                     }
                                 }
                         )
                 }
             }
-            .frame(height: 200)
+            .frame(height: 170)
             .animation(.easeInOut(duration: 0.3), value: readings.count)
         }
     }
@@ -161,25 +175,41 @@ struct StressDayChartView: View {
 
     private var emptyState: some View {
         VStack(spacing: 14) {
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 36, weight: .light))
-                .foregroundStyle(Color.secondary.opacity(0.45))
+            Image(systemName: "waveform.path")
+                .font(.system(size: 30, weight: .ultraLight))
+                .foregroundStyle(Color.secondary.opacity(0.35))
 
-            VStack(spacing: 4) {
+            VStack(spacing: 3) {
                 Text("No readings yet today")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
-                Text("Stress snapshots will appear here automatically when your score changes.")
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
+                Text("Snapshots appear automatically when your score changes.")
+                    .font(.system(size: 11, weight: .regular, design: .rounded))
+                    .foregroundStyle(Color.secondary.opacity(0.65))
                     .multilineTextAlignment(.center)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
+        .padding(.vertical, 36)
     }
 
     // MARK: - Helpers
+
+    /// Low stress (≤40%) → .primary at reduced opacity (calm, editorial)
+    /// High stress         → warm terracotta → rust
+    private func lineColor(for score: Double) -> Color {
+        let t = min(max(score / 100.0, 0), 1)
+        if t <= 0.40 {
+            // primary fades from 0.35 (calm) to 0.55 (warning edge)
+            return Color.primary.opacity(0.35 + t * 0.50)
+        }
+        let ht = (t - 0.40) / 0.60  // 0→1 across the warm half
+        return Color(
+            hue: 0.12 - ht * 0.11,          // amber (0.12) → rust (0.01)
+            saturation: 0.50 + ht * 0.18,
+            brightness: 0.68 - ht * 0.12
+        )
+    }
 
     private var todayDomain: ClosedRange<Date> {
         let cal = Calendar.current
@@ -191,46 +221,6 @@ struct StressDayChartView: View {
     private func closestReading(to date: Date) -> StressReading? {
         readings.min(by: { abs($0.timestamp.timeIntervalSince(date)) < abs($1.timestamp.timeIntervalSince(date)) })
     }
-
-    private func stressGradientColor(for score: Double) -> Color {
-        let t = min(max(score / 100.0, 0), 1)
-        return Color(hue: 0.33 * (1.0 - t), saturation: 0.75, brightness: 0.78)
-    }
-
-    private func colorFor(score: Double) -> Color { stressGradientColor(for: score) }
-
-    @ViewBuilder
-    private func annotationLabel(reading: StressReading) -> some View {
-        VStack(spacing: 2) {
-            Text(reading.timestamp, format: .dateTime.hour().minute())
-                .font(.system(size: 10, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
-            Text("\(Int(reading.score))")
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-                .foregroundStyle(stressGradientColor(for: reading.score))
-            Text(reading.levelLabel)
-                .font(.system(size: 10, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
-        )
-    }
-
-    private func legendDot(color: Color, label: String) -> some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(color)
-                .frame(width: 7, height: 7)
-            Text(label)
-                .font(.system(size: 11, weight: .regular, design: .rounded))
-                .foregroundStyle(.secondary)
-        }
-    }
 }
 
 // MARK: - Preview
@@ -239,13 +229,14 @@ struct StressDayChartView: View {
     let now = Date()
     let cal = Calendar.current
     let samples: [StressReading] = [
-        StressReading(timestamp: cal.date(byAdding: .hour, value: -7, to: now)!, score: 18, levelLabel: "Excellent"),
-        StressReading(timestamp: cal.date(byAdding: .hour, value: -5, to: now)!, score: 35, levelLabel: "Good"),
-        StressReading(timestamp: cal.date(byAdding: .hour, value: -3, to: now)!, score: 58, levelLabel: "Moderate"),
-        StressReading(timestamp: cal.date(byAdding: .hour, value: -1, to: now)!, score: 72, levelLabel: "High"),
-        StressReading(timestamp: now, score: 45, levelLabel: "Moderate"),
+        StressReading(timestamp: cal.date(byAdding: .hour, value: -8, to: now)!, score: 22, levelLabel: "Good"),
+        StressReading(timestamp: cal.date(byAdding: .hour, value: -6, to: now)!, score: 38, levelLabel: "Good"),
+        StressReading(timestamp: cal.date(byAdding: .hour, value: -4, to: now)!, score: 55, levelLabel: "Moderate"),
+        StressReading(timestamp: cal.date(byAdding: .hour, value: -2, to: now)!, score: 68, levelLabel: "High"),
+        StressReading(timestamp: cal.date(byAdding: .hour, value: -1, to: now)!, score: 48, levelLabel: "Moderate"),
+        StressReading(timestamp: now, score: 72, levelLabel: "High"),
     ]
-    VStack {
+    VStack(spacing: 16) {
         StressDayChartView(readings: samples)
             .padding()
         StressDayChartView(readings: [])

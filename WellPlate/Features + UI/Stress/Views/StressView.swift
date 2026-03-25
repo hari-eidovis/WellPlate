@@ -38,18 +38,25 @@ struct StressView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var activeSheet: StressSheet? = nil
     @State private var pendingManualHours: Double = 0
+    @State private var showInsights = false
+
+    // Entrance animation states
+    @State private var scoreAppeared   = false
+    @State private var chartAppeared   = false
+    @State private var weekAppeared    = false
+    @State private var adviceAppeared  = false
+
     #if DEBUG
     @State private var debugScreenTimeHours: Double = 0
     @State private var didSeedDebugScreenTimeHours = false
     #endif
-    private let refreshTicker   = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
+
+    private let refreshTicker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // Warm tinted background that shifts with stress level
-                levelBackground
-                    .ignoresSafeArea()
+                levelBackground.ignoresSafeArea()
 
                 Group {
                     if !HealthKitService.isAvailable {
@@ -59,12 +66,26 @@ struct StressView: View {
                     } else if !viewModel.isAuthorized {
                         permissionView
                     } else {
-                        mainContent
+                        mainScrollView
                     }
                 }
             }
-            .navigationTitle("")
-            .navigationBarHidden(true)
+            .navigationTitle("Stress")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if HealthKitService.isAvailable && viewModel.isAuthorized && !viewModel.isLoading {
+                        Button {
+                            HapticService.impact(.light)
+                            showInsights = true
+                        } label: {
+                            Label("Insights", systemImage: "chart.bar.xaxis.ascending")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(viewModel.stressLevel.color)
+                        }
+                    }
+                }
+            }
         }
         .task {
             await ScreenTimeManager.shared.requestAuthorization()
@@ -83,6 +104,7 @@ struct StressView: View {
             #if DEBUG
             seedDebugScreenTimeInputIfNeeded()
             #endif
+            triggerEntranceAnimations()
         }
         .onReceive(refreshTicker) { _ in
             guard viewModel.isAuthorized else { return }
@@ -92,6 +114,11 @@ struct StressView: View {
             guard phase == .active, viewModel.isAuthorized else { return }
             Task { await viewModel.loadData() }
         }
+        // MARK: Insights sheet
+        .sheet(isPresented: $showInsights) {
+            insightsSheet
+        }
+        // MARK: Factor / vital detail sheets
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .exercise:
@@ -130,14 +157,28 @@ struct StressView: View {
         }
     }
 
+    // MARK: - Entrance animations
+
+    private func triggerEntranceAnimations() {
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.75).delay(0.05)) {
+            scoreAppeared = true
+        }
+        withAnimation(.easeOut(duration: 0.4).delay(0.25)) {
+            chartAppeared = true
+        }
+        withAnimation(.easeOut(duration: 0.45).delay(0.38)) {
+            weekAppeared = true
+        }
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.78).delay(0.52)) {
+            adviceAppeared = true
+        }
+    }
+
     // MARK: - Background
 
     private var levelBackground: some View {
         ZStack {
-            // Base warm cream
             Color(.systemGroupedBackground)
-
-            // Subtle level-tinted gradient overlaid on top
             LinearGradient(
                 colors: [
                     viewModel.stressLevel.color.opacity(0.10),
@@ -150,52 +191,49 @@ struct StressView: View {
         }
     }
 
-    // MARK: - Main Content
+    // MARK: - Main Scroll View
 
-    private var mainContent: some View {
+    private var mainScrollView: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 0) {
-                // ── Header ────────────────────────────────────
-                headerSection
-                    .padding(.top, 56)
-                    .padding(.horizontal, 24)
+            VStack(alignment: .leading, spacing: 0) {
 
-                // ── Score Gauge ───────────────────────────────
-                StressScoreGaugeView(
-                    score: viewModel.totalScore,
-                    level: viewModel.stressLevel
-                )
-                .padding(.top, 4)
+                // ── Score Header ──────────────────────────────────
+                scoreHeader
+                    .padding(.top, 20)
+                    .padding(.horizontal, 20)
+                    .opacity(scoreAppeared ? 1 : 0)
+                    .scaleEffect(scoreAppeared ? 1 : 0.93, anchor: .topLeading)
 
-                // ── Contextual comparison blurb ───────────────
-                comparisonBadge
-                    .padding(.top, 2)
+                // ── TODAY'S PATTERN ───────────────────────────────
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionLabel("Today's Pattern")
+                    StressDayChartView(readings: viewModel.todayReadings)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 28)
+                .opacity(chartAppeared ? 1 : 0)
+                .offset(y: chartAppeared ? 0 : 12)
 
-                // ── Auto Logging Note ─────────────────────────
-                autoLoggingNote
-                    .padding(.top, 10)
-                    .padding(.bottom, 28)
+                // ── THIS WEEK ─────────────────────────────────────
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionLabel("This Week")
+                    weekColourBar
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 28)
+                .opacity(weekAppeared ? 1 : 0)
+                .offset(y: weekAppeared ? 0 : 12)
 
-                // ── Quick Vitals ──────────────────────────────
-                vitalsQuickSection
-                    .padding(.horizontal, 16)
-
-                // ── Stress Factors ────────────────────────────
-                factorsSection
-                    .padding(.horizontal, 16)
-                    .padding(.top, 28)
-
-                #if DEBUG
-                debugScreenTimeSection
-                    .padding(.horizontal, 16)
-                    .padding(.top, 18)
-                #endif
-
-                // ── Timeline ──────────────────────────────────
-                timelineSection
-                    .padding(.horizontal, 16)
-                    .padding(.top, 28)
-                    .padding(.bottom, 40)
+                // ── ADVICE ────────────────────────────────────────
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionLabel("Suggestion")
+                    adviceCard
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 28)
+                .padding(.bottom, 40)
+                .opacity(adviceAppeared ? 1 : 0)
+                .offset(y: adviceAppeared ? 0 : 16)
             }
         }
         .refreshable {
@@ -205,116 +243,327 @@ struct StressView: View {
         }
     }
 
-    // MARK: - Header
+    // MARK: - Score Header
 
-    private var headerSection: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("TODAY'S STRESS")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .tracking(1.2)
-                Text(viewModel.stressLevel.label)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+    private var scoreHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Big number row
+            HStack(alignment: .lastTextBaseline, spacing: 4) {
+                Text("\(Int(viewModel.totalScore))")
+                    .font(.system(size: 72, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
+                    .contentTransition(.numericText())
+
+                Text("/100")
+                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, 6)
             }
-            Spacer()
-            // Level icon badge
-            ZStack {
+            // Level badge pill
+            levelBadgePill
+        }
+    }
+
+    private var formattedToday: String {
+        let f = DateFormatter()
+        f.dateFormat = "EEE MMM d"
+        return f.string(from: Date())
+    }
+
+    private var levelBadgePill: some View {
+        HStack(spacing: 5) {
+            Image(systemName: levelBadgeIcon)
+                .font(.system(size: 11, weight: .semibold))
+            Text(viewModel.stressLevel.label.lowercased())
+                .font(.system(size: 12, weight: .semibold))
+                .tracking(0.2)
+        }
+        .foregroundColor(viewModel.stressLevel.color)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(viewModel.stressLevel.color.opacity(0.14))
+        )
+        .overlay(
+            Capsule()
+                .strokeBorder(viewModel.stressLevel.color.opacity(0.30), lineWidth: 1)
+        )
+    }
+
+    private var levelBadgeIcon: String {
+        switch viewModel.stressLevel {
+        case .excellent: return "checkmark.circle.fill"
+        case .good:      return "checkmark.circle"
+        case .moderate:  return "triangle"
+        case .high:      return "triangle.fill"
+        case .veryHigh:  return "exclamationmark.triangle.fill"
+        }
+    }
+
+    // MARK: - Week Colour Bar
+
+    private var weekColourBar: some View {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        // Build Sunday-of-this-week → Saturday
+        let weekday = cal.component(.weekday, from: today) // 1=Sun
+        let sundayOffset = -(weekday - 1)
+        let sunday = cal.date(byAdding: .day, value: sundayOffset, to: today)!
+
+        // Group weekReadings by day
+        let grouped: [Date: [StressReading]] = Dictionary(
+            grouping: viewModel.weekReadings,
+            by: { cal.startOfDay(for: $0.timestamp) }
+        )
+
+        return HStack(spacing: 6) {
+            ForEach(0..<7, id: \.self) { offset in
+                let day = cal.date(byAdding: .day, value: offset, to: sunday)!
+                let isToday = cal.isDate(day, inSameDayAs: today)
+                let label = dayLetter(for: day)
+                let readings = grouped[day] ?? []
+                let avgScore = readings.isEmpty ? nil : readings.map(\.score).reduce(0, +) / Double(readings.count)
+
+                VStack(spacing: 5) {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(avgScore.map { weekDayColor(score: $0) } ?? Color.secondary.opacity(0.18))
+                        .frame(height: 48)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(isToday ? Color.primary.opacity(0.30) : Color.clear, lineWidth: 1.5)
+                        )
+                        .opacity(weekAppeared ? 1 : 0)
+                        .animation(
+                            .easeOut(duration: 0.35).delay(Double(offset) * 0.055),
+                            value: weekAppeared
+                        )
+
+                    Text(label)
+                        .font(.system(size: 11, weight: isToday ? .bold : .regular))
+                        .foregroundColor(isToday ? .primary : .secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 4)
+        )
+    }
+
+    private func dayLetter(for date: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "EEEEE" // single letter: S, M, T, W, T, F, S
+        return f.string(from: date)
+    }
+
+    // Low stress → .primary at opacity (calm); higher stress → amber → rust
+    private func weekDayColor(score: Double) -> Color {
+        let t = min(max(score / 100.0, 0), 1)
+        if t <= 0.40 {
+            return Color.primary.opacity(0.28 + t * 0.40)
+        }
+        let ht = (t - 0.40) / 0.60
+        return Color(
+            hue: 0.12 - ht * 0.11,
+            saturation: 0.45 + ht * 0.20,
+            brightness: 0.68 - ht * 0.10
+        )
+    }
+
+    // MARK: - Advice Card
+
+    private var adviceCard: some View {
+        let topFactor = sortedFactors.first
+        let factorName = topFactor?.factor.title.uppercased() ?? "LIFESTYLE"
+        let detailText = topFactor?.factor.detailText ?? "Focus on balanced habits to keep stress in check."
+        let sheet = topFactor?.sheet
+
+        return VStack(alignment: .leading, spacing: 0) {
+            // Header row: • TOP FACTOR · SCREEN TIME
+            HStack(spacing: 6) {
                 Circle()
-                    .fill(viewModel.stressLevel.color.opacity(0.15))
-                    .frame(width: 48, height: 48)
-                Image(systemName: viewModel.stressLevel.systemImage)
-                    .font(.system(size: 22))
-                    .foregroundColor(viewModel.stressLevel.color)
+                    .fill(Color.secondary.opacity(0.55))
+                    .frame(width: 7, height: 7)
+                Text("TOP FACTOR · \(factorName)")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .tracking(0.8)
+            }
+            .padding(.bottom, 10)
+
+            // Main insight text
+            Text(adviceText(for: topFactor?.factor))
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(.primary.opacity(0.92))
+                .lineSpacing(3)
+                .padding(.bottom, 16)
+
+            Divider()
+                .background(Color.secondary.opacity(0.2))
+                .padding(.bottom, 12)
+
+            // Action button
+            Button {
+                HapticService.impact(.light)
+                if let s = sheet { activeSheet = s }
+            } label: {
+                HStack {
+                    Text(actionLabel(for: topFactor?.factor))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.secondary.opacity(0.6))
+                }
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemGray5).opacity(0.95))
+                .shadow(color: .black.opacity(0.06), radius: 12, x: 0, y: 4)
+        )
+    }
+
+    private func adviceText(for factor: StressFactorResult?) -> AttributedString {
+        guard let f = factor else {
+            return AttributedString("Track your habits daily to better understand what affects your stress.")
+        }
+        var base = AttributedString(f.detailText)
+        // Bold any number with a unit (e.g. "6.4h", "4,200 steps")
+        // This is a simple heuristic: bold words containing digits
+        let words = f.detailText.components(separatedBy: " ")
+        var result = AttributedString()
+        for (i, word) in words.enumerated() {
+            var part = AttributedString(word + (i < words.count - 1 ? " " : ""))
+            let hasDigit = word.unicodeScalars.contains { CharacterSet.decimalDigits.contains($0) }
+            if hasDigit {
+                part.font = .system(size: 15, weight: .bold)
+            }
+            result.append(part)
+        }
+        return result.runs.isEmpty ? base : result
+    }
+
+    private func actionLabel(for factor: StressFactorResult?) -> String {
+        guard let f = factor else { return "view details →" }
+        switch f.title.lowercased() {
+        case let n where n.contains("screen"): return "set screen reminder →"
+        case let n where n.contains("sleep"):  return "view sleep details →"
+        case let n where n.contains("diet"),
+             let n where n.contains("food"):   return "view nutrition →"
+        case let n where n.contains("exercise"),
+             let n where n.contains("activ"):  return "view activity →"
+        default: return "view details →"
+        }
+    }
+
+    // MARK: - Insights Sheet
+
+    private var insightsSheet: some View {
+        NavigationStack {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // Vitals Grid
+                    vitalsGridSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 20)
+
+                    // Stress Factors
+                    factorsSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 28)
+
+                    // 7-Day Trend
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionLabel("7-DAY TREND")
+                        StressWeekChartView(readings: viewModel.weekReadings)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 28)
+
+                    // Stress through the day (detailed)
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionLabel("STRESS THROUGH THE DAY")
+                        StressDayChartView(readings: viewModel.todayReadings)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 28)
+
+                    #if DEBUG
+                    debugScreenTimeSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 18)
+                    #endif
+
+                    Spacer().frame(height: 40)
+                }
+            }
+            .navigationTitle("Insights")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showInsights = false }
+                        .font(.system(size: 16, weight: .semibold))
+                }
             }
         }
+        .presentationDragIndicator(.visible)
     }
 
-    // MARK: - Comparison Badge
+    // MARK: - Vitals Grid
 
-    private var comparisonBadge: some View {
-        let weekPercentile = stressPercentile
-        return HStack(spacing: 4) {
-            Text("Your stress is lower than")
-                .font(.system(size: 14, weight: .regular, design: .rounded))
-                .foregroundColor(.secondary)
-            Text("\(weekPercentile)%")
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundColor(viewModel.stressLevel.color)
-            Text("of this week")
-                .font(.system(size: 14, weight: .regular, design: .rounded))
-                .foregroundColor(.secondary)
-        }
-        .multilineTextAlignment(.center)
-    }
-
-    /// Simple heuristic: invert the score to a "lower than X%" reading.
-    private var stressPercentile: Int {
-        let pct = Int((1.0 - viewModel.totalScore / 100.0) * 100)
-        return max(0, min(100, pct))
-    }
-
-    // MARK: - Quick Vitals (Heart Rate · Sleep · Activity)
-
-    private var vitalsQuickSection: some View {
+    private var vitalsGridSection: some View {
         VStack(spacing: 10) {
-            // Heart Rate row
-            quickVitalRow(
-                icon: "heart.fill",
-                iconColor: .pink,
-                label: "HEART RATE",
-                value: viewModel.todayHeartRate.map { "\(Int($0)) bpm" } ?? "—",
-                subtitle: viewModel.todayRestingHR.map { "Resting: \(Int($0)) bpm" } ?? "Resting",
-                onTap: { activeSheet = .vital(.heartRate) }
-            )
-
-            // Sleep Quality — derived from sleep factor
-            quickVitalRow(
-                icon: "moon.zzz.fill",
-                iconColor: Color(hue: 0.68, saturation: 0.55, brightness: 0.75),
-                label: "SLEEP QUALITY",
-                value: sleepDisplayValue,
-                subtitle: sleepSubtitle,
-                onTap: { activeSheet = .sleep }
-            )
-
-            // Activity — derived from exercise factor
-            quickVitalRow(
-                icon: "figure.walk",
-                iconColor: Color(hue: 0.55, saturation: 0.55, brightness: 0.60),
-                label: "ACTIVITY",
-                value: viewModel.exerciseFactor.statusText,
-                subtitle: viewModel.exerciseFactor.detailText,
-                onTap: { activeSheet = .exercise }
-            )
-        }
-    }
-
-    private var sleepDisplayValue: String {
-        let st = viewModel.sleepFactor.statusText
-        // statusText is like "7.2h total · 1.5h deep"
-        if st.contains("total") {
-            let parts = st.components(separatedBy: " · ")
-            return parts.first ?? st
-        }
-        return st
-    }
-
-    private var sleepSubtitle: String {
-        let st = viewModel.sleepFactor.statusText
-        if st.contains("·") {
-            let parts = st.components(separatedBy: " · ")
-            if parts.count > 1 {
-                // "1.5h deep" → "Deep 42%" style
-                return parts[1]
+            sectionLabel("VITALS & ACTIVITY")
+            LazyVGrid(
+                columns: [GridItem(.flexible()), GridItem(.flexible())],
+                spacing: 10
+            ) {
+                gridVitalCard(
+                    icon: "heart.fill",
+                    iconColor: .pink,
+                    label: "HEART RATE",
+                    value: viewModel.todayHeartRate.map { "\(Int($0)) bpm" } ?? "—",
+                    subtitle: viewModel.todayRestingHR.map { "Resting: \(Int($0)) bpm" } ?? "Resting",
+                    onTap: { activeSheet = .vital(.heartRate); showInsights = false }
+                )
+                gridVitalCard(
+                    icon: "waveform.path.ecg",
+                    iconColor: .purple,
+                    label: "HRV",
+                    value: viewModel.todayHRV.map { "\(Int($0)) ms" } ?? "—",
+                    subtitle: "Heart rate variability",
+                    onTap: { activeSheet = .vital(.hrv); showInsights = false }
+                )
+                gridVitalCard(
+                    icon: "moon.zzz.fill",
+                    iconColor: Color(hue: 0.68, saturation: 0.55, brightness: 0.75),
+                    label: "SLEEP QUALITY",
+                    value: sleepDisplayValue,
+                    subtitle: sleepSubtitle,
+                    onTap: { activeSheet = .sleep; showInsights = false }
+                )
+                gridVitalCard(
+                    icon: "figure.walk",
+                    iconColor: Color(hue: 0.55, saturation: 0.55, brightness: 0.60),
+                    label: "ACTIVITY",
+                    value: viewModel.exerciseFactor.statusText,
+                    subtitle: viewModel.exerciseFactor.detailText,
+                    onTap: { activeSheet = .exercise; showInsights = false }
+                )
             }
         }
-        return viewModel.sleepFactor.detailText
     }
 
     @ViewBuilder
-    private func quickVitalRow(
+    private func gridVitalCard(
         icon: String,
         iconColor: Color,
         label: String,
@@ -326,44 +575,41 @@ struct StressView: View {
             HapticService.impact(.light)
             onTap()
         }) {
-            HStack(spacing: 14) {
-                // Icon
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(iconColor.opacity(0.12))
-                        .frame(width: 46, height: 46)
-                    Image(systemName: icon)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(iconColor)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(iconColor.opacity(0.12))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: icon)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(iconColor)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(.secondary.opacity(0.35))
                 }
-
-                // Labels
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(label)
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundColor(.secondary)
-                        .tracking(0.6)
-                    Text(value)
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
-                    Text(subtitle)
-                        .font(.system(size: 12, weight: .regular, design: .rounded))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary.opacity(0.35))
+                Text(label)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .tracking(0.6)
+                Text(value)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(subtitle)
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 13)
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(Color(.systemBackground).opacity(0.85))
-                    .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
+                    .shadow(color: .black.opacity(0.06), radius: 32, x: 0, y: 16)
             )
         }
         .buttonStyle(.plain)
@@ -392,7 +638,7 @@ struct StressView: View {
             VStack(spacing: 10) {
                 ForEach(sortedFactors, id: \.factor.id) { item in
                     if let sheet = item.sheet {
-                        StressFactorCardView(factor: item.factor, onTap: { activeSheet = sheet })
+                        StressFactorCardView(factor: item.factor, onTap: { activeSheet = sheet; showInsights = false })
                     } else {
                         StressFactorCardView(factor: item.factor)
                     }
@@ -400,6 +646,37 @@ struct StressView: View {
             }
         }
     }
+
+    // MARK: - Sleep helpers
+
+    private var sleepDisplayValue: String {
+        let st = viewModel.sleepFactor.statusText
+        if st.contains("total") {
+            return st.components(separatedBy: " · ").first ?? st
+        }
+        return st
+    }
+
+    private var sleepSubtitle: String {
+        let st = viewModel.sleepFactor.statusText
+        if st.contains("·") {
+            let parts = st.components(separatedBy: " · ")
+            if parts.count > 1 { return parts[1] }
+        }
+        return viewModel.sleepFactor.detailText
+    }
+
+    // MARK: - Helpers
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundColor(.secondary)
+            .tracking(1.2)
+            .padding(.leading, 4)
+    }
+
+    // MARK: - Debug (only inside Insights sheet)
 
     #if DEBUG
     private var debugScreenTimeSection: some View {
@@ -409,7 +686,7 @@ struct StressView: View {
             VStack(spacing: 12) {
                 HStack {
                     Text("Manual override")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(.system(size: 13, weight: .semibold))
                     Spacer()
                     Text(String(format: "%.2f h", debugScreenTimeHours))
                         .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -425,7 +702,7 @@ struct StressView: View {
                     Spacer()
                     Text("24h")
                 }
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.secondary)
 
                 HStack(spacing: 10) {
@@ -447,15 +724,15 @@ struct StressView: View {
 
                 if viewModel.debugManualScreenTimeOverrideHours != nil {
                     Text("Debug override is active.")
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary)
                 }
             }
             .padding(14)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(Color(.systemBackground).opacity(0.88))
-                    .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
+                    .shadow(color: .black.opacity(0.06), radius: 32, x: 0, y: 16)
             )
         }
     }
@@ -473,55 +750,6 @@ struct StressView: View {
     }
     #endif
 
-    // MARK: - Auto Logging Note
-
-    private var autoLoggingNote: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "clock.badge.checkmark")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(viewModel.stressLevel.color)
-            Text("Stress is logged automatically with time and value whenever it changes.")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            Capsule()
-                .fill(Color(.systemBackground).opacity(0.85))
-                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
-        )
-    }
-
-    // MARK: - Timeline Section (Real Charts)
-
-    private var timelineSection: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            // ── Today's intraday chart ──
-            VStack(alignment: .leading, spacing: 10) {
-                sectionLabel("STRESS THROUGH THE DAY")
-                StressDayChartView(readings: viewModel.todayReadings)
-            }
-
-            // ── 7-day trend ──
-            VStack(alignment: .leading, spacing: 10) {
-                sectionLabel("7-DAY TREND")
-                StressWeekChartView(readings: viewModel.weekReadings)
-            }
-        }
-    }
-
-    // MARK: - Helpers
-
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 11, weight: .semibold, design: .rounded))
-            .foregroundColor(.secondary)
-            .tracking(1.0)
-            .padding(.leading, 4)
-    }
-
     // MARK: - State Views
 
     private var permissionView: some View {
@@ -537,14 +765,12 @@ struct StressView: View {
                         )
                     )
                     .frame(width: 120, height: 120)
-
                 Image(systemName: "brain.head.profile.fill")
                     .font(.system(size: 48))
                     .foregroundStyle(
                         LinearGradient(colors: [.teal, .cyan], startPoint: .top, endPoint: .bottom)
                     )
             }
-
             VStack(spacing: 8) {
                 Text("Stress Insights")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
@@ -553,7 +779,6 @@ struct StressView: View {
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
-
             Button {
                 HapticService.impact(.medium)
                 Task { await viewModel.requestPermissionAndLoad() }

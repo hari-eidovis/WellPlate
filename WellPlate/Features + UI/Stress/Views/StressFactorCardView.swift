@@ -59,7 +59,7 @@ struct StressFactorCardView: View {
                 if factor.hasValidData {
                     // Status text (main info line)
                     Text(factor.statusText)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
@@ -68,19 +68,19 @@ struct StressFactorCardView: View {
                         ZStack(alignment: .leading) {
                             Capsule()
                                 .fill(Color(.systemGray5))
-                                .frame(height: 5)
+                                .frame(height: 8)
                             Capsule()
                                 .fill(factor.accentColor)
-                                .frame(width: max(0, geo.size.width * factor.progress), height: 5)
+                                .frame(width: max(0, geo.size.width * factor.progress), height: 8)
                                 .animation(.spring(response: 0.7, dampingFraction: 0.75), value: factor.progress)
                         }
                     }
-                    .frame(height: 5)
+                    .frame(height: 8)
 
                     // Tip text
                     if !inlineTip.isEmpty {
                         Text(inlineTip)
-                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .font(.system(size: 12, weight: .regular))
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     }
@@ -89,9 +89,9 @@ struct StressFactorCardView: View {
         }
         .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(Color(.systemBackground).opacity(0.88))
-                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.06), radius: 32, x: 0, y: 16)
         )
     }
 
