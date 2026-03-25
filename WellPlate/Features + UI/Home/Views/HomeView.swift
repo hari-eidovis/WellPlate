@@ -319,6 +319,24 @@ struct HomeView: View {
                 }
             }
             .buttonStyle(.plain)
+
+            // Mood badge — visible only when mood is logged today
+            if hasLoggedMoodToday, let mood = selectedMood {
+                ZStack {
+                    Circle()
+                        .fill(Color(.systemBackground))
+                        .frame(width: 44, height: 44)
+                        .shadow(color: mood.accentColor.opacity(0.25), radius: 6, x: 0, y: 3)
+
+                    Circle()
+                        .stroke(mood.accentColor.opacity(0.35), lineWidth: 1.5)
+                        .frame(width: 44, height: 44)
+
+                    Text(mood.emoji)
+                        .font(.system(size: 22))
+                }
+                .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
         }
     }
 
@@ -360,6 +378,7 @@ struct HomeView: View {
                 progress: calorieProgress,
                 color: AppColors.brand,
                 emojiOrSymbol: nil,
+                inlineLabel: nil,
                 destination: .calories
             ),
             WellnessRingItem(
@@ -369,6 +388,7 @@ struct HomeView: View {
                 progress: waterProgress,
                 color: Color(hue: 0.58, saturation: 0.68, brightness: 0.82),
                 emojiOrSymbol: nil,
+                inlineLabel: nil,
                 destination: .water
             ),
             WellnessRingItem(
@@ -378,15 +398,17 @@ struct HomeView: View {
                 progress: exerciseProgress,
                 color: Color(hue: 0.50, saturation: 0.62, brightness: 0.70),
                 emojiOrSymbol: nil,
+                inlineLabel: nil,
                 destination: .exercise
             ),
             WellnessRingItem(
                 label: "Stress",
-                sublabel: log?.stressLevel ?? "—",
+                sublabel: "Today",
                 value: "",
                 progress: stressProgress,
                 color: Color(hue: 0.76, saturation: 0.50, brightness: 0.75),
                 emojiOrSymbol: stressEmojiFromLevel(log?.stressLevel),
+                inlineLabel: log?.stressLevel,
                 destination: .stress
             )
         ]
@@ -478,7 +500,9 @@ struct HomeView: View {
         todayLog.moodRaw = mood.rawValue
         do {
             try modelContext.save()
-            hasLoggedMoodToday = true
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                hasLoggedMoodToday = true
+            }
         } catch {
             hasLoggedMoodToday = false
             selectedMood = nil

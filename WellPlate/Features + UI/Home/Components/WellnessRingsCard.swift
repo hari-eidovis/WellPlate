@@ -18,6 +18,7 @@ struct WellnessRingItem: Identifiable {
     let progress: CGFloat        // 0.0 – 1.0
     let color: Color
     let emojiOrSymbol: String?   // Optional emoji shown instead of value for Stress
+    let inlineLabel: String?     // Optional text shown below emoji inside the ring
     let destination: WellnessRingDestination
 }
 
@@ -105,10 +106,19 @@ private struct WellnessRingButton: View {
                             value: animate
                         )
 
-                    // Center: emoji or numeric value
+                    // Center: emoji (+ inline level label) or numeric value
                     if let emoji = ring.emojiOrSymbol {
-                        Text(emoji)
-                            .font(.system(size: 22))
+                        VStack(spacing: 0) {
+                            Text(emoji)
+                                .font(.system(size: ring.inlineLabel != nil ? 18 : 22))
+                            if let level = ring.inlineLabel {
+                                Text(level)
+                                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                            }
+                        }
                     } else {
                         Text(ring.value)
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -150,13 +160,13 @@ private struct RingButtonStyle: ButtonStyle {
     WellnessRingsCard(
         rings: [
             WellnessRingItem(label: "Calories", sublabel: "/ 2000", value: "1420",
-                             progress: 0.71, color: AppColors.brand, emojiOrSymbol: nil, destination: .calories),
+                             progress: 0.71, color: AppColors.brand, emojiOrSymbol: nil, inlineLabel: nil, destination: .calories),
             WellnessRingItem(label: "Water", sublabel: "/ 8 cups", value: "5",
-                             progress: 0.625, color: .blue, emojiOrSymbol: nil, destination: .water),
+                             progress: 0.625, color: .blue, emojiOrSymbol: nil, inlineLabel: nil, destination: .water),
             WellnessRingItem(label: "Exercise", sublabel: "/ 45 min", value: "32",
-                             progress: 0.71, color: Color(hue: 0.45, saturation: 0.6, brightness: 0.72), emojiOrSymbol: nil, destination: .exercise),
+                             progress: 0.71, color: Color(hue: 0.45, saturation: 0.6, brightness: 0.72), emojiOrSymbol: nil, inlineLabel: nil, destination: .exercise),
             WellnessRingItem(label: "Stress", sublabel: "Low", value: "",
-                             progress: 0.25, color: Color(hue: 0.76, saturation: 0.55, brightness: 0.78), emojiOrSymbol: "😌", destination: .stress)
+                             progress: 0.25, color: Color(hue: 0.76, saturation: 0.55, brightness: 0.78), emojiOrSymbol: "😌", inlineLabel: "Low", destination: .stress)
         ],
         completionPercent: 71
     )

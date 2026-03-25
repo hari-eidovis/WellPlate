@@ -246,22 +246,23 @@ struct WaterDetailView: View {
     private func addGlass() {
         guard glassesConsumed < totalGlasses else { return }
         HapticService.impact(.light)
-        SoundService.playConfirmation()
+        SoundService.play("water_log_sound", ext: "mp3")
         updateGlasses(glassesConsumed + 1)
     }
 
     private func removeGlass() {
         guard glassesConsumed > 0 else { return }
-        HapticService.impact(.light)
+        HapticService.notify(.error)
         updateGlasses(glassesConsumed - 1)
     }
 
     private func toggleGlass(at index: Int) {
-        HapticService.impact(.light)
-        SoundService.playConfirmation()
         if index < glassesConsumed {
+            HapticService.notify(.error)
             updateGlasses(index)
         } else {
+            HapticService.impact(.light)
+            SoundService.play("water_log_sound", ext: "mp3")
             updateGlasses(index + 1)
         }
     }

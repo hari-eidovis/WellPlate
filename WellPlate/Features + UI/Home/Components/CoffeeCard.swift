@@ -100,13 +100,10 @@ struct CoffeeCard: View {
     }
 
     private func toggleCup(at index: Int) {
+        guard index < cupsConsumed else { return }
         HapticService.impact(.light)
         SoundService.playConfirmation()
-        if index < cupsConsumed {
-            cupsConsumed = index
-        } else {
-            cupsConsumed = index + 1
-        }
+        cupsConsumed = index
     }
 }
 
