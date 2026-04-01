@@ -11,6 +11,8 @@ struct ProgressInsightsView: View {
 
     @Query private var allFoodLogs: [FoodLogEntry]
     @Query private var userGoalsList: [UserGoals]
+    @Query private var allStressReadings: [StressReading]
+    @Query private var allWellnessLogs: [WellnessDayLog]
 
     private var currentGoals: UserGoals {
         userGoalsList.first ?? UserGoals.defaults()
@@ -69,6 +71,68 @@ struct ProgressInsightsView: View {
                                             value: -selectedTimeRange.rawValue,
                                             to: Date()) ?? Date()
         return calculateStats(for: dailyAggregates.filter { $0.date >= cutoffDate && $0.date < endDate })
+    }
+
+    private var weekReportData: WellnessReportData {
+        let cal = Calendar.current
+        let cutoff = cal.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+
+        let foodLogs    = allFoodLogs.filter { $0.day >= cutoff }
+        let stressLogs  = allStressReadings.filter { $0.timestamp >= cutoff }
+        let wellnessLogs = allWellnessLogs.filter { $0.day >= cutoff }
+
+        // Date range string
+        let fmt = DateFormatter()
+        fmt.dateFormat = "MMM d"
+        let endFmt = DateFormatter()
+        endFmt.dateFormat = "MMM d, yyyy"
+        let start = cal.date(byAdding: .day, value: -6, to: cal.startOfDay(for: Date())) ?? Date()
+        let dateRange = "\(fmt.string(from: start)) – \(endFmt.string(from: Date()))"
+
+        // Nutrition (group by day, average across logged days)
+        let dayGroups    = Dictionary(grouping: foodLogs) { $0.day }
+        let loggedDays   = dayGroups.count
+        let dailyCalories = dayGroups.values.map { logs in logs.reduce(0) { $0 + $1.calories } }
+        let dailyProtein  = dayGroups.values.map { logs in logs.reduce(0.0) { $0 + $1.protein } }
+        let dailyCarbs    = dayGroups.values.map { logs in logs.reduce(0.0) { $0 + $1.carbs } }
+        let dailyFat      = dayGroups.values.map { logs in logs.reduce(0.0) { $0 + $1.fat } }
+
+        let avgCal     = dailyCalories.isEmpty ? 0 : Double(dailyCalories.reduce(0, +)) / Double(dailyCalories.count)
+        let avgProtein = dailyProtein.isEmpty  ? 0 : dailyProtein.reduce(0, +) / Double(dailyProtein.count)
+        let avgCarbs   = dailyCarbs.isEmpty    ? 0 : dailyCarbs.reduce(0, +) / Double(dailyCarbs.count)
+        let avgFat     = dailyFat.isEmpty      ? 0 : dailyFat.reduce(0, +) / Double(dailyFat.count)
+
+        // Stress
+        let avgStress: Double? = stressLogs.isEmpty ? nil :
+            stressLogs.map(\.score).reduce(0, +) / Double(stressLogs.count)
+
+        // Steps + water (from WellnessDayLog)
+        let avgSteps = wellnessLogs.isEmpty ? 0.0 :
+            Double(wellnessLogs.map(\.steps).reduce(0, +)) / Double(wellnessLogs.count)
+        let avgWater = wellnessLogs.isEmpty ? 0.0 :
+            Double(wellnessLogs.map(\.waterGlasses).reduce(0, +)) / Double(wellnessLogs.count)
+
+        // Dominant mood
+        let moodCounts   = Dictionary(grouping: wellnessLogs.compactMap(\.moodRaw)) { $0 }
+        let dominantRaw  = moodCounts.max(by: { $0.value.count < $1.value.count })?.key
+        let dominantEmoji = dominantRaw.flatMap { MoodOption(rawValue: $0) }?.emoji ?? "—"
+
+        let goals = currentGoals
+
+        return WellnessReportData(
+            dateRange: dateRange,
+            avgStressScore: avgStress,
+            avgCalories: avgCal,
+            calorieGoal: goals.calorieGoal,
+            avgProtein: avgProtein,
+            avgCarbs: avgCarbs,
+            avgFat: avgFat,
+            avgSteps: avgSteps,
+            avgWaterGlasses: avgWater,
+            waterGoal: goals.waterDailyCups,
+            dominantMoodEmoji: dominantEmoji,
+            loggedDays: loggedDays
+        )
     }
 
     // MARK: - Colors
@@ -235,6 +299,20 @@ struct ProgressInsightsView: View {
         .preferredColorScheme(colorScheme)             // keep app scheme
         // Use UIKit bridge to lock status-bar style to .lightContent
         .background(StatusBarStyleModifier())
+        .sheet(isPresented: $showShareSheet) {
+            WellnessReportShareSheet(
+                reportData: weekReportData,
+                foodLogs: Array(allFoodLogs.filter {
+                    $0.day >= Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+                }),
+                stressReadings: Array(allStressReadings.filter {
+                    $0.timestamp >= Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+                }),
+                wellnessLogs: Array(allWellnessLogs.filter {
+                    $0.day >= Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+                })
+            )
+        }
     }
 
 
