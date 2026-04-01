@@ -20,6 +20,7 @@ final class WellnessCalendarViewModel: ObservableObject {
     @Published var dayLog: WellnessDayLog?
     @Published var foodEntries: [FoodLogEntry] = []
     @Published private(set) var healthKitActivity: DailyActivitySnapshot?
+    @Published private(set) var isLoadingActivity: Bool = false
 
     private var modelContext: ModelContext?
     private var activityTask: Task<Void, Never>?
@@ -61,6 +62,7 @@ final class WellnessCalendarViewModel: ObservableObject {
 
         activityTask?.cancel()
         healthKitActivity = nil
+        isLoadingActivity = true
         activityTask = Task { [weak self] in
             await self?.loadHealthKitActivity(for: startOfDay)
         }
@@ -103,9 +105,9 @@ final class WellnessCalendarViewModel: ObservableObject {
         }
 
         return (
-            logExercise > 0 ? logExercise : snapshot.exerciseMinutes,
-            logCalories > 0 ? logCalories : snapshot.caloriesBurned,
-            logSteps > 0 ? logSteps : snapshot.steps
+            snapshot.exerciseMinutes > 0 ? snapshot.exerciseMinutes : logExercise,
+            snapshot.caloriesBurned > 0 ? snapshot.caloriesBurned : logCalories,
+            snapshot.steps > 0 ? snapshot.steps : logSteps
         )
     }
 
@@ -193,9 +195,11 @@ final class WellnessCalendarViewModel: ObservableObject {
 
             guard Calendar.current.isDate(selectedDate, inSameDayAs: day) else { return }
             healthKitActivity = snapshot
+            isLoadingActivity = false
         } catch {
             guard Calendar.current.isDate(selectedDate, inSameDayAs: day) else { return }
             healthKitActivity = nil
+            isLoadingActivity = false
         }
     }
 

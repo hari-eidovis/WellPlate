@@ -143,10 +143,10 @@ struct WellnessCalendarView: View {
                 activityCard(log)
                 stressCard(log)
             } else {
-                if viewModel.hasHealthKitActivityData {
+                if viewModel.isLoadingActivity || viewModel.hasHealthKitActivityData {
                     activityCard(nil)
                 }
-                if !viewModel.hasHealthKitActivityData && viewModel.foodEntries.isEmpty {
+                if !viewModel.isLoadingActivity && !viewModel.hasHealthKitActivityData && viewModel.foodEntries.isEmpty {
                     emptyDayCard
                 }
             }
