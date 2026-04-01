@@ -110,18 +110,21 @@ struct MealLogCard: View {
                 }
 
                 // Macro chips
-                HStack(spacing: 5) {
-                    // Quantity pill — show user-entered amount when available, else API serving
-                    if let qty = entry.quantity, !qty.isEmpty, let unit = entry.quantityUnit {
-                        macroPill("\(qty)\(unit)", color: AppColors.primary)
-                    } else if let serving = entry.servingSize, !serving.isEmpty {
-                        macroPill(serving, color: AppColors.primary)
-                    }
-                    macroPill("\(Int(entry.protein))g P", color: Color(red: 0.85, green: 0.25, blue: 0.25))
-                    macroPill("\(Int(entry.carbs))g C", color: .blue)
-                    macroPill("\(Int(entry.fat))g F", color: .orange)
-                    if entry.fiber > 0.5 {
-                        macroPill("\(Int(entry.fiber))g F·ib", color: .green)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 5) {
+                        // Quantity pill — show user-entered amount when available, else API serving
+                        if let qty = entry.quantity, !qty.isEmpty, let unit = entry.quantityUnit {
+                            macroPill("\(qty)\(unit)", color: AppColors.primary)
+                        } else if let serving = entry.servingSize, !serving.isEmpty {
+                            macroPill(serving, color: AppColors.primary)
+                        }
+                        macroPill("\(Int(entry.protein))g P", color: Color(red: 0.85, green: 0.25, blue: 0.25))
+                        macroPill("\(Int(entry.carbs))g C", color: .blue)
+                        macroPill("\(Int(entry.fat))g F", color: .orange)
+                        if entry.fiber > 0.5 {
+                            macroPill("\(Int(entry.fiber))g F·ib", color: .green)
+                        }
+                        provenancePill(for: entry)
                     }
                 }
             }
@@ -150,6 +153,55 @@ struct MealLogCard: View {
                 Capsule()
                     .fill(color.opacity(0.12))
             )
+    }
+
+    @ViewBuilder
+    private func provenancePill(for entry: FoodLogEntry) -> some View {
+        if let provenance = LogProvenance(logSource: entry.logSource, confidence: entry.confidence) {
+            Text(provenance.label)
+                .font(.r(10, .medium))
+                .foregroundColor(provenance.color)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(
+                    Capsule()
+                        .fill(provenance.color.opacity(0.12))
+                )
+        }
+    }
+
+    // MARK: - Log Provenance
+
+    private enum LogProvenance {
+        case barcodeVerified
+        case aiHigh
+        case aiEstimated
+
+        init?(logSource: String?, confidence: Double?) {
+            guard let source = logSource else { return nil }
+            if source == "barcode" { self = .barcodeVerified; return }
+            if let c = confidence, c >= 0.8 {
+                self = .aiHigh
+            } else {
+                self = .aiEstimated
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .barcodeVerified: return "Barcode ✓"
+            case .aiHigh:          return "AI · High"
+            case .aiEstimated:     return "AI · Est."
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .barcodeVerified: return .green
+            case .aiHigh:          return AppColors.primary
+            case .aiEstimated:     return .orange
+            }
+        }
     }
 
     // MARK: - Helpers

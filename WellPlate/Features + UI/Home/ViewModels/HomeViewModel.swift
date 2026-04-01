@@ -115,7 +115,8 @@ final class HomeViewModel: ObservableObject {
 
             // 5) Upsert cache + insert log
             try upsertCache(from: result, key: key, displayName: canonicalName)
-            insertLog(from: result, day: day, typedName: canonicalName, key: key, context: context)
+            insertLog(from: result, day: day, typedName: canonicalName, key: key,
+                      context: context, logSource: "text")
 
             try modelContext.save()
             refreshWidget(for: day)
