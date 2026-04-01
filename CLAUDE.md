@@ -76,19 +76,26 @@ WellPlate/
 - **Cards:** `RoundedRectangle(cornerRadius: 20).fill(Color(.systemBackground)).appShadow(radius: 15, y: 5)`
 - **Colors:** `VitalMetric` and `BurnMetric` enums define accent colors per metric; `StressLevel` enum maps scores to semantic colors
 
-## Development Workflow (.codex)
+## Development Workflow
 
-This repo uses a 7-stage workflow for features:
+Use `/develop <sub-command>` as the single entry point for feature development:
 
-1. `brainstorm` → `Docs/02_Planning/Brainstorming/YYMMDD-[feature]-brainstorm.md`
-2. `planner` → `Docs/02_Planning/Specs/YYMMDD-[feature].md`
-3. `plan-auditor` → `Docs/05_Audits/Code/YYMMDD-[feature]-audit.md`
-4. `resolve-audit` → `Docs/02_Planning/Specs/YYMMDD-[feature]-RESOLVED.md` (**hard stop — user approval required**)
-5. `checklist-preparer` → `Docs/02_Planning/Specs/CHECKLIST-YYMMDD-[feature].md`
-6. `implementer` — execute approved checklist
-7. `tester` — build verification (see build commands above)
+| Sub-command | What it does | Output |
+|---|---|---|
+| `brainstorm <topic>` | Creative exploration | `Docs/01_Brainstorming/YYMMDD-[slug]-brainstorm.md` |
+| `strategize <topic>` | Choose one approach | `Docs/02_Planning/Specs/YYMMDD-[slug]-strategy.md` |
+| `plan <topic>` | Detailed implementation plan | `Docs/02_Planning/Specs/YYMMDD-[slug]-plan.md` |
+| `audit <path>` | Review plan or checklist | `Docs/03_Audits/YYMMDD-[slug]-[plan\|checklist]-audit.md` |
+| `resolve <path>` | Fix audit findings | `Docs/02_Planning/Specs/...-RESOLVED.md` or `Docs/04_Checklist/...-RESOLVED.md` |
+| `checklist <path>` | Step-by-step checklist | `Docs/04_Checklist/YYMMDD-[slug]-checklist.md` |
+| `implement <path>` | Execute checklist | (code changes + build verification) |
+| `fix` | Fix build errors | (code fixes + build verification) |
 
-Do not skip from planning to implementation. `code-reviewer` is optional and separate from the seven stages.
+**Standalone skills**: `/brainstorm` and `/code-reviewer` also work independently outside `/develop`.
+
+**Naming convention**: `YYMMDD-[feature-slug]-[stage].md` (e.g., `260401-wellness-calendar-plan.md`)
+
+**Hard stop**: The `resolve` step requires user approval before proceeding. Do not skip from planning to implementation.
 
 ## Key Files
 
@@ -101,3 +108,4 @@ Do not skip from planning to implementation. `code-reviewer` is optional and sep
 | Design tokens | `WellPlate/Shared/Color/AppColor.swift` |
 | SwiftData models | `WellPlate/Models/` |
 | Mock API data | `WellPlate/Resources/MockData/` |
+| /develop orchestrator | `.claude/skills/develop/SKILL.md` |

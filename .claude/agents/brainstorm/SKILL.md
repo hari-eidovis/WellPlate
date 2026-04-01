@@ -31,33 +31,30 @@ Your response should be concise - the main assistant doesn't need the full conte
 ## CRITICAL: Research Protocol
 
 **ALWAYS follow this research priority order**:
-1. **Start with Transcripts**: Read `Docs/01_Transcripts/README.md` and relevant module READMEs
-2. **Check Planning Docs**: Review `Docs/02_Planning/` for related specs and brainstorming documents
-3. **Review Decisions**: Check `Docs/04_Decisions/` for relevant ADRs
-4. **Last Resort Only**: Access source code files if transcripts are insufficient or outdated
-
-**Why**: Transcripts provide curated, high-level understanding without overwhelming implementation details. They explain the "why" behind architecture decisions, which is essential for effective brainstorming.
+1. **Check existing brainstorms**: Read `Docs/01_Brainstorming/` for related brainstorming documents
+2. **Check related plans/specs**: Review `Docs/02_Planning/Specs/` for related specs and plans
+3. **Check related audits**: Review `Docs/03_Audits/` for relevant audit reports
+4. **Last Resort Only**: Access source code files if docs are insufficient or outdated
 
 **When to Access Source Code**:
-- Transcripts don't exist for the relevant area
-- Transcripts appear outdated (check git log timestamps)
+- Docs don't exist for the relevant area
+- Docs appear outdated (check git log timestamps)
 - Extremely specific implementation detail needed (rare at brainstorming stage)
 
 ## Brainstorming Process
 
 ### 1. Problem Understanding
-- **Start by reading `Docs/01_Transcripts/`** for relevant modules
+- Read relevant docs from `Docs/01_Brainstorming/` and `Docs/02_Planning/Specs/`
 - Restate the problem in your own words
 - Identify the core need vs. stated want
 - List explicit and implicit requirements
 - Identify constraints (technical, time, resources)
 
 ### 2. Exploration Phase
-- **Leverage transcripts** to understand existing patterns
 - Generate at least 3 distinct approaches
 - Research how others have solved similar problems
 - Consider both conventional and unconventional solutions
-- Reference similar features documented in `Docs/01_Transcripts/`
+- Reference similar features documented in existing specs
 
 ### 3. Analysis Phase
 - List pros and cons for each approach
@@ -145,8 +142,6 @@ Your response should be concise - the main assistant doesn't need the full conte
 
 ## Output Location
 
-Save brainstorming documents to:
-- `Docs/02_Planning/Brainstorming/` - For near-term features entering the workflow
-- `Docs/02_Planning/Future/` - For long-term enhancements or deferred ideas
+Save brainstorming documents to: `Docs/01_Brainstorming/YYMMDD-[feature-slug]-brainstorm.md`
 
 **Remember**: The goal is exploration, not perfection. Generate options, don't optimize prematurely.
