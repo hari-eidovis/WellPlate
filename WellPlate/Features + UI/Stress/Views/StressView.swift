@@ -15,6 +15,7 @@ enum StressSheet: Identifiable {
     case diet
     case screenTimeDetail
     case vital(VitalMetric)
+    case stressLab
 
     var id: String {
         switch self {
@@ -23,6 +24,7 @@ enum StressSheet: Identifiable {
         case .diet:             return "diet"
         case .screenTimeDetail: return "screenTimeDetail"
         case .vital(let m):     return "vital_\(m.id)"
+        case .stressLab:        return "stressLab"
         }
     }
 }
@@ -64,6 +66,18 @@ struct StressView: View {
             .navigationTitle("Stress")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if (HealthKitService.isAvailable || viewModel.usesMockData) && viewModel.isAuthorized && !viewModel.isLoading {
+                        Button {
+                            HapticService.impact(.light)
+                            activeSheet = .stressLab
+                        } label: {
+                            Label("Lab", systemImage: "flask.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(viewModel.stressLevel.color)
+                        }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     if (HealthKitService.isAvailable || viewModel.usesMockData) && viewModel.isAuthorized && !viewModel.isLoading {
                         Button {
@@ -137,6 +151,8 @@ struct StressView: View {
                     metric: metric,
                     samples: viewModel.vitalHistory(for: metric)
                 )
+            case .stressLab:
+                StressLabView()
             }
         }
     }
