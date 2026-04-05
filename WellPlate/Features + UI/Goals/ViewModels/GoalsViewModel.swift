@@ -16,7 +16,6 @@ final class GoalsViewModel: ObservableObject {
 
     func save() {
         try? modelContext.save()
-        WidgetRefreshHelper.refresh(goals: goals, context: modelContext)
     }
 
     func resetToDefaults() {

@@ -10,6 +10,7 @@ import SwiftUI
 struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedTab = 0
+    @Binding var pendingDeepLink: URL?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -20,15 +21,8 @@ struct MainTabView: View {
                 Label("Home", systemImage: "house.fill")
             }
 
-            // MARK: - Burn
-            Tab(value: 1) {
-                BurnView()
-            } label: {
-                Label("Burn", systemImage: "flame.fill")
-            }
-
             // MARK: - Stress
-            Tab(value: 2) {
+            Tab(value: 1) {
                 StressView(viewModel: {
                     #if DEBUG
                     if AppConfig.shared.mockMode {
@@ -56,10 +50,17 @@ struct MainTabView: View {
        // .tabViewStyle(.sidebarAdaptable)
         .tint(AppColors.brand)
         .sensoryFeedback(.selection, trigger: selectedTab)
+        .onChange(of: pendingDeepLink) { _, url in
+            guard let url, url.scheme == "wellplate" else { return }
+            switch url.host {
+            case "stress": selectedTab = 2
+            default: break
+            }
+            pendingDeepLink = nil
+        }
     }
 }
 
 #Preview {
-    MainTabView()
+    MainTabView(pendingDeepLink: .constant(nil))
 }
-

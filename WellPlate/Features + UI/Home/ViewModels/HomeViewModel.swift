@@ -94,8 +94,7 @@ final class HomeViewModel: ObservableObject {
                     confidence: cached.confidence
                 )
                 try modelContext.save()
-                refreshWidget(for: day)
-                return
+                                return
             }
 
             // 4) API call using canonical name
@@ -119,8 +118,7 @@ final class HomeViewModel: ObservableObject {
                       context: context, logSource: "text")
 
             try modelContext.save()
-            refreshWidget(for: day)
-        } catch {
+                    } catch {
             WPLogger.home.error("logFood failed: \(error)")
             showErrorMessage(userFacingErrorMessage(for: error))
         }
@@ -240,8 +238,7 @@ final class HomeViewModel: ObservableObject {
                 logSource: "barcode"
             )
             try modelContext.save()
-            refreshWidget(for: day)
-            WPLogger.home.info("logFoodDirectly saved ✅")
+                        WPLogger.home.info("logFoodDirectly saved ✅")
         } catch {
             WPLogger.home.error("logFoodDirectly failed: \(error)")
             showErrorMessage(userFacingErrorMessage(for: error))
@@ -285,12 +282,4 @@ final class HomeViewModel: ObservableObject {
         return "Failed to log food. Please try again."
     }
 
-    // MARK: - Widget Refresh
-
-    /// Aggregates today's food logs, writes to AppGroup UserDefaults, then tells
-    /// WidgetKit to reload the food widget timeline.
-    func refreshWidget(for day: Date) {
-        let goals = UserGoals.current(in: modelContext)
-        WidgetRefreshHelper.refresh(goals: goals, context: modelContext)
-    }
 }

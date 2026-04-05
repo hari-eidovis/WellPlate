@@ -12,7 +12,7 @@
 		AA000010AA000010AA000010 /* ScreenTimeMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA000003AA000003AA000003 /* ScreenTimeMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AA000011AA000011AA000011 /* ScreenTimeReport.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA000004AA000004AA000004 /* ScreenTimeReport.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AB100001AB100001AB100001 /* WellPlateWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB100004AB100004AB100004 /* WellPlateWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		AB100002AB100002AB100002 /* SharedFoodData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB100005AB100005AB100005 /* SharedFoodData.swift */; };
+		AB100002AB100002AB100002 /* SharedStressData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB100005AB100005AB100005 /* SharedStressData.swift */; };
 		BF53DC452F49D20100423F77 /* FamilyControls.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF53DC442F49D20100423F77 /* FamilyControls.framework */; };
 		BF53DC472F49D20600423F77 /* ScreenTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF53DC462F49D20600423F77 /* ScreenTime.framework */; };
 		BF76276B2F49170700984E8E /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF76276A2F49170700984E8E /* HealthKit.framework */; };
@@ -64,7 +64,7 @@
 		AA000003AA000003AA000003 /* ScreenTimeMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenTimeMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000004AA000004AA000004 /* ScreenTimeReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenTimeReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB100004AB100004AB100004 /* WellPlateWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WellPlateWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		AB100005AB100005AB100005 /* SharedFoodData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SharedFoodData.swift; path = WellPlate/Widgets/SharedFoodData.swift; sourceTree = SOURCE_ROOT; };
+		AB100005AB100005AB100005 /* SharedStressData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SharedStressData.swift; path = WellPlate/Widgets/SharedStressData.swift; sourceTree = SOURCE_ROOT; };
 		BF53DC442F49D20100423F77 /* FamilyControls.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FamilyControls.framework; path = System/Library/Frameworks/FamilyControls.framework; sourceTree = SDKROOT; };
 		BF53DC462F49D20600423F77 /* ScreenTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScreenTime.framework; path = System/Library/Frameworks/ScreenTime.framework; sourceTree = SDKROOT; };
 		BF76276A2F49170700984E8E /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
@@ -171,7 +171,7 @@
 		BF2850592F4F74CA002DBFA0 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
-				AB100005AB100005AB100005 /* SharedFoodData.swift */,
+				AB100005AB100005AB100005 /* SharedStressData.swift */,
 			);
 			name = "Recovered References";
 			sourceTree = "<group>";
@@ -403,7 +403,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AB100002AB100002AB100002 /* SharedFoodData.swift in Sources */,
+				AB100002AB100002AB100002 /* SharedStressData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

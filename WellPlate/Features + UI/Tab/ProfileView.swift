@@ -4,7 +4,7 @@ import WidgetKit
 
 // MARK: - Widget size selection
 
-enum FoodWidgetSize: String, CaseIterable, Identifiable {
+enum StressWidgetSize: String, CaseIterable, Identifiable {
     case small  = "Small"
     case medium = "Medium"
     case large  = "Large"
@@ -21,18 +21,17 @@ enum FoodWidgetSize: String, CaseIterable, Identifiable {
 
     var description: String {
         switch self {
-        case .small:  return "Calorie ring + quick add"
-        case .medium: return "Ring + macro bars"
-        case .large:  return "Full log + recent foods"
+        case .small:  return "Score ring + level"
+        case .medium: return "Ring + top factor + vitals"
+        case .large:  return "Full breakdown + 7-day trend"
         }
     }
 
-    /// Aspect ratio of the iOS widget for visual preview
     var aspectRatio: CGFloat {
         switch self {
         case .small:  return 1.0
         case .medium: return 2.12
-        case .large:  return 1.0   // large is roughly square but taller — use 0.95
+        case .large:  return 1.0
         }
     }
 
@@ -46,10 +45,11 @@ enum FoodWidgetSize: String, CaseIterable, Identifiable {
 }
 
 // MARK: - Profile View
+
 struct ProfilePlaceholderView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var userGoalsList: [UserGoals]
-    @State private var selectedSize: FoodWidgetSize = .medium
+    @State private var selectedSize: StressWidgetSize = .medium
     @State private var isWidgetInstalled            = false
     @State private var showInstructions             = false
     @State private var showGoals                    = false
@@ -60,6 +60,7 @@ struct ProfilePlaceholderView: View {
     @State private var editedWeight                 = UserProfileManager.shared.weightKg
     @State private var editedHeight                 = UserProfileManager.shared.heightCm
     @State private var editWeightUnit               = UserProfileManager.shared.weightUnit
+    @State private var editHeightUnit               = UserProfileManager.shared.heightUnit
     @Namespace private var sizeNamespace
     #if DEBUG
     @State private var mockModeEnabled: Bool = AppConfig.shared.mockMode
@@ -72,41 +73,45 @@ struct ProfilePlaceholderView: View {
         userGoalsList.first ?? UserGoals.defaults()
     }
 
+    private var bmi: Double? {
+        let h = profile.heightCm / 100
+        guard h > 0, profile.weightKg > 0 else { return nil }
+        return profile.weightKg / (h * h)
+    }
+
+    private var bmiCategory: (label: String, color: Color) {
+        guard let bmi else { return ("--", .secondary) }
+        switch bmi {
+        case ..<18.5: return ("Underweight", .orange)
+        case 18.5..<25: return ("Normal", AppColors.brand)
+        case 25..<30: return ("Overweight", .orange)
+        default: return ("Obese", .red)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    // ── Profile header ──────────────────────────
-                    ProfileHeaderSection(
-                        name: profile.userName,
-                        statsText: "\(profile.formattedWeight) · \(profile.formattedHeight)"
-                    )
-                    .padding(.top, 12)
+                VStack(spacing: 24) {
+                    // ── Hero header ──────────────────────────
+                    profileHero
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
 
-                    // ── Personal info card ─────────────────────
-                    PersonalInfoCard(
-                        name: profile.userName.isEmpty ? "Not set" : profile.userName,
-                        weight: profile.formattedWeight,
-                        height: profile.formattedHeight,
-                        onNameTap: { showEditName = true },
-                        onWeightTap: { showEditWeight = true },
-                        onHeightTap: { showEditHeight = true }
-                    )
-                    .padding(.horizontal, 16)
+                    // ── Body metrics ─────────────────────────
+                    bodyMetricsCard
+                        .padding(.horizontal, 16)
 
-                    // ── Goals card ─────────────────────────────
-                    GoalsNavigationCard(goals: currentGoals) {
-                        HapticService.impact(.light)
-                        showGoals = true
-                    }
-                    .padding(.horizontal, 16)
+                    // ── Goals snapshot ────────────────────────
+                    goalsSnapshotCard
+                        .padding(.horizontal, 16)
 
-                    // ── Widget setup card ────────────────────────────
+                    // ── Widget setup ─────────────────────────
                     WidgetSetupCard(
-                        selectedSize:      $selectedSize,
-                        isInstalled:       isWidgetInstalled,
-                        namespace:         sizeNamespace,
-                        onAddTapped:       { showInstructions = true }
+                        selectedSize: $selectedSize,
+                        isInstalled: isWidgetInstalled,
+                        namespace: sizeNamespace,
+                        onAddTapped: { showInstructions = true }
                     )
                     .padding(.horizontal, 16)
 
@@ -117,6 +122,10 @@ struct ProfilePlaceholderView: View {
                     )
                     .padding(.horizontal, 16)
                     #endif
+
+                    // ── App info footer ──────────────────────
+                    appInfoFooter
+                        .padding(.top, 8)
                 }
                 .padding(.bottom, 32)
             }
@@ -144,155 +153,199 @@ struct ProfilePlaceholderView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
-            .alert("Edit Name", isPresented: $showEditName) {
-                TextField("Name", text: $editedName)
-                Button("Save") {
-                    profile.userName = editedName
-                }
-                Button("Cancel", role: .cancel) {
-                    editedName = profile.userName
-                }
+            .sheet(isPresented: $showEditName) {
+                editNameSheet
+                    .presentationDetents([.height(220)])
+                    .presentationDragIndicator(.visible)
             }
-            .alert("Edit Weight (kg)", isPresented: $showEditWeight) {
-                TextField("Weight", value: $editedWeight, format: .number)
-                    .keyboardType(.decimalPad)
-                Button("Save") {
-                    profile.weightKg = editedWeight
-                }
-                Button("Cancel", role: .cancel) {
-                    editedWeight = profile.weightKg
-                }
+            .sheet(isPresented: $showEditWeight) {
+                editWeightSheet
+                    .presentationDetents([.height(280)])
+                    .presentationDragIndicator(.visible)
             }
-            .alert("Edit Height (cm)", isPresented: $showEditHeight) {
-                TextField("Height", value: $editedHeight, format: .number)
-                    .keyboardType(.decimalPad)
-                Button("Save") {
-                    profile.heightCm = editedHeight
-                }
-                Button("Cancel", role: .cancel) {
-                    editedHeight = profile.heightCm
-                }
+            .sheet(isPresented: $showEditHeight) {
+                editHeightSheet
+                    .presentationDetents([.height(280)])
+                    .presentationDragIndicator(.visible)
             }
         }
     }
 
-    private func checkWidgetStatus() {
-        WidgetCenter.shared.getCurrentConfigurations { result in
-            DispatchQueue.main.async {
-                if case .success(let infos) = result {
-                    isWidgetInstalled = infos.contains {
-                        $0.kind == "com.hariom.wellplate.foodWidget"
+    // MARK: - Hero Header
+
+    private var profileHero: some View {
+        VStack(spacing: 0) {
+            // Gradient top area
+            ZStack {
+                // Background gradient
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                AppColors.brand.opacity(0.15),
+                                AppColors.brand.opacity(0.05)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                VStack(spacing: 14) {
+                    // Avatar
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [AppColors.brand.opacity(0.2), AppColors.brand.opacity(0.08)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 88, height: 88)
+
+                        Circle()
+                            .stroke(
+                                AngularGradient(
+                                    colors: [AppColors.brand, AppColors.brand.opacity(0.3), AppColors.brand],
+                                    center: .center
+                                ),
+                                lineWidth: 2.5
+                            )
+                            .frame(width: 88, height: 88)
+
+                        Text(initials)
+                            .font(.r(28, .bold))
+                            .foregroundStyle(AppColors.brand)
+                    }
+
+                    // Name
+                    Text(profile.userName.isEmpty ? "Your Profile" : profile.userName)
+                        .font(.r(.title2, .bold))
+                        .foregroundStyle(.primary)
+
+                    // Stats row
+                    HStack(spacing: 16) {
+                        if profile.weightKg > 0 {
+                            profileStatPill(icon: "scalemass.fill", value: profile.formattedWeight)
+                        }
+                        if profile.heightCm > 0 {
+                            profileStatPill(icon: "ruler.fill", value: profile.formattedHeight)
+                        }
+                        if let bmi {
+                            profileStatPill(
+                                icon: "heart.text.clipboard.fill",
+                                value: "BMI \(String(format: "%.1f", bmi))",
+                                tint: bmiCategory.color
+                            )
+                        }
                     }
                 }
+                .padding(.vertical, 24)
             }
         }
     }
 
-    private func refreshProfileData() {
-        editedName = profile.userName
-        editedWeight = profile.weightKg
-        editedHeight = profile.heightCm
-        editWeightUnit = profile.weightUnit
-    }
-
-    #if DEBUG
-    private func refreshDebugNutritionState() {
-        mockModeEnabled = AppConfig.shared.mockMode
-        hasGroqAPIKey = AppConfig.shared.hasGroqAPIKey
-    }
-    #endif
-}
-
-// MARK: - Profile Header
-
-private struct ProfileHeaderSection: View {
-    let name: String
-    let statsText: String
-
-    var body: some View {
-        VStack(spacing: 10) {
-            // Avatar with gradient ring
-            ZStack {
-                Circle()
-                    .stroke(
-                        AngularGradient(
-                            colors: [AppColors.brand, AppColors.brand.opacity(0.4), AppColors.brand],
-                            center: .center
-                        ),
-                        lineWidth: 3
-                    )
-                    .frame(width: 72, height: 72)
-
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.system(size: 56))
-                    .foregroundStyle(AppColors.brand.opacity(0.75))
-                    .symbolRenderingMode(.hierarchical)
-            }
-
-            VStack(spacing: 4) {
-                Text(name.isEmpty ? "Your Profile" : name)
-                    .font(.r(.title3, .bold))
-                    .foregroundStyle(.primary)
-
-                if !statsText.isEmpty && statsText != "0 kg · 0 cm" {
-                    Text(statsText)
-                        .font(.r(.subheadline, .medium))
-                        .foregroundStyle(.secondary)
-                }
-            }
+    private func profileStatPill(icon: String, value: String, tint: Color = .secondary) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(tint)
+            Text(value)
+                .font(.r(.caption, .semibold))
+                .foregroundStyle(.secondary)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(
+            Capsule()
+                .fill(Color(.systemBackground).opacity(0.8))
+        )
     }
-}
 
-// MARK: - Personal Info Card
+    private var initials: String {
+        let name = profile.userName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return "?" }
+        let parts = name.split(separator: " ")
+        if parts.count >= 2 {
+            return "\(parts[0].prefix(1))\(parts[1].prefix(1))".uppercased()
+        }
+        return String(name.prefix(2)).uppercased()
+    }
 
-private struct PersonalInfoCard: View {
-    let name: String
-    let weight: String
-    let height: String
-    let onNameTap: () -> Void
-    let onWeightTap: () -> Void
-    let onHeightTap: () -> Void
+    // MARK: - Body Metrics Card
 
-    var body: some View {
+    private var bodyMetricsCard: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Section header
             HStack(spacing: 10) {
-                Image(systemName: "person.text.rectangle.fill")
-                    .font(.title3)
-                    .foregroundStyle(AppColors.brand)
-                Text("Personal Info")
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(AppColors.brand.opacity(0.12))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "figure.stand")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppColors.brand)
+                }
+                Text("Body")
                     .font(.r(.headline, .semibold))
+                Spacer()
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)
-            .padding(.bottom, 12)
+            .padding(.bottom, 14)
 
-            ProfileInfoRow(icon: "person.fill", label: "Name", value: name, action: onNameTap)
-            Divider().padding(.leading, 52)
-            ProfileInfoRow(icon: "scalemass.fill", label: "Weight", value: weight, action: onWeightTap)
-            Divider().padding(.leading, 52)
-            ProfileInfoRow(icon: "ruler.fill", label: "Height", value: height, action: onHeightTap)
+            // Name row
+            metricRow(
+                icon: "person.fill",
+                label: "Name",
+                value: profile.userName.isEmpty ? "Not set" : profile.userName,
+                action: {
+                    editedName = profile.userName
+                    showEditName = true
+                }
+            )
+
+            Divider().padding(.leading, 56)
+
+            // Weight row
+            metricRow(
+                icon: "scalemass.fill",
+                label: "Weight",
+                value: profile.formattedWeight,
+                action: {
+                    editedWeight = profile.weightKg
+                    editWeightUnit = profile.weightUnit
+                    showEditWeight = true
+                }
+            )
+
+            Divider().padding(.leading, 56)
+
+            // Height row
+            metricRow(
+                icon: "ruler.fill",
+                label: "Height",
+                value: profile.formattedHeight,
+                action: {
+                    editedHeight = profile.heightCm
+                    editHeightUnit = profile.heightUnit
+                    showEditHeight = true
+                }
+            )
         }
-        .padding(.bottom, 6)
+        .padding(.bottom, 8)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.06), radius: 15, x: 0, y: 5)
+                .appShadow(radius: 15, y: 5)
         )
     }
-}
 
-private struct ProfileInfoRow: View {
-    let icon: String
-    let label: String
-    let value: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: {
+    private func metricRow(icon: String, label: String, value: String, action: @escaping () -> Void) -> some View {
+        Button {
             HapticService.impact(.light)
             action()
-        }) {
+        } label: {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 13))
@@ -318,52 +371,343 @@ private struct ProfileInfoRow: View {
         }
         .buttonStyle(.plain)
     }
-}
 
-#if DEBUG
-private struct NutritionSourceDebugCard: View {
-    @Binding var isMockMode: Bool
-    let hasGroqAPIKey: Bool
+    // MARK: - Goals Snapshot
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Nutrition Mode")
-                .font(.r(.headline, .semibold))
-                .foregroundStyle(.primary)
+    private var goalsSnapshotCard: some View {
+        Button {
+            HapticService.impact(.light)
+            showGoals = true
+        } label: {
+            VStack(alignment: .leading, spacing: 14) {
+                // Header
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(AppColors.brand.opacity(0.12))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: "target")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(AppColors.brand)
+                    }
+                    Text("Daily Goals")
+                        .font(.r(.headline, .semibold))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.tertiary)
+                }
 
-            Toggle("Use Mock Nutrition", isOn: $isMockMode)
-                .font(.r(.subheadline, .semibold))
-                .tint(AppColors.brand)
+                // 2x2 grid
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: 10),
+                    GridItem(.flexible(), spacing: 10)
+                ], spacing: 10) {
+                    goalMiniCard(
+                        icon: "flame.fill",
+                        label: "Calories",
+                        value: "\(currentGoals.calorieGoal)",
+                        unit: "cal",
+                        color: .orange
+                    )
+                    goalMiniCard(
+                        icon: "drop.fill",
+                        label: "Water",
+                        value: "\(currentGoals.waterDailyCups)",
+                        unit: "cups",
+                        color: .cyan
+                    )
+                    goalMiniCard(
+                        icon: "figure.run",
+                        label: "Workout",
+                        value: "\(currentGoals.todayWorkoutGoal)",
+                        unit: "min",
+                        color: .green
+                    )
+                    goalMiniCard(
+                        icon: "moon.fill",
+                        label: "Sleep",
+                        value: String(format: "%.0f", currentGoals.sleepGoalHours),
+                        unit: "hrs",
+                        color: .indigo
+                    )
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(.systemBackground))
+                    .appShadow(radius: 15, y: 5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
 
-            if isMockMode {
-                Text("Using local deterministic nutrition JSON responses.")
-                    .font(.r(.caption, .medium))
+    private func goalMiniCard(icon: String, label: String, value: String, unit: String, color: Color) -> some View {
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(color.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.r(.caption2, .medium))
                     .foregroundStyle(.secondary)
-            } else {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(hasGroqAPIKey ? Color.green : Color.orange)
-                        .frame(width: 8, height: 8)
-                    Text(hasGroqAPIKey ? "GROQ_API_KEY detected in Secrets.plist" : "GROQ_API_KEY missing. Add WellPlate/Resources/Secrets.plist")
-                        .font(.r(.caption, .medium))
-                        .foregroundStyle(hasGroqAPIKey ? Color.green : Color.orange)
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(value)
+                        .font(.r(.subheadline, .bold))
+                        .foregroundStyle(.primary)
+                        .monospacedDigit()
+                    Text(unit)
+                        .font(.r(.caption2, .medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+
+    // MARK: - Edit Sheets
+
+    private var editNameSheet: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                TextField("Your name", text: $editedName)
+                    .font(.r(.title3, .medium))
+                    .padding(14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color(.secondarySystemGroupedBackground))
+                    )
+                    .padding(.horizontal, 20)
+
+                Spacer()
+            }
+            .padding(.top, 24)
+            .navigationTitle("Edit Name")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        editedName = profile.userName
+                        showEditName = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        profile.userName = editedName
+                        showEditName = false
+                    }
+                    .fontWeight(.semibold)
                 }
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
-        )
     }
+
+    private var editWeightSheet: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                // Unit toggle
+                Picker("Unit", selection: $editWeightUnit) {
+                    ForEach(WeightUnit.allCases) { unit in
+                        Text(unit.rawValue).tag(unit)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 20)
+
+                // Value
+                let displayValue: Binding<Double> = Binding(
+                    get: {
+                        editWeightUnit == .kg ? editedWeight : editedWeight * 2.20462
+                    },
+                    set: { newVal in
+                        editedWeight = editWeightUnit == .kg ? newVal : newVal / 2.20462
+                    }
+                )
+
+                TextField(
+                    "Weight",
+                    value: displayValue,
+                    format: .number.precision(.fractionLength(1))
+                )
+                .font(.r(.title, .medium))
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.center)
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color(.secondarySystemBackground))
+                )
+                .padding(.horizontal, 20)
+
+                Spacer()
+            }
+            .padding(.top, 24)
+            .navigationTitle("Edit Weight")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        editedWeight = profile.weightKg
+                        editWeightUnit = profile.weightUnit
+                        showEditWeight = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        profile.weightKg = editedWeight
+                        profile.weightUnit = editWeightUnit
+                        showEditWeight = false
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+    }
+
+    private var editHeightSheet: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                // Unit toggle
+                Picker("Unit", selection: $editHeightUnit) {
+                    ForEach(HeightUnit.allCases) { unit in
+                        Text(unit.rawValue).tag(unit)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 20)
+
+                // Value
+                let displayValue: Binding<Double> = Binding(
+                    get: {
+                        editHeightUnit == .cm ? editedHeight : editedHeight / 2.54
+                    },
+                    set: { newVal in
+                        editedHeight = editHeightUnit == .cm ? newVal : newVal * 2.54
+                    }
+                )
+
+                if editHeightUnit == .ft {
+                    // Feet + inches display
+                    let totalInches = editedHeight / 2.54
+                    let feet = Int(totalInches) / 12
+                    let inches = Int(totalInches) % 12
+                    Text("\(feet)' \(inches)\"")
+                        .font(.r(.title, .bold))
+                        .foregroundStyle(.primary)
+                        .padding(.top, 4)
+                }
+
+                TextField(
+                    editHeightUnit == .cm ? "Height (cm)" : "Height (inches)",
+                    value: displayValue,
+                    format: .number.precision(.fractionLength(editHeightUnit == .cm ? 0 : 1))
+                )
+                .font(.r(.title, .medium))
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.center)
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color(.secondarySystemBackground))
+                )
+                .padding(.horizontal, 20)
+
+                Spacer()
+            }
+            .padding(.top, 24)
+            .navigationTitle("Edit Height")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        editedHeight = profile.heightCm
+                        editHeightUnit = profile.heightUnit
+                        showEditHeight = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        profile.heightCm = editedHeight
+                        profile.heightUnit = editHeightUnit
+                        showEditHeight = false
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+    }
+
+    // MARK: - App Info Footer
+
+    private var appInfoFooter: some View {
+        VStack(spacing: 6) {
+            Image(systemName: "leaf.fill")
+                .font(.system(size: 20))
+                .foregroundStyle(AppColors.brand.opacity(0.3))
+
+            Text("WellPlate")
+                .font(.r(.footnote, .semibold))
+                .foregroundStyle(.secondary)
+
+            if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+               let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+                Text("v\(version) (\(build))")
+                    .font(.r(.caption2, .regular))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - Helpers
+
+    private func checkWidgetStatus() {
+        WidgetCenter.shared.getCurrentConfigurations { result in
+            DispatchQueue.main.async {
+                if case .success(let infos) = result {
+                    isWidgetInstalled = infos.contains {
+                        $0.kind == "com.hariom.wellplate.stressWidget"
+                    }
+                }
+            }
+        }
+    }
+
+    private func refreshProfileData() {
+        editedName = profile.userName
+        editedWeight = profile.weightKg
+        editedHeight = profile.heightCm
+        editWeightUnit = profile.weightUnit
+        editHeightUnit = profile.heightUnit
+    }
+
+    #if DEBUG
+    private func refreshDebugNutritionState() {
+        mockModeEnabled = AppConfig.shared.mockMode
+        hasGroqAPIKey = AppConfig.shared.hasGroqAPIKey
+    }
+    #endif
 }
-#endif
 
 // MARK: - Widget Setup Card
 
 private struct WidgetSetupCard: View {
-    @Binding var selectedSize: FoodWidgetSize
+    @Binding var selectedSize: StressWidgetSize
     let isInstalled:  Bool
     let namespace:    Namespace.ID
     let onAddTapped:  () -> Void
@@ -374,13 +718,17 @@ private struct WidgetSetupCard: View {
 
             // Header row
             HStack(spacing: 10) {
-                Image(systemName: "rectangle.3.group.fill")
-                    .font(.title3)
-                    .foregroundStyle(AppColors.brand)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(AppColors.brand.opacity(0.12))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "rectangle.3.group.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppColors.brand)
+                }
                 Text("Widget")
                     .font(.r(.headline, .semibold))
                 Spacer()
-                // Status badge
                 StatusBadge(isInstalled: isInstalled)
 
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
@@ -397,7 +745,7 @@ private struct WidgetSetupCard: View {
             if isExpanded {
                 // Size picker pills
                 HStack(spacing: 8) {
-                    ForEach(FoodWidgetSize.allCases) { size in
+                    ForEach(StressWidgetSize.allCases) { size in
                         SizePill(
                             size:       size,
                             isSelected: selectedSize == size,
@@ -426,7 +774,7 @@ private struct WidgetSetupCard: View {
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: isInstalled ? "checkmark.circle.fill" : "plus.circle.fill")
-                        Text(isInstalled ? "Widget Active — Add Another" : "Add")
+                        Text(isInstalled ? "Widget Active — Add Another" : "Add Widget")
                             .fontWeight(.semibold)
                             .foregroundStyle(.white)
                     }
@@ -435,13 +783,7 @@ private struct WidgetSetupCard: View {
                     .foregroundStyle(.white)
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(
-                                LinearGradient(
-                                    colors: [AppColors.brand.opacity(0.85)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .fill(AppColors.brand)
                     )
                 }
                 .buttonStyle(.plain)
@@ -452,7 +794,7 @@ private struct WidgetSetupCard: View {
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.06), radius: 15, x: 0, y: 5)
+                .appShadow(radius: 15, y: 5)
         )
     }
 }
@@ -484,7 +826,7 @@ private struct StatusBadge: View {
 // MARK: - Size Pill
 
 private struct SizePill: View {
-    let size:       FoodWidgetSize
+    let size:       StressWidgetSize
     let isSelected: Bool
     let namespace:  Namespace.ID
 
@@ -507,7 +849,7 @@ private struct SizePill: View {
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(isSelected ? Color.clear : Color(.secondarySystemBackground))
+                    .fill(isSelected ? Color.clear : Color(.secondarySystemGroupedBackground))
             )
         }
     }
@@ -515,26 +857,10 @@ private struct SizePill: View {
 
 // MARK: - Widget Preview
 
-/// Visual mock of the real widget — purely decorative so users know what to expect.
 private struct WidgetPreview: View {
-    let size: FoodWidgetSize
+    let size: StressWidgetSize
 
-    private let mockData = WidgetFoodData(
-        totalCalories: 1_243,
-        totalProtein:  45,
-        totalCarbs:    140,
-        totalFat:      38,
-        recentFoods: [
-            WidgetFoodItem(id: UUID(), name: "Chicken Rice",  calories: 420),
-            WidgetFoodItem(id: UUID(), name: "Greek Yogurt",  calories: 120),
-            WidgetFoodItem(id: UUID(), name: "Oatmeal Bowl",  calories: 280)
-        ],
-        calorieGoal:  2000,
-        proteinGoal:  60,
-        carbsGoal:    225,
-        fatGoal:      65,
-        lastUpdated:  .now
-    )
+    private let mockData = WidgetStressData.placeholder
 
     var body: some View {
         Group {
@@ -564,54 +890,46 @@ private struct WidgetPreview: View {
     }
 }
 
-// MARK: Widget preview bodies (mirror the real widget views)
+// MARK: Widget preview bodies (mirror the real stress widget views)
 
 private struct SmallPreview: View {
-    let data: WidgetFoodData
+    let data: WidgetStressData
 
-    private var fraction: Double {
-        min(Double(data.totalCalories) / Double(data.calorieGoal), 1.0)
-    }
+    private var levelColor: Color { previewLevelColor(for: data.levelRaw) }
+    private var fraction: Double { min(data.totalScore / 100.0, 1.0) }
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(.systemBackground), AppColors.brand.opacity(0.07)],
+            LinearGradient(colors: [Color(.systemBackground), levelColor.opacity(0.07)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
-
             VStack(spacing: 0) {
                 HStack {
-                    Text("Today").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                    Text("Stress").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
                     Spacer()
-                    Image(systemName: "fork.knife").font(.system(size: 9)).foregroundStyle(AppColors.brand)
+                    Image(systemName: "brain.head.profile.fill").font(.system(size: 9)).foregroundStyle(levelColor)
                 }
                 Spacer(minLength: 4)
-                // Mini ring
                 ZStack {
-                    Circle().stroke(AppColors.brand.opacity(0.18), lineWidth: 7)
+                    Circle().stroke(levelColor.opacity(0.18), lineWidth: 7)
                     Circle()
                         .trim(from: 0, to: fraction)
-                        .stroke(AngularGradient(colors: [AppColors.brand, .pink],
-                                               center: .center,
-                                               startAngle: .degrees(-90),
-                                               endAngle: .degrees(270)),
-                                style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                        .stroke(levelColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                     VStack(spacing: 0) {
-                        Text("\(data.totalCalories)").font(.system(size: 14, weight: .bold, design: .rounded))
-                        Text("cal").font(.system(size: 8)).foregroundStyle(.secondary)
+                        Text("\(Int(data.totalScore))").font(.system(size: 14, weight: .bold, design: .rounded))
+                        Text("/100").font(.system(size: 7)).foregroundStyle(.secondary)
                     }
                 }
                 .frame(width: 62, height: 62)
                 Spacer(minLength: 4)
-                Text("\(data.calorieGoal - data.totalCalories) cal left")
-                    .font(.system(size: 8, weight: .medium)).foregroundStyle(.secondary)
+                Text(data.levelRaw)
+                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    .foregroundStyle(levelColor)
                 Spacer(minLength: 6)
-                HStack(spacing: 3) {
-                    Image(systemName: "plus.circle.fill").font(.system(size: 8)).foregroundStyle(AppColors.brand)
-                    Text("Add Food").font(.system(size: 8, weight: .semibold))
-                }
-                .padding(.horizontal, 9).padding(.vertical, 4)
-                .background(Capsule().fill(AppColors.brand.opacity(0.12)))
+                Text(data.encouragement)
+                    .font(.system(size: 7, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             .padding(10)
         }
@@ -619,37 +937,33 @@ private struct SmallPreview: View {
 }
 
 private struct MediumPreview: View {
-    let data: WidgetFoodData
+    let data: WidgetStressData
 
-    private var fraction: Double { min(Double(data.totalCalories) / Double(data.calorieGoal), 1.0) }
+    private var levelColor: Color { previewLevelColor(for: data.levelRaw) }
+    private var fraction: Double { min(data.totalScore / 100.0, 1.0) }
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(.systemBackground), AppColors.brand.opacity(0.06)],
+            LinearGradient(colors: [Color(.systemBackground), levelColor.opacity(0.06)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             HStack(spacing: 0) {
                 VStack(spacing: 4) {
-                    Text("Today").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                    Text("Stress").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
                     ZStack {
-                        Circle().stroke(AppColors.brand.opacity(0.18), lineWidth: 7)
+                        Circle().stroke(levelColor.opacity(0.18), lineWidth: 7)
                         Circle()
                             .trim(from: 0, to: fraction)
-                            .stroke(AngularGradient(colors: [AppColors.brand, .pink],
-                                                   center: .center,
-                                                   startAngle: .degrees(-90),
-                                                   endAngle: .degrees(270)),
-                                    style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                            .stroke(levelColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                             .rotationEffect(.degrees(-90))
                         VStack(spacing: 0) {
-                            Text("\(data.totalCalories)").font(.system(size: 13, weight: .bold, design: .rounded))
-                            Text("cal").font(.system(size: 7)).foregroundStyle(.secondary)
+                            Text("\(Int(data.totalScore))").font(.system(size: 13, weight: .bold, design: .rounded))
+                            Text("/100").font(.system(size: 7)).foregroundStyle(.secondary)
                         }
                     }
                     .frame(width: 60, height: 60)
-                    HStack(spacing: 2) {
-                        Image(systemName: "plus.circle.fill").font(.system(size: 7)).foregroundStyle(AppColors.brand)
-                        Text("Add").font(.system(size: 8, weight: .semibold)).foregroundStyle(AppColors.brand)
-                    }
+                    Text(data.levelRaw)
+                        .font(.system(size: 8, weight: .semibold, design: .rounded))
+                        .foregroundStyle(levelColor)
                 }
                 .frame(width: 88)
 
@@ -657,9 +971,9 @@ private struct MediumPreview: View {
                     .padding(.horizontal, 10)
 
                 VStack(alignment: .leading, spacing: 7) {
-                    MiniMacroBar(label: "Protein", value: data.totalProtein, goal: data.proteinGoal, color: .green)
-                    MiniMacroBar(label: "Carbs",   value: data.totalCarbs,   goal: data.carbsGoal,   color: .blue)
-                    MiniMacroBar(label: "Fat",     value: data.totalFat,     goal: data.fatGoal,     color: .orange)
+                    ForEach(data.factors.prefix(3), id: \.title) { factor in
+                        MiniFactorBar(factor: factor)
+                    }
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -669,106 +983,100 @@ private struct MediumPreview: View {
 }
 
 private struct LargePreview: View {
-    let data: WidgetFoodData
+    let data: WidgetStressData
 
-    private var fraction: Double { min(Double(data.totalCalories) / Double(data.calorieGoal), 1.0) }
+    private var levelColor: Color { previewLevelColor(for: data.levelRaw) }
+    private var fraction: Double { min(data.totalScore / 100.0, 1.0) }
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(.systemBackground), AppColors.brand.opacity(0.06)],
+            LinearGradient(colors: [Color(.systemBackground), levelColor.opacity(0.06)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             VStack(alignment: .leading, spacing: 0) {
-                // Header
                 HStack(spacing: 4) {
-                    Image(systemName: "fork.knife.circle.fill").font(.system(size: 12)).foregroundStyle(AppColors.brand)
-                    Text("Nutrition").font(.system(size: 11, weight: .bold))
+                    Image(systemName: "brain.head.profile.fill").font(.system(size: 12)).foregroundStyle(levelColor)
+                    Text("Stress Level").font(.system(size: 11, weight: .bold))
                     Spacer()
                     Text("Today").font(.system(size: 9)).foregroundStyle(.secondary)
                 }
                 .padding(.bottom, 10)
 
-                // Calorie number
-                HStack(alignment: .lastTextBaseline, spacing: 3) {
-                    Text("\(data.totalCalories)")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(AppColors.brand)
-                    Text("/ \(data.calorieGoal) cal")
-                        .font(.system(size: 9)).foregroundStyle(.secondary)
-                }
-                .padding(.bottom, 6)
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle().stroke(levelColor.opacity(0.18), lineWidth: 7)
+                        Circle()
+                            .trim(from: 0, to: fraction)
+                            .stroke(levelColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                        VStack(spacing: 0) {
+                            Text("\(Int(data.totalScore))").font(.system(size: 14, weight: .bold, design: .rounded))
+                            Text("/100").font(.system(size: 7)).foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(width: 56, height: 56)
 
-                // Calorie progress bar
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 3).fill(AppColors.brand.opacity(0.15)).frame(height: 6)
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(LinearGradient(colors: [AppColors.brand, .pink], startPoint: .leading, endPoint: .trailing))
-                            .frame(width: geo.size.width * fraction, height: 6)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(data.levelRaw)
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundStyle(levelColor)
+                        Text(data.encouragement)
+                            .font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(2)
                     }
                 }
-                .frame(height: 6)
                 .padding(.bottom, 10)
 
                 Divider().padding(.bottom, 8)
 
                 VStack(spacing: 6) {
-                    MiniMacroBar(label: "Protein", value: data.totalProtein, goal: data.proteinGoal, color: .green)
-                    MiniMacroBar(label: "Carbs",   value: data.totalCarbs,   goal: data.carbsGoal,   color: .blue)
-                    MiniMacroBar(label: "Fat",     value: data.totalFat,     goal: data.fatGoal,     color: .orange)
+                    ForEach(data.factors, id: \.title) { factor in
+                        MiniFactorBar(factor: factor)
+                    }
                 }
                 .padding(.bottom, 10)
 
                 Divider().padding(.bottom, 8)
 
-                Text("Recent").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary).padding(.bottom, 5)
-                VStack(spacing: 4) {
-                    ForEach(data.recentFoods.prefix(3)) { food in
-                        HStack(spacing: 5) {
-                            Circle().fill(AppColors.brand.opacity(0.35)).frame(width: 5, height: 5)
-                            Text(food.name).font(.system(size: 9)).lineLimit(1)
-                            Spacer()
-                            Text("\(food.calories)").font(.system(size: 9, weight: .medium)).foregroundStyle(.secondary)
-                        }
+                Text("7-Day Trend").font(.system(size: 8, weight: .medium)).foregroundStyle(.tertiary)
+                    .textCase(.uppercase).padding(.bottom, 4)
+
+                HStack(alignment: .bottom, spacing: 4) {
+                    ForEach(data.weeklyScores, id: \.date) { day in
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(levelColor.opacity(0.6))
+                            .frame(height: max(CGFloat(day.score ?? 0) / 100.0 * 24, 2))
+                            .frame(maxWidth: .infinity)
                     }
                 }
+                .frame(height: 28)
 
-                Spacer(minLength: 8)
-
-                HStack(spacing: 5) {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Add Food").fontWeight(.semibold)
-                }
-                .font(.system(size: 10))
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 7)
-                .background(Capsule().fill(LinearGradient(colors: [AppColors.brand, .pink.opacity(0.85)],
-                                                          startPoint: .leading, endPoint: .trailing)))
+                Spacer(minLength: 4)
             }
             .padding(12)
         }
     }
 }
 
-private struct MiniMacroBar: View {
-    let label: String
-    let value: Double
-    let goal:  Double
-    let color: Color
+private struct MiniFactorBar: View {
+    let factor: WidgetStressFactor
 
-    private var fraction: Double { min(value / max(goal, 1), 1.0) }
+    private var fraction: Double { min(factor.contribution / 25.0, 1.0) }
+    private var barColor: Color {
+        let ratio = min(max(factor.contribution / 25.0, 0), 1)
+        return Color(hue: 0.33 * (1.0 - ratio), saturation: 0.65, brightness: 0.75)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
-                Text(label).font(.system(size: 8)).foregroundStyle(.secondary)
+                Image(systemName: factor.icon).font(.system(size: 7)).foregroundStyle(barColor)
+                Text(factor.title).font(.system(size: 8)).foregroundStyle(.secondary)
                 Spacer()
-                Text("\(Int(value))g").font(.system(size: 8, weight: .medium)).foregroundStyle(.secondary)
+                Text("\(Int(factor.contribution))/25").font(.system(size: 8, weight: .medium)).foregroundStyle(.secondary)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2).fill(color.opacity(0.2)).frame(height: 4)
-                    RoundedRectangle(cornerRadius: 2).fill(color)
+                    RoundedRectangle(cornerRadius: 2).fill(barColor.opacity(0.2)).frame(height: 4)
+                    RoundedRectangle(cornerRadius: 2).fill(barColor)
                         .frame(width: geo.size.width * fraction, height: 4)
                 }
             }
@@ -777,10 +1085,21 @@ private struct MiniMacroBar: View {
     }
 }
 
+private func previewLevelColor(for levelRaw: String) -> Color {
+    switch levelRaw {
+    case "Excellent":  return Color(hue: 0.33, saturation: 0.60, brightness: 0.72)
+    case "Good":       return Color(hue: 0.27, saturation: 0.55, brightness: 0.70)
+    case "Moderate":   return Color(hue: 0.12, saturation: 0.55, brightness: 0.72)
+    case "High":       return Color(hue: 0.06, saturation: 0.60, brightness: 0.70)
+    case "Very High":  return Color(hue: 0.01, saturation: 0.65, brightness: 0.65)
+    default:           return Color.gray
+    }
+}
+
 // MARK: - Instructions Sheet
 
 private struct WidgetInstructionsSheet: View {
-    let size: FoodWidgetSize
+    let size: StressWidgetSize
     @Environment(\.dismiss) private var dismiss
 
     private let steps: [(icon: String, color: Color, text: String)] = [
@@ -796,12 +1115,11 @@ private struct WidgetInstructionsSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
 
-                    // Header illustration
                     VStack(spacing: 10) {
                         Image(systemName: "rectangle.3.group.fill")
                             .font(.system(size: 48))
                             .foregroundStyle(AppColors.brand)
-                        Text("Add the Food Widget")
+                        Text("Add the Stress Widget")
                             .font(.r(.title3, .bold))
                         Text("Follow these steps to add the \(size.rawValue) widget to your Home Screen.")
                             .font(.r(.subheadline, .regular))
@@ -811,7 +1129,6 @@ private struct WidgetInstructionsSheet: View {
                     .frame(maxWidth: .infinity)
                     .padding(.top, 8)
 
-                    // Step-by-step
                     VStack(alignment: .leading, spacing: 16) {
                         ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
                             InstructionRow(number: index + 1,
@@ -823,10 +1140,9 @@ private struct WidgetInstructionsSheet: View {
                     .padding(16)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.secondarySystemBackground))
+                            .fill(Color(.secondarySystemGroupedBackground))
                     )
 
-                    // Tip
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: "lightbulb.fill")
                             .foregroundStyle(.yellow)
@@ -880,55 +1196,55 @@ private struct InstructionRow: View {
         }
     }
 }
-// MARK: - Goals Navigation Card
 
-private struct GoalsNavigationCard: View {
-    let goals: UserGoals
-    let onTap: () -> Void
+#if DEBUG
+private struct NutritionSourceDebugCard: View {
+    @Binding var isMockMode: Bool
+    let hasGroqAPIKey: Bool
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(AppColors.brand.opacity(0.12))
-                        .frame(width: 42, height: 42)
-                    Image(systemName: "target")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(AppColors.brand)
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.purple.opacity(0.12))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "hammer.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.purple)
                 }
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Goals")
-                        .font(.r(.headline, .semibold))
-                        .foregroundStyle(.primary)
-
-                    Text(goalSummary)
-                        .font(.r(.caption, .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.tertiary)
+                Text("Debug")
+                    .font(.r(.headline, .semibold))
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.06), radius: 15, x: 0, y: 5)
-            )
-        }
-        .buttonStyle(.plain)
-    }
 
-    private var goalSummary: String {
-        "\(goals.calorieGoal) cal · \(goals.waterDailyCups) cups · \(goals.todayWorkoutGoal) min"
+            Toggle("Use Mock Nutrition", isOn: $isMockMode)
+                .font(.r(.subheadline, .semibold))
+                .tint(AppColors.brand)
+
+            if isMockMode {
+                Text("Using local deterministic nutrition JSON responses.")
+                    .font(.r(.caption, .medium))
+                    .foregroundStyle(.secondary)
+            } else {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(hasGroqAPIKey ? Color.green : Color.orange)
+                        .frame(width: 8, height: 8)
+                    Text(hasGroqAPIKey ? "GROQ_API_KEY detected in Secrets.plist" : "GROQ_API_KEY missing. Add WellPlate/Resources/Secrets.plist")
+                        .font(.r(.caption, .medium))
+                        .foregroundStyle(hasGroqAPIKey ? Color.green : Color.orange)
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 15, y: 5)
+        )
     }
 }
+#endif
 
 #Preview {
     ProfilePlaceholderView()

@@ -11,6 +11,7 @@ import SwiftUI
 struct RootView: View {
     @State private var showSplash = false
     @State private var showOnboarding = !UserProfileManager.shared.hasCompletedOnboarding
+    @State private var pendingDeepLink: URL? = nil
 
     var body: some View {
         ZStack {
@@ -31,9 +32,12 @@ struct RootView: View {
                 }
                 .transition(.opacity)
             } else {
-                MainTabView()
+                MainTabView(pendingDeepLink: $pendingDeepLink)
                     .transition(.opacity)
             }
+        }
+        .onOpenURL { url in
+            pendingDeepLink = url
         }
     }
 }

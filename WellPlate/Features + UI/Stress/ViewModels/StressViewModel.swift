@@ -292,6 +292,11 @@ final class StressViewModel: ObservableObject {
         todaySystolicBP      = systolicBPHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
         todayDiastolicBP     = diastolicBPHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
         todayRespiratoryRate = respiratoryRateHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
+
+        // Ensure weekReadings is populated (SwiftData doesn't need HK auth)
+        loadReadings()
+        // Push latest data to widget
+        WidgetRefreshHelper.refreshStress(viewModel: self)
     }
 
     func refreshDietFactor() {
