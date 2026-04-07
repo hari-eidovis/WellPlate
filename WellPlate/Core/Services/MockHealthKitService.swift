@@ -71,6 +71,10 @@ final class MockHealthKitService: HealthKitServiceProtocol {
         snapshot.respiratoryRateHistory.filter { range.contains($0.date) }
     }
 
+    func fetchDaylight(for range: DateInterval) async throws -> [DailyMetricSample] {
+        snapshot.daylightHistory.filter { range.contains($0.date) }
+    }
+
     func writeMood(_ mood: MoodOption) async throws {
         // No-op in mock mode.
     }

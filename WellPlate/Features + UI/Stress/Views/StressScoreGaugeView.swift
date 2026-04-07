@@ -2,6 +2,9 @@
 //  StressScoreGaugeView.swift
 //  WellPlate
 //
+//  Animated circular arc gauge with tick marks, multi-stop gradient,
+//  and pulsing halo effect.
+//
 
 import SwiftUI
 
@@ -21,7 +24,7 @@ struct StressScoreGaugeView: View {
 
     var body: some View {
         ZStack {
-            // Outer glow halo — pulses with stress level color
+            // ── Outer glow halo ──
             Circle()
                 .fill(level.color.opacity(immersive ? 0.22 : 0.13))
                 .frame(width: size + 52, height: size + 52)
@@ -31,16 +34,38 @@ struct StressScoreGaugeView: View {
                 .fill(level.color.opacity(immersive ? 0.12 : 0.07))
                 .frame(width: size + 28, height: size + 28)
 
-            // Track ring
+            // ── Track ring (subtle gradient) ──
             arcShape
-                .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: trackWidth, lineCap: .round))
+                .stroke(
+                    AngularGradient(
+                        gradient: Gradient(colors: [
+                            Color(.systemGray5),
+                            Color(.systemGray6),
+                            Color(.systemGray5)
+                        ]),
+                        center: .center,
+                        startAngle: .degrees(startAngle),
+                        endAngle: .degrees(startAngle + sweepAngle)
+                    ),
+                    style: StrokeStyle(lineWidth: trackWidth, lineCap: .round)
+                )
 
-            // Progress ring
+            // ── Tick marks at 25%, 50%, 75% ──
+            ForEach([0.25, 0.50, 0.75], id: \.self) { fraction in
+                tickMark(at: fraction)
+            }
+
+            // ── Progress ring (multi-stop gradient) ──
             arcShape
                 .trim(from: 0, to: animatedProgress)
                 .stroke(
                     AngularGradient(
-                        gradient: Gradient(colors: [level.color.opacity(0.6), level.color]),
+                        gradient: Gradient(stops: [
+                            .init(color: level.color.opacity(0.35), location: 0),
+                            .init(color: level.color.opacity(0.60), location: 0.25),
+                            .init(color: level.color.opacity(0.82), location: 0.65),
+                            .init(color: level.color, location: 1.0)
+                        ]),
                         center: .center,
                         startAngle: .degrees(startAngle),
                         endAngle: .degrees(startAngle + sweepAngle * animatedProgress)
@@ -48,10 +73,10 @@ struct StressScoreGaugeView: View {
                     style: StrokeStyle(lineWidth: trackWidth, lineCap: .round)
                 )
 
-            // Thumb dot at the tip of the arc
+            // ── Thumb dot at the tip of the arc ──
             thumbDot
 
-            // Center content
+            // ── Center content ──
             VStack(spacing: 6) {
                 Text(level.label.uppercased())
                     .font(.system(size: size * 0.065, weight: .semibold, design: .rounded))
@@ -78,11 +103,32 @@ struct StressScoreGaugeView: View {
         }
     }
 
+    // MARK: - Tick Marks
+
+    private func tickMark(at fraction: Double) -> some View {
+        let tickAngle = (startAngle + sweepAngle * fraction) * .pi / 180.0
+        let radius = size / 2
+        let outerR = radius + trackWidth / 2 - 2
+        let innerR = radius - trackWidth / 2 + 2
+        let midR = (outerR + innerR) / 2
+
+        let x = midR * CGFloat(cos(tickAngle))
+        let y = midR * CGFloat(sin(tickAngle))
+
+        // Tick is hidden when progress covers it
+        let isRevealed = animatedProgress < fraction + 0.02
+
+        return Circle()
+            .fill(Color.secondary.opacity(isRevealed ? 0.22 : 0.0))
+            .frame(width: 4, height: 4)
+            .offset(x: x, y: y)
+            .animation(.easeInOut(duration: 0.3), value: animatedProgress)
+    }
+
     // MARK: - Thumb Dot
+
     private var thumbDot: some View {
-        let progress = animatedProgress
-        let sweepRad = sweepAngle * .pi / 180.0
-        let progressAngle = startAngle + sweepAngle * progress
+        let progressAngle = startAngle + sweepAngle * animatedProgress
         let rad = progressAngle * .pi / 180.0
         let radius = size / 2
         let x = radius * CGFloat(cos(rad))
@@ -93,7 +139,7 @@ struct StressScoreGaugeView: View {
             .frame(width: trackWidth + 4, height: trackWidth + 4)
             .shadow(color: level.color.opacity(0.6), radius: 6, x: 0, y: 2)
             .offset(x: x, y: y)
-            .opacity(progress > 0.01 ? 1 : 0)
+            .opacity(animatedProgress > 0.01 ? 1 : 0)
     }
 
     private var arcShape: some Shape {

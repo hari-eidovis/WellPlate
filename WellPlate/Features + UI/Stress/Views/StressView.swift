@@ -18,6 +18,7 @@ enum StressSheet: Identifiable {
     case stressLab
     case interventions
     case fasting
+    case circadian
 
     var id: String {
         switch self {
@@ -29,6 +30,7 @@ enum StressSheet: Identifiable {
         case .stressLab:        return "stressLab"
         case .interventions:    return "interventions"
         case .fasting:          return "fasting"
+        case .circadian:        return "circadian"
         }
     }
 }
@@ -181,6 +183,12 @@ struct StressView: View {
                 InterventionsView()
             case .fasting:
                 FastingView()
+            case .circadian:
+                CircadianDetailView(
+                    result: viewModel.circadianResult,
+                    sleepSummaries: viewModel.sleepHistory,
+                    daylightSamples: viewModel.daylightHistory
+                )
             }
         }
     }
@@ -359,36 +367,72 @@ struct StressView: View {
             by: { cal.startOfDay(for: $0.timestamp) }
         )
 
-        return HStack(spacing: 6) {
+        return HStack(spacing: 5) {
             ForEach(0..<7, id: \.self) { offset in
                 let day = cal.date(byAdding: .day, value: offset, to: sunday)!
                 let isToday = cal.isDate(day, inSameDayAs: today)
                 let label = dayLetter(for: day)
                 let readings = grouped[day] ?? []
                 let avgScore = readings.isEmpty ? nil : readings.map(\.score).reduce(0, +) / Double(readings.count)
+                let barHeight: CGFloat = 56
 
-                VStack(spacing: 5) {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(avgScore.map { weekDayColor(score: $0) } ?? Color.secondary.opacity(0.18))
-                        .frame(height: 48)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .strokeBorder(isToday ? Color.primary.opacity(0.30) : Color.clear, lineWidth: 1.5)
-                        )
-                        .opacity(weekAppeared ? 1 : 0)
-                        .animation(
-                            .easeOut(duration: 0.35).delay(Double(offset) * 0.055),
-                            value: weekAppeared
-                        )
+                VStack(spacing: 4) {
+                    // Mini gradient bar
+                    ZStack(alignment: .bottom) {
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .fill(Color.secondary.opacity(0.05))
+                            .frame(height: barHeight)
 
-                    Text(label)
-                        .font(.system(size: 11, weight: isToday ? .bold : .regular))
-                        .foregroundColor(isToday ? .primary : .secondary)
+                        if let score = avgScore, score > 0 {
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            weekDayColor(score: score).opacity(0.30),
+                                            weekDayColor(score: score)
+                                        ],
+                                        startPoint: .bottom,
+                                        endPoint: .top
+                                    )
+                                )
+                                .frame(height: max(8, barHeight * CGFloat(score / 100.0)))
+                                .padding(.horizontal, 2)
+                                .padding(.bottom, 2)
+                        }
+                    }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .strokeBorder(
+                                isToday ? weekDayColor(score: avgScore ?? 0).opacity(0.45) : Color.clear,
+                                lineWidth: 1.5
+                            )
+                    )
+                    .opacity(weekAppeared ? 1 : 0)
+                    .animation(
+                        .easeOut(duration: 0.35).delay(Double(offset) * 0.055),
+                        value: weekAppeared
+                    )
+
+                    // Score + day label
+                    VStack(spacing: 1) {
+                        if let score = avgScore, score > 0 {
+                            Text("\(Int(score))")
+                                .font(.system(size: 9, weight: .semibold, design: .rounded))
+                                .foregroundColor(weekDayColor(score: score))
+                        } else {
+                            Text("—")
+                                .font(.system(size: 9, weight: .regular, design: .rounded))
+                                .foregroundColor(.secondary.opacity(0.25))
+                        }
+                        Text(label)
+                            .font(.system(size: 10, weight: isToday ? .bold : .regular, design: .rounded))
+                            .foregroundColor(isToday ? .primary : .secondary)
+                    }
                 }
                 .frame(maxWidth: .infinity)
             }
         }
-        .padding(14)
+        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Color(.systemBackground))
@@ -402,18 +446,25 @@ struct StressView: View {
         return f.string(from: date)
     }
 
-    // Low stress → .primary at opacity (calm); higher stress → amber → rust
+    /// Teal (calm) → amber (moderate) → rust (stressed).
     private func weekDayColor(score: Double) -> Color {
         let t = min(max(score / 100.0, 0), 1)
-        if t <= 0.40 {
-            return Color.primary.opacity(0.28 + t * 0.40)
+        if t <= 0.35 {
+            let local = t / 0.35
+            return Color(hue: 0.48,
+                         saturation: 0.32 + local * 0.22,
+                         brightness: 0.70 + local * 0.05)
+        } else if t <= 0.55 {
+            let local = (t - 0.35) / 0.20
+            return Color(hue: 0.48 - local * 0.36,
+                         saturation: 0.50 + local * 0.08,
+                         brightness: 0.74 - local * 0.02)
+        } else {
+            let local = (t - 0.55) / 0.45
+            return Color(hue: 0.12 - local * 0.11,
+                         saturation: 0.55 + local * 0.15,
+                         brightness: 0.72 - local * 0.10)
         }
-        let ht = (t - 0.40) / 0.60
-        return Color(
-            hue: 0.12 - ht * 0.11,
-            saturation: 0.45 + ht * 0.20,
-            brightness: 0.68 - ht * 0.10
-        )
     }
 
     // MARK: - Advice Card
@@ -558,6 +609,17 @@ struct StressView: View {
                     factorsSection
                         .padding(.horizontal, 16)
                         .padding(.top, 28)
+
+                    // Circadian Health
+                    VStack(alignment: .leading, spacing: 12) {
+                        sectionLabel("CIRCADIAN HEALTH")
+                        CircadianCardView(result: viewModel.circadianResult) {
+                            activeSheet = .circadian
+                            showInsights = false
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 28)
 
                     // 7-Day Trend
                     VStack(alignment: .leading, spacing: 10) {

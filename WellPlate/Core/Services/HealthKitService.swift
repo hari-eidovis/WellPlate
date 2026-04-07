@@ -38,7 +38,8 @@ final class HealthKitService: HealthKitServiceProtocol {
         let quantityIDs: [HKQuantityTypeIdentifier] = [
             .stepCount, .activeEnergyBurned, .appleExerciseTime, .heartRate, .dietaryWater,
             .restingHeartRate, .heartRateVariabilitySDNN,
-            .bloodPressureSystolic, .bloodPressureDiastolic, .respiratoryRate
+            .bloodPressureSystolic, .bloodPressureDiastolic, .respiratoryRate,
+            .timeInDaylight
         ]
         quantityIDs.compactMap { HKQuantityType.quantityType(forIdentifier: $0) }
                    .forEach { types.insert($0) }
@@ -165,12 +166,19 @@ final class HealthKitService: HealthKitServiceProtocol {
             let deep = daySamples.filter { $0.stage == .deep }.map(\.value).reduce(0, +)
             let unspec = daySamples.filter { $0.stage == .unspecified }.map(\.value).reduce(0, +)
             let total = core + rem + deep + unspec
+
+            // Bedtime = earliest sample start; WakeTime = latest sample end
+            let bedtime = daySamples.map(\.date).min()
+            let wakeTime = daySamples.map { $0.date.addingTimeInterval($0.value * 3600) }.max()
+
             return DailySleepSummary(
                 date: day,
                 totalHours: total,
                 coreHours: core,
                 remHours: rem,
-                deepHours: deep
+                deepHours: deep,
+                bedtime: total >= 3.0 ? bedtime : nil,
+                wakeTime: total >= 3.0 ? wakeTime : nil
             )
         }
         .sorted { $0.date < $1.date }
@@ -209,6 +217,15 @@ final class HealthKitService: HealthKitServiceProtocol {
             throw HealthKitError.typeNotAvailable
         }
         return try await fetchDailyAvg(type: type, unit: HKUnit(from: "count/min"), range: range)
+    }
+
+    // MARK: - Daylight
+
+    func fetchDaylight(for range: DateInterval) async throws -> [DailyMetricSample] {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .timeInDaylight) else {
+            throw HealthKitError.typeNotAvailable
+        }
+        return try await fetchDailySum(type: type, unit: .minute(), range: range)
     }
 
     // MARK: - State of Mind (Mood Sync)

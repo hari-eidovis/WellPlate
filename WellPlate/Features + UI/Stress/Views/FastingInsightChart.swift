@@ -28,6 +28,11 @@ struct FastingInsightChart: View {
         fastDayAvg.count >= 3 && nonFastDayAvg.count >= 3
     }
 
+    /// Positive = fasting days have lower stress (better)
+    private var delta: Double {
+        nonFastDayAvg.mean - fastDayAvg.mean
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Fasting & Stress")
@@ -35,6 +40,25 @@ struct FastingInsightChart: View {
 
             if hasSufficientData {
                 dataView
+
+                // Delta indicator
+                if abs(delta) > 1 {
+                    HStack(spacing: 5) {
+                        Image(systemName: delta > 0 ? "arrow.down.right" : "arrow.up.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(delta > 0 ? .green : .orange)
+                        Text("\(String(format: "%.1f", abs(delta))) pts \(delta > 0 ? "lower" : "higher") on fast days")
+                            .font(.r(.caption2, .medium))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill((delta > 0 ? Color.green : Color.orange).opacity(0.08))
+                    )
+                }
+
                 Text("Correlation does not imply causation.")
                     .font(.r(.caption2, .regular))
                     .foregroundColor(.secondary)
@@ -77,11 +101,17 @@ struct FastingInsightChart: View {
             }
             GeometryReader { geo in
                 let width = maxValue > 0 ? CGFloat(avg / maxValue) * geo.size.width : 0
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(color.opacity(0.7))
-                    .frame(width: max(width, 4), height: 8)
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(
+                        LinearGradient(
+                            colors: [color.opacity(0.25), color.opacity(0.80)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: max(width, 4), height: 10)
             }
-            .frame(height: 8)
+            .frame(height: 10)
         }
     }
 }

@@ -52,6 +52,13 @@ final class StressViewModel: ObservableObject {
     @Published var diastolicBPHistory: [DailyMetricSample] = []
     @Published var respiratoryRateHistory: [DailyMetricSample] = []
 
+    // MARK: - Circadian
+
+    @Published var circadianResult: CircadianService.CircadianResult = CircadianService.CircadianResult(
+        score: 0, regularityScore: 0, daylightScore: nil, level: .disrupted, tip: "", hasEnoughData: false
+    )
+    @Published var daylightHistory: [DailyMetricSample] = []
+
     // MARK: - Intraday Stress Readings (for charts)
 
     /// All `StressReading` rows captured today — drives the day chart.
@@ -274,6 +281,7 @@ final class StressViewModel: ObservableObject {
         async let sysBPHist  = fetchSysBPHistorySafely(range: thirtyDayRange)
         async let diasBPHist = fetchDiasBPHistorySafely(range: thirtyDayRange)
         async let rrHist     = fetchRRHistorySafely(range: thirtyDayRange)
+        async let daylightHist = fetchDaylightHistorySafely(range: thirtyDayRange)
 
         stepsHistory           = await stepsHist
         energyHistory          = await energyHist
@@ -284,6 +292,7 @@ final class StressViewModel: ObservableObject {
         systolicBPHistory      = await sysBPHist
         diastolicBPHistory     = await diasBPHist
         respiratoryRateHistory = await rrHist
+        daylightHistory        = await daylightHist
 
         // Extract today's vitals values
         todayHeartRate       = heartRateHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
@@ -292,6 +301,16 @@ final class StressViewModel: ObservableObject {
         todaySystolicBP      = systolicBPHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
         todayDiastolicBP     = diastolicBPHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
         todayRespiratoryRate = respiratoryRateHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
+
+        // Compute Circadian Score from last 7 days of sleep + daylight
+        let sevenDayStart = calendar.date(byAdding: .day, value: -7, to: now) ?? now
+        let recentSleep = sleepHistory.filter { $0.date >= sevenDayStart }
+        let recentDaylight = daylightHistory.filter { $0.date >= sevenDayStart }
+        circadianResult = CircadianService.compute(sleepSummaries: recentSleep, daylightSamples: recentDaylight)
+
+        #if DEBUG
+        log("🌅 Circadian → score=\(fmt2(circadianResult.score))  regularity=\(fmt2(circadianResult.regularityScore))  daylight=\(circadianResult.daylightScore.map { fmt2($0) } ?? "nil")  level=\(circadianResult.level.rawValue)  hasData=\(circadianResult.hasEnoughData)")
+        #endif
 
         // Ensure weekReadings is populated (SwiftData doesn't need HK auth)
         loadReadings()
@@ -519,6 +538,10 @@ final class StressViewModel: ObservableObject {
 
     private func fetchRRHistorySafely(range: DateInterval) async -> [DailyMetricSample] {
         (try? await healthService.fetchRespiratoryRate(for: range)) ?? []
+    }
+
+    private func fetchDaylightHistorySafely(range: DateInterval) async -> [DailyMetricSample] {
+        (try? await healthService.fetchDaylight(for: range)) ?? []
     }
 
     // MARK: - Factor Builders

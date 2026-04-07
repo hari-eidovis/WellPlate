@@ -96,6 +96,8 @@ struct DailySleepSummary: Identifiable {
     let coreHours: Double
     let remHours: Double
     let deepHours: Double
+    var bedtime: Date? = nil      // earliest sleep sample startDate in session
+    var wakeTime: Date? = nil     // latest sleep sample endDate in session
 
     var quality: SleepQuality { SleepQuality(hours: totalHours) }
 

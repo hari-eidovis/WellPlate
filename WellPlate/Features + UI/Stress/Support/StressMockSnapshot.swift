@@ -31,6 +31,7 @@ struct StressMockSnapshot {
     let systolicBPHistory: [DailyMetricSample]
     let diastolicBPHistory: [DailyMetricSample]
     let respiratoryRateHistory: [DailyMetricSample]
+    let daylightHistory: [DailyMetricSample]
 
     // MARK: - Chart Readings (non-persisted, display-only)
 
@@ -60,12 +61,16 @@ struct StressMockSnapshot {
         let energy: Double = 340.0
         let screenTime: Double = 4.5
 
+        let sleepTodayBedtime = cal.date(bySettingHour: 23, minute: 0, second: 0,
+                                          of: cal.date(byAdding: .day, value: -1, to: today)!)
         let sleepToday = DailySleepSummary(
             date: today,
             totalHours: 7.2,
             coreHours: 3.1,
             remHours: 1.8,
-            deepHours: 2.3
+            deepHours: 2.3,
+            bedtime: sleepTodayBedtime,
+            wakeTime: sleepTodayBedtime?.addingTimeInterval(7.2 * 3600)
         )
 
         // ── 30-Day History Helpers (pattern-based, no randomness) ─────
@@ -149,13 +154,36 @@ struct StressMockSnapshot {
         let remRatios:  [Double] = [0.20, 0.21, 0.19, 0.20, 0.22, 0.20, 0.21, 0.20, 0.19, 0.21,
                                     0.22, 0.20, 0.21, 0.19, 0.20, 0.22, 0.20, 0.19, 0.21, 0.22,
                                     0.20, 0.21, 0.22, 0.19, 0.21, 0.20, 0.19, 0.21, 0.20, 0.21]
+        let bedtimeHours: [Double] = [
+            23.0, 23.3, 22.8, 23.5, 22.5, 23.1, 23.2,
+            22.9, 23.4, 23.0, 22.6, 23.3, 23.1, 23.5,
+            22.7, 23.0, 23.4, 22.8, 23.2, 23.6,
+            23.0, 22.9, 23.3, 22.4, 23.1, 23.0, 23.5,
+            22.8, 23.2, 23.0
+        ]
+        let daylightBase: [Double] = [
+            25, 30, 15, 35, 10, 28, 32,
+            20, 33, 40, 12, 27, 35, 22,
+            38, 18, 25, 42, 30, 28,
+            22, 35, 31, 14, 26, 38, 24,
+            30, 34, 28
+        ]
+        let daylightHist = (0..<count).map { DailyMetricSample(date: daysAgo(count - 1 - $0), value: daylightBase[$0]) }
         let sleepHist: [DailySleepSummary] = (0..<count).map { i in
             let total = sleepTotals[i]
             let deep  = total * deepRatios[i]
             let rem   = total * remRatios[i]
             let core  = max(0, total - deep - rem)
-            return DailySleepSummary(date: daysAgo(count - 1 - i), totalHours: total,
-                                     coreHours: core, remHours: rem, deepHours: deep)
+            let dayDate = daysAgo(count - 1 - i)
+            let prevDay = cal.date(byAdding: .day, value: -1, to: dayDate)!
+            let btDecimal = bedtimeHours[i]
+            let btDate = cal.date(bySettingHour: Int(btDecimal),
+                                  minute: Int((btDecimal.truncatingRemainder(dividingBy: 1)) * 60),
+                                  second: 0, of: prevDay)
+            let wtDate = btDate?.addingTimeInterval(total * 3600)
+            return DailySleepSummary(date: dayDate, totalHours: total,
+                                     coreHours: core, remHours: rem, deepHours: deep,
+                                     bedtime: btDate, wakeTime: wtDate)
         }
 
         // ── Today's Intraday Readings (hour, score pairs) ─────────────
@@ -204,6 +232,7 @@ struct StressMockSnapshot {
             systolicBPHistory: sysBPHist,
             diastolicBPHistory: diasBPHist,
             respiratoryRateHistory: rrHist,
+            daylightHistory: daylightHist,
             todayReadings: todayReadings,
             weekReadings: weekReadings,
             currentDayLogs: logs

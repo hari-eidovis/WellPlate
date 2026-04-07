@@ -2,7 +2,8 @@
 //  StressWeekChartView.swift
 //  WellPlate
 //
-//  7-day stress trend — minimal capsule bars, muted earth-tone palette.
+//  7-day stress trend — gradient capsule bars with trend line overlay,
+//  score annotations, and teal → amber → rust color palette.
 //
 
 import SwiftUI
@@ -45,93 +46,89 @@ struct StressWeekChartView: View {
         }
     }
 
+    private var weekAverage: Double {
+        let active = dayAverages.filter { $0.averageScore > 0 }.map(\.averageScore)
+        guard !active.isEmpty else { return 0 }
+        return active.reduce(0, +) / Double(active.count)
+    }
+
     private func dominantLevel(in readings: [StressReading]) -> String? {
         guard !readings.isEmpty else { return nil }
         return Dictionary(grouping: readings, by: \.levelLabel).mapValues(\.count)
             .max(by: { $0.value < $1.value })?.key
     }
 
-    /// Low stress (≤40%) → .primary at opacity; higher → amber → rust
-    private func barColor(for avg: Double, isToday: Bool) -> Color {
-        guard avg > 0 else {
-            return Color.secondary.opacity(isToday ? 0.18 : 0.10)
-        }
-        let t = min(max(avg / 100.0, 0), 1)
-        if t <= 0.40 {
-            let base = 0.28 + t * 0.40
-            return Color.primary.opacity(isToday ? base + 0.10 : base)
-        }
-        let ht = (t - 0.40) / 0.60
-        return Color(
-            hue: 0.12 - ht * 0.11,
-            saturation: isToday ? (0.52 + ht * 0.18) : (0.40 + ht * 0.15),
-            brightness: isToday ? (0.70 - ht * 0.12) : (0.76 - ht * 0.10)
-        )
-    }
-
     // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            tooltipHeader
 
-            // Tooltip row — visible only while scrubbing
-            Group {
-                if let sel = selectedDay, sel.averageScore > 0 {
-                    HStack(spacing: 5) {
-                        Text(sel.isToday ? "Today" : shortDayName(for: sel.day))
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        Text("·  avg \(Int(sel.averageScore))")
-                            .font(.system(size: 12, weight: .regular, design: .rounded))
-                            .foregroundStyle(.secondary)
-                        Text("·  \(sel.dominantLevel)")
-                            .font(.system(size: 12, weight: .regular, design: .rounded))
-                            .foregroundStyle(.secondary)
-                    }
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                } else {
-                    HStack {
-                        Text("this week")
-                            .font(.system(size: 12, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.secondary.opacity(0.65))
-                        Spacer()
-                        if !readings.isEmpty {
-                            let overall = readings.map(\.score).reduce(0, +) / Double(readings.count)
-                            Text("avg \(Int(overall))")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.secondary)
+            Chart {
+                // ── Week average line ──
+                if weekAverage > 0 {
+                    RuleMark(y: .value("Avg", weekAverage))
+                        .foregroundStyle(Color.secondary.opacity(0.14))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                }
+
+                ForEach(dayAverages) { item in
+                    // ── Gradient bar ──
+                    BarMark(
+                        x: .value("Day", shortDayName(for: item.day)),
+                        y: .value("Score", max(item.averageScore, item.averageScore == 0 ? 0 : 3)),
+                        width: .ratio(0.50)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                barColor(for: item.averageScore, isToday: item.isToday).opacity(0.25),
+                                barColor(for: item.averageScore, isToday: item.isToday)
+                            ],
+                            startPoint: .bottom,
+                            endPoint: .top
+                        )
+                    )
+                    .cornerRadius(6, style: .continuous)
+
+                    // ── Score label on every bar ──
+                    .annotation(position: .top, alignment: .center, spacing: 4) {
+                        if item.averageScore > 0 {
+                            Text("\(Int(item.averageScore))")
+                                .font(.system(size: 9, weight: item.isToday ? .bold : .medium, design: .rounded))
+                                .foregroundStyle(barColor(for: item.averageScore, isToday: item.isToday)
+                                    .opacity(item.isToday ? 1.0 : 0.65))
                         }
                     }
-                    .transition(.opacity)
                 }
-            }
-            .animation(.easeOut(duration: 0.18), value: selectedDay?.id)
 
-            Chart(dayAverages) { item in
-                BarMark(
-                    x: .value("Day", shortDayName(for: item.day)),
-                    y: .value("Score", max(item.averageScore, item.averageScore == 0 ? 0 : 3)),
-                    width: .ratio(0.55)
-                )
-                .foregroundStyle(barColor(for: item.averageScore, isToday: item.isToday))
-                .cornerRadius(5, style: .continuous)
-                // Subtle value label only for today or selected
-                .annotation(position: .top, alignment: .center) {
-                    if item.isToday && item.averageScore > 0 {
-                        Text("\(Int(item.averageScore))")
-                            .font(.system(size: 9, weight: .medium, design: .rounded))
-                            .foregroundStyle(barColor(for: item.averageScore, isToday: true).opacity(0.75))
-                    }
+                // ── Trend line connecting averages ──
+                ForEach(dayAverages.filter { $0.averageScore > 0 }) { item in
+                    LineMark(
+                        x: .value("Day", shortDayName(for: item.day)),
+                        y: .value("Trend", item.averageScore)
+                    )
+                    .foregroundStyle(Color.secondary.opacity(0.22))
+                    .lineStyle(StrokeStyle(lineWidth: 1.2, lineCap: .round, lineJoin: .round))
+                    .interpolationMethod(.catmullRom)
+
+                    PointMark(
+                        x: .value("Day", shortDayName(for: item.day)),
+                        y: .value("Trend", item.averageScore)
+                    )
+                    .symbolSize(10)
+                    .foregroundStyle(Color.secondary.opacity(0.18))
                 }
             }
             .chartYAxis {
                 AxisMarks(values: [25, 50, 75]) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.4))
-                        .foregroundStyle(Color.secondary.opacity(0.10))
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.35))
+                        .foregroundStyle(Color.secondary.opacity(0.08))
                     AxisValueLabel {
                         if let v = value.as(Int.self) {
                             Text("\(v)")
                                 .font(.system(size: 9, weight: .regular, design: .rounded))
-                                .foregroundStyle(Color.secondary.opacity(0.45))
+                                .foregroundStyle(Color.secondary.opacity(0.40))
                         }
                     }
                 }
@@ -140,10 +137,11 @@ struct StressWeekChartView: View {
                 AxisMarks { _ in
                     AxisValueLabel()
                         .font(.system(size: 10, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.secondary.opacity(0.55))
+                        .foregroundStyle(Color.secondary.opacity(0.50))
                 }
             }
             .chartYScale(domain: 0...100)
+            .chartLegend(.hidden)
             .chartOverlay { proxy in
                 GeometryReader { geo in
                     Rectangle()
@@ -168,7 +166,7 @@ struct StressWeekChartView: View {
                         )
                 }
             }
-            .frame(height: 140)
+            .frame(height: 150)
             .animation(.easeInOut(duration: 0.3), value: readings.count)
         }
         .padding(16)
@@ -177,6 +175,79 @@ struct StressWeekChartView: View {
                 .fill(Color(.systemBackground))
                 .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 3)
         )
+    }
+
+    // MARK: - Tooltip Header
+
+    private var tooltipHeader: some View {
+        Group {
+            if let sel = selectedDay, sel.averageScore > 0 {
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(barColor(for: sel.averageScore, isToday: sel.isToday))
+                        .frame(width: 7, height: 7)
+                    Text(sel.isToday ? "Today" : shortDayName(for: sel.day))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    Text("·")
+                        .foregroundStyle(.quaternary)
+                    Text("\(Int(sel.averageScore))")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(barColor(for: sel.averageScore, isToday: sel.isToday))
+                    Text(sel.dominantLevel.lowercased())
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule()
+                        .fill(barColor(for: sel.averageScore, isToday: sel.isToday).opacity(0.10))
+                )
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            } else {
+                HStack {
+                    Text("this week")
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundStyle(Color.secondary.opacity(0.65))
+                    Spacer()
+                    if weekAverage > 0 {
+                        Text("avg \(Int(weekAverage))")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.18), value: selectedDay?.id)
+    }
+
+    // MARK: - Chart Color Palette
+
+    /// Teal (calm) → amber (moderate) → rust (stressed).
+    private func barColor(for avg: Double, isToday: Bool) -> Color {
+        guard avg > 0 else {
+            return Color.secondary.opacity(isToday ? 0.18 : 0.10)
+        }
+        let t = min(max(avg / 100.0, 0), 1)
+        let boost: Double = isToday ? 0.06 : 0
+
+        if t <= 0.35 {
+            let local = t / 0.35
+            return Color(hue: 0.48,
+                         saturation: 0.32 + local * 0.22 + boost,
+                         brightness: 0.70 + local * 0.05 + boost)
+        } else if t <= 0.55 {
+            let local = (t - 0.35) / 0.20
+            return Color(hue: 0.48 - local * 0.36,
+                         saturation: 0.50 + local * 0.08 + boost,
+                         brightness: 0.74 - local * 0.02 + boost)
+        } else {
+            let local = (t - 0.55) / 0.45
+            return Color(hue: 0.12 - local * 0.11,
+                         saturation: 0.55 + local * 0.15 + boost,
+                         brightness: 0.72 - local * 0.10 + boost)
+        }
     }
 
     // MARK: - Helpers

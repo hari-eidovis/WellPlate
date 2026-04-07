@@ -52,6 +52,10 @@ protocol HealthKitServiceProtocol {
     /// Daily respiratory rate (breaths/min) over the given interval.
     func fetchRespiratoryRate(for range: DateInterval) async throws -> [DailyMetricSample]
 
+    /// Daily time in daylight (minutes) sums over the given interval.
+    /// Returns empty array if Apple Watch is not paired or data unavailable.
+    func fetchDaylight(for range: DateInterval) async throws -> [DailyMetricSample]
+
     // MARK: - State of Mind (Mood Sync)
 
     /// Write a mood check-in to HealthKit as an HKStateOfMind sample.
