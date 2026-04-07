@@ -30,6 +30,7 @@ struct HomeView: View {
     /// Set by the picker closure, read by onChange(of: showCoffeeTypePicker).
     @State private var pendingCoffeeType: CoffeeType? = nil
     @State private var showAIInsight = false
+    @State private var showBurnView = false
     @State private var dragLogProgress: CGFloat = 0
     @StateObject private var foodJournalViewModel = HomeViewModel()
     @StateObject private var insightService = StressInsightService()
@@ -59,8 +60,8 @@ struct HomeView: View {
                             switch destination {
                             case .calories: showLogMeal = true
                             case .water:    showWaterDetail = true
-                            case .exercise: selectedTab = 1
-                            case .stress:   selectedTab = 2
+                            case .exercise: showBurnView = true
+                            case .stress:   selectedTab = 1
                             }
                         }
                     )
@@ -161,6 +162,9 @@ struct HomeView: View {
                     totalCups: currentGoals.coffeeDailyCups,
                     coffeeType: todayWellnessLog?.resolvedCoffeeType
                 )
+            }
+            .navigationDestination(isPresented: $showBurnView) {
+                BurnView()
             }
             .navigationDestination(isPresented: $showWellnessCalendar) {
                 WellnessCalendarView()

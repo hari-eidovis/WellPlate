@@ -21,30 +21,28 @@ struct BurnView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+        ZStack {
+            Color(.systemGroupedBackground).ignoresSafeArea()
 
-                Group {
-                    if !HealthKitService.isAvailable {
-                        unavailableView
-                    } else if viewModel.isLoading {
-                        loadingView
-                    } else if !viewModel.isAuthorized {
-                        permissionView
-                    } else {
-                        mainContent
-                    }
+            Group {
+                if !HealthKitService.isAvailable {
+                    unavailableView
+                } else if viewModel.isLoading {
+                    loadingView
+                } else if !viewModel.isAuthorized {
+                    permissionView
+                } else {
+                    mainContent
                 }
             }
-            .navigationTitle("Burn")
-            .navigationBarTitleDisplayMode(.large)
-            .sheet(item: $detailMetric) { metric in
-                BurnDetailView(
-                    metric: metric,
-                    samples: viewModel.last30Days(for: metric)
-                )
-            }
+        }
+        .navigationTitle("Burn")
+        .navigationBarTitleDisplayMode(.large)
+        .sheet(item: $detailMetric) { metric in
+            BurnDetailView(
+                metric: metric,
+                samples: viewModel.last30Days(for: metric)
+            )
         }
         .task { await viewModel.requestPermissionAndLoad() }
         .onAppear { syncGoals() }

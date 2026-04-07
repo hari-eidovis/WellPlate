@@ -79,12 +79,12 @@ struct MoodCheckInCard: View {
         .padding(.vertical, 22)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(uiColor: .systemBackground).opacity(0.001)) // transparent — tinted by gradient below
-                .background(
+                .fill(Color(.systemBackground))
+                .overlay(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.94, green: 0.91, blue: 0.97),
-                            Color(red: 0.96, green: 0.93, blue: 0.98)
+                            Color.orange.opacity(0.08),
+                            Color.pink.opacity(0.06)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing

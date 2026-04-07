@@ -16,6 +16,8 @@ enum StressSheet: Identifiable {
     case screenTimeDetail
     case vital(VitalMetric)
     case stressLab
+    case interventions
+    case fasting
 
     var id: String {
         switch self {
@@ -25,6 +27,8 @@ enum StressSheet: Identifiable {
         case .screenTimeDetail: return "screenTimeDetail"
         case .vital(let m):     return "vital_\(m.id)"
         case .stressLab:        return "stressLab"
+        case .interventions:    return "interventions"
+        case .fasting:          return "fasting"
         }
     }
 }
@@ -67,13 +71,33 @@ struct StressView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    if (HealthKitService.isAvailable || viewModel.usesMockData) && viewModel.isAuthorized && !viewModel.isLoading {
-                        Button {
-                            HapticService.impact(.light)
-                            activeSheet = .stressLab
+                    if !viewModel.isLoading {
+                        Menu {
+                            // Lab is gated — requires HealthKit for experiment biometrics
+                            if (HealthKitService.isAvailable || viewModel.usesMockData) && viewModel.isAuthorized {
+                                Button {
+                                    HapticService.impact(.light)
+                                    activeSheet = .stressLab
+                                } label: {
+                                    Label("Lab", systemImage: "flask.fill")
+                                }
+                            }
+                            // Resets are always available — no HealthKit dependency
+                            Button {
+                                HapticService.impact(.light)
+                                activeSheet = .interventions
+                            } label: {
+                                Label("Resets", systemImage: "bolt.heart.fill")
+                            }
+                            Button {
+                                HapticService.impact(.light)
+                                activeSheet = .fasting
+                            } label: {
+                                Label("Fast", systemImage: "fork.knife.circle")
+                            }
                         } label: {
-                            Label("Lab", systemImage: "flask.fill")
-                                .font(.system(size: 14, weight: .semibold))
+                            Image(systemName: "ellipsis.circle")
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(viewModel.stressLevel.color)
                         }
                     }
@@ -153,6 +177,10 @@ struct StressView: View {
                 )
             case .stressLab:
                 StressLabView()
+            case .interventions:
+                InterventionsView()
+            case .fasting:
+                FastingView()
             }
         }
     }
@@ -231,9 +259,23 @@ struct StressView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 28)
-                .padding(.bottom, 40)
                 .opacity(adviceAppeared ? 1 : 0)
                 .offset(y: adviceAppeared ? 0 : 16)
+
+                // ── QUICK RESET (conditional) ─────────────────────
+                if viewModel.stressLevel == .high || viewModel.stressLevel == .veryHigh {
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionLabel("Quick Reset")
+                        resetRecommendationCard
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 28)
+                    .padding(.bottom, 40)
+                    .opacity(adviceAppeared ? 1 : 0)
+                    .offset(y: adviceAppeared ? 0 : 16)
+                } else {
+                    Spacer().frame(height: 40)
+                }
             }
         }
         .refreshable {
@@ -375,6 +417,43 @@ struct StressView: View {
     }
 
     // MARK: - Advice Card
+
+    private var resetRecommendationCard: some View {
+        Button {
+            HapticService.impact(.light)
+            activeSheet = .interventions
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.teal.opacity(0.12))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "bolt.heart.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.teal)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Try a Quick Reset")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Text("60-sec exercises to ease stress now")
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.4))
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color(.systemBackground))
+                    .appShadow(radius: 15, y: 5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
 
     private var adviceCard: some View {
         let topFactor = sortedFactors.first

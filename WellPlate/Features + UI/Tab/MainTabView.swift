@@ -41,7 +41,7 @@ struct MainTabView: View {
             }
 
             // MARK: - Profile
-            Tab(value: 3) {
+            Tab(value: 2) {
                 ProfilePlaceholderView()
             } label: {
                 Label("Profile", systemImage: "person.crop.circle.fill")
@@ -53,7 +53,7 @@ struct MainTabView: View {
         .onChange(of: pendingDeepLink) { _, url in
             guard let url, url.scheme == "wellplate" else { return }
             switch url.host {
-            case "stress": selectedTab = 2
+            case "stress": selectedTab = 1
             default: break
             }
             pendingDeepLink = nil

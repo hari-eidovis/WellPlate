@@ -8,6 +8,7 @@ enum AppColors {
     static let onPrimary         = Color("OnPrimary")            // text/icons on primary
 
     // MARK: - Surfaces / Borders / Text
+    static let cream = Color(red: 1.0, green: 0.976, blue: 0.902) // #FFF9E6
     static let surface = Color("Surface")
     static let borderSubtle = Color("BorderSubtle")
     static let textPrimary = Color("TextPrimary")
