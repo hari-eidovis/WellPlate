@@ -60,7 +60,11 @@ When invoked as `/develop <sub-command> [args]`:
 3. **Check gate rules**: Apply the gate for this sub-command (see table above)
 4. **Read agent SKILL.md**: `Read .claude/agents/<sub-command>/SKILL.md`
 5. **Execute**: Follow the agent's instructions as your own
-6. **Report**: Output the file path written (if any) and suggest the next step in the workflow
+6. **Report & Gate**: Output the file path written (if any), then:
+   - Identify the next logical step in the workflow
+   - Ask the user for permission: e.g., "Next step: **strategize**. Proceed? (yes/no)"
+   - If the user confirms → automatically dispatch the next sub-command (no need for them to type it)
+   - If the user declines or requests changes → stop and wait for instructions
 
 ## Workflow Summary
 
@@ -97,4 +101,4 @@ Docs Structure:
 
 - `/brainstorm` and `/code-reviewer` also work as standalone skills (not just through `/develop`)
 - RESOLVED files always stay next to their source document (plans in `02_Planning/Specs/`, checklists in `04_Checklist/`)
-- The `resolve` step is a **hard stop** — user approval is required before proceeding to the next stage
+- **Every step transition asks for permission** — after completing any sub-command, ask the user before auto-continuing to the next step. If they confirm, dispatch the next step automatically without requiring them to type the command.

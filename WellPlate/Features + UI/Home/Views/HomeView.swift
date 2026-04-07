@@ -18,6 +18,7 @@ struct HomeView: View {
 
     @State private var selectedMood: MoodOption?
     @State private var hasLoggedMoodToday = false
+    @State private var healthSuggestedMood: MoodOption?
     @State private var hydrationGlasses: Int = 0
     @State private var coffeeCups: Int = 0
     @State private var showLogMeal = false
@@ -84,7 +85,7 @@ struct HomeView: View {
 
                     // 4. Mood Check-In
                     if !hasLoggedMoodToday {
-                        MoodCheckInCard(selectedMood: $selectedMood)
+                        MoodCheckInCard(selectedMood: $selectedMood, suggestion: healthSuggestedMood)
                             .padding(.horizontal, 16)
                     }
 
@@ -479,15 +480,35 @@ struct HomeView: View {
         guard let log = fetchTodayWellnessLog() else {
             hasLoggedMoodToday = false
             selectedMood = nil
+            healthSuggestedMood = nil
+            fetchHealthMoodSuggestion()
             return
         }
 
         if let mood = log.mood {
             hasLoggedMoodToday = true
             selectedMood = mood
+            healthSuggestedMood = nil
         } else {
             hasLoggedMoodToday = false
             selectedMood = nil
+            healthSuggestedMood = nil
+            fetchHealthMoodSuggestion()
+        }
+    }
+
+    private func fetchHealthMoodSuggestion() {
+        guard HealthKitService.isAvailable else { return }
+        Task {
+            let service = HealthKitService()
+            do {
+                try await service.requestAuthorization()
+                if let mood = try await service.fetchTodayMood() {
+                    healthSuggestedMood = mood
+                }
+            } catch {
+                WPLogger.healthKit.error("Mood suggestion from Health failed: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -504,6 +525,10 @@ struct HomeView: View {
         todayLog.moodRaw = mood.rawValue
         do {
             try modelContext.save()
+            if HealthKitService.isAvailable {
+                Task { try? await HealthKitService().writeMood(mood) }
+            }
+            healthSuggestedMood = nil
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 hasLoggedMoodToday = true
             }

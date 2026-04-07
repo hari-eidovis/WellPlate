@@ -46,6 +46,13 @@ final class HealthKitService: HealthKitServiceProtocol {
         if let sleep = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) {
             types.insert(sleep)
         }
+        types.insert(HKSampleType.stateOfMindType())
+        return types
+    }
+
+    private var shareTypes: Set<HKSampleType> {
+        var types = Set<HKSampleType>()
+        types.insert(HKSampleType.stateOfMindType())
         return types
     }
 
@@ -56,7 +63,7 @@ final class HealthKitService: HealthKitServiceProtocol {
             throw HealthKitError.notAvailable
         }
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            store.requestAuthorization(toShare: [], read: readTypes) { [weak self] success, error in
+            store.requestAuthorization(toShare: shareTypes, read: readTypes) { [weak self] success, error in
                 if let error = error {
                     cont.resume(throwing: error)
                 } else {
@@ -202,6 +209,47 @@ final class HealthKitService: HealthKitServiceProtocol {
             throw HealthKitError.typeNotAvailable
         }
         return try await fetchDailyAvg(type: type, unit: HKUnit(from: "count/min"), range: range)
+    }
+
+    // MARK: - State of Mind (Mood Sync)
+
+    func writeMood(_ mood: MoodOption) async throws {
+        let valence: Double = switch mood {
+        case .awful: -1.0
+        case .bad:   -0.5
+        case .okay:   0.0
+        case .good:   0.5
+        case .great:  1.0
+        }
+
+        let sample = HKStateOfMind(
+            date: .now,
+            kind: .dailyMood,
+            valence: valence,
+            labels: [],
+            associations: []
+        )
+        try await store.save(sample)
+    }
+
+    func fetchTodayMood() async throws -> MoodOption? {
+        let start = Calendar.current.startOfDay(for: .now)
+        let end = Date.now
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.stateOfMind(predicate)],
+            sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)],
+            limit: 1
+        )
+
+        let results = try await descriptor.result(for: store)
+        guard let latest = results.first else { return nil }
+
+        // Reverse-map valence → MoodOption: snap to nearest of 5 levels
+        let index = Int(round((latest.valence + 1.0) * 2.0))
+        let clamped = min(max(index, 0), 4)
+        return MoodOption(rawValue: clamped)
     }
 
     // MARK: - Private Helpers

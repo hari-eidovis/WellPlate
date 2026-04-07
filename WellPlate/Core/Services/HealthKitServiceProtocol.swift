@@ -51,4 +51,13 @@ protocol HealthKitServiceProtocol {
 
     /// Daily respiratory rate (breaths/min) over the given interval.
     func fetchRespiratoryRate(for range: DateInterval) async throws -> [DailyMetricSample]
+
+    // MARK: - State of Mind (Mood Sync)
+
+    /// Write a mood check-in to HealthKit as an HKStateOfMind sample.
+    func writeMood(_ mood: MoodOption) async throws
+
+    /// Fetch today's most recent HKStateOfMind sample and reverse-map to MoodOption.
+    /// Returns nil if no sample exists or HealthKit is unavailable.
+    func fetchTodayMood() async throws -> MoodOption?
 }

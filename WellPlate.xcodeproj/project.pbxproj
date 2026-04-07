@@ -716,8 +716,8 @@
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = wellplate;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera to click pictures Please allow it.";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Please allow this to fetch your health data in this app";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "WellPlate reads your activity and health data to show Burn and Sleep insights alongside your nutrition.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Please allow this to fetch your health data in this app";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "WellPlate reads your activity, health, and mood data to show wellness insights alongside your nutrition.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "WellPlate saves your daily mood check-in to Apple Health so it stays in sync with your other health data.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WellPlate uses the microphone so you can speak meal entries instead of typing them.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Please allow library access to pick photos";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need permission to access photos";
@@ -765,8 +765,8 @@
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = wellplate;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera to click pictures Please allow it.";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Please allow this to fetch your health data in this app";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "WellPlate reads your activity and health data to show Burn and Sleep insights alongside your nutrition.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Please allow this to fetch your health data in this app";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "WellPlate reads your activity, health, and mood data to show wellness insights alongside your nutrition.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "WellPlate saves your daily mood check-in to Apple Health so it stays in sync with your other health data.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WellPlate uses the microphone so you can speak meal entries instead of typing them.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Please allow library access to pick photos";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need permission to access photos";

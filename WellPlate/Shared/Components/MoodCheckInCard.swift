@@ -49,6 +49,9 @@ struct MoodCheckInCard: View {
     /// Called when the user confirms their mood (tap on already-selected item).
     var onConfirm: ((MoodOption) -> Void)? = nil
 
+    /// Mood suggested from Apple Health — shown with a visual hint but not committed until user taps.
+    var suggestion: MoodOption? = nil
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             // Header
@@ -57,9 +60,15 @@ struct MoodCheckInCard: View {
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
 
-                Text("Tap to check in with yourself")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundStyle(.secondary)
+                if suggestion != nil && selectedMood == nil {
+                    Label("Suggested from Apple Health", systemImage: "heart.fill")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundStyle(.pink.opacity(0.8))
+                } else {
+                    Text("Tap to check in with yourself")
+                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
             }
 
             // Mood pills
@@ -67,7 +76,8 @@ struct MoodCheckInCard: View {
                 ForEach(MoodOption.allCases) { mood in
                     MoodPill(
                         mood: mood,
-                        isSelected: selectedMood == mood
+                        isSelected: selectedMood == mood,
+                        isSuggested: suggestion == mood && selectedMood == nil
                     ) {
                         handleTap(mood)
                     }
@@ -118,6 +128,7 @@ private struct MoodPill: View {
 
     let mood: MoodOption
     let isSelected: Bool
+    let isSuggested: Bool
     let onTap: () -> Void
 
     @State private var isPressed = false
@@ -127,19 +138,22 @@ private struct MoodPill: View {
         VStack(spacing: 8) {
             ZStack {
                 // Selection ring + glow
-                if isSelected {
+                if isSelected || isSuggested {
                     Circle()
-                        .stroke(mood.accentColor.opacity(0.45), lineWidth: 2.5)
+                        .stroke(
+                            mood.accentColor.opacity(isSelected ? 0.45 : 0.25),
+                            style: StrokeStyle(lineWidth: isSelected ? 2.5 : 2, dash: isSuggested && !isSelected ? [4, 3] : [])
+                        )
                         .frame(width: 54, height: 54)
-                        .shadow(color: mood.accentColor.opacity(0.4), radius: 8, x: 0, y: 0)
+                        .shadow(color: mood.accentColor.opacity(isSelected ? 0.4 : 0.2), radius: 8, x: 0, y: 0)
                         .transition(.scale.combined(with: .opacity))
                 }
 
                 // Frosted pill background
                 Circle()
                     .fill(
-                        isSelected
-                            ? mood.accentColor.opacity(0.12)
+                        (isSelected || isSuggested)
+                            ? mood.accentColor.opacity(isSelected ? 0.12 : 0.06)
                             : Color(uiColor: .systemBackground).opacity(0.6)
                     )
                     .frame(width: 50, height: 50)
@@ -159,8 +173,8 @@ private struct MoodPill: View {
             }
 
             Text(mood.label)
-                .font(.system(size: 12, weight: isSelected ? .semibold : .regular, design: .rounded))
-                .foregroundStyle(isSelected ? mood.accentColor : .secondary)
+                .font(.system(size: 12, weight: (isSelected || isSuggested) ? .semibold : .regular, design: .rounded))
+                .foregroundStyle((isSelected || isSuggested) ? mood.accentColor : .secondary)
                 .animation(.easeInOut(duration: 0.2), value: isSelected)
         }
         .contentShape(Rectangle())
@@ -198,6 +212,20 @@ private struct MoodPill: View {
                 Color(.systemGroupedBackground).ignoresSafeArea()
                 MoodCheckInCard(selectedMood: $mood) { _ in }
                 .padding(.horizontal, 16)
+            }
+        }
+    }
+    return PreviewWrapper()
+}
+
+#Preview("Mood — Health Suggestion") {
+    struct PreviewWrapper: View {
+        @State private var mood: MoodOption? = nil
+        var body: some View {
+            ZStack {
+                Color(.systemGroupedBackground).ignoresSafeArea()
+                MoodCheckInCard(selectedMood: $mood, suggestion: .good)
+                    .padding(.horizontal, 16)
             }
         }
     }
