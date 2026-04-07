@@ -52,6 +52,7 @@ enum ProfileSheet: Identifiable {
     case editWeight
     case editHeight
     case symptomLog
+    case addSupplement
 
     var id: String {
         switch self {
@@ -60,6 +61,7 @@ enum ProfileSheet: Identifiable {
         case .editWeight:         return "editWeight"
         case .editHeight:         return "editHeight"
         case .symptomLog:         return "symptomLog"
+        case .addSupplement:      return "addSupplement"
         }
     }
 }
@@ -79,6 +81,11 @@ struct ProfilePlaceholderView: View {
     @State private var selectedSymptomForCorrelation: String?
     @Query(sort: \SymptomEntry.timestamp, order: .reverse) private var allSymptomEntries: [SymptomEntry]
     @StateObject private var correlationEngine      = SymptomCorrelationEngine()
+    // Supplement state
+    @State private var showSupplementList            = false
+    @Query private var allSupplements: [SupplementEntry]
+    @Query(sort: \AdherenceLog.day, order: .reverse) private var allAdherenceLogs: [AdherenceLog]
+    @StateObject private var supplementService       = SupplementService()
     @State private var editedName                   = UserProfileManager.shared.userName
     @State private var editedWeight                 = UserProfileManager.shared.weightKg
     @State private var editedHeight                 = UserProfileManager.shared.heightCm
@@ -139,6 +146,10 @@ struct ProfilePlaceholderView: View {
                             .padding(.horizontal, 16)
                     }
 
+                    // ── Health regimen (supplements) ─────────
+                    supplementRegimenCard
+                        .padding(.horizontal, 16)
+
                     // ── Widget setup ─────────────────────────
                     WidgetSetupCard(
                         selectedSize: $selectedSize,
@@ -168,6 +179,7 @@ struct ProfilePlaceholderView: View {
             .onAppear {
                 refreshProfileData()
                 checkWidgetStatus()
+                supplementService.createPendingLogs(context: modelContext, supplements: allSupplements)
                 #if DEBUG
                 refreshDebugNutritionState()
                 #endif
@@ -189,6 +201,9 @@ struct ProfilePlaceholderView: View {
                     SymptomCorrelationView(symptomName: name, engine: correlationEngine)
                 }
             }
+            .navigationDestination(isPresented: $showSupplementList) {
+                SupplementListView(service: supplementService)
+            }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .widgetInstructions:
@@ -209,6 +224,8 @@ struct ProfilePlaceholderView: View {
                         .presentationDragIndicator(.visible)
                 case .symptomLog:
                     SymptomLogSheet()
+                case .addSupplement:
+                    AddSupplementSheet(service: supplementService)
                 }
             }
         }
@@ -692,6 +709,106 @@ struct ProfilePlaceholderView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Supplement Regimen Card
+
+    private var todayAdherenceLogs: [AdherenceLog] {
+        allAdherenceLogs.filter { Calendar.current.isDate($0.day, inSameDayAs: Date()) }
+    }
+
+    private var supplementRegimenCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Image(systemName: "pill.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(AppColors.brand)
+                Text("Health Regimen")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Button {
+                    HapticService.impact(.light)
+                    activeSheet = .addSupplement
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 13, weight: .bold))
+                        Text("Add")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle(AppColors.brand)
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(Capsule().fill(AppColors.brand.opacity(0.12)))
+                }
+            }
+
+            if allSupplements.isEmpty {
+                Button {
+                    HapticService.impact(.light)
+                    activeSheet = .addSupplement
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(AppColors.brand)
+                        Text("Add your first supplement")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(AppColors.brand)
+                    }
+                }
+            } else {
+                let pct = supplementService.todayAdherencePercent(todayLogs: todayAdherenceLogs)
+                let taken = todayAdherenceLogs.filter { $0.status == "taken" }.count
+                let total = todayAdherenceLogs.count
+                let streak = supplementService.currentStreak(allLogs: allAdherenceLogs)
+
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("\(taken)/\(total) doses taken")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if streak > 0 {
+                            HStack(spacing: 3) {
+                                Image(systemName: "flame.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.orange)
+                                Text("\(streak)d")
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Color(.systemFill)).frame(height: 6)
+                            Capsule().fill(AppColors.brand).frame(width: geo.size.width * CGFloat(pct), height: 6)
+                        }
+                    }
+                    .frame(height: 6)
+                }
+
+                Button {
+                    HapticService.impact(.light)
+                    showSupplementList = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("View All")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(AppColors.brand)
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 15, y: 5)
+        )
     }
 
     // MARK: - Symptom Tracking Card
@@ -1463,7 +1580,7 @@ private struct NutritionSourceDebugCard: View {
 
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: SymptomEntry.self, UserGoals.self, configurations: config)
+    let container = try! ModelContainer(for: SymptomEntry.self, UserGoals.self, SupplementEntry.self, AdherenceLog.self, configurations: config)
     return ProfilePlaceholderView()
         .modelContainer(container)
 }

@@ -34,9 +34,10 @@ struct WellnessReportGenerator {
         foodLogs: [FoodLogEntry],
         stressReadings: [StressReading],
         wellnessLogs: [WellnessDayLog],
-        symptomEntries: [SymptomEntry] = []
+        symptomEntries: [SymptomEntry] = [],
+        adherenceLogs: [AdherenceLog] = []
     ) -> Data {
-        var rows: [String] = ["date,stress_score,calories,protein_g,carbs_g,fat_g,fiber_g,steps,water_glasses,mood,symptom,symptom_severity"]
+        var rows: [String] = ["date,stress_score,calories,protein_g,carbs_g,fat_g,fiber_g,steps,water_glasses,mood,symptom,symptom_severity,supplement_adherence_pct"]
 
         let cal = Calendar.current
         let cutoff = cal.date(byAdding: .day, value: -7, to: Date()) ?? Date()
@@ -45,10 +46,11 @@ struct WellnessReportGenerator {
             cal.date(byAdding: .day, value: -$0, to: cal.startOfDay(for: Date()))
         }.reversed()
 
-        let foodByDay     = Dictionary(grouping: foodLogs.filter { $0.day >= cutoff }) { $0.day }
-        let stressByDay   = Dictionary(grouping: stressReadings.filter { $0.timestamp >= cutoff }) { $0.day }
-        let wellnessByDay = Dictionary(grouping: wellnessLogs.filter { $0.day >= cutoff }) { $0.day }
-        let symptomByDay  = Dictionary(grouping: symptomEntries.filter { $0.day >= cutoff }) { $0.day }
+        let foodByDay      = Dictionary(grouping: foodLogs.filter { $0.day >= cutoff }) { $0.day }
+        let stressByDay    = Dictionary(grouping: stressReadings.filter { $0.timestamp >= cutoff }) { $0.day }
+        let wellnessByDay  = Dictionary(grouping: wellnessLogs.filter { $0.day >= cutoff }) { $0.day }
+        let symptomByDay   = Dictionary(grouping: symptomEntries.filter { $0.day >= cutoff }) { $0.day }
+        let adherenceByDay = Dictionary(grouping: adherenceLogs.filter { $0.day >= cutoff }) { $0.day }
 
         let dateFmt = DateFormatter()
         dateFmt.dateFormat = "yyyy-MM-dd"
@@ -72,8 +74,17 @@ struct WellnessReportGenerator {
             let symptomName   = worstSymptom?.name ?? ""
             let symptomSev    = worstSymptom.map { String($0.severity) } ?? ""
 
+            let dayAdherence  = adherenceByDay[day] ?? []
+            let adherencePct: String
+            if dayAdherence.isEmpty {
+                adherencePct = ""
+            } else {
+                let taken = dayAdherence.filter { $0.status == "taken" }.count
+                adherencePct = String(Int(Double(taken) / Double(dayAdherence.count) * 100))
+            }
+
             let stressStr = stressAvg.map { String(format: "%.1f", $0) } ?? ""
-            let row = "\(dateFmt.string(from: day)),\(stressStr),\(calories),\(String(format: "%.1f", protein)),\(String(format: "%.1f", carbs)),\(String(format: "%.1f", fat)),\(String(format: "%.1f", fiber)),\(steps),\(water),\(mood),\(symptomName),\(symptomSev)"
+            let row = "\(dateFmt.string(from: day)),\(stressStr),\(calories),\(String(format: "%.1f", protein)),\(String(format: "%.1f", carbs)),\(String(format: "%.1f", fat)),\(String(format: "%.1f", fiber)),\(steps),\(water),\(mood),\(symptomName),\(symptomSev),\(adherencePct)"
             rows.append(row)
         }
 

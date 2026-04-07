@@ -32,7 +32,8 @@ final class SymptomCorrelationEngine: ObservableObject {
         foodLogs: [FoodLogEntry],
         wellnessLogs: [WellnessDayLog],
         stressReadings: [StressReading],
-        sleepHours: [Date: Double]
+        sleepHours: [Date: Double],
+        adherenceByDay: [Date: Double] = [:]
     ) async {
         isComputing = true
         defer { isComputing = false }
@@ -71,6 +72,7 @@ final class SymptomCorrelationEngine: ObservableObject {
             Factor(name: "Protein",      icon: "fish.fill") { day in dailyProtein[day] },
             Factor(name: "Fiber",        icon: "leaf.fill") { day in dailyFiber[day] },
             Factor(name: "Water",        icon: "drop.fill") { day in wellnessByDay[day].map { Double($0.waterGlasses) } },
+            Factor(name: "Supplement adherence", icon: "pill.fill") { day in adherenceByDay.isEmpty ? nil : adherenceByDay[day] },
         ]
 
         // Compute correlation per factor
