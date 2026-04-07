@@ -27,8 +27,8 @@ struct StressLabAnalyzer {
         let baselineReadings   = allReadings.filter { $0.timestamp >= baselineStart && $0.timestamp < baselineEnd }
         let experimentReadings = allReadings.filter { $0.timestamp >= experiment.startDate && $0.timestamp < experimentEnd }
 
-        let baselineDailyAvgs   = dailyAverages(from: baselineReadings)
-        let experimentDailyAvgs = dailyAverages(from: experimentReadings)
+        let baselineDailyAvgs   = StressAnalyticsHelper.dailyAverages(from: baselineReadings)
+        let experimentDailyAvgs = StressAnalyticsHelper.dailyAverages(from: experimentReadings)
 
         guard baselineDailyAvgs.count >= minimumDays,
               experimentDailyAvgs.count >= minimumDays else { return nil }
@@ -52,14 +52,6 @@ struct StressLabAnalyzer {
             baselineDayCount: baselineDailyAvgs.count,
             experimentDayCount: experimentDailyAvgs.count
         )
-    }
-
-    private static func dailyAverages(from readings: [StressReading]) -> [Double] {
-        let cal = Calendar.current
-        let grouped = Dictionary(grouping: readings) { cal.startOfDay(for: $0.timestamp) }
-        return grouped.values.map { day in
-            day.map(\.score).reduce(0, +) / Double(day.count)
-        }
     }
 
     private static func bootstrapCI(
