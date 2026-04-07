@@ -31,7 +31,7 @@ struct WellPlateApp: App {
         WindowGroup {
             RootView()
         }
-        .modelContainer(for: [FoodCache.self, FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, StressReading.self, StressExperiment.self, InterventionSession.self, FastingSchedule.self, FastingSession.self, JournalEntry.self])
+        .modelContainer(for: [FoodCache.self, FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, StressReading.self, StressExperiment.self, InterventionSession.self, FastingSchedule.self, FastingSession.self, JournalEntry.self, SymptomEntry.self])
 
     }
 

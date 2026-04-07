@@ -6,11 +6,13 @@ import SwiftData
 enum HomeSheet: Identifiable {
     case coffeeTypePicker
     case journalEntry
+    case symptomLog
 
     var id: String {
         switch self {
         case .coffeeTypePicker: return "coffeeTypePicker"
         case .journalEntry: return "journalEntry"
+        case .symptomLog: return "symptomLog"
         }
     }
 }
@@ -309,6 +311,8 @@ struct HomeView: View {
                     promptService: journalPromptService,
                     onSave: saveJournalEntry
                 )
+            case .symptomLog:
+                SymptomLogSheet()
             }
         }
         // Water nudge alert after every coffee addition
@@ -340,31 +344,13 @@ struct HomeView: View {
 
             Spacer()
 
-            // AI Insights pill
+            // AI Insights button
             Button {
                 HapticService.impact(.light)
                 showAIInsight = true
                 Task { await insightService.generateInsight() }
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    AppColors.brand.opacity(0.65),
-                                    AppColors.brand.opacity(0.65)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 44, height: 44)
-                        .shadow(color: AppColors.brand.opacity(0.12), radius: 6, x: 0, y: 3)
-
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
-                }
+                headerIcon("sparkles")
             }
             .buttonStyle(.plain)
 
@@ -373,73 +359,68 @@ struct HomeView: View {
                 HapticService.impact(.light)
                 showWellnessCalendar = true
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    AppColors.brand.opacity(0.65),
-                                    AppColors.brand.opacity(0.65)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 44, height: 44)
-                        .shadow(color: AppColors.brand.opacity(0.12), radius: 6, x: 0, y: 3)
-
-                    Image(systemName: "calendar")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
-                }
+                headerIcon("calendar")
             }
             .buttonStyle(.plain)
+
+            // Symptom quick-log button
+            Button {
+                HapticService.impact(.light)
+                activeSheet = .symptomLog
+            } label: {
+                headerIcon("heart.text.square.fill")
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Log a symptom")
 
             // Journal history button
             Button {
                 HapticService.impact(.light)
                 showJournalHistory = true
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    AppColors.brand.opacity(0.65),
-                                    AppColors.brand.opacity(0.65)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 44, height: 44)
-                        .shadow(color: AppColors.brand.opacity(0.12), radius: 6, x: 0, y: 3)
-
-                    Image(systemName: "book.fill")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
-                }
+                headerIcon("book.fill")
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Journal history")
 
-            // Mood badge — visible only when mood is logged today
+            // Mood badge — visible only when mood is logged today (38pt to match icons)
             if hasLoggedMoodToday, let mood = selectedMood {
                 ZStack {
                     Circle()
                         .fill(Color(.systemBackground))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 38, height: 38)
                         .shadow(color: mood.accentColor.opacity(0.25), radius: 6, x: 0, y: 3)
 
                     Circle()
                         .stroke(mood.accentColor.opacity(0.35), lineWidth: 1.5)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 38, height: 38)
 
                     Text(mood.emoji)
-                        .font(.system(size: 22))
+                        .font(.system(size: 19))
                 }
                 .transition(.scale(scale: 0.6).combined(with: .opacity))
             }
+        }
+    }
+
+    // MARK: - Header Icon Helper (38pt, reduced from 44pt to fit 4 icons + badge)
+
+    @ViewBuilder
+    private func headerIcon(_ systemName: String) -> some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [AppColors.brand.opacity(0.65), AppColors.brand.opacity(0.65)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 38, height: 38)
+                .shadow(color: AppColors.brand.opacity(0.12), radius: 6, x: 0, y: 3)
+            Image(systemName: systemName)
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
         }
     }
 

@@ -44,6 +44,26 @@ enum StressWidgetSize: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - ProfileSheet
+
+enum ProfileSheet: Identifiable {
+    case widgetInstructions
+    case editName
+    case editWeight
+    case editHeight
+    case symptomLog
+
+    var id: String {
+        switch self {
+        case .widgetInstructions: return "widgetInstructions"
+        case .editName:           return "editName"
+        case .editWeight:         return "editWeight"
+        case .editHeight:         return "editHeight"
+        case .symptomLog:         return "symptomLog"
+        }
+    }
+}
+
 // MARK: - Profile View
 
 struct ProfilePlaceholderView: View {
@@ -51,11 +71,14 @@ struct ProfilePlaceholderView: View {
     @Query private var userGoalsList: [UserGoals]
     @State private var selectedSize: StressWidgetSize = .medium
     @State private var isWidgetInstalled            = false
-    @State private var showInstructions             = false
+    @State private var activeSheet: ProfileSheet?
     @State private var showGoals                    = false
-    @State private var showEditName                 = false
-    @State private var showEditWeight               = false
-    @State private var showEditHeight               = false
+    // Symptom state
+    @State private var showSymptomHistory           = false
+    @State private var showSymptomCorrelation       = false
+    @State private var selectedSymptomForCorrelation: String?
+    @Query(sort: \SymptomEntry.timestamp, order: .reverse) private var allSymptomEntries: [SymptomEntry]
+    @StateObject private var correlationEngine      = SymptomCorrelationEngine()
     @State private var editedName                   = UserProfileManager.shared.userName
     @State private var editedWeight                 = UserProfileManager.shared.weightKg
     @State private var editedHeight                 = UserProfileManager.shared.heightCm
@@ -106,12 +129,22 @@ struct ProfilePlaceholderView: View {
                     goalsSnapshotCard
                         .padding(.horizontal, 16)
 
+                    // ── Symptom tracking ─────────────────────
+                    symptomTrackingCard
+                        .padding(.horizontal, 16)
+
+                    // ── Symptom insights ──────────────────────
+                    if uniqueSymptomDays >= 7 {
+                        symptomInsightsCard
+                            .padding(.horizontal, 16)
+                    }
+
                     // ── Widget setup ─────────────────────────
                     WidgetSetupCard(
                         selectedSize: $selectedSize,
                         isInstalled: isWidgetInstalled,
                         namespace: sizeNamespace,
-                        onAddTapped: { showInstructions = true }
+                        onAddTapped: { activeSheet = .widgetInstructions }
                     )
                     .padding(.horizontal, 16)
 
@@ -148,25 +181,35 @@ struct ProfilePlaceholderView: View {
             .navigationDestination(isPresented: $showGoals) {
                 GoalsView(viewModel: GoalsViewModel(modelContext: modelContext))
             }
-            .sheet(isPresented: $showInstructions) {
-                WidgetInstructionsSheet(size: selectedSize)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
+            .navigationDestination(isPresented: $showSymptomHistory) {
+                SymptomHistoryView()
             }
-            .sheet(isPresented: $showEditName) {
-                editNameSheet
-                    .presentationDetents([.height(220)])
-                    .presentationDragIndicator(.visible)
+            .navigationDestination(isPresented: $showSymptomCorrelation) {
+                if let name = selectedSymptomForCorrelation {
+                    SymptomCorrelationView(symptomName: name, engine: correlationEngine)
+                }
             }
-            .sheet(isPresented: $showEditWeight) {
-                editWeightSheet
-                    .presentationDetents([.height(280)])
-                    .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $showEditHeight) {
-                editHeightSheet
-                    .presentationDetents([.height(280)])
-                    .presentationDragIndicator(.visible)
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .widgetInstructions:
+                    WidgetInstructionsSheet(size: selectedSize)
+                        .presentationDetents([.medium, .large])
+                        .presentationDragIndicator(.visible)
+                case .editName:
+                    editNameSheet
+                        .presentationDetents([.height(220)])
+                        .presentationDragIndicator(.visible)
+                case .editWeight:
+                    editWeightSheet
+                        .presentationDetents([.height(280)])
+                        .presentationDragIndicator(.visible)
+                case .editHeight:
+                    editHeightSheet
+                        .presentationDetents([.height(280)])
+                        .presentationDragIndicator(.visible)
+                case .symptomLog:
+                    SymptomLogSheet()
+                }
             }
         }
     }
@@ -301,7 +344,7 @@ struct ProfilePlaceholderView: View {
                 value: profile.userName.isEmpty ? "Not set" : profile.userName,
                 action: {
                     editedName = profile.userName
-                    showEditName = true
+                    activeSheet = .editName
                 }
             )
 
@@ -315,7 +358,7 @@ struct ProfilePlaceholderView: View {
                 action: {
                     editedWeight = profile.weightKg
                     editWeightUnit = profile.weightUnit
-                    showEditWeight = true
+                    activeSheet = .editWeight
                 }
             )
 
@@ -329,7 +372,7 @@ struct ProfilePlaceholderView: View {
                 action: {
                     editedHeight = profile.heightCm
                     editHeightUnit = profile.heightUnit
-                    showEditHeight = true
+                    activeSheet = .editHeight
                 }
             )
         }
@@ -502,13 +545,13 @@ struct ProfilePlaceholderView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         editedName = profile.userName
-                        showEditName = false
+                        activeSheet = nil
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         profile.userName = editedName
-                        showEditName = false
+                        activeSheet = nil
                     }
                     .fontWeight(.semibold)
                 }
@@ -563,14 +606,14 @@ struct ProfilePlaceholderView: View {
                     Button("Cancel") {
                         editedWeight = profile.weightKg
                         editWeightUnit = profile.weightUnit
-                        showEditWeight = false
+                        activeSheet = nil
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         profile.weightKg = editedWeight
                         profile.weightUnit = editWeightUnit
-                        showEditWeight = false
+                        activeSheet = nil
                     }
                     .fontWeight(.semibold)
                 }
@@ -636,19 +679,191 @@ struct ProfilePlaceholderView: View {
                     Button("Cancel") {
                         editedHeight = profile.heightCm
                         editHeightUnit = profile.heightUnit
-                        showEditHeight = false
+                        activeSheet = nil
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         profile.heightCm = editedHeight
                         profile.heightUnit = editHeightUnit
-                        showEditHeight = false
+                        activeSheet = nil
                     }
                     .fontWeight(.semibold)
                 }
             }
         }
+    }
+
+    // MARK: - Symptom Tracking Card
+
+    private var uniqueSymptomDays: Int {
+        Set(allSymptomEntries.map { $0.day }).count
+    }
+
+    private var topSymptomNames: [String] {
+        let counts = Dictionary(grouping: allSymptomEntries, by: \.name)
+            .mapValues(\.count)
+            .sorted { $0.value > $1.value }
+        return Array(counts.prefix(3).map(\.key))
+    }
+
+    private var symptomTrackingCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Header row
+            HStack {
+                Image(systemName: "heart.text.square.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(AppColors.brand)
+                Text("Symptom Tracking")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Button {
+                    HapticService.impact(.light)
+                    activeSheet = .symptomLog
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 13, weight: .bold))
+                        Text("Log")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle(AppColors.brand)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(AppColors.brand.opacity(0.12)))
+                }
+            }
+
+            // Recent entries
+            if allSymptomEntries.isEmpty {
+                Button {
+                    HapticService.impact(.light)
+                    activeSheet = .symptomLog
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(AppColors.brand)
+                        Text("Log your first symptom")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(AppColors.brand)
+                    }
+                }
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(allSymptomEntries.prefix(3)) { entry in
+                        HStack {
+                            Text(entry.name)
+                                .font(.system(size: 14, weight: .medium, design: .rounded))
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            severityPill(entry.severity)
+                            Text(relativeTimeString(for: entry.timestamp))
+                                .font(.system(size: 12, weight: .regular, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                Button {
+                    HapticService.impact(.light)
+                    showSymptomHistory = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("View History")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(AppColors.brand)
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 15, y: 5)
+        )
+    }
+
+    private var symptomInsightsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(AppColors.brand)
+                Text("Symptom Insights")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
+
+            VStack(spacing: 8) {
+                ForEach(topSymptomNames, id: \.self) { symptomName in
+                    // Show strongest correlation if available
+                    let corr = correlationEngine.correlations
+                        .filter { $0.symptomName == symptomName && $0.isSignificant }
+                        .max(by: { abs($0.spearmanR) < abs($1.spearmanR) })
+
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(symptomName)
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.primary)
+                            if let c = corr {
+                                Text("\(c.interpretation) with \(c.factorName)")
+                                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("Analysing patterns…")
+                                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                        Button {
+                            HapticService.impact(.light)
+                            selectedSymptomForCorrelation = symptomName
+                            showSymptomCorrelation = true
+                        } label: {
+                            Text("Details")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundStyle(AppColors.brand)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 15, y: 5)
+        )
+    }
+
+    private func severityPill(_ severity: Int) -> some View {
+        let color: Color = {
+            switch severity {
+            case 1...3: return Color(hue: 0.38, saturation: 0.58, brightness: 0.72)
+            case 4...6: return Color(hue: 0.14, saturation: 0.72, brightness: 0.95)
+            default:    return Color(hue: 0.00, saturation: 0.72, brightness: 0.85)
+            }
+        }()
+        return Text("\(severity)/10")
+            .font(.system(size: 11, weight: .bold, design: .rounded))
+            .foregroundStyle(color)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(color.opacity(0.12)))
+    }
+
+    private func relativeTimeString(for date: Date) -> String {
+        let diff = Date().timeIntervalSince(date)
+        if diff < 3600 { return "\(Int(diff / 60))m ago" }
+        if diff < 86400 { return "\(Int(diff / 3600))h ago" }
+        return "yesterday"
     }
 
     // MARK: - App Info Footer
@@ -1247,5 +1462,8 @@ private struct NutritionSourceDebugCard: View {
 #endif
 
 #Preview {
-    ProfilePlaceholderView()
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: SymptomEntry.self, UserGoals.self, configurations: config)
+    return ProfilePlaceholderView()
+        .modelContainer(container)
 }
