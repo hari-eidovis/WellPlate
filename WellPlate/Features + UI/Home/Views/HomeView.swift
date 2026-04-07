@@ -1,6 +1,20 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - HomeSheet
+
+enum HomeSheet: Identifiable {
+    case coffeeTypePicker
+    case journalEntry
+
+    var id: String {
+        switch self {
+        case .coffeeTypePicker: return "coffeeTypePicker"
+        case .journalEntry: return "journalEntry"
+        }
+    }
+}
+
 // MARK: - HomeView
 // Redesigned dashboard: header, wellness rings, quick log, mood check-in,
 // hydration, activity, and stress insight sections.
@@ -11,6 +25,7 @@ struct HomeView: View {
     @Query private var userGoalsList: [UserGoals]
     @Query(sort: \FoodLogEntry.createdAt, order: .forward) private var allFoodLogs: [FoodLogEntry]
     @Query private var allWellnessDayLogs: [WellnessDayLog]
+    @Query private var allJournalEntries: [JournalEntry]
 
     @Binding var selectedTab: Int
 
@@ -25,19 +40,28 @@ struct HomeView: View {
     @State private var showWaterDetail = false
     @State private var showCoffeeDetail = false
     @State private var showWellnessCalendar = false
-    @State private var showCoffeeTypePicker = false
+    @State private var activeSheet: HomeSheet?
     @State private var showCoffeeWaterAlert = false
     /// Handoff variable for the sheet→alert race-safe pattern.
-    /// Set by the picker closure, read by onChange(of: showCoffeeTypePicker).
+    /// Set by the picker closure, read by onChange(of: activeSheet).
     @State private var pendingCoffeeType: CoffeeType? = nil
     @State private var showAIInsight = false
     @State private var showBurnView = false
     @State private var dragLogProgress: CGFloat = 0
+    // Journal state
+    @State private var journalText: String = ""
+    @State private var hasJournaledToday = false
+    @State private var showJournalHistory = false
     @StateObject private var foodJournalViewModel = HomeViewModel()
     @StateObject private var insightService = StressInsightService()
+    @StateObject private var journalPromptService = JournalPromptService()
 
     private var currentGoals: UserGoals {
         userGoalsList.first ?? UserGoals.defaults()
+    }
+
+    private var todayJournalEntry: JournalEntry? {
+        allJournalEntries.first { Calendar.current.isDate($0.day, inSameDayAs: Date()) }
     }
 
     // MARK: - Body
@@ -83,10 +107,24 @@ struct HomeView: View {
 //                    )
 //                    .padding(.horizontal, 16)
 
-                    // 4. Mood Check-In
+                    // 4. Mood Check-In / Journal Reflection
                     if !hasLoggedMoodToday {
                         MoodCheckInCard(selectedMood: $selectedMood, suggestion: healthSuggestedMood)
                             .padding(.horizontal, 16)
+                    } else if !hasJournaledToday {
+                        JournalReflectionCard(
+                            prompt: journalPromptService.currentPrompt,
+                            promptCategory: journalPromptService.promptCategory,
+                            entryText: $journalText,
+                            onSave: saveJournalEntry,
+                            onWriteMore: { activeSheet = .journalEntry },
+                            isGeneratingPrompt: journalPromptService.isGenerating
+                        )
+                        .padding(.horizontal, 16)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .opacity
+                        ))
                     }
 
                     // 5. Hydration
@@ -173,6 +211,9 @@ struct HomeView: View {
             .navigationDestination(isPresented: $showAIInsight) {
                 HomeAIInsightView(insightService: insightService)
             }
+            .navigationDestination(isPresented: $showJournalHistory) {
+                JournalHistoryView()
+            }
             .navigationBarHidden(true)
         }
         .onAppear {
@@ -182,6 +223,7 @@ struct HomeView: View {
             refreshTodayMoodState()
             refreshTodayHydrationState()
             refreshTodayCoffeeState()
+            refreshTodayJournalState()
         }
         .onChange(of: showWaterDetail) { _, showing in
             if !showing { refreshTodayHydrationState() }
@@ -203,8 +245,8 @@ struct HomeView: View {
                     // First cup, no type chosen — show picker.
                     // Cup count is saved optimistically; type saved after picker selection.
                     updateCoffeeForToday(cups: newCups, type: nil)
-                    showCoffeeTypePicker = true
-                    // Water alert fires in onChange(of: showCoffeeTypePicker) after sheet closes.
+                    activeSheet = .coffeeTypePicker
+                    // Water alert fires in onChange(of: activeSheet) after sheet closes.
                 } else {
                     // Subsequent cup or type already known.
                     updateCoffeeForToday(cups: newCups, type: todayWellnessLog?.resolvedCoffeeType)
@@ -216,16 +258,31 @@ struct HomeView: View {
             }
         }
         // Race-safe: alert fires only after the sheet animation has fully completed.
-        .onChange(of: showCoffeeTypePicker) { _, isShowing in
-            guard !isShowing else { return }
-            if let type = pendingCoffeeType {
-                // User selected a type — save it and show the water alert.
-                pendingCoffeeType = nil
-                updateCoffeeForToday(cups: coffeeCups, type: type)
-                showCoffeeWaterAlert = true
-            } else {
-                // User swiped picker away without selecting — revert the cup increment.
-                coffeeCups = max(0, coffeeCups - 1)
+        // Also handles journal sheet dismissal.
+        .onChange(of: activeSheet) { old, new in
+            // Coffee picker just dismissed
+            if old == .coffeeTypePicker && new == nil {
+                if let type = pendingCoffeeType {
+                    pendingCoffeeType = nil
+                    updateCoffeeForToday(cups: coffeeCups, type: type)
+                    showCoffeeWaterAlert = true
+                } else {
+                    coffeeCups = max(0, coffeeCups - 1)
+                }
+            }
+            // Journal sheet just dismissed
+            if old == .journalEntry && new == nil {
+                refreshTodayJournalState()
+            }
+        }
+        .onChange(of: hasLoggedMoodToday) { _, logged in
+            if logged {
+                Task {
+                    await journalPromptService.generatePrompt(
+                        mood: selectedMood,
+                        stressLevel: todayWellnessLog?.stressLevel
+                    )
+                }
             }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -233,12 +290,25 @@ struct HomeView: View {
             refreshTodayMoodState()
             refreshTodayHydrationState()
             refreshTodayCoffeeState()
+            refreshTodayJournalState()
         }
-        // Coffee type picker sheet
-        .sheet(isPresented: $showCoffeeTypePicker) {
-            CoffeeTypePickerSheet { type in
-                pendingCoffeeType = type
-                showCoffeeTypePicker = false
+        // Consolidated sheet — coffee picker + journal entry
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .coffeeTypePicker:
+                CoffeeTypePickerSheet { type in
+                    pendingCoffeeType = type
+                    activeSheet = nil
+                }
+            case .journalEntry:
+                JournalEntryView(
+                    mood: selectedMood,
+                    stressLevel: todayWellnessLog?.stressLevel,
+                    entryText: $journalText,
+                    prompt: journalPromptService.currentPrompt,
+                    promptService: journalPromptService,
+                    onSave: saveJournalEntry
+                )
             }
         }
         // Water nudge alert after every coffee addition
@@ -324,6 +394,34 @@ struct HomeView: View {
                 }
             }
             .buttonStyle(.plain)
+
+            // Journal history button
+            Button {
+                HapticService.impact(.light)
+                showJournalHistory = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    AppColors.brand.opacity(0.65),
+                                    AppColors.brand.opacity(0.65)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+                        .shadow(color: AppColors.brand.opacity(0.12), radius: 6, x: 0, y: 3)
+
+                    Image(systemName: "book.fill")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Journal history")
 
             // Mood badge — visible only when mood is logged today
             if hasLoggedMoodToday, let mood = selectedMood {
@@ -590,6 +688,61 @@ struct HomeView: View {
         modelContext.insert(newLog)
         return newLog
     }
+
+    // MARK: - Journal
+
+    /// Restores journal state from SwiftData. Intentionally does NOT animate —
+    /// called from onAppear and scenePhase for state restore, not user interactions.
+    private func refreshTodayJournalState() {
+        if let entry = todayJournalEntry {
+            hasJournaledToday = true
+            journalText = entry.text
+        } else {
+            hasJournaledToday = false
+            journalText = ""
+        }
+        // If mood is already logged and no journal yet, generate a prompt
+        if hasLoggedMoodToday && !hasJournaledToday {
+            Task {
+                await journalPromptService.generatePrompt(
+                    mood: selectedMood,
+                    stressLevel: todayWellnessLog?.stressLevel
+                )
+            }
+        }
+    }
+
+    /// Saves today's journal entry. Uses withAnimation() so the card removal transition fires.
+    private func saveJournalEntry() {
+        let trimmed = journalText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        if let existing = todayJournalEntry {
+            existing.text = trimmed
+            existing.updatedAt = .now
+        } else {
+            let entry = JournalEntry(
+                day: Date(),
+                text: trimmed,
+                moodRaw: selectedMood?.rawValue,
+                promptUsed: journalPromptService.currentPrompt,
+                stressScore: nil
+            )
+            modelContext.insert(entry)
+        }
+
+        do {
+            try modelContext.save()
+            HapticService.notify(.success)
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                hasJournaledToday = true
+            }
+            activeSheet = nil // Dismiss journal sheet if open
+            WPLogger.home.info("Journal entry saved for today")
+        } catch {
+            WPLogger.home.error("Journal save failed: \(error.localizedDescription)")
+        }
+    }
 }
 
 // MARK: - Preview
@@ -597,7 +750,7 @@ struct HomeView: View {
 #Preview("Home Dashboard") {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(
-        for: FoodLogEntry.self, WellnessDayLog.self, UserGoals.self,
+        for: FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, JournalEntry.self,
         configurations: config
     )
     return HomeView(selectedTab: .constant(0))
