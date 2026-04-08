@@ -69,6 +69,7 @@ struct SighSessionView: View {
                 if !showComplete {
                     Button("Cancel") {
                         saveSession(completed: false)
+                        ActivityManager.shared.endBreathingActivity()
                         dismiss()
                     }
                     .font(.system(size: 15, weight: .medium))
@@ -79,11 +80,35 @@ struct SighSessionView: View {
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
             sessionStart = .now
+
+            // Start Live Activity before timer (so onPhaseStart can update it)
+            let sessionPhases = phases
+            let totalDuration = sessionPhases.map(\.duration).reduce(0, +)
+            ActivityManager.shared.startBreathingActivity(
+                sessionName: "Physiological Sigh",
+                totalSteps: 3,
+                stepLabel: "Cycle",
+                firstPhaseName: sessionPhases[0].name,
+                firstPhaseEndDate: Date().addingTimeInterval(sessionPhases[0].duration),
+                totalSessionDuration: totalDuration
+            )
+
+            timer.onPhaseStart = { phase in
+                let cycleNumber = (timer.currentPhaseIndex / 3) + 1
+                ActivityManager.shared.updateBreathingActivity(
+                    phaseName: phase.name,
+                    phaseEndDate: Date().addingTimeInterval(phase.duration),
+                    currentStep: cycleNumber,
+                    totalProgress: timer.totalProgress
+                )
+            }
+
             timer.onComplete = {
                 saveSession(completed: true)
+                ActivityManager.shared.endBreathingActivity()
                 withAnimation(.easeIn(duration: 0.3)) { showComplete = true }
             }
-            timer.start(phases: phases)
+            timer.start(phases: sessionPhases)
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false

@@ -325,26 +325,44 @@ struct FastingView: View {
         if let schedule {
             fastingService.configure(schedule: schedule, activeSession: activeSession)
             previousState = fastingService.currentState
+
+            // If fasting and no Live Activity running, start one (e.g. after app relaunch or first F7 use)
+            if fastingService.currentState.isFasting && !ActivityManager.shared.isFastingActivityActive {
+                if let session = activeSession {
+                    ActivityManager.shared.startFastingActivity(
+                        scheduleLabel: schedule.resolvedScheduleType.label + " Fast",
+                        fastStartDate: session.startedAt,
+                        targetEndDate: session.targetEndAt
+                    )
+                }
+            }
         }
     }
 
     private func handleStateTransition(from oldState: FastingState, to newState: FastingState) {
         guard let schedule else { return }
 
-        // Eating → Fasting: create new session
+        // Eating → Fasting: create new session + start Live Activity
         if oldState.isEating && newState.isFasting && activeSession == nil {
             let fastStart = fastingService.mostRecentEatWindowEnd(for: schedule)
             let fastEnd = fastingService.nextEatWindowStart(for: schedule)
             let session = FastingSession(startedAt: fastStart, targetEndAt: fastEnd,
                                          scheduleType: schedule.resolvedScheduleType)
             modelContext.insert(session)
+
+            ActivityManager.shared.startFastingActivity(
+                scheduleLabel: schedule.resolvedScheduleType.label + " Fast",
+                fastStartDate: fastStart,
+                targetEndDate: fastEnd
+            )
         }
 
-        // Fasting → Eating: complete active session
+        // Fasting → Eating: complete active session + end Live Activity
         if oldState.isFasting && newState.isEating, let session = activeSession {
             session.completed = true
             session.actualEndAt = .now
             HapticService.notify(.success)
+            ActivityManager.shared.endFastingActivity(completed: true)
         }
     }
 
@@ -352,6 +370,7 @@ struct FastingView: View {
         guard let session = activeSession else { return }
         session.completed = false
         session.actualEndAt = .now
+        ActivityManager.shared.endFastingActivity(completed: false)
     }
 
     // MARK: - Formatting
