@@ -282,4 +282,38 @@ final class HomeViewModel: ObservableObject {
         return "Failed to log food. Please try again."
     }
 
+    // MARK: - Yesterday Stats
+
+    struct YesterdayStats: Equatable {
+        var water: Int = 0
+        var coffee: Int = 0
+        var steps: Int = 0
+    }
+
+    @Published var yesterdayStats = YesterdayStats()
+
+    func loadYesterdayStats() {
+        guard let context = modelContext else { return }
+        let yesterday = Calendar.current.startOfDay(
+            for: Calendar.current.date(byAdding: .day, value: -1, to: .now) ?? .now
+        )
+        let fd = FetchDescriptor<WellnessDayLog>(
+            predicate: #Predicate { $0.day == yesterday }
+        )
+        if let log = (try? context.fetch(fd))?.first {
+            yesterdayStats = YesterdayStats(
+                water: log.waterGlasses,
+                coffee: log.coffeeCups,
+                steps: log.steps
+            )
+        } else {
+            yesterdayStats = YesterdayStats()
+        }
+    }
+
+    func prefillFromEntry(_ entry: FoodLogEntry) {
+        foodDescription = entry.foodName
+        servingSize = entry.servingSize ?? ""
+    }
+
 }

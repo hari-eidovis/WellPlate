@@ -18,9 +18,17 @@ final class JournalPromptService: ObservableObject {
     @Published var promptCategory: String?
     @Published var isGenerating: Bool = false
 
+    /// The calendar day for which the current prompt was generated.
+    private var promptDay: Date?
+
     // MARK: - Public API
 
     func generatePrompt(mood: MoodOption?, stressLevel: String?) async {
+        // Only generate once per calendar day — prevents shuffling on tab switches.
+        let today = Calendar.current.startOfDay(for: Date())
+        if let promptDay, promptDay == today, currentPrompt != nil {
+            return
+        }
         isGenerating = true
         defer { isGenerating = false }
 
@@ -28,6 +36,7 @@ final class JournalPromptService: ObservableObject {
             if let result = await generateWithFoundationModels(mood: mood, stressLevel: stressLevel) {
                 currentPrompt = result.prompt
                 promptCategory = result.category
+                promptDay = today
                 return
             }
         }
@@ -36,6 +45,7 @@ final class JournalPromptService: ObservableObject {
         let result = templatePrompt(mood: mood, stressLevel: stressLevel)
         currentPrompt = result.prompt
         promptCategory = result.category
+        promptDay = today
     }
 
     // MARK: - Foundation Models (iOS 26+)

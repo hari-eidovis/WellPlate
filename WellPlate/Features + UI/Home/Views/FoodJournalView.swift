@@ -18,6 +18,8 @@ struct FoodJournalView: View {
     @State private var showNotepad = false
     @State private var showVoice = false
     @State private var showBarcode = false
+    @State private var selectedMealEntry: FoodLogEntry?
+    @State private var showMealDetail = false
     @FocusState private var isTextEditorFocused: Bool
 
     init(viewModel: HomeViewModel) {
@@ -111,7 +113,11 @@ struct FoodJournalView: View {
                         foodLogs: foodLogsForSelectedDate,
                         isToday: Calendar.current.isDateInToday(selectedDate),
                         onDelete: deleteFoodEntry,
-                        onAddAgain: addAgain
+                        onAddAgain: addAgain,
+                        onTap: { entry in
+                            selectedMealEntry = entry
+                            showMealDetail = true
+                        }
                     )
                 }
                 .padding(.bottom, 100)
@@ -225,6 +231,15 @@ struct FoodJournalView: View {
         }
         .fullScreenCover(isPresented: $showProgressInsights) {
             ProgressInsightsView()
+        }
+        .navigationDestination(isPresented: $showMealDetail) {
+            if let entry = selectedMealEntry {
+                MealDetailView(
+                    entry: entry,
+                    onDelete: { deleteFoodEntry(entry) },
+                    onAddAgain: { addAgain(entry) }
+                )
+            }
         }
         .navigationDestination(isPresented: $showNotepad) {
             MealLogView(

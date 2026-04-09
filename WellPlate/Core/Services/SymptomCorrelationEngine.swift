@@ -109,13 +109,13 @@ final class SymptomCorrelationEngine: ObservableObject {
             } else {
                 // Compute off main actor
                 let (r, ciLow, ciHigh) = await Task.detached(priority: .userInitiated) {
-                    let r = Self.spearmanR(symptomValues, factorValues)
-                    let (lo, hi) = Self.bootstrapCI(symptomValues: symptomValues, factorValues: factorValues, iterations: 1000)
+                    let r = CorrelationMath.spearmanR(symptomValues, factorValues)
+                    let (lo, hi) = CorrelationMath.bootstrapCI(xValues: symptomValues, yValues: factorValues)
                     return (r, lo, hi)
                 }.value
 
                 let ciSpansZero = ciLow < 0 && ciHigh > 0
-                let interp = Self.interpretationLabel(r: r, ciSpansZero: ciSpansZero)
+                let interp = CorrelationMath.interpretationLabel(r: r, ciSpansZero: ciSpansZero)
 
                 results.append(SymptomCorrelation(
                     symptomName: symptomName,
@@ -141,83 +141,4 @@ final class SymptomCorrelationEngine: ObservableObject {
         correlations = results
     }
 
-    // MARK: - Spearman Rank Correlation
-
-    nonisolated private static func spearmanR(_ x: [Double], _ y: [Double]) -> Double {
-        guard x.count == y.count, x.count >= 2 else { return 0 }
-        let rx = ranks(of: x)
-        let ry = ranks(of: y)
-        return pearsonR(rx, ry)
-    }
-
-    nonisolated private static func ranks(of values: [Double]) -> [Double] {
-        let n = values.count
-        let indexed = values.enumerated().sorted { $0.element < $1.element }
-        var result = [Double](repeating: 0, count: n)
-
-        var i = 0
-        while i < n {
-            var j = i
-            // Find ties
-            while j < n - 1 && indexed[j].element == indexed[j + 1].element { j += 1 }
-            // Assign average rank (1-based)
-            let avgRank = Double(i + j) / 2.0 + 1.0
-            for k in i...j {
-                result[indexed[k].offset] = avgRank
-            }
-            i = j + 1
-        }
-        return result
-    }
-
-    nonisolated private static func pearsonR(_ x: [Double], _ y: [Double]) -> Double {
-        let n = Double(x.count)
-        let xBar = x.reduce(0, +) / n
-        let yBar = y.reduce(0, +) / n
-        let num = zip(x, y).reduce(0.0) { $0 + ($1.0 - xBar) * ($1.1 - yBar) }
-        let dxSq = x.reduce(0.0) { $0 + pow($1 - xBar, 2) }
-        let dySq = y.reduce(0.0) { $0 + pow($1 - yBar, 2) }
-        let denom = sqrt(dxSq * dySq)
-        guard denom > 0 else { return 0 }
-        return max(-1, min(1, num / denom))
-    }
-
-    // MARK: - Bootstrap CI (95%)
-
-    nonisolated private static func bootstrapCI(
-        symptomValues: [Double],
-        factorValues: [Double],
-        iterations: Int
-    ) -> (low: Double, high: Double) {
-        let pairs = Array(zip(symptomValues, factorValues))
-        let n = pairs.count
-        var rValues: [Double] = []
-        rValues.reserveCapacity(iterations)
-
-        for _ in 0..<iterations {
-            let sample = (0..<n).map { _ in pairs.randomElement()! }
-            let sX = sample.map(\.0)
-            let sY = sample.map(\.1)
-            rValues.append(spearmanR(sX, sY))
-        }
-
-        rValues.sort()
-        let lo = Int(Double(iterations) * 0.025) // 2.5th percentile → 95% CI
-        let hi = Int(Double(iterations) * 0.975) // 97.5th percentile
-        return (rValues[lo], rValues[hi])
-    }
-
-    // MARK: - Interpretation
-
-    nonisolated static func interpretationLabel(r: Double, ciSpansZero: Bool) -> String {
-        if ciSpansZero { return "No clear pattern (yet)" }
-        let direction = r > 0 ? "positive" : "negative"
-        let strength: String
-        switch abs(r) {
-        case 0..<0.3: strength = "weak"
-        case 0.3..<0.6: strength = "moderate"
-        default: strength = "strong"
-        }
-        return "\(strength) \(direction) association"
-    }
 }

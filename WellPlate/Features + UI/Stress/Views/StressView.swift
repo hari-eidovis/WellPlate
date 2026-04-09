@@ -39,6 +39,8 @@ enum StressSheet: Identifiable {
 
 struct StressView: View {
 
+    static let themeBlue = Color(hex: "5E9FFF")
+
     @StateObject var viewModel: StressViewModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var activeSheet: StressSheet? = nil
@@ -100,7 +102,7 @@ struct StressView: View {
                         } label: {
                             Image(systemName: "ellipsis.circle")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(viewModel.stressLevel.color)
+                                .foregroundStyle(Self.themeBlue)
                         }
                     }
                 }
@@ -112,7 +114,7 @@ struct StressView: View {
                         } label: {
                             Label("Insights", systemImage: "chart.bar.xaxis.ascending")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(viewModel.stressLevel.color)
+                                .foregroundStyle(Self.themeBlue)
                         }
                     }
                 }
@@ -217,8 +219,8 @@ struct StressView: View {
             Color(.systemGroupedBackground)
             LinearGradient(
                 colors: [
-                    viewModel.stressLevel.color.opacity(0.10),
-                    viewModel.stressLevel.color.opacity(0.03),
+                    Self.themeBlue.opacity(0.10),
+                    Self.themeBlue.opacity(0.03),
                     Color.clear
                 ],
                 startPoint: .top,
@@ -328,16 +330,16 @@ struct StressView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .tracking(0.2)
         }
-        .foregroundColor(viewModel.stressLevel.color)
+        .foregroundColor(Self.themeBlue)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(
             Capsule()
-                .fill(viewModel.stressLevel.color.opacity(0.14))
+                .fill(Self.themeBlue.opacity(0.14))
         )
         .overlay(
             Capsule()
-                .strokeBorder(viewModel.stressLevel.color.opacity(0.30), lineWidth: 1)
+                .strokeBorder(Self.themeBlue.opacity(0.30), lineWidth: 1)
         )
     }
 
@@ -446,25 +448,12 @@ struct StressView: View {
         return f.string(from: date)
     }
 
-    /// Teal (calm) → amber (moderate) → rust (stressed).
+    private static let chartBlue = Color(hex: "5E9FFF")
+
     private func weekDayColor(score: Double) -> Color {
         let t = min(max(score / 100.0, 0), 1)
-        if t <= 0.35 {
-            let local = t / 0.35
-            return Color(hue: 0.48,
-                         saturation: 0.32 + local * 0.22,
-                         brightness: 0.70 + local * 0.05)
-        } else if t <= 0.55 {
-            let local = (t - 0.35) / 0.20
-            return Color(hue: 0.48 - local * 0.36,
-                         saturation: 0.50 + local * 0.08,
-                         brightness: 0.74 - local * 0.02)
-        } else {
-            let local = (t - 0.55) / 0.45
-            return Color(hue: 0.12 - local * 0.11,
-                         saturation: 0.55 + local * 0.15,
-                         brightness: 0.72 - local * 0.10)
-        }
+        let opacity = 0.45 + t * 0.55
+        return Self.chartBlue.opacity(opacity)
     }
 
     // MARK: - Advice Card
@@ -870,7 +859,7 @@ struct StressView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.4)
-                .tint(viewModel.stressLevel.color)
+                .tint(Self.themeBlue)
             Text("Analyzing stress factors…")
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundColor(.secondary)

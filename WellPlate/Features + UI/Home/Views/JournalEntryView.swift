@@ -152,21 +152,6 @@ struct JournalEntryView: View {
                     .accessibilityLabel("Journal prompt: \(p)")
             }
 
-            Button(action: {
-                HapticService.impact(.light)
-                Task {
-                    await promptService.generatePrompt(mood: mood, stressLevel: stressLevel)
-                }
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 12, weight: .medium))
-                    Text("New prompt")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                }
-                .foregroundStyle(AppColors.brand.opacity(0.8))
-            }
-            .accessibilityLabel("Generate a new journal prompt")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)

@@ -21,6 +21,7 @@ final class WellnessCalendarViewModel: ObservableObject {
     @Published var foodEntries: [FoodLogEntry] = []
     @Published private(set) var healthKitActivity: DailyActivitySnapshot?
     @Published private(set) var isLoadingActivity: Bool = false
+    @Published private(set) var stressScore: Double?
 
     private var modelContext: ModelContext?
     private var activityTask: Task<Void, Never>?
@@ -65,6 +66,14 @@ final class WellnessCalendarViewModel: ObservableObject {
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         foodEntries = (try? ctx.fetch(foodDescriptor)) ?? []
+
+        // Fetch last StressReading for the day
+        let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+        let stressDescriptor = FetchDescriptor<StressReading>(
+            predicate: #Predicate { $0.timestamp >= startOfDay && $0.timestamp < nextDay },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        stressScore = (try? ctx.fetch(stressDescriptor))?.first?.score
 
         activityTask?.cancel()
         healthKitActivity = nil

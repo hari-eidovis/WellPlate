@@ -125,7 +125,6 @@ struct WellnessCalendarView: View {
                         HapticService.impact(.light)
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
                             viewModel.loadData(for: date)
-                            showCalendar = false
                         }
                     }
                 }
@@ -149,15 +148,16 @@ struct WellnessCalendarView: View {
             if let log = viewModel.dayLog {
                 hydrationCard(log)
                 activityCard(log)
-                stressCard(log)
             } else {
                 if viewModel.isLoadingActivity || viewModel.hasHealthKitActivityData {
                     activityCard(nil)
                 }
-                if !viewModel.isLoadingActivity && !viewModel.hasHealthKitActivityData && viewModel.foodEntries.isEmpty {
+                if !viewModel.isLoadingActivity && !viewModel.hasHealthKitActivityData && viewModel.foodEntries.isEmpty && viewModel.stressScore == nil {
                     emptyDayCard
                 }
             }
+
+            stressCard
 
             foodCard
         }
@@ -332,41 +332,37 @@ struct WellnessCalendarView: View {
 
     // MARK: - Stress Card
 
-    private func stressCard(_ log: WellnessDayLog) -> some View {
-        let stressColor: Color = {
-            switch log.stressLevel {
-            case "Excellent": return Color(hue: 0.38, saturation: 0.55, brightness: 0.75)
-            case "Good":      return Color(hue: 0.33, saturation: 0.50, brightness: 0.70)
-            case "Moderate":  return Color(hue: 0.12, saturation: 0.65, brightness: 0.90)
-            case "High":      return Color(hue: 0.06, saturation: 0.65, brightness: 0.85)
-            case "Very High": return Color(hue: 0.01, saturation: 0.70, brightness: 0.80)
-            default: return .secondary
-            }
-        }()
-
-        let stressEmoji: String = {
-            switch log.stressLevel {
-            case "Excellent": return "😌"
-            case "Good":      return "🙂"
-            case "Moderate":  return "😐"
-            case "High":      return "😰"
-            case "Very High": return "😱"
-            default: return "—"
-            }
-        }()
+    private var stressCard: some View {
+        let score = viewModel.stressScore
+        let level: StressLevel? = score.map { StressLevel(score: $0) }
+        let stressColor = level?.color ?? .secondary
 
         return detailCard(icon: "brain.head.profile", iconColor: stressColor, title: "Stress") {
-            if let level = log.stressLevel {
+            if let score, let level {
                 HStack(spacing: 14) {
-                    Text(stressEmoji)
-                        .font(.system(size: 36))
+                    // Numeric score gauge
+                    ZStack {
+                        Circle()
+                            .stroke(stressColor.opacity(0.18), lineWidth: 5)
+                            .frame(width: 52, height: 52)
+
+                        Circle()
+                            .trim(from: 0, to: min(score / 100, 1.0))
+                            .stroke(stressColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                            .frame(width: 52, height: 52)
+                            .rotationEffect(.degrees(-90))
+
+                        Text("\(Int(score))")
+                            .font(.system(size: 18, weight: .heavy, design: .rounded))
+                            .foregroundStyle(stressColor)
+                    }
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(level)
+                        Text(level.label)
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundStyle(stressColor)
 
-                        Text(stressTip(for: level))
+                        Text(level.encouragementText)
                             .font(.system(size: 13, weight: .regular, design: .rounded))
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
@@ -382,17 +378,6 @@ struct WellnessCalendarView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-        }
-    }
-
-    private func stressTip(for level: String) -> String {
-        switch level {
-        case "Excellent": return "Great work! Keep your calm routine going 🧘"
-        case "Good":      return "You're doing well — stay consistent!"
-        case "Moderate":  return "Consider a short breathing exercise to unwind"
-        case "High":      return "High stress detected — try a walk or meditation 💆"
-        case "Very High": return "Take a break — prioritize rest and self-care"
-        default: return ""
         }
     }
 

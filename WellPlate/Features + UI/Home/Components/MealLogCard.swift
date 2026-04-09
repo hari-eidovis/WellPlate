@@ -5,6 +5,7 @@ struct MealLogCard: View {
     let isToday: Bool
     var onDelete: (FoodLogEntry) -> Void
     var onAddAgain: (FoodLogEntry) -> Void
+    var onTap: ((FoodLogEntry) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -44,35 +45,42 @@ struct MealLogCard: View {
     // MARK: - Meal List Card
 
     private var mealList: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(foodLogs.enumerated()), id: \.element.id) { index, entry in
-                mealRow(entry: entry)
-                    .contextMenu {
-                        Button {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 0) {
+                ForEach(Array(foodLogs.enumerated()), id: \.element.id) { index, entry in
+                    mealRow(entry: entry)
+                        .onTapGesture {
                             HapticService.impact(.light)
-                            onAddAgain(entry)
-                        } label: {
-                            Label("Add Again", systemImage: "plus.circle.fill")
+                            onTap?(entry)
                         }
-                        Divider()
-                        Button(role: .destructive) {
-                            onDelete(entry)
-                        } label: {
-                            Label("Delete", systemImage: "trash.fill")
+                        .contextMenu {
+                            Button {
+                                HapticService.impact(.light)
+                                onAddAgain(entry)
+                            } label: {
+                                Label("Add Again", systemImage: "plus.circle.fill")
+                            }
+                            Divider()
+                            Button(role: .destructive) {
+                                onDelete(entry)
+                            } label: {
+                                Label("Delete", systemImage: "trash.fill")
+                            }
                         }
-                    }
 
-                if index < foodLogs.count - 1 {
-                    Divider()
-                        .padding(.leading, 60)
+                    if index < foodLogs.count - 1 {
+                        Divider()
+                            .padding(.leading, 60)
+                    }
                 }
             }
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(.systemBackground))
+                    .appShadow(radius: 15, y: 5)
+            )
         }
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
+        .frame(maxHeight: 360)
         .padding(.horizontal, 16)
     }
 
@@ -132,13 +140,6 @@ struct MealLogCard: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .contentShape(Rectangle())
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            Button(role: .destructive) {
-                onDelete(entry)
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
     }
 
     // MARK: - Macro Pill

@@ -53,14 +53,14 @@ struct HomeView: View {
     /// Handoff variable for the sheet→alert race-safe pattern.
     /// Set by the picker closure, read by onChange(of: activeSheet).
     @State private var pendingCoffeeType: CoffeeType? = nil
-    @State private var showAIInsight = false
+    @State private var showInsightsHub = false
     @State private var showBurnView = false
     // Journal state
     @State private var journalText: String = ""
     @State private var hasJournaledToday = false
     @State private var showJournalHistory = false
     @StateObject private var foodJournalViewModel = HomeViewModel()
-    @StateObject private var insightService = StressInsightService()
+    @StateObject private var insightEngine = InsightEngine()
     @StateObject private var journalPromptService = JournalPromptService()
 
     private var currentGoals: UserGoals {
@@ -124,8 +124,6 @@ struct HomeView: View {
                         JournalReflectionCard(
                             prompt: journalPromptService.currentPrompt,
                             promptCategory: journalPromptService.promptCategory,
-                            entryText: $journalText,
-                            onSave: saveJournalEntry,
                             onWriteMore: { activeSheet = .journalEntry },
                             isGeneratingPrompt: journalPromptService.isGenerating
                         )
@@ -136,7 +134,7 @@ struct HomeView: View {
                         ))
                     }
 
-                    // 4. Quick Stats (Water + Coffee + Activity)
+                    // 4. Quick Stats (Water + Coffee — Liquid Gauge tiles)
                     QuickStatsRow(
                         hydrationGlasses: $hydrationGlasses,
                         hydrationGoal: currentGoals.waterDailyCups,
@@ -145,22 +143,21 @@ struct HomeView: View {
                         coffeeType: todayWellnessLog?.resolvedCoffeeType,
                         yesterdayWater: foodJournalViewModel.yesterdayStats.water,
                         yesterdayCoffee: foodJournalViewModel.yesterdayStats.coffee,
+                        cupSizeML: currentGoals.waterCupSizeML,
                         onWaterTap: { showWaterDetail = true },
                         onCoffeeTap: { showCoffeeDetail = true },
-                        onCoffeeFirstCup: { activeSheet = .coffeeTypePicker }
+                        onCoffeeFirstCup: { activeSheet = .coffeeTypePicker },
+                        onCoffeeAdded: { showCoffeeWaterAlert = true }
                     )
 
-                    // (future 6. Activity — commented out)
-//                    ActivityCard.sample()
-//                        .padding(.horizontal, 16)
-
-                    // (future 7. Stress Insight — commented out)
-//                    StressInsightCard(
-//                        stressLevel: "Low",
-//                        tip: "Try a 5-min breathing exercise to stay centered 🧘",
-//                        onStart: { /* TODO: navigate to stress / breathing */ }
-//                    )
-//                    .padding(.horizontal, 16)
+                    // 5. Daily AI Insight
+                    DailyInsightCard(
+                        card: insightEngine.dailyInsight,
+                        isGenerating: insightEngine.isGenerating
+                    ) {
+                        showInsightsHub = true
+                    }
+                    .padding(.horizontal, 16)
                 }
                 .padding(.bottom, 32)
               }
@@ -189,12 +186,16 @@ struct HomeView: View {
                         // RESOLVED: M8 — wasFirst pattern: increment BEFORE triggering picker
                         let wasFirst = coffeeCups == 0 && todayWellnessLog?.coffeeType == nil
                         coffeeCups += 1
-                        if wasFirst { activeSheet = .coffeeTypePicker }
+                        if wasFirst {
+                            activeSheet = .coffeeTypePicker
+                        } else {
+                            showCoffeeWaterAlert = true
+                        }
                     },
                     onStressTab: { selectedTab = 1 },
                     onSeeInsight: {
-                        showAIInsight = true
-                        Task { await insightService.generateInsight() }
+                        showInsightsHub = true
+                        Task { await insightEngine.generateInsights() }
                     },
                     onLogSymptom: {
                         HapticService.impact(.light)
@@ -227,8 +228,8 @@ struct HomeView: View {
             .navigationDestination(isPresented: $showWellnessCalendar) {
                 WellnessCalendarView()
             }
-            .navigationDestination(isPresented: $showAIInsight) {
-                HomeAIInsightView(insightService: insightService)
+            .navigationDestination(isPresented: $showInsightsHub) {
+                InsightsHubView(engine: insightEngine)
             }
             .navigationDestination(isPresented: $showJournalHistory) {
                 JournalHistoryView()
@@ -238,7 +239,8 @@ struct HomeView: View {
         .onAppear {
             // Inject the model context into the VM once the environment is available.
             foodJournalViewModel.bindContext(modelContext)
-            insightService.bindContext(modelContext)
+            insightEngine.bindContext(modelContext)
+            Task { await insightEngine.generateInsights() }
             refreshTodayMoodState()
             refreshTodayHydrationState()
             refreshTodayCoffeeState()
@@ -259,25 +261,11 @@ struct HomeView: View {
         .onChange(of: hydrationGlasses) { _, cups in
             updateHydrationForToday(cups)
         }
-        .onChange(of: coffeeCups) { oldCups, newCups in
+        .onChange(of: coffeeCups) { _, newCups in
             guard hasCoffeeStateLoaded else { return }
-            if newCups > oldCups {
-                // Addition path
-                if newCups == 1 && todayWellnessLog?.coffeeType == nil {
-                    // First cup, no type chosen — show picker.
-                    // Cup count is saved optimistically; type saved after picker selection.
-                    updateCoffeeForToday(cups: newCups, type: nil)
-                    activeSheet = .coffeeTypePicker
-                    // Water alert fires in onChange(of: activeSheet) after sheet closes.
-                } else {
-                    // Subsequent cup or type already known.
-                    updateCoffeeForToday(cups: newCups, type: todayWellnessLog?.resolvedCoffeeType)
-                    showCoffeeWaterAlert = true
-                }
-            } else {
-                // Decrement — persist only, no water alert.
-                updateCoffeeForToday(cups: newCups, type: todayWellnessLog?.resolvedCoffeeType)
-            }
+            // Persistence only — water alert is triggered directly by user-action closures,
+            // not here, to avoid spurious alerts during state restoration (onAppear / scenePhase).
+            updateCoffeeForToday(cups: newCups, type: todayWellnessLog?.resolvedCoffeeType)
         }
         // Race-safe: alert fires only after the sheet animation has fully completed.
         // Also handles journal sheet dismissal.
@@ -367,8 +355,8 @@ struct HomeView: View {
             // AI Insights button
             Button {
                 HapticService.impact(.light)
-                showAIInsight = true
-                Task { await insightService.generateInsight() }
+                showInsightsHub = true
+                Task { await insightEngine.generateInsights() }
             } label: {
                 headerIcon("sparkles")
             }

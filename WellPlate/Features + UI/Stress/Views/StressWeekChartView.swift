@@ -3,7 +3,7 @@
 //  WellPlate
 //
 //  7-day stress trend — gradient capsule bars with trend line overlay,
-//  score annotations, and teal → amber → rust color palette.
+//  score annotations, and blue color palette.
 //
 
 import SwiftUI
@@ -222,32 +222,17 @@ struct StressWeekChartView: View {
         .animation(.easeOut(duration: 0.18), value: selectedDay?.id)
     }
 
-    // MARK: - Chart Color Palette
+    // MARK: - Chart Color
 
-    /// Teal (calm) → amber (moderate) → rust (stressed).
+    private static let chartBlue = Color(hex: "5E9FFF")
+
     private func barColor(for avg: Double, isToday: Bool) -> Color {
         guard avg > 0 else {
             return Color.secondary.opacity(isToday ? 0.18 : 0.10)
         }
         let t = min(max(avg / 100.0, 0), 1)
-        let boost: Double = isToday ? 0.06 : 0
-
-        if t <= 0.35 {
-            let local = t / 0.35
-            return Color(hue: 0.48,
-                         saturation: 0.32 + local * 0.22 + boost,
-                         brightness: 0.70 + local * 0.05 + boost)
-        } else if t <= 0.55 {
-            let local = (t - 0.35) / 0.20
-            return Color(hue: 0.48 - local * 0.36,
-                         saturation: 0.50 + local * 0.08 + boost,
-                         brightness: 0.74 - local * 0.02 + boost)
-        } else {
-            let local = (t - 0.55) / 0.45
-            return Color(hue: 0.12 - local * 0.11,
-                         saturation: 0.55 + local * 0.15 + boost,
-                         brightness: 0.72 - local * 0.10 + boost)
-        }
+        let opacity = 0.45 + t * 0.55 + (isToday ? 0.0 : -0.08)
+        return Self.chartBlue.opacity(opacity)
     }
 
     // MARK: - Helpers

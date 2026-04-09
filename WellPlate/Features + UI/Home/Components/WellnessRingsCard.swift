@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Ring Destination
 
-enum WellnessRingDestination: Identifiable {
+enum WellnessRingDestination: Identifiable, Hashable {
     case calories, water, exercise, stress
     var id: Self { self }
 }
@@ -26,6 +26,7 @@ struct WellnessRingsCard: View {
 
     let rings: [WellnessRingItem]
     let completionPercent: Int
+    var deltaValues: [WellnessRingDestination: Int]? = nil
     var onRingTap: (WellnessRingDestination) -> Void = { _ in }
 
     @State private var animate = false
@@ -51,7 +52,11 @@ struct WellnessRingsCard: View {
             // Rings row
             HStack(spacing: 0) {
                 ForEach(rings) { ring in
-                    WellnessRingButton(ring: ring, animate: animate) {
+                    WellnessRingButton(
+                        ring: ring,
+                        animate: animate,
+                        deltaValue: deltaValues?[ring.destination]
+                    ) {
                         HapticService.impact(.light)
                         onRingTap(ring.destination)
                     }
@@ -79,6 +84,7 @@ private struct WellnessRingButton: View {
 
     let ring: WellnessRingItem
     let animate: Bool
+    let deltaValue: Int?
     let action: () -> Void
 
     @State private var isPressed = false
@@ -135,6 +141,24 @@ private struct WellnessRingButton: View {
                     Text(ring.sublabel)
                         .font(.system(size: 8, weight: .regular, design: .rounded))
                         .foregroundStyle(.secondary)
+                }
+
+                Group {
+                    if let delta = deltaValue, delta != 0 {
+                        let positive = delta > 0
+                        let text = positive ? "Δ +\(delta)" : "Δ \(delta)"
+                        Text(text)
+                            .font(.system(size: 8, weight: .semibold, design: .rounded))
+                            .foregroundStyle(positive ? AppColors.success : AppColors.warning)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill((positive ? AppColors.success : AppColors.warning).opacity(0.12))
+                            )
+                    } else {
+                        Color.clear.frame(height: 14)
+                    }
                 }
             }
         }

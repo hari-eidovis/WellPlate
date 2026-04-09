@@ -9,12 +9,8 @@ import SwiftUI
 struct JournalReflectionCard: View {
     let prompt: String?
     let promptCategory: String?
-    @Binding var entryText: String
-    var onSave: () -> Void
     var onWriteMore: () -> Void
     var isGeneratingPrompt: Bool
-
-    @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -61,57 +57,29 @@ struct JournalReflectionCard: View {
                 }
             }
 
-            // Text field
-            TextField("Write something...", text: $entryText, axis: .vertical)
-                .font(.system(size: 15, weight: .regular, design: .rounded))
-                .lineLimit(2...4)
-                .focused($isTextFieldFocused)
+            // Tappable text field placeholder — navigates to expanded view
+            Button(action: {
+                HapticService.impact(.light)
+                onWriteMore()
+            }) {
+                HStack {
+                    Text("Write something...")
+                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .foregroundStyle(Color(.placeholderText))
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(AppColors.brand.opacity(0.6))
+                }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(Color(.secondarySystemBackground))
                 )
-
-            // Actions
-            HStack {
-                Button(action: {
-                    HapticService.impact(.light)
-                    isTextFieldFocused = false
-                    onSave()
-                }) {
-                    Text("Save")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 9)
-                        .background(
-                            Capsule().fill(entryText.trimmingCharacters(in: .whitespaces).isEmpty
-                                ? AppColors.brand.opacity(0.4)
-                                : AppColors.brand)
-                        )
-                }
-                .disabled(entryText.trimmingCharacters(in: .whitespaces).isEmpty)
-                .accessibilityLabel("Save journal entry")
-
-                Spacer()
-
-                Button(action: {
-                    HapticService.impact(.light)
-                    isTextFieldFocused = false
-                    onWriteMore()
-                }) {
-                    HStack(spacing: 4) {
-                        Text("Write more")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundStyle(AppColors.brand)
-                }
-                .accessibilityLabel("Open full journal editor")
-                .accessibilityHint("Write a longer entry")
             }
+            .accessibilityLabel("Open full journal editor")
+            .accessibilityHint("Tap to write your reflection")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 22)
@@ -153,43 +121,27 @@ struct JournalReflectionCard: View {
 // MARK: - Preview
 
 #Preview("Journal Reflection Card") {
-    struct PreviewWrapper: View {
-        @State private var text = ""
-        var body: some View {
-            ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
-                JournalReflectionCard(
-                    prompt: "What's one thing you're grateful for right now?",
-                    promptCategory: "gratitude",
-                    entryText: $text,
-                    onSave: {},
-                    onWriteMore: {},
-                    isGeneratingPrompt: false
-                )
-                .padding(.horizontal, 16)
-            }
-        }
+    ZStack {
+        Color(.systemGroupedBackground).ignoresSafeArea()
+        JournalReflectionCard(
+            prompt: "What's one thing you're grateful for right now?",
+            promptCategory: "gratitude",
+            onWriteMore: {},
+            isGeneratingPrompt: false
+        )
+        .padding(.horizontal, 16)
     }
-    return PreviewWrapper()
 }
 
 #Preview("Loading state") {
-    struct PreviewWrapper: View {
-        @State private var text = ""
-        var body: some View {
-            ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
-                JournalReflectionCard(
-                    prompt: nil,
-                    promptCategory: nil,
-                    entryText: $text,
-                    onSave: {},
-                    onWriteMore: {},
-                    isGeneratingPrompt: true
-                )
-                .padding(.horizontal, 16)
-            }
-        }
+    ZStack {
+        Color(.systemGroupedBackground).ignoresSafeArea()
+        JournalReflectionCard(
+            prompt: nil,
+            promptCategory: nil,
+            onWriteMore: {},
+            isGeneratingPrompt: true
+        )
+        .padding(.horizontal, 16)
     }
-    return PreviewWrapper()
 }

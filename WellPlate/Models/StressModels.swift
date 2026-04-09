@@ -38,12 +38,13 @@ enum StressLevel: String, CaseIterable {
 //        }
 //    }
     var color: Color {
+        let blue = Color(hex: "5E9FFF")
         switch self {
-        case .excellent: return Color.primary.opacity(0.45)  // near-neutral, calm
-        case .good:      return Color.primary.opacity(0.55)  // slightly denser
-        case .moderate:  return Color(hue: 0.12, saturation: 0.55, brightness: 0.72) // amber
-        case .high:      return Color(hue: 0.06, saturation: 0.60, brightness: 0.70) // terracotta
-        case .veryHigh:  return Color(hue: 0.01, saturation: 0.65, brightness: 0.65) // rust
+        case .excellent: return blue.opacity(0.45)
+        case .good:      return blue.opacity(0.58)
+        case .moderate:  return blue.opacity(0.72)
+        case .high:      return blue.opacity(0.86)
+        case .veryHigh:  return blue
         }
     }
 

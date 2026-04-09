@@ -3,7 +3,7 @@
 //  WellPlate
 //
 //  Intraday stress rhythm — gradient area chart with zone indicators,
-//  rich color palette (teal → amber → rust), and interactive scrub tooltip.
+//  blue color palette, and interactive scrub tooltip.
 //
 
 import SwiftUI
@@ -111,12 +111,12 @@ struct StressDayChartView: View {
         Chart {
             // ── Zone boundary: moderate threshold ──
             RuleMark(y: .value("Zone", 40))
-                .foregroundStyle(Color.orange.opacity(0.12))
+                .foregroundStyle(Self.chartBlue.opacity(0.15))
                 .lineStyle(StrokeStyle(lineWidth: 0.5, dash: [5, 5]))
 
             // ── Zone boundary: high threshold ──
             RuleMark(y: .value("Zone-Hi", 70))
-                .foregroundStyle(Color.red.opacity(0.10))
+                .foregroundStyle(Self.chartBlue.opacity(0.25))
                 .lineStyle(StrokeStyle(lineWidth: 0.5, dash: [5, 5]))
 
             // ── Day average line ──
@@ -274,28 +274,15 @@ struct StressDayChartView: View {
         .padding(.vertical, 36)
     }
 
-    // MARK: - Chart Color Palette
+    // MARK: - Chart Color
 
-    /// Teal (calm) → amber (moderate) → rust (stressed).
-    /// Gives low-stress readings a distinctive color instead of neutral gray.
+    private static let chartBlue = Color(hex: "5E9FFF")
+
     private func chartColor(for score: Double) -> Color {
         let t = min(max(score / 100.0, 0), 1)
-        if t <= 0.35 {
-            let local = t / 0.35
-            return Color(hue: 0.48,
-                         saturation: 0.32 + local * 0.22,
-                         brightness: 0.70 + local * 0.05)
-        } else if t <= 0.55 {
-            let local = (t - 0.35) / 0.20
-            return Color(hue: 0.48 - local * 0.36,
-                         saturation: 0.50 + local * 0.08,
-                         brightness: 0.74 - local * 0.02)
-        } else {
-            let local = (t - 0.55) / 0.45
-            return Color(hue: 0.12 - local * 0.11,
-                         saturation: 0.55 + local * 0.15,
-                         brightness: 0.72 - local * 0.10)
-        }
+        // Higher stress → more saturated/opaque blue
+        let opacity = 0.45 + t * 0.55
+        return Self.chartBlue.opacity(opacity)
     }
 
     // MARK: - Helpers
