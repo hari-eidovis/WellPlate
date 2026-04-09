@@ -42,14 +42,19 @@ struct HomeView: View {
     @State private var showWaterDetail = false
     @State private var showCoffeeDetail = false
     @State private var showWellnessCalendar = false
+    // TODO: F-next — re-home WellnessCalendarView to Profile tab.
+    // The calendar button has been removed from the header as of the Home Screen UX Update.
+    // This state and its .navigationDestination are kept as dead code to avoid touching the
+    // navigation chain. Remove both when the Profile tab relocation is implemented.
     @State private var activeSheet: HomeSheet?
     @State private var showCoffeeWaterAlert = false
+    /// Guards against onChange(of: coffeeCups) firing during initial state restoration.
+    @State private var hasCoffeeStateLoaded = false
     /// Handoff variable for the sheet→alert race-safe pattern.
     /// Set by the picker closure, read by onChange(of: activeSheet).
     @State private var pendingCoffeeType: CoffeeType? = nil
     @State private var showAIInsight = false
     @State private var showBurnView = false
-    @State private var dragLogProgress: CGFloat = 0
     // Journal state
     @State private var journalText: String = ""
     @State private var hasJournaledToday = false
@@ -70,6 +75,7 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
+            // ZStack kept intentionally — reserved for future overlay layers (e.g., confetti on goalsCelebration)
             ZStack {
               ScrollView {
                 LazyVStack(spacing: 16) {
@@ -83,6 +89,7 @@ struct HomeView: View {
                     WellnessRingsCard(
                         rings: wellnessRings,
                         completionPercent: wellnessCompletionPercent,
+                        deltaValues: wellnessDeltaValues,
                         onRingTap: { destination in
                             switch destination {
                             case .calories: showLogMeal = true
@@ -94,7 +101,7 @@ struct HomeView: View {
                     )
                     .padding(.horizontal, 16)
 
-                    // 3. Quick Log
+                    // (3. Quick Log — commented out, kept for future reference)
 //                    QuickLogSection(
 //                        showsMoodLog: !hasLoggedMoodToday,
 //                        waterGoalReached: hydrationGlasses >= currentGoals.waterDailyCups,
@@ -109,7 +116,7 @@ struct HomeView: View {
 //                    )
 //                    .padding(.horizontal, 16)
 
-                    // 4. Mood Check-In / Journal Reflection
+                    // 3. Mood Check-In / Journal Reflection
                     if !hasLoggedMoodToday {
                         MoodCheckInCard(selectedMood: $selectedMood, suggestion: healthSuggestedMood)
                             .padding(.horizontal, 16)
@@ -129,29 +136,25 @@ struct HomeView: View {
                         ))
                     }
 
-                    // 5. Hydration
-                    HydrationCard(
-                        glassesConsumed: $hydrationGlasses,
-                        totalGlasses: currentGoals.waterDailyCups,
-                        cupSizeML: currentGoals.waterCupSizeML,
-                        onTap: { showWaterDetail = true }
-                    )
-                    .padding(.horizontal, 16)
-
-                    // 6. Coffee
-                    CoffeeCard(
-                        cupsConsumed: $coffeeCups,
-                        totalCups: currentGoals.coffeeDailyCups,
+                    // 4. Quick Stats (Water + Coffee + Activity)
+                    QuickStatsRow(
+                        hydrationGlasses: $hydrationGlasses,
+                        hydrationGoal: currentGoals.waterDailyCups,
+                        coffeeCups: $coffeeCups,
+                        coffeeGoal: currentGoals.coffeeDailyCups,
                         coffeeType: todayWellnessLog?.resolvedCoffeeType,
-                        onTap: { showCoffeeDetail = true }
+                        yesterdayWater: foodJournalViewModel.yesterdayStats.water,
+                        yesterdayCoffee: foodJournalViewModel.yesterdayStats.coffee,
+                        onWaterTap: { showWaterDetail = true },
+                        onCoffeeTap: { showCoffeeDetail = true },
+                        onCoffeeFirstCup: { activeSheet = .coffeeTypePicker }
                     )
-                    .padding(.horizontal, 16)
 
-                    // 7. Activity
+                    // (future 6. Activity — commented out)
 //                    ActivityCard.sample()
 //                        .padding(.horizontal, 16)
 
-                    // 7. Stress Insight
+                    // (future 7. Stress Insight — commented out)
 //                    StressInsightCard(
 //                        stressLevel: "Low",
 //                        tip: "Try a 5-min breathing exercise to stay centered 🧘",
@@ -161,12 +164,6 @@ struct HomeView: View {
                 }
                 .padding(.bottom, 32)
               }
-              .blur(radius: dragLogProgress * 14)
-              .overlay(
-                  Color.black.opacity(dragLogProgress * 0.25)
-                      .ignoresSafeArea()
-                      .allowsHitTesting(false)
-              )
             }
             .simultaneousGesture(
                 DragGesture(minimumDistance: 20)
@@ -181,9 +178,29 @@ struct HomeView: View {
                     }
             )
             .safeAreaInset(edge: .bottom) {
-                DragToLogOverlay(onTrigger: {
-                    showLogMeal = true
-                }, dragProgress: $dragLogProgress)
+                ContextualActionBar(
+                    state: contextualBarState,
+                    onLogMeal: { showLogMeal = true },
+                    onAddWater: {
+                        guard hydrationGlasses < currentGoals.waterDailyCups else { return }
+                        hydrationGlasses += 1
+                    },
+                    onAddCoffee: {
+                        // RESOLVED: M8 — wasFirst pattern: increment BEFORE triggering picker
+                        let wasFirst = coffeeCups == 0 && todayWellnessLog?.coffeeType == nil
+                        coffeeCups += 1
+                        if wasFirst { activeSheet = .coffeeTypePicker }
+                    },
+                    onStressTab: { selectedTab = 1 },
+                    onSeeInsight: {
+                        showAIInsight = true
+                        Task { await insightService.generateInsight() }
+                    },
+                    onLogSymptom: {
+                        HapticService.impact(.light)
+                        activeSheet = .symptomLog
+                    }
+                )
                 .padding(.bottom, 4)
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
@@ -225,7 +242,9 @@ struct HomeView: View {
             refreshTodayMoodState()
             refreshTodayHydrationState()
             refreshTodayCoffeeState()
+            hasCoffeeStateLoaded = true
             refreshTodayJournalState()
+            foodJournalViewModel.loadYesterdayStats()
         }
         .onChange(of: showWaterDetail) { _, showing in
             if !showing { refreshTodayHydrationState() }
@@ -241,6 +260,7 @@ struct HomeView: View {
             updateHydrationForToday(cups)
         }
         .onChange(of: coffeeCups) { oldCups, newCups in
+            guard hasCoffeeStateLoaded else { return }
             if newCups > oldCups {
                 // Addition path
                 if newCups == 1 && todayWellnessLog?.coffeeType == nil {
@@ -354,25 +374,6 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
 
-            // Calendar button
-            Button {
-                HapticService.impact(.light)
-                showWellnessCalendar = true
-            } label: {
-                headerIcon("calendar")
-            }
-            .buttonStyle(.plain)
-
-            // Symptom quick-log button
-            Button {
-                HapticService.impact(.light)
-                activeSheet = .symptomLog
-            } label: {
-                headerIcon("heart.text.square.fill")
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Log a symptom")
-
             // Journal history button
             Button {
                 HapticService.impact(.light)
@@ -403,7 +404,7 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Header Icon Helper (38pt, reduced from 44pt to fit 4 icons + badge)
+    // MARK: - Header Icon Helper (38pt — 2 icons + optional mood badge)
 
     @ViewBuilder
     private func headerIcon(_ systemName: String) -> some View {
@@ -436,6 +437,99 @@ struct HomeView: View {
 
     private var todayCalories: Int {
         allFoodLogs.filter { $0.day == todayStart }.reduce(0) { $0 + $1.calories }
+    }
+
+    /// Today's food log entries, filtered from the `@Query` result.
+    /// Used by MealLogCard and contextualBarState.
+    // RESOLVED: M7 — using $0.day == todayStart for consistency with the existing todayCalories
+    // pattern in HomeView. Direct equality avoids a Calendar call on every element.
+    private var todayFoodLogs: [FoodLogEntry] {
+        allFoodLogs.filter { $0.day == todayStart }
+    }
+
+    /// Pure computed property. Evaluated on every body call.
+    /// Priority: goalsCelebration > stressActionable > waterBehindPace > logNextMeal > defaultActions
+    private var contextualBarState: ContextualBarState {
+        // 1. Goals celebration
+        if wellnessCompletionPercent >= 100 {
+            return .goalsCelebration
+        }
+
+        // 2. Stress actionable
+        if let level = todayWellnessLog?.stressLevel?.lowercased(),
+           level == "high" || level == "very high" {
+            return .stressActionable(level: todayWellnessLog?.stressLevel ?? "High")
+        }
+
+        // 3. Water behind pace
+        let behind = expectedCupsDeficit()
+        if behind > 1 {
+            return .waterBehindPace(glassesNeeded: behind)
+        }
+
+        // 4. Log next meal
+        if let mealLabel = nextMealLabel() {
+            return .logNextMeal(mealLabel: mealLabel)
+        }
+
+        // 5. Default
+        return .defaultActions
+    }
+
+    /// Returns how many cups behind the user is vs. expected pace (wake 07:00, sleep 22:00).
+    private func expectedCupsDeficit() -> Int {
+        let target = currentGoals.waterDailyCups
+        guard target > 0 else { return 0 }
+
+        let cal = Calendar.current
+        let now = Date()
+        let dayStart = cal.startOfDay(for: now)
+        let wakeComponents = DateComponents(hour: 7, minute: 0)
+        let sleepComponents = DateComponents(hour: 22, minute: 0)
+        guard let wake = cal.date(byAdding: wakeComponents, to: dayStart),
+              let sleep = cal.date(byAdding: sleepComponents, to: dayStart) else { return 0 }
+
+        let total = sleep.timeIntervalSince(wake)
+        guard total > 0 else { return 0 }
+        let elapsed = max(0, min(now.timeIntervalSince(wake), total))
+        let fraction = elapsed / total
+        let expected = Int(ceil(fraction * Double(target)))
+        let behind = expected - hydrationGlasses
+        return max(0, behind)
+    }
+
+    /// Returns the contextual meal label based on time-of-day and today's logs.
+    private func nextMealLabel() -> String? {
+        let hour = Calendar.current.component(.hour, from: Date())
+
+        // Breakfast window: 05:00–10:59
+        if (5..<11).contains(hour) {
+            let hasBreakfast = todayFoodLogs.contains {
+                let h = Calendar.current.component(.hour, from: $0.createdAt)
+                return (5..<11).contains(h)
+            }
+            return hasBreakfast ? nil : "Breakfast"
+        }
+
+        // Lunch window: 11:00–13:59
+        if (11..<14).contains(hour) {
+            let hasLunch = todayFoodLogs.contains {
+                let h = Calendar.current.component(.hour, from: $0.createdAt)
+                return (11..<14).contains(h)
+            }
+            return hasLunch ? nil : "Lunch"
+        }
+
+        // Dinner window: 17:00–20:59
+        if (17..<21).contains(hour) {
+            let hasDinner = todayFoodLogs.contains {
+                let h = Calendar.current.component(.hour, from: $0.createdAt)
+                return (17..<21).contains(h)
+            }
+            return hasDinner ? nil : "Dinner"
+        }
+
+        return nil
     }
 
     private var wellnessRings: [WellnessRingItem] {
@@ -498,6 +592,29 @@ struct HomeView: View {
         ]
     }
 
+    /// Delta values passed to WellnessRingsCard for Δ badges.
+    /// Uses yesterdayStats from the VM for water and activity.
+    /// Returns nil when no yesterday data is available.
+    private var wellnessDeltaValues: [WellnessRingDestination: Int]? {
+        let stats = foodJournalViewModel.yesterdayStats
+        // Only show deltas when we have yesterday data
+        guard stats.water > 0 || stats.coffee > 0 || stats.steps > 0 else { return nil }
+
+        var values: [WellnessRingDestination: Int] = [:]
+
+        // Water delta: current glasses vs yesterday
+        let waterDiff = hydrationGlasses - stats.water
+        if waterDiff != 0 { values[.water] = waterDiff }
+
+        // Activity (steps) delta
+        if let steps = todayWellnessLog?.steps, stats.steps > 0 {
+            let stepsDiff = steps - stats.steps
+            if stepsDiff != 0 { values[.exercise] = stepsDiff }
+        }
+
+        return values.isEmpty ? nil : values
+    }
+
     private var wellnessCompletionPercent: Int {
         let cupGoal = currentGoals.waterDailyCups
         let energyGoal = currentGoals.activeEnergyGoalKcal
@@ -545,6 +662,7 @@ struct HomeView: View {
     }
 
     private var greeting: String {
+        // TODO: replace "Alex" with user's actual name when UserGoals.userName is available.
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
         case 5..<12:  return "Good Morning, Alex"
@@ -577,6 +695,7 @@ struct HomeView: View {
     }
 
     private func fetchHealthMoodSuggestion() {
+        if AppConfig.shared.mockDataInjected { return }
         guard HealthKitService.isAvailable else { return }
         Task {
             let service = HealthKitService()
@@ -604,7 +723,7 @@ struct HomeView: View {
         todayLog.moodRaw = mood.rawValue
         do {
             try modelContext.save()
-            if HealthKitService.isAvailable {
+            if HealthKitService.isAvailable && !AppConfig.shared.mockDataInjected {
                 Task { try? await HealthKitService().writeMood(mood) }
             }
             healthSuggestedMood = nil
