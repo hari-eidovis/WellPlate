@@ -25,6 +25,13 @@ enum SymptomCategory: String, CaseIterable, Identifiable, Codable {
         }
     }
 
+    var iconImage: Image {
+        switch self {
+        case .digestive: return Image("stomach").renderingMode(.original)
+        default:         return Image(systemName: icon)
+        }
+    }
+
     var color: Color {
         switch self {
         case .digestive: return Color(hue: 0.08, saturation: 0.70, brightness: 0.90)  // warm orange

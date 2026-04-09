@@ -97,8 +97,10 @@ struct SymptomLogSheet: View {
             step = .symptom
         } label: {
             VStack(spacing: 12) {
-                Image(systemName: category.icon)
-                    .font(.system(size: 28, weight: .medium))
+                category.iconImage
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
                     .foregroundStyle(category.color)
 
                 Text(category.label)
@@ -123,8 +125,10 @@ struct SymptomLogSheet: View {
             VStack(alignment: .leading, spacing: 20) {
                 if let cat = selectedCategory {
                     HStack(spacing: 8) {
-                        Image(systemName: cat.icon)
-                            .font(.system(size: 15, weight: .medium))
+                        cat.iconImage
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 15, height: 15)
                             .foregroundStyle(cat.color)
                         Text(cat.label)
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
