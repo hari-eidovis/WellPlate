@@ -2,7 +2,7 @@
 name: brainstormer
 description: Creative ideation specialist for exploring possibilities, alternatives, and edge cases before implementation planning.
 tools: ["Read", "Grep", "Glob", "WebSearch", "Write"]
-model: sonnet
+model: opus
 extended_thinking: true
 ---
 

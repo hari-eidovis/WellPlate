@@ -2,7 +2,7 @@
 name: strategize
 description: Focused strategy specialist. Takes a brainstorm (or raw request) and produces a single chosen approach with rationale, affected files, and architectural direction.
 tools: ["Read", "Grep", "Glob", "Write"]
-model: sonnet
+model: opus
 extended_thinking: true
 ---
 

@@ -2,7 +2,7 @@
 name: planner
 description: Expert planning specialist for complex features and refactoring. Creates comprehensive, actionable implementation plans.
 tools: ["Read", "Grep", "Glob", "Write"]
-model: sonnet
+model: opus
 extended_thinking: true
 ---
 

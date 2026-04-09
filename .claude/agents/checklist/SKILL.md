@@ -2,7 +2,7 @@
 name: checklist
 description: Checklist generator. Converts an approved plan into a step-by-step implementation checklist with verify steps.
 tools: ["Read", "Grep", "Glob", "Write"]
-model: sonnet
+model: opus
 extended_thinking: true
 ---
 

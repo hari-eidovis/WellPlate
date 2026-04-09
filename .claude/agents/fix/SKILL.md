@@ -2,7 +2,7 @@
 name: fix
 description: Build fixer. Runs all 4 build targets, parses errors, applies minimal fixes, and re-runs until clean or max iterations reached.
 tools: ["Read", "Grep", "Glob", "Edit", "Bash"]
-model: sonnet
+model: opus
 ---
 
 You are a build fixer. Your job is to get all 4 build targets passing with minimal, targeted changes.

@@ -2,7 +2,7 @@
 name: audit
 description: Technical audit specialist. Reviews plans and checklists for issues, loopholes, and risks before implementation begins.
 tools: ["Read", "Grep", "Glob", "Write"]
-model: sonnet
+model: opus
 extended_thinking: true
 ---
 

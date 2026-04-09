@@ -2,7 +2,7 @@
 name: implement
 description: Implementation specialist. Executes an approved checklist step-by-step, writing code and verifying each step.
 tools: ["Read", "Grep", "Glob", "Write", "Edit", "Bash"]
-model: sonnet
+model: opus
 extended_thinking: true
 ---
 
