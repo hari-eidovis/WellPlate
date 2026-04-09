@@ -1,12 +1,33 @@
-
-
-
-
 # Implementation Plan: Home Screen UX Update
 
 **Date**: 2026-04-09
 **Strategy Source**: `Docs/02_Planning/Specs/260409-home-screen-ux-update-strategy.md`
-**Status**: Ready for Implementation
+**Status**: RESOLVED — Ready for Implementation
+**Resolved by**: audit resolve agent
+**Resolution Date**: 2026-04-09
+**Source Audit**: `Docs/03_Audits/260409-home-screen-ux-update-plan-audit.md`
+
+---
+
+## Audit Resolution Summary
+
+| ID | Severity | Finding | Resolution |
+|---|---|---|---|
+| H1 | HIGH | Wrong file path for `HomeViewModel.swift` in Step 2.1 | Fixed — corrected to `WellPlate/Features + UI/Home/ViewModels/HomeViewModel.swift` |
+| H2 | HIGH | Coffee `onIncrement` in Step 1.2 fires `onCoffeeFirstCup()` before incrementing `coffeeCups` | Fixed — increment happens first, then picker is triggered via `wasFirst` flag |
+| H3 | HIGH | `@Published var yesterdayStats` uses a labeled tuple — unreliable in Swift/Combine | Fixed — replaced with `YesterdayStats` struct conforming to `Equatable` as primary form |
+| M1 | MEDIUM | `dragLogProgress` cited at line 52; actual location is line 51 | Fixed — updated line reference to line 51 |
+| M2 | MEDIUM | `WellnessRingDestination` not explicitly `Hashable`; used as Dictionary key | Fixed — added `Hashable` to enum declaration in Step 3.1 |
+| M6 | MEDIUM | Description says show `—` only when `steps == nil`; `0` is also treated as no-data | Fixed — description updated to cover both `nil` and `0` cases |
+| M7 | MEDIUM | `todayFoodLogs` uses `Calendar.current.isDate(_:inSameDayAs:)` inconsistently with existing `todayCalories` pattern | Fixed — updated to use `$0.day == todayStart` for consistency |
+| M8 | MEDIUM | `onAddCoffee` in Step 5.9 has identical first-cup bug as H2 — picker shown without incrementing first | Fixed — applied same W4 pattern: `wasFirst` flag, increment before picker |
+| M9 | MEDIUM | `ZStack` becomes unnecessary after removing `DragToLogOverlay`; plan doesn't note this | Acknowledged — added note in Step 5.2 that `ZStack` can be removed |
+| L1 | LOW | Hardcoded user name "Alex" in `greeting` | Acknowledged — TODO note added in Step 5.4 |
+| L3 | LOW | `showWellnessCalendar` left as dead state with no future trigger noted | Acknowledged — TODO comment added in Step 5.3 |
+| — | MISSING | No `goalsCelebration` test path that actually reaches 100% on all 4 rings | Added explicit test path to Manual Verification section |
+| — | MISSING | No cold launch / no-data test path for `ContextualActionBar` | Added cold launch test path to Manual Verification section |
+
+**Verdict**: ALL RESOLVED
 
 ---
 
@@ -205,12 +226,13 @@ HStack(spacing: 10) {
         showIncrementButton: coffeeCups < coffeeGoal,
         onTap: { onCoffeeTap() },
         onIncrement: {
+            // RESOLVED: H2 — increment coffeeCups BEFORE calling onCoffeeFirstCup so that
+            // HomeView.onChange(of: coffeeCups) fires and persists the cup count on first add.
+            // The wasFirst flag captures the pre-increment state to decide which path to take.
+            let wasFirst = isFirstCupNoType
             SoundService.playConfirmation()
-            if coffeeCups == 0 && coffeeType == nil {
-                onCoffeeFirstCup()
-            } else {
-                coffeeCups += 1
-            }
+            coffeeCups += 1
+            if wasFirst { onCoffeeFirstCup() }
         }
     )
     QuickStatTile(
@@ -226,8 +248,12 @@ HStack(spacing: 10) {
 .padding(.horizontal, 16)
 ```
 
-**Delta text helpers** (private computed vars):
+**Delta text helpers and computed flags** (private computed vars):
 ```swift
+private var isFirstCupNoType: Bool {
+    coffeeCups == 0 && coffeeType == nil
+}
+
 private var waterDeltaText: String? {
     let diff = hydrationGlasses - yesterdayWater
     guard diff != 0 else { return nil }
@@ -244,6 +270,8 @@ private var stepsDeltaText: String? {
     if diff == 0 { return nil }
     return diff > 0 ? "Δ +\(diff)" : "Δ \(diff)"
 }
+// RESOLVED: M6 — stepsText shows "—" for both nil (no log today) and 0 (log exists but
+// steps not yet written by HealthKit). Both cases mean "no meaningful data to display."
 private var stepsText: String {
     guard let s = steps, s > 0 else { return "—" }
     let formatted = NumberFormatter.localizedString(from: NSNumber(value: s), number: .decimal)
@@ -473,7 +501,9 @@ Note: `ContextualBarState` must conform to `Equatable` for the `.animation(value
 
 #### Step 2.1 — Add `yesterdayStats` and `prefillFromEntry` to `HomeViewModel`
 
-**File**: `WellPlate/Features + UI/HomeViewModels/HomeViewModel.swift`
+<!-- RESOLVED: H1 — corrected file path from WellPlate/Features + UI/HomeViewModels/HomeViewModel.swift
+     to the actual location: WellPlate/Features + UI/Home/ViewModels/HomeViewModel.swift -->
+**File**: `WellPlate/Features + UI/Home/ViewModels/HomeViewModel.swift`
 
 **Current end of file**: line 285, closing `}` of the class.
 
@@ -482,8 +512,18 @@ Note: `ContextualBarState` must conform to `Equatable` for the `.animation(value
 ```swift
 // MARK: - Yesterday Stats (for delta badges)
 
+// RESOLVED: H3 — using the struct form as primary. The labeled-tuple form is dropped.
+// Swift/Combine's ObservableObject synthesis does not reliably synthesize Equatable for
+// labeled tuples, which can prevent objectWillChange from firing in some Xcode versions.
+// The struct form is strictly safer and has identical dot-notation access patterns.
+struct YesterdayStats: Equatable {
+    var water: Int = 0
+    var coffee: Int = 0
+    var steps: Int = 0
+}
+
 /// Computed once per onAppear. Not live-updated.
-@Published var yesterdayStats: (water: Int, coffee: Int, steps: Int) = (0, 0, 0)
+@Published var yesterdayStats = YesterdayStats()
 
 func loadYesterdayStats() {
     guard let ctx = modelContext else { return }
@@ -495,7 +535,7 @@ func loadYesterdayStats() {
         predicate: #Predicate { $0.day == yesterday }
     )
     let log = try? ctx.fetch(descriptor).first
-    yesterdayStats = (
+    yesterdayStats = YesterdayStats(
         water: log?.waterGlasses ?? 0,
         coffee: log?.coffeeCups ?? 0,
         steps: log?.steps ?? 0
@@ -516,16 +556,7 @@ func prefillFromEntry(_ entry: FoodLogEntry) {
 
 **Why this approach**: `@Published var yesterdayStats` lets `HomeView` observe it without a computed property on the view layer. `loadYesterdayStats()` is called from `HomeView.onAppear`, following the same pattern as `bindContext(_:)` which is also called from `onAppear` (line 223 of `HomeView.swift`).
 
-Note on tuple `@Published`: Swift allows publishing tuple types, but the publisher won't fire granularly on inner-value changes. Since this is set once and read once, this is acceptable. If the compiler rejects `@Published` on a tuple (rare but possible in some Swift versions), replace with a small struct:
-```swift
-struct YesterdayStats: Equatable {
-    var water: Int = 0
-    var coffee: Int = 0
-    var steps: Int = 0
-}
-@Published var yesterdayStats = YesterdayStats()
-```
-Use the struct form if the tuple causes issues — it is strictly safer.
+All downstream references (`foodJournalViewModel.yesterdayStats.water`, `.coffee`, `.steps`) are identical in dot-notation to the previous tuple form.
 
 **Build verification**: build `WellPlate` scheme after this step.
 
@@ -557,7 +588,19 @@ struct WellnessRingsCard: View {
     var deltaValues: [WellnessRingDestination: Int]? = nil
 ```
 
-**Where delta badges render**: inside `WellnessRingButton`, in the `VStack(spacing: 10)` below the ring circle and label stack (lines 88–139 of current file). Thread `deltaValues` down by passing it to `WellnessRingButton`.
+<!-- RESOLVED: M2 — added explicit Hashable conformance to WellnessRingDestination.
+     Although Swift auto-synthesizes Hashable for plain enums, making it explicit prevents
+     silent breakage if an associated value is ever added, and documents the intent clearly. -->
+**Also update the `WellnessRingDestination` enum declaration** (when found in the file):
+```swift
+// Before:
+enum WellnessRingDestination: Identifiable { ... }
+
+// After:
+enum WellnessRingDestination: Identifiable, Hashable { ... }
+```
+
+**Where delta badges render**: inside `WellnessRingButton`, in the `VStack(spacing: 10)` below the ring circle and label stack (lines 88–142 of current file; note: closing `}` is at line 142, not 139 — line numbers are approximate, locate by content pattern). Thread `deltaValues` down by passing it to `WellnessRingButton`.
 
 **WellnessRingButton change** — add `deltaValue: Int?` parameter:
 
@@ -689,8 +732,11 @@ This is the largest change. Each sub-step leaves the project in a buildable stat
 ```swift
 /// Today's food log entries, filtered from the `@Query` result.
 /// Used by MealLogCard and ContextualBarState.
+// RESOLVED: M7 — using $0.day == todayStart for consistency with the existing todayCalories
+// pattern in HomeView. Both approaches are correct (day is stored as startOfDay), but direct
+// equality avoids a Calendar call on every element and is consistent with existing code.
 private var todayFoodLogs: [FoodLogEntry] {
-    allFoodLogs.filter { Calendar.current.isDate($0.day, inSameDayAs: Date()) }
+    allFoodLogs.filter { $0.day == todayStart }
 }
 ```
 
@@ -790,7 +836,8 @@ private func nextMealLabel() -> String? {
 
 **File**: `WellPlate/Features + UI/Home/Views/HomeView.swift`
 
-**Remove line 52**:
+<!-- RESOLVED: M1 — line number corrected from 52 to 51. dragLogProgress is on line 51, not 52. -->
+**Remove line 51** (not line 52):
 ```swift
 @State private var dragLogProgress: CGFloat = 0   // DELETE THIS LINE
 ```
@@ -815,6 +862,15 @@ ZStack {
         .padding(.bottom, 32)
     }
 }
+```
+
+<!-- RESOLVED: M9 — noting that the ZStack is now a single-child wrapper with no purpose.
+     It can optionally be removed, leaving ScrollView as the direct child of NavigationStack.
+     This is a clean-up improvement and carries no risk. If removed, update the surrounding
+     NavigationStack body accordingly. If kept for future extensibility, add a comment explaining why. -->
+**Optional cleanup**: the `ZStack` now wraps only a single `ScrollView` child and serves no layout purpose. It may be removed, making `ScrollView` the direct child of `NavigationStack`. This is optional but improves view hierarchy clarity. If kept, add a comment:
+```swift
+// ZStack kept intentionally — reserved for future overlay layers (e.g., confetti on goalsCelebration)
 ```
 
 **Build verification**: build to confirm `dragLogProgress` is not referenced anywhere else.
@@ -861,6 +917,16 @@ Button {
 
 **Note on `showWellnessCalendar`**: the `@State private var showWellnessCalendar = false` (line 44) and its `.navigationDestination(isPresented: $showWellnessCalendar)` (lines 210–212) are kept as-is — removing them would require also removing the navigation destination, which risks a compile error if anything else references them. Leave them as harmless dead state for now. The strategy's non-goals section explicitly defers moving the calendar to Profile tab.
 
+<!-- RESOLVED: L3 — added TODO comment to mark showWellnessCalendar as intentionally deferred dead state -->
+Add the following comment next to the `showWellnessCalendar` state declaration:
+```swift
+@State private var showWellnessCalendar = false
+// TODO: F-next — re-home WellnessCalendarView to Profile tab.
+// The calendar button has been removed from the header as of the Home Screen UX Update.
+// This state and its .navigationDestination are kept as dead code to avoid touching the
+// navigation chain. Remove both when the Profile tab relocation is implemented.
+```
+
 **Build verification**: build after this step.
 
 ---
@@ -884,6 +950,10 @@ private var greeting: String {
 **New `greeting`** — weekday-aware, streak-acknowledging:
 ```swift
 private var greeting: String {
+    // RESOLVED: L1 — hardcoded name "Alex" is a known limitation. No UserGoals or model
+    // currently stores a user name. Track as a future improvement: personalize greeting
+    // once a user profile name field is added to UserGoals or a dedicated model.
+    // TODO: replace "Alex" with user's actual name when UserGoals.userName is available.
     let cal = Calendar.current
     let hour = cal.component(.hour, from: Date())
     let weekday = cal.component(.weekday, from: Date()) // 1=Sun, 2=Mon, ..., 7=Sat
@@ -996,7 +1066,7 @@ Note: `QuickStatsRow` does not take `.padding(.horizontal, 16)` because the indi
 
 **Important**: the `coffeeCups` binding in `QuickStatsRow` must drive `HomeView.onChange(of: coffeeCups)` correctly. The increment paths in `QuickStatTile` mutate `coffeeCups += 1` directly on the binding, which will fire `onChange(of: coffeeCups)` in `HomeView` exactly as before — no change to the coffee logging logic is needed.
 
-The `onCoffeeFirstCup` closure sets `activeSheet = .coffeeTypePicker` to show the picker when incrementing from 0 with no type set. The tile in `QuickStatsRow` checks `coffeeCups == 0 && coffeeType == nil` before deciding which path to take (see Step 1.2 above).
+The `onCoffeeFirstCup` closure sets `activeSheet = .coffeeTypePicker` to show the picker when incrementing from 0 with no type set. The tile in `QuickStatsRow` increments first and checks `wasFirst` (the pre-increment state) before deciding which path to take (see Step 1.2 above — W4 fix applied).
 
 **Build verification**: build after this step.
 
@@ -1010,28 +1080,7 @@ The `onCoffeeFirstCup` closure sets `activeSheet = .coffeeTypePicker` to show th
 
 **New card position 4 (Today's Meals)**:
 ```swift
-// 4. Today's Meals
-MealLogCard(
-    foodLogs: todayFoodLogs,
-    isToday: true,
-    onDelete: { entry in
-        modelContext.delete(entry)
-        try? modelContext.save()
-    },
-    onAddAgain: { entry in
-        foodJournalViewModel.prefillFromEntry(entry)
-        showLogMeal = true
-    }
-)
-.padding(.horizontal, 16)
-```
-
-Note: `.padding(.horizontal, 16)` is applied at the call site in `HomeView`, NOT inside `MealLogCard`. Looking at `MealLogCard.swift`, `mealList` already applies its own `.padding(.horizontal, 16)` to the card container (line 76–77), and `emptyState` also applies `.padding(.horizontal, 16)` (line 248–249). This means if `HomeView` also applies `.padding(.horizontal, 16)`, the result is double-padded.
-
-**Resolution**: the call site in `HomeView` should NOT add `.padding(.horizontal, 16)` for `MealLogCard` — the padding is already baked into the component. The strategy document's code snippet shows `.padding(.horizontal, 16)` at the call site, but this conflicts with the internal padding. Follow the existing component behavior: no external horizontal padding.
-
-```swift
-// 4. Today's Meals — no .padding(.horizontal, 16) here
+// 4. Today's Meals — no .padding(.horizontal, 16) here; MealLogCard applies padding internally
 MealLogCard(
     foodLogs: todayFoodLogs,
     isToday: true,
@@ -1045,6 +1094,8 @@ MealLogCard(
     }
 )
 ```
+
+Note: `.padding(.horizontal, 16)` is NOT applied at the call site. `MealLogCard` applies its own `.padding(.horizontal, 16)` internally on both `mealList` (line 76–77) and `emptyState` (line 248–249). Adding it again at the `HomeView` call site would create 32 pt total padding. Follow the existing component behavior — no external horizontal padding.
 
 **Build verification**: build after this step.
 
@@ -1146,11 +1197,13 @@ Note: calories delta is omitted for now because yesterday's food log calories re
             hydrationGlasses += 1
         },
         onAddCoffee: {
-            if coffeeCups == 0 && todayWellnessLog?.coffeeType == nil {
-                activeSheet = .coffeeTypePicker
-            } else {
-                coffeeCups += 1
-            }
+            // RESOLVED: M8 — applied the same W4 fix pattern as Step 1.2.
+            // Increment coffeeCups BEFORE checking the first-cup path so that
+            // HomeView.onChange(of: coffeeCups) fires and persists the cup count.
+            // wasFirst captures pre-increment state to decide which side-effect to trigger.
+            let wasFirst = coffeeCups == 0 && todayWellnessLog?.coffeeType == nil
+            coffeeCups += 1
+            if wasFirst { activeSheet = .coffeeTypePicker }
         },
         onStressTab: { selectedTab = 1 },
         onSeeInsight: {
@@ -1214,15 +1267,19 @@ xcodebuild -project WellPlate.xcodeproj -target WellPlateWidget -destination 'ge
 ### Manual verification flows
 
 1. **ContextualActionBar states**:
-   - Fresh launch (no data) → `logNextMeal` or `defaultActions` based on time of day
+   - Fresh launch (no data) → bar shows `logNextMeal` or `defaultActions` based on time of day (cold launch test: `allWellnessDayLogs` is empty, `allFoodLogs` is empty — bar must not crash and must show `defaultActions` or `logNextMeal`)
+   <!-- RESOLVED: added cold launch test path per audit missing element -->
+   - Cold launch before `onAppear` completes: `contextualBarState` reads `allWellnessDayLogs` (empty array) → bar shows `defaultActions` or `logNextMeal`. Confirm no crash and correct fallback state on first install with zero data.
    - Log 8 water glasses (all rings complete) → `goalsCelebration` state
+   <!-- RESOLVED: added explicit goalsCelebration test path per audit missing element -->
+   - **`goalsCelebration` test path**: `wellnessCompletionPercent >= 100` requires all 4 rings (calories, water, exercise, stress) at 100%. To test manually: use mock mode (`AppConfig.shared.mockMode = true`), inject mock data with calories at/above goal, water at 8+ glasses, exercise at/above goal, and stress score at/below threshold. Alternatively, run the app mid-day with all rings fully logged. This state is hard to reach organically — add a DEBUG-only override in `AppConfig` if needed.
    - Set stress level to High in Stress tab → `stressActionable` state
    - Delete most water glasses mid-day → `waterBehindPace` state
    - Tap "Log Meal" pill → `FoodJournalView` pushes correctly
 
 2. **QuickStatsRow interactions**:
    - Tap `+` on water tile → `hydrationGlasses` increments; sound plays; `WellnessRingsCard` ring updates
-   - Tap `+` on coffee tile from 0 cups → `CoffeeTypePickerSheet` appears
+   - Tap `+` on coffee tile from 0 cups → `coffeeCups` increments to 1, THEN `CoffeeTypePickerSheet` appears (verify cup count is 1, not 0, when picker is shown)
    - Tap `+` on coffee tile from 1+ cups → `coffeeCups` increments; `showCoffeeWaterAlert` fires
    - Tap tile body (water) → `WaterDetailView` pushes; detail shows correct count
    - Tap activity tile → `BurnView` pushes
@@ -1252,9 +1309,9 @@ xcodebuild -project WellPlate.xcodeproj -target WellPlateWidget -destination 'ge
 
 ## Risks & Watchouts
 
-### W1: `@Published` tuple type in `HomeViewModel`
+### W1: `@Published` struct form for `yesterdayStats` (RESOLVED — struct is now primary)
 
-`@Published var yesterdayStats: (water: Int, coffee: Int, steps: Int)` — Swift's `Combine` framework can publish tuple values, but `ObservableObject` synthesis may not detect inner mutations on the tuple (only full replacement). Since `loadYesterdayStats()` always replaces the full tuple (`yesterdayStats = (...)`), this works correctly. If the compiler complains about `@Published` on a non-`Equatable` type, use a small named struct (shown in Step 2.1 fallback).
+~~`@Published var yesterdayStats: (water: Int, coffee: Int, steps: Int)` — Swift's `Combine` framework can publish tuple values, but the publisher won't fire granularly on inner-value changes.~~ This plan now uses `struct YesterdayStats: Equatable` as the primary form (see Step 2.1). The struct form is strictly safer and `Equatable` conformance is explicit. The tuple form is no longer considered.
 
 ### W2: `swipeActions` only works in `List` context
 
@@ -1264,36 +1321,11 @@ xcodebuild -project WellPlate.xcodeproj -target WellPlateWidget -destination 'ge
 
 `MealLogCard` applies `.padding(.horizontal, 16)` internally on both `mealList` and `emptyState`. Adding it again at the `HomeView` call site would create 32 pt total padding. Do not add `.padding(.horizontal, 16)` at the `HomeView` call site for `MealLogCard` (Step 5.7 accounts for this).
 
-### W4: `onCoffeeFirstCup` interaction in `QuickStatsRow`
+### W4: `onCoffeeFirstCup` interaction in `QuickStatsRow` (RESOLVED in Step 1.2)
 
-`QuickStatsRow` fires `onCoffeeFirstCup()` when `coffeeCups == 0 && coffeeType == nil`. But `coffeeCups` at this moment is still 0 — the increment hasn't happened yet. `HomeView.onChange(of: coffeeCups)` relies on `newCups > oldCups` to detect addition and trigger the picker. If `onCoffeeFirstCup` sets `activeSheet = .coffeeTypePicker` without incrementing `coffeeCups` first, the `onChange` won't fire and the optimistic cup count won't be saved until the picker closes.
+~~`QuickStatsRow` fires `onCoffeeFirstCup()` when `coffeeCups == 0 && coffeeType == nil`. But `coffeeCups` at this moment is still 0 — the increment hasn't happened yet. `HomeView.onChange(of: coffeeCups)` relies on `newCups > oldCups` to detect addition and trigger the picker. If `onCoffeeFirstCup` sets `activeSheet = .coffeeTypePicker` without incrementing `coffeeCups` first, the `onChange` won't fire and the optimistic cup count won't be saved until the picker closes.~~
 
-**Resolution**: inside `QuickStatsRow.onIncrement` for coffee, increment `coffeeCups += 1` first, then call `onCoffeeFirstCup()` for the first cup. This matches the existing `HydrationCard` approach where addition happens inline and side-effects are handled by `onChange`. Specifically in `QuickStatTile`'s increment button for the coffee tile:
-```swift
-onIncrement: {
-    SoundService.playConfirmation()
-    coffeeCups += 1        // mutate binding first
-    if coffeeCups == 1 && coffeeType == nil {
-        onCoffeeFirstCup() // then trigger picker
-    }
-}
-```
-This means `QuickStatsRow` needs to know whether this is the "first cup + no type" scenario. Pass this as a computed flag:
-```swift
-// In QuickStatsRow
-private var isFirstCupNoType: Bool {
-    coffeeCups == 0 && coffeeType == nil
-}
-```
-And the increment closure:
-```swift
-onIncrement: {
-    let wasFirst = isFirstCupNoType
-    SoundService.playConfirmation()
-    coffeeCups += 1
-    if wasFirst { onCoffeeFirstCup() }
-}
-```
+**Resolution applied in Step 1.2**: the `onIncrement` closure for the coffee tile uses `isFirstCupNoType` to capture pre-increment state, then increments `coffeeCups` first, then calls `onCoffeeFirstCup()` if it was the first cup. The same pattern is applied in Step 5.9's `onAddCoffee` closure for `ContextualActionBar`. Both locations now follow the same W4 fix.
 
 ### W5: `ContextualBarState.Equatable` conformance for `stressActionable`
 
@@ -1326,7 +1358,7 @@ This keeps all ring columns the same height regardless of badge presence.
 
 ### W9: `steps` in `QuickStatTile` activity tile shows `WellnessDayLog.steps`
 
-`WellnessDayLog.steps` is written by the HealthKit integration. In the current codebase, steps are fetched by `HealthKitService` but the synchronization path into `WellnessDayLog` is not visible in the files read. If `todayWellnessLog?.steps` is always 0 (because the HealthKit sync hasn't written it today), the activity tile will show "—". This is acceptable per the strategy ("If no data, show `—`"). No code change needed — just be aware during manual testing.
+`WellnessDayLog.steps` is written by the HealthKit integration. In the current codebase, steps are fetched by `HealthKitService` but the synchronization path into `WellnessDayLog` is not visible in the files read. If `todayWellnessLog?.steps` is always 0 (because the HealthKit sync hasn't written it today), the activity tile will show `"—"`. This is correct behavior per `stepsText` (which returns `"—"` for both `nil` and `0` — see Step 1.2, M6 fix). No code change needed — be aware during manual testing.
 
 ---
 
@@ -1346,10 +1378,12 @@ This keeps all ring columns the same height regardless of badge presence.
 - [ ] Bar state changes to `goalsCelebration` when all rings ≥ 100%
 - [ ] Tapping "Log Meal" pill navigates to `FoodJournalView`
 - [ ] Tapping `💧` in bar increments `hydrationGlasses`; plays water sound
-- [ ] Tapping `☕` in bar increments `coffeeCups`; triggers picker on first cup
+- [ ] Tapping `☕` in bar increments `coffeeCups` to 1 first, THEN triggers picker on first cup (verify count is 1 when picker appears)
+- [ ] Tapping `☕` in bar from `coffeeCups > 0` increments count without showing picker
 - [ ] Delta badges appear in `WellnessRingsCard` when yesterday data is available
 - [ ] Delta badges appear in `QuickStatsRow` tiles when data differs from yesterday
 - [ ] "Add Again" in `MealLogCard` context menu pre-fills food name in `FoodJournalView`
 - [ ] `greeting` varies by day of week and time of day
 - [ ] Reduce Motion setting disables bar transition animation
 - [ ] All interactive elements have minimum 44×44 pt touch target
+- [ ] Cold launch with no data: `ContextualActionBar` shows `defaultActions` or `logNextMeal` without crashing
