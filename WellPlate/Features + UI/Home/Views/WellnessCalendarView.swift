@@ -5,11 +5,11 @@ import SwiftData
 
 struct WellnessCalendarView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
     @Query private var userGoalsList: [UserGoals]
     @Query private var allWellnessDayLogs: [WellnessDayLog]
     @Query private var allFoodEntries: [FoodLogEntry]
     @StateObject private var viewModel = WellnessCalendarViewModel()
+    @State private var showCalendar = false
 
     private let weekdaySymbols = Calendar.current.veryShortWeekdaySymbols
     private var currentGoals: UserGoals { userGoalsList.first ?? UserGoals.defaults() }
@@ -17,7 +17,8 @@ struct WellnessCalendarView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                calendarSection
+                datePickerHeader
+                if showCalendar { calendarSection }
                 detailSection
             }
             .padding(.horizontal, 16)
@@ -25,20 +26,7 @@ struct WellnessCalendarView: View {
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .scrollIndicators(.hidden)
-        .navigationTitle("Wellness Calendar")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button {
-                    dismiss()
-                } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color(hue: 0.40, saturation: 0.55, brightness: 0.72))
-                }
-            }
-        }
+        .navigationBarHidden(true)
         .onAppear {
             viewModel.bind(modelContext)
         }
@@ -48,6 +36,34 @@ struct WellnessCalendarView: View {
         .onChange(of: allFoodEntries) {
             viewModel.loadData(for: viewModel.selectedDate)
         }
+    }
+
+    // MARK: - Date Picker Header
+
+    private var datePickerHeader: some View {
+        Button {
+            HapticService.impact(.light)
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                showCalendar.toggle()
+            }
+        } label: {
+            HStack {
+                Text(selectedDateString)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(showCalendar ? 180 : 0))
+
+                Spacer()
+            }
+            .padding(.horizontal, 4)
+            .padding(.top, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Calendar Section
@@ -109,6 +125,7 @@ struct WellnessCalendarView: View {
                         HapticService.impact(.light)
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
                             viewModel.loadData(for: date)
+                            showCalendar = false
                         }
                     }
                 }
@@ -127,15 +144,6 @@ struct WellnessCalendarView: View {
 
     private var detailSection: some View {
         VStack(spacing: 14) {
-            // Date header
-            HStack {
-                Text(selectedDateString)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-                Spacer()
-            }
-            .padding(.horizontal, 4)
-
             moodCard(viewModel.dayLog)
 
             if let log = viewModel.dayLog {

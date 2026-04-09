@@ -95,6 +95,8 @@ struct ProfilePlaceholderView: View {
     #if DEBUG
     @State private var mockModeEnabled: Bool = AppConfig.shared.mockMode
     @State private var hasGroqAPIKey: Bool = AppConfig.shared.hasGroqAPIKey
+    @State private var mockDataInjected: Bool = AppConfig.shared.mockDataInjected
+    @State private var showMockDataRestartAlert = false
     #endif
 
     private let profile = UserProfileManager.shared
@@ -165,6 +167,21 @@ struct ProfilePlaceholderView: View {
                         hasGroqAPIKey: hasGroqAPIKey
                     )
                     .padding(.horizontal, 16)
+
+                    MockDataDebugCard(
+                        isInjected: $mockDataInjected,
+                        onInject: {
+                            MockDataInjector.inject(into: modelContext)
+                            mockDataInjected = AppConfig.shared.mockDataInjected
+                            showMockDataRestartAlert = true
+                        },
+                        onDelete: {
+                            MockDataInjector.deleteAll(from: modelContext)
+                            mockDataInjected = AppConfig.shared.mockDataInjected
+                            showMockDataRestartAlert = true
+                        }
+                    )
+                    .padding(.horizontal, 16)
                     #endif
 
                     // ── App info footer ──────────────────────
@@ -188,6 +205,13 @@ struct ProfilePlaceholderView: View {
             .onChange(of: mockModeEnabled) { _, newValue in
                 AppConfig.shared.mockMode = newValue
                 refreshDebugNutritionState()
+            }
+            .alert("Mock Data Updated", isPresented: $showMockDataRestartAlert) {
+                Button("OK") { }
+            } message: {
+                Text(mockDataInjected
+                     ? "30 days of mock data injected. Restart the app for HealthKit-backed screens (Burn, Stress) to reflect changes."
+                     : "Mock data cleared. Restart the app for full cleanup of HealthKit-backed screens.")
             }
             #endif
             .navigationDestination(isPresented: $showGoals) {
@@ -1032,6 +1056,7 @@ struct ProfilePlaceholderView: View {
     private func refreshDebugNutritionState() {
         mockModeEnabled = AppConfig.shared.mockMode
         hasGroqAPIKey = AppConfig.shared.hasGroqAPIKey
+        mockDataInjected = AppConfig.shared.mockDataInjected
     }
     #endif
 }

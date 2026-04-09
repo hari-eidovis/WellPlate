@@ -39,8 +39,14 @@ final class StressInsightService: StressInsightServiceProtocol, ObservableObject
     // MARK: - Init
 
     @MainActor
-    init(healthService: HealthKitServiceProtocol = HealthKitService()) {
-        self.healthService = healthService
+    init(healthService: HealthKitServiceProtocol? = nil) {
+        if let healthService {
+            self.healthService = healthService
+        } else if AppConfig.shared.mockDataInjected {
+            self.healthService = MockHealthKitService(snapshot: .default)
+        } else {
+            self.healthService = HealthKitService()
+        }
     }
 
     func bindContext(_ context: ModelContext) {

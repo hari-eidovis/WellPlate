@@ -32,6 +32,8 @@ struct StressMockSnapshot {
     let diastolicBPHistory: [DailyMetricSample]
     let respiratoryRateHistory: [DailyMetricSample]
     let daylightHistory: [DailyMetricSample]
+    let waterHistory: [DailyMetricSample]
+    let exerciseMinutesHistory: [DailyMetricSample]
 
     // MARK: - Chart Readings (non-persisted, display-only)
 
@@ -169,6 +171,24 @@ struct StressMockSnapshot {
             30, 34, 28
         ]
         let daylightHist = (0..<count).map { DailyMetricSample(date: daysAgo(count - 1 - $0), value: daylightBase[$0]) }
+
+        let waterBase: [Double] = [
+            1.5, 2.0, 1.8, 2.2, 1.3, 1.9, 2.1,
+            1.7, 2.1, 2.4, 1.2, 1.8, 2.0, 1.6,
+            2.3, 1.5, 1.4, 2.2, 1.9, 2.0,
+            1.6, 2.1, 2.2, 1.3, 1.8, 2.3, 1.7,
+            1.9, 2.1, 1.8
+        ]
+        let exerciseBase: [Double] = [
+            30, 45, 0, 60, 20, 35, 50,
+            25, 40, 55, 0, 30, 45, 15,
+            50, 20, 10, 60, 35, 40,
+            0, 45, 50, 15, 30, 55, 25,
+            35, 45, 30
+        ]
+        let waterHist = (0..<count).map { DailyMetricSample(date: daysAgo(count - 1 - $0), value: waterBase[$0]) }
+        let exerciseHist = (0..<count).map { DailyMetricSample(date: daysAgo(count - 1 - $0), value: exerciseBase[$0]) }
+
         let sleepHist: [DailySleepSummary] = (0..<count).map { i in
             let total = sleepTotals[i]
             let deep  = total * deepRatios[i]
@@ -233,6 +253,8 @@ struct StressMockSnapshot {
             diastolicBPHistory: diasBPHist,
             respiratoryRateHistory: rrHist,
             daylightHistory: daylightHist,
+            waterHistory: waterHist,
+            exerciseMinutesHistory: exerciseHist,
             todayReadings: todayReadings,
             weekReadings: weekReadings,
             currentDayLogs: logs

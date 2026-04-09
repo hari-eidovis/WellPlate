@@ -36,7 +36,7 @@ final class MockHealthKitService: HealthKitServiceProtocol {
     }
 
     func fetchExerciseMinutes(for range: DateInterval) async throws -> [DailyMetricSample] {
-        []
+        snapshot.exerciseMinutesHistory.filter { range.contains($0.date) }
     }
 
     func fetchSleep(for range: DateInterval) async throws -> [SleepSample] {
@@ -48,7 +48,7 @@ final class MockHealthKitService: HealthKitServiceProtocol {
     }
 
     func fetchWater(for range: DateInterval) async throws -> [DailyMetricSample] {
-        []
+        snapshot.waterHistory.filter { range.contains($0.date) }
     }
 
     func fetchRestingHeartRate(for range: DateInterval) async throws -> [DailyMetricSample] {

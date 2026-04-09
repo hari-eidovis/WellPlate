@@ -17,6 +17,8 @@ final class AppConfig {
         static let legacyGeminiModel = "app.nutrition.geminiModel"
         static let mockResponseDelay = "app.nutrition.mockResponseDelay"
         static let apiTimeout = "app.networking.apiTimeout"
+        static let mockDataInjected = "app.mock.dataInjected"
+        static let mockInjectedWellnessLogDates = "app.mock.wellnessLogDates"
     }
 
     private init() {}
@@ -99,6 +101,40 @@ final class AppConfig {
         set {
             #if DEBUG
             UserDefaults.standard.set(max(1.0, newValue), forKey: Keys.apiTimeout)
+            #endif
+        }
+    }
+
+    /// Whether mock data has been injected into SwiftData + HealthKit layer.
+    /// Always returns false in Release builds (same pattern as mockMode).
+    var mockDataInjected: Bool {
+        get {
+            #if DEBUG
+            return UserDefaults.standard.bool(forKey: Keys.mockDataInjected)
+            #else
+            return false
+            #endif
+        }
+        set {
+            #if DEBUG
+            UserDefaults.standard.set(newValue, forKey: Keys.mockDataInjected)
+            WPLogger.app.info("Mock Data Injection → \(newValue ? "ACTIVE" : "CLEARED")")
+            #endif
+        }
+    }
+
+    /// ISO8601 date strings of WellnessDayLog records created by mock injection.
+    var mockInjectedWellnessLogDates: [String] {
+        get {
+            #if DEBUG
+            return UserDefaults.standard.stringArray(forKey: Keys.mockInjectedWellnessLogDates) ?? []
+            #else
+            return []
+            #endif
+        }
+        set {
+            #if DEBUG
+            UserDefaults.standard.set(newValue, forKey: Keys.mockInjectedWellnessLogDates)
             #endif
         }
     }
