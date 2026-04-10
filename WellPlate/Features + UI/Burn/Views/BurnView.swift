@@ -25,7 +25,7 @@ struct BurnView: View {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
             Group {
-                if !HealthKitService.isAvailable && !AppConfig.shared.mockDataInjected {
+                if !HealthKitServiceFactory.isDataAvailable {
                     unavailableView
                 } else if viewModel.isLoading {
                     loadingView

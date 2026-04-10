@@ -25,10 +25,9 @@ struct MainTabView: View {
             Tab(value: 1) {
                 StressView(viewModel: {
                     #if DEBUG
-                    if AppConfig.shared.mockMode || AppConfig.shared.mockDataInjected {
+                    if AppConfig.shared.mockMode {
                         let snap = StressMockSnapshot.default
                         return StressViewModel(
-                            healthService: MockHealthKitService(snapshot: snap),
                             modelContext: modelContext,
                             mockSnapshot: snap
                         )

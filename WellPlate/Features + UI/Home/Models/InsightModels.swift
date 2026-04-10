@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - WellnessDomain
 
 enum WellnessDomain: String, CaseIterable {
-    case stress, nutrition, sleep, activity, hydration, caffeine, mood, fasting, symptoms, cross
+    case stress, nutrition, sleep, activity, hydration, caffeine, mood, fasting, symptoms, cross, supplements
 
     var label: String {
         switch self {
@@ -16,7 +16,8 @@ enum WellnessDomain: String, CaseIterable {
         case .mood:      return "Mood"
         case .fasting:   return "Fasting"
         case .symptoms:  return "Symptoms"
-        case .cross:     return "Patterns"
+        case .cross:        return "Patterns"
+        case .supplements:  return "Supplements"
         }
     }
 
@@ -31,7 +32,8 @@ enum WellnessDomain: String, CaseIterable {
         case .mood:      return "face.smiling"
         case .fasting:   return "timer"
         case .symptoms:  return "stethoscope"
-        case .cross:     return "arrow.triangle.swap"
+        case .cross:        return "arrow.triangle.swap"
+        case .supplements:  return "pill.fill"
         }
     }
 
@@ -46,7 +48,8 @@ enum WellnessDomain: String, CaseIterable {
         case .mood:      return Color(hue: 0.14, saturation: 0.70, brightness: 0.95)
         case .fasting:   return .orange
         case .symptoms:  return AppColors.error
-        case .cross:     return AppColors.brand
+        case .cross:        return AppColors.brand
+        case .supplements:  return Color(hue: 0.72, saturation: 0.50, brightness: 0.80)
         }
     }
 }
@@ -153,6 +156,25 @@ struct WellnessDaySummary {
     let supplementAdherence: Double?
     // Journal
     let journalLogged: Bool
+
+    // Report-specific fields (var with defaults — preserves memberwise init)
+    var eatingTriggers: [String: Int] = [:]
+    var mealTypes: [String: Int] = [:]
+    var foodNames: [String] = []
+    var coffeeType: String? = nil
+    var mealTimestamps: [Date] = []
+    var interventionSessions: [(type: String, stressDelta: Double?)] = []
+    // Stress detail
+    var stressMin: Double? = nil
+    var stressMax: Double? = nil
+    var stressReadingCount: Int = 0
+    // Vitals
+    var restingHeartRateAvg: Double? = nil
+    var hrvAvg: Double? = nil
+    var systolicBPAvg: Double? = nil
+    var diastolicBPAvg: Double? = nil
+    var respiratoryRateAvg: Double? = nil
+    var daylightMinutes: Double? = nil
 }
 
 // MARK: - WellnessContext

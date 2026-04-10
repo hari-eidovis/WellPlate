@@ -31,7 +31,7 @@ final class InsightEngine: ObservableObject {
 
     // MARK: - Init
 
-    init(healthService: HealthKitServiceProtocol = HealthKitService()) {
+    init(healthService: HealthKitServiceProtocol = HealthKitServiceFactory.shared) {
         self.healthService = healthService
     }
 
@@ -52,15 +52,16 @@ final class InsightEngine: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        // Mock mode
-        if AppConfig.shared.mockMode {
-            let mocks = mockInsights()
-            insightCards = mocks
-            dailyInsight = mocks.first
-            return
-        }
-
         guard let context = await buildWellnessContext() else {
+            #if DEBUG
+            if AppConfig.shared.mockMode {
+                // Fallback: mock data not yet injected or SwiftData empty
+                let mocks = mockInsights()
+                insightCards = mocks
+                dailyInsight = mocks.first
+                return
+            }
+            #endif
             insufficientData = true
             return
         }
@@ -155,7 +156,16 @@ final class InsightEngine: ObservableObject {
         async let energyFetch = fetchDailyEnergySafely(range: interval)
         async let heartRateFetch = fetchHeartRateSafely(range: interval)
         async let exerciseFetch = fetchExerciseMinutesSafely(range: interval)
+        // Additional vitals for report
+        async let restingHRFetch = fetchRestingHRSafely(range: interval)
+        async let hrvFetch = fetchHRVSafely(range: interval)
+        async let systolicFetch = fetchSystolicSafely(range: interval)
+        async let diastolicFetch = fetchDiastolicSafely(range: interval)
+        async let respiratoryFetch = fetchRespiratorySafely(range: interval)
+        async let daylightFetch = fetchDaylightSafely(range: interval)
+
         let (sleepSummaries, stepsData, energyData, heartRateData, exerciseData) = await (sleepFetch, stepsFetch, energyFetch, heartRateFetch, exerciseFetch)
+        let (restingHRData, hrvData, systolicData, diastolicData, respiratoryData, daylightData) = await (restingHRFetch, hrvFetch, systolicFetch, diastolicFetch, respiratoryFetch, daylightFetch)
 
         if sleepSummaries.count >= 2 { domainsWith2Days += 1 }
         if stepsData.count >= 2 { domainsWith2Days += 1 }
@@ -209,7 +219,7 @@ final class InsightEngine: ObservableObject {
             // Journal
             let journalLogged = journalEntries.contains { calendar.isDate($0.day, inSameDayAs: dayStart) }
 
-            days.append(WellnessDaySummary(
+            var summary = WellnessDaySummary(
                 date: dayStart,
                 stressScore: avgScore,
                 stressLabel: wellness?.stressLevel,
@@ -237,7 +247,27 @@ final class InsightEngine: ObservableObject {
                 fastingCompleted: fastingCompleted,
                 supplementAdherence: supplementAdherence,
                 journalLogged: journalLogged
-            ))
+            )
+
+            // Populate report-specific var fields
+            let triggerStrings = dayFood.flatMap { $0.eatingTriggers ?? [] }
+            summary.eatingTriggers = Dictionary(triggerStrings.map { ($0, 1) }, uniquingKeysWith: +)
+            let typeStrings = dayFood.compactMap { $0.mealType }
+            summary.mealTypes = Dictionary(typeStrings.map { ($0, 1) }, uniquingKeysWith: +)
+            summary.foodNames = dayFood.map(\.foodName)
+            summary.coffeeType = wellness?.coffeeType
+            summary.mealTimestamps = dayFood.map(\.createdAt)
+            summary.stressMin = dayReadings.map(\.score).min()
+            summary.stressMax = dayReadings.map(\.score).max()
+            summary.stressReadingCount = dayReadings.count
+            summary.restingHeartRateAvg = restingHRData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
+            summary.hrvAvg = hrvData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
+            summary.systolicBPAvg = systolicData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
+            summary.diastolicBPAvg = diastolicData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
+            summary.respiratoryRateAvg = respiratoryData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
+            summary.daylightMinutes = daylightData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
+
+            days.append(summary)
         }
 
         // Data quality note
@@ -269,6 +299,30 @@ final class InsightEngine: ObservableObject {
 
     private func fetchExerciseMinutesSafely(range: DateInterval) async -> [DailyMetricSample] {
         (try? await healthService.fetchExerciseMinutes(for: range)) ?? []
+    }
+
+    private func fetchRestingHRSafely(range: DateInterval) async -> [DailyMetricSample] {
+        (try? await healthService.fetchRestingHeartRate(for: range)) ?? []
+    }
+
+    private func fetchHRVSafely(range: DateInterval) async -> [DailyMetricSample] {
+        (try? await healthService.fetchHRV(for: range)) ?? []
+    }
+
+    private func fetchSystolicSafely(range: DateInterval) async -> [DailyMetricSample] {
+        (try? await healthService.fetchBloodPressureSystolic(for: range)) ?? []
+    }
+
+    private func fetchDiastolicSafely(range: DateInterval) async -> [DailyMetricSample] {
+        (try? await healthService.fetchBloodPressureDiastolic(for: range)) ?? []
+    }
+
+    private func fetchRespiratorySafely(range: DateInterval) async -> [DailyMetricSample] {
+        (try? await healthService.fetchRespiratoryRate(for: range)) ?? []
+    }
+
+    private func fetchDaylightSafely(range: DateInterval) async -> [DailyMetricSample] {
+        (try? await healthService.fetchDaylight(for: range)) ?? []
     }
 }
 

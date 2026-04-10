@@ -22,7 +22,7 @@ final class SleepViewModel: ObservableObject {
 
     private let service: HealthKitServiceProtocol
 
-    init(service: HealthKitServiceProtocol = HealthKitService()) {
+    init(service: HealthKitServiceProtocol = HealthKitServiceFactory.shared) {
         self.service = service
     }
 
@@ -87,7 +87,7 @@ final class SleepViewModel: ObservableObject {
     // MARK: - Actions
 
     func requestPermissionAndLoad() async {
-        guard HealthKitService.isAvailable else { return }
+        guard HealthKitServiceFactory.isDataAvailable else { return }
         isLoading = true
         defer { isLoading = false }
         do {

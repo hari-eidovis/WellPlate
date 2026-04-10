@@ -17,8 +17,8 @@ final class AppConfig {
         static let legacyGeminiModel = "app.nutrition.geminiModel"
         static let mockResponseDelay = "app.nutrition.mockResponseDelay"
         static let apiTimeout = "app.networking.apiTimeout"
-        static let mockDataInjected = "app.mock.dataInjected"
-        static let mockInjectedWellnessLogDates = "app.mock.wellnessLogDates"
+        static let mockInjectedDates = "app.mock.injectedDates"
+        static let mockInjectedRecordIDs = "app.mock.injectedRecordIDs"
     }
 
     private init() {}
@@ -105,36 +105,34 @@ final class AppConfig {
         }
     }
 
-    /// Whether mock data has been injected into SwiftData + HealthKit layer.
-    /// Always returns false in Release builds (same pattern as mockMode).
-    var mockDataInjected: Bool {
+    /// ISO8601 date strings of mock-injected records (WellnessDayLog, FastingSession, JournalEntry).
+    var mockInjectedDates: [String] {
         get {
             #if DEBUG
-            return UserDefaults.standard.bool(forKey: Keys.mockDataInjected)
-            #else
-            return false
-            #endif
-        }
-        set {
-            #if DEBUG
-            UserDefaults.standard.set(newValue, forKey: Keys.mockDataInjected)
-            WPLogger.app.info("Mock Data Injection → \(newValue ? "ACTIVE" : "CLEARED")")
-            #endif
-        }
-    }
-
-    /// ISO8601 date strings of WellnessDayLog records created by mock injection.
-    var mockInjectedWellnessLogDates: [String] {
-        get {
-            #if DEBUG
-            return UserDefaults.standard.stringArray(forKey: Keys.mockInjectedWellnessLogDates) ?? []
+            return UserDefaults.standard.stringArray(forKey: Keys.mockInjectedDates) ?? []
             #else
             return []
             #endif
         }
         set {
             #if DEBUG
-            UserDefaults.standard.set(newValue, forKey: Keys.mockInjectedWellnessLogDates)
+            UserDefaults.standard.set(newValue, forKey: Keys.mockInjectedDates)
+            #endif
+        }
+    }
+
+    /// UUID strings of mock-injected AdherenceLog records.
+    var mockInjectedRecordIDs: [String] {
+        get {
+            #if DEBUG
+            return UserDefaults.standard.stringArray(forKey: Keys.mockInjectedRecordIDs) ?? []
+            #else
+            return []
+            #endif
+        }
+        set {
+            #if DEBUG
+            UserDefaults.standard.set(newValue, forKey: Keys.mockInjectedRecordIDs)
             #endif
         }
     }
@@ -152,6 +150,7 @@ final class AppConfig {
     func logCurrentMode() {
         WPLogger.app.block(emoji: "🔧", title: "CONFIGURATION", lines: [
             "Mock Mode   : \(mockMode ? "ENABLED ✅" : "DISABLED ❌")",
+            "Mock Data   : \(mockMode ? "INJECTED" : "NONE")",
             "Nutrition   : \(nutritionSourceLabel)",
             "Groq API Key: \(hasGroqAPIKey ? "PRESENT ✅" : "MISSING ❌")",
             "Groq Model  : \(groqModel)"

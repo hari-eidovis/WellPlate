@@ -1,71 +1,66 @@
 //
-//  MockDataDebugCard.swift
+//  MockModeDebugCard.swift
 //  WellPlate
 //
-//  DEBUG-only card for Profile: inject / clear 30 days of mock data.
+//  Unified mock mode card for Profile. Replaces both NutritionSourceDebugCard
+//  and MockDataDebugCard. Single toggle controls API mock + data injection.
 //
 
 #if DEBUG
 import SwiftUI
 
-struct MockDataDebugCard: View {
-    @Binding var isInjected: Bool
-    let onInject: () -> Void
-    let onDelete: () -> Void
-    @State private var showDeleteConfirmation = false
+/// IMPORTANT: ProfileView must NOT have a separate onChange(of: mockModeEnabled) handler —
+/// the onToggle callback is the single source of truth for flag + data changes.
+struct MockModeDebugCard: View {
+    @Binding var isMockMode: Bool
+    let hasGroqAPIKey: Bool
+    let onToggle: (Bool) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
             HStack(spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.orange.opacity(0.12))
                         .frame(width: 32, height: 32)
-                    Image(systemName: "cylinder.split.1x2.fill")
+                    Image(systemName: "theatermasks.fill")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.orange)
                 }
-                Text("Mock Data")
+                Text("Mock Mode")
                     .font(.r(.headline, .semibold))
                 Spacer()
-                Text(isInjected ? "Active" : "Inactive")
+                Text(isMockMode ? "Active" : "Off")
                     .font(.r(.caption2, .semibold))
-                    .foregroundStyle(isInjected ? .green : .secondary)
+                    .foregroundStyle(isMockMode ? .green : .secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(
                         Capsule()
-                            .fill((isInjected ? Color.green : Color.secondary).opacity(0.15))
+                            .fill((isMockMode ? Color.green : Color.secondary).opacity(0.15))
                     )
             }
 
-            Text("Inject 30 days of realistic food logs, wellness data, stress readings, and HealthKit metrics across all screens.")
-                .font(.r(.caption, .medium))
-                .foregroundStyle(.secondary)
-
-            HStack(spacing: 12) {
-                Button {
-                    onInject()
-                } label: {
-                    Label("Inject Data", systemImage: "plus.circle.fill")
-                        .font(.r(.subheadline, .semibold))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
+            Toggle("Enable Mock Mode", isOn: $isMockMode)
+                .font(.r(.subheadline, .semibold))
                 .tint(AppColors.brand)
-                .disabled(isInjected)
-
-                Button {
-                    showDeleteConfirmation = true
-                } label: {
-                    Label("Clear", systemImage: "trash.fill")
-                        .font(.r(.subheadline, .semibold))
-                        .frame(maxWidth: .infinity)
+                .onChange(of: isMockMode) { _, newValue in
+                    onToggle(newValue)
                 }
-                .buttonStyle(.bordered)
-                .tint(.red)
-                .disabled(!isInjected)
+
+            if isMockMode {
+                Text("All features use mock data. 30 days of food logs, wellness data, stress readings, HealthKit metrics, symptoms, fasting sessions, supplements, and journal entries.")
+                    .font(.r(.caption, .medium))
+                    .foregroundStyle(.secondary)
+            } else {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(hasGroqAPIKey ? Color.green : Color.orange)
+                        .frame(width: 8, height: 8)
+                    Text(hasGroqAPIKey ? "GROQ_API_KEY detected" : "GROQ_API_KEY missing — nutrition AI unavailable")
+                        .font(.r(.caption, .medium))
+                        .foregroundStyle(hasGroqAPIKey ? Color.green : Color.orange)
+                }
             }
         }
         .padding(16)
@@ -74,17 +69,6 @@ struct MockDataDebugCard: View {
                 .fill(Color(.systemBackground))
                 .appShadow(radius: 15, y: 5)
         )
-        .confirmationDialog(
-            "Clear all mock data?",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Clear Mock Data", role: .destructive) {
-                onDelete()
-            }
-        } message: {
-            Text("This will remove all injected food logs, wellness logs, and stress readings. Your real data is not affected.")
-        }
     }
 }
 #endif

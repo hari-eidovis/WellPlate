@@ -710,10 +710,10 @@ struct HomeView: View {
     }
 
     private func fetchHealthMoodSuggestion() {
-        if AppConfig.shared.mockDataInjected { return }
-        guard HealthKitService.isAvailable else { return }
+        guard HealthKitServiceFactory.isDataAvailable else { return }
+        if AppConfig.shared.mockMode { return }
         Task {
-            let service = HealthKitService()
+            let service = HealthKitServiceFactory.shared
             do {
                 try await service.requestAuthorization()
                 if let mood = try await service.fetchTodayMood() {
@@ -738,8 +738,8 @@ struct HomeView: View {
         todayLog.moodRaw = mood.rawValue
         do {
             try modelContext.save()
-            if HealthKitService.isAvailable && !AppConfig.shared.mockDataInjected {
-                Task { try? await HealthKitService().writeMood(mood) }
+            if HealthKitServiceFactory.isDataAvailable && !AppConfig.shared.mockMode {
+                Task { try? await HealthKitServiceFactory.shared.writeMood(mood) }
             }
             healthSuggestedMood = nil
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {

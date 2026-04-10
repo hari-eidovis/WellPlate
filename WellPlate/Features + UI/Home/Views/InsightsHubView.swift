@@ -8,6 +8,7 @@ import SwiftUI
 struct InsightsHubView: View {
     @ObservedObject var engine: InsightEngine
     @State private var selectedCard: InsightCard?
+    @State private var showFullReport = false
 
     var body: some View {
         ZStack {
@@ -25,6 +26,9 @@ struct InsightsHubView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedCard) { card in
             InsightDetailSheet(card: card, engine: engine)
+        }
+        .navigationDestination(isPresented: $showFullReport) {
+            AI15DayReportView()
         }
     }
 
@@ -70,15 +74,46 @@ struct InsightsHubView: View {
                 InsightsHubHeader(cardCount: engine.insightCards.count)
                     .insightEntrance(index: 0)
 
+                // Full Report navigation card
+                Button {
+                    HapticService.impact(.light)
+                    showFullReport = true
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(AppColors.brand)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("15-Day Wellness Report")
+                                .font(.r(.headline, .bold))
+                                .foregroundStyle(.primary)
+                            Text("Comprehensive analysis across all your data")
+                                .font(.r(.caption, .regular))
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(18)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(AppColors.brand.opacity(0.08))
+                    )
+                }
+                .buttonStyle(.plain)
+                .insightEntrance(index: 1)
+
                 ForEach(Array(engine.insightCards.enumerated()), id: \.element.id) { idx, card in
                     InsightCardView(card: card) {
                         selectedCard = card
                     }
-                    .insightEntrance(index: idx + 1)
+                    .insightEntrance(index: idx + 2)
                 }
 
                 InsightsHubFooter(engine: engine)
-                    .insightEntrance(index: engine.insightCards.count + 1)
+                    .insightEntrance(index: engine.insightCards.count + 2)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 20)

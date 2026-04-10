@@ -15,20 +15,37 @@ enum MockDataInjector {
     // MARK: - Public API
 
     /// Inject 30 days of mock data into SwiftData.
-    /// Guards against double-injection via AppConfig flag.
+    /// Guards against double-injection by checking for existing mock records.
     static func inject(into context: ModelContext) {
-        guard !AppConfig.shared.mockDataInjected else { return }
+        let existingMockFood = FetchDescriptor<FoodLogEntry>(
+            predicate: #Predicate { $0.logSource == "mock" }
+        )
+        guard (try? context.fetchCount(existingMockFood)) == 0 else {
+            WPLogger.app.info("Mock data already exists — skipping injection")
+            return
+        }
 
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
+        var injectedDates: [String] = []
+        var injectedIDs: [String] = []
 
+        // Existing injectors
         injectFoodLogs(into: context, today: today, cal: cal)
-        injectWellnessLogs(into: context, today: today, cal: cal)
+        injectWellnessLogs(into: context, today: today, cal: cal, injectedDates: &injectedDates)
         injectStressReadings(into: context, today: today, cal: cal)
+
+        // New injectors
+        injectSymptomEntries(into: context, today: today, cal: cal)
+        injectFastingSessions(into: context, today: today, cal: cal, injectedDates: &injectedDates)
+        injectAdherenceLogs(into: context, today: today, cal: cal, injectedIDs: &injectedIDs)
+        injectJournalEntries(into: context, today: today, cal: cal, injectedDates: &injectedDates)
 
         do {
             try context.save()
-            AppConfig.shared.mockDataInjected = true
+            AppConfig.shared.mockInjectedDates = injectedDates
+            AppConfig.shared.mockInjectedRecordIDs = injectedIDs
+            WPLogger.app.info("Mock data injection complete")
         } catch {
             WPLogger.app.error("Mock data injection failed: \(error.localizedDescription)")
         }
@@ -36,7 +53,7 @@ enum MockDataInjector {
 
     /// Remove all mock-injected data.
     static func deleteAll(from context: ModelContext) {
-        // 1. FoodLogEntry — delete where logSource == "mock"
+        // 1. FoodLogEntry — by tag
         let foodDescriptor = FetchDescriptor<FoodLogEntry>(
             predicate: #Predicate { $0.logSource == "mock" }
         )
@@ -44,7 +61,7 @@ enum MockDataInjector {
             mockFoods.forEach { context.delete($0) }
         }
 
-        // 2. StressReading — delete where source == "mock"
+        // 2. StressReading — by tag
         let stressDescriptor = FetchDescriptor<StressReading>(
             predicate: #Predicate { $0.source == "mock" }
         )
@@ -52,24 +69,60 @@ enum MockDataInjector {
             mockReadings.forEach { context.delete($0) }
         }
 
-        // 3. WellnessDayLog — delete by tracked dates
+        // 3. SymptomEntry — by tag
+        let symptomDescriptor = FetchDescriptor<SymptomEntry>(
+            predicate: #Predicate { $0.notes == "[mock]" }
+        )
+        if let mockSymptoms = try? context.fetch(symptomDescriptor) {
+            mockSymptoms.forEach { context.delete($0) }
+        }
+
+        // 4. JournalEntry — by tag
+        let journalDescriptor = FetchDescriptor<JournalEntry>(
+            predicate: #Predicate { $0.promptUsed == "[mock]" }
+        )
+        if let mockJournals = try? context.fetch(journalDescriptor) {
+            mockJournals.forEach { context.delete($0) }
+        }
+
+        // 5. WellnessDayLog + FastingSession — by tracked dates
         let formatter = ISO8601DateFormatter()
-        let trackedDates = AppConfig.shared.mockInjectedWellnessLogDates.compactMap { formatter.date(from: $0) }
+        let trackedDates = AppConfig.shared.mockInjectedDates.compactMap { formatter.date(from: $0) }
         for date in trackedDates {
             let start = date
             let end = Calendar.current.date(byAdding: .second, value: 1, to: start)!
-            let descriptor = FetchDescriptor<WellnessDayLog>(
+
+            // WellnessDayLog
+            let wellnessDescriptor = FetchDescriptor<WellnessDayLog>(
                 predicate: #Predicate { $0.day >= start && $0.day < end }
             )
-            if let logs = try? context.fetch(descriptor) {
+            if let logs = try? context.fetch(wellnessDescriptor) {
                 logs.forEach { context.delete($0) }
+            }
+
+            // FastingSession (by startedAt date)
+            let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: start)!
+            let fastingDescriptor = FetchDescriptor<FastingSession>(
+                predicate: #Predicate { $0.startedAt >= start && $0.startedAt < nextDay }
+            )
+            if let sessions = try? context.fetch(fastingDescriptor) {
+                sessions.filter { $0.completed }.forEach { context.delete($0) }
             }
         }
 
-        // 4. Save + clear flags
+        // 6. AdherenceLog — by tracked UUIDs
+        let trackedIDs = Set(AppConfig.shared.mockInjectedRecordIDs)
+        if !trackedIDs.isEmpty {
+            let adherenceDescriptor = FetchDescriptor<AdherenceLog>()
+            if let allLogs = try? context.fetch(adherenceDescriptor) {
+                allLogs.filter { trackedIDs.contains($0.id.uuidString) }.forEach { context.delete($0) }
+            }
+        }
+
+        // 7. Save + clear tracking
         try? context.save()
-        AppConfig.shared.mockDataInjected = false
-        AppConfig.shared.mockInjectedWellnessLogDates = []
+        AppConfig.shared.mockInjectedDates = []
+        AppConfig.shared.mockInjectedRecordIDs = []
     }
 
     // MARK: - Food Logs
@@ -108,17 +161,15 @@ enum MockDataInjector {
             let day = cal.date(byAdding: .day, value: -offset, to: today)!
             let startOfDay = cal.startOfDay(for: day)
 
-            // Breakfast, Lunch, Dinner from rotating templates
-            let breakfast = mealTemplates[offset % 5]          // index 0-4
-            let lunch     = mealTemplates[5 + (offset % 5)]    // index 5-9
-            let dinner    = mealTemplates[10 + (offset % 5)]   // index 10-14
+            let breakfast = mealTemplates[offset % 5]
+            let lunch     = mealTemplates[5 + (offset % 5)]
+            let dinner    = mealTemplates[10 + (offset % 5)]
 
             let meals = offset % 3 == 0
                 ? [breakfast, lunch, dinner]
-                : [breakfast, lunch, dinner, mealTemplates[15 + (offset % 5)]]  // + snack
+                : [breakfast, lunch, dinner, mealTemplates[15 + (offset % 5)]]
 
             for (i, tmpl) in meals.enumerated() {
-                // Stagger createdAt within the day for ordering
                 let createdAt = cal.date(byAdding: .hour, value: 7 + i * 4, to: startOfDay) ?? startOfDay
                 let entry = FoodLogEntry(
                     day: startOfDay,
@@ -133,7 +184,7 @@ enum MockDataInjector {
                     confidence: 0.90,
                     createdAt: createdAt,
                     mealType: tmpl.meal,
-                    logSource: "mock" // Convention: used for cleanup. Do not use for real entries.
+                    logSource: "mock"
                 )
                 context.insert(entry)
             }
@@ -142,15 +193,13 @@ enum MockDataInjector {
 
     // MARK: - Wellness Logs
 
-    private static func injectWellnessLogs(into context: ModelContext, today: Date, cal: Calendar) {
-        // Fetch existing WellnessDayLog dates in the 30-day range to avoid collisions
+    private static func injectWellnessLogs(into context: ModelContext, today: Date, cal: Calendar, injectedDates: inout [String]) {
         let start = cal.date(byAdding: .day, value: -29, to: today)!
         let descriptor = FetchDescriptor<WellnessDayLog>(
             predicate: #Predicate { $0.day >= start }
         )
         let existingDays = Set((try? context.fetch(descriptor))?.map { cal.startOfDay(for: $0.day) } ?? [])
 
-        var injectedDates: [String] = []
         let formatter = ISO8601DateFormatter()
 
         let exerciseValues = [0, 30, 45, 20, 60, 35, 50]
@@ -178,8 +227,6 @@ enum MockDataInjector {
             context.insert(log)
             injectedDates.append(formatter.string(from: startOfDay))
         }
-
-        AppConfig.shared.mockInjectedWellnessLogDates = injectedDates
     }
 
     // MARK: - Stress Readings
@@ -197,7 +244,7 @@ enum MockDataInjector {
         for offset in 0..<30 {
             let day = cal.date(byAdding: .day, value: -offset, to: today)!
             let pattern = baseScores[offset % 5]
-            let readingCount = 3 + (offset % 3)  // 3, 4, or 5
+            let readingCount = 3 + (offset % 3)
 
             for i in 0..<readingCount {
                 guard let ts = cal.date(bySettingHour: hours[i], minute: 0, second: 0, of: day) else { continue }
@@ -210,6 +257,102 @@ enum MockDataInjector {
                 )
                 context.insert(reading)
             }
+        }
+    }
+
+    // MARK: - Symptom Entries
+
+    private static func injectSymptomEntries(into context: ModelContext, today: Date, cal: Calendar) {
+        let symptoms: [(name: String, category: SymptomCategory, severityRange: ClosedRange<Int>)] = [
+            ("Headache", .pain, 3...7),
+            ("Bloating", .digestive, 2...5),
+            ("Fatigue", .energy, 4...8),
+            ("Brain Fog", .cognitive, 3...6),
+        ]
+        for offset in stride(from: 0, to: 30, by: 3) {
+            let day = cal.date(byAdding: .day, value: -offset, to: today)!
+            let symptom = symptoms[offset / 3 % symptoms.count]
+            let severity = symptom.severityRange.lowerBound + (offset % (symptom.severityRange.upperBound - symptom.severityRange.lowerBound + 1))
+            let ts = cal.date(bySettingHour: 9 + (offset % 8), minute: 0, second: 0, of: day) ?? day
+            let entry = SymptomEntry(name: symptom.name, category: symptom.category, severity: severity, timestamp: ts, notes: "[mock]")
+            context.insert(entry)
+        }
+    }
+
+    // MARK: - Fasting Sessions
+
+    private static func injectFastingSessions(into context: ModelContext, today: Date, cal: Calendar, injectedDates: inout [String]) {
+        let formatter = ISO8601DateFormatter()
+        for offset in stride(from: 0, to: 30, by: 2) {
+            let day = cal.date(byAdding: .day, value: -offset, to: today)!
+            let prevDay = cal.date(byAdding: .day, value: -1, to: day)!
+            let startTime = cal.date(bySettingHour: 20, minute: 0, second: 0, of: prevDay)!
+            let targetEnd = cal.date(byAdding: .hour, value: 16, to: startTime)!
+            let session = FastingSession(startedAt: startTime, targetEndAt: targetEnd, scheduleType: .ratio16_8)
+            session.actualEndAt = targetEnd
+            session.completed = true
+            context.insert(session)
+            injectedDates.append(formatter.string(from: cal.startOfDay(for: startTime)))
+        }
+    }
+
+    // MARK: - Adherence Logs
+
+    private static func injectAdherenceLogs(into context: ModelContext, today: Date, cal: Calendar, injectedIDs: inout [String]) {
+        let supplements: [(name: String, id: UUID, minute: Int)] = [
+            ("Vitamin D", UUID(), 480),
+            ("Omega-3", UUID(), 1200),
+        ]
+        for offset in 0..<30 {
+            let day = cal.date(byAdding: .day, value: -offset, to: today)!
+            for supp in supplements {
+                let status = offset % 7 == 0 ? "skipped" : "taken"
+                let takenAt = status == "taken" ? cal.date(bySettingHour: supp.minute / 60, minute: supp.minute % 60, second: 0, of: day) : nil
+                let log = AdherenceLog(supplementName: supp.name, supplementID: supp.id, day: day, scheduledMinute: supp.minute, status: status, takenAt: takenAt)
+                context.insert(log)
+                injectedIDs.append(log.id.uuidString)
+            }
+        }
+    }
+
+    // MARK: - Journal Entries
+
+    private static func injectJournalEntries(into context: ModelContext, today: Date, cal: Calendar, injectedDates: inout [String]) {
+        let texts = [
+            "Felt energized today after morning walk. Good sleep last night.",
+            "Stressful day at work. Tried deep breathing exercises.",
+            "Meal prep went well. Hit protein goal for the first time this week.",
+            "Slept poorly. Need to cut caffeine after 2pm.",
+            "Great workout session. Recovery shake tasted amazing.",
+            "Practiced mindfulness for 10 minutes. Noticed less anxiety.",
+            "Weekend hike with friends. Perfect weather.",
+            "Tried a new recipe — lentil soup turned out great.",
+            "Journaling before bed helps me wind down.",
+            "Feeling grateful for small wins this week.",
+        ]
+        let moods = [3, 1, 4, 0, 4, 3, 4, 3, 3, 4]
+        let stressScores: [Double?] = [28, 55, 32, 68, 22, 35, 18, 40, 30, 25]
+        let formatter = ISO8601DateFormatter()
+
+        for (i, offset) in stride(from: 0, to: 30, by: 3).enumerated() {
+            guard i < texts.count else { break }
+            let day = cal.date(byAdding: .day, value: -offset, to: today)!
+            let startOfDay = cal.startOfDay(for: day)
+
+            let descriptor = FetchDescriptor<JournalEntry>(
+                predicate: #Predicate { $0.day == startOfDay }
+            )
+            guard (try? context.fetchCount(descriptor)) == 0 else { continue }
+
+            let entry = JournalEntry(
+                day: day,
+                text: texts[i],
+                moodRaw: moods[i],
+                promptUsed: "[mock]",
+                stressScore: stressScores[i]
+            )
+            context.insert(entry)
+            injectedDates.append(formatter.string(from: startOfDay))
         }
     }
 }

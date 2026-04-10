@@ -27,14 +27,8 @@ final class WellnessCalendarViewModel: ObservableObject {
     private var activityTask: Task<Void, Never>?
     private let healthService: HealthKitServiceProtocol
 
-    init(healthService: HealthKitServiceProtocol? = nil) {
-        if let healthService {
-            self.healthService = healthService
-        } else if AppConfig.shared.mockDataInjected {
-            self.healthService = MockHealthKitService(snapshot: .default)
-        } else {
-            self.healthService = HealthKitService()
-        }
+    init(healthService: HealthKitServiceProtocol = HealthKitServiceFactory.shared) {
+        self.healthService = healthService
     }
 
     // MARK: - Init
@@ -189,9 +183,7 @@ final class WellnessCalendarViewModel: ObservableObject {
     // MARK: - HealthKit Activity Fallback
 
     private func loadHealthKitActivity(for day: Date) async {
-        if !AppConfig.shared.mockDataInjected {
-            guard HealthKitService.isAvailable else { return }
-        }
+        guard HealthKitServiceFactory.isDataAvailable else { return }
         guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: day) else { return }
         let range = DateInterval(start: day, end: endOfDay)
 

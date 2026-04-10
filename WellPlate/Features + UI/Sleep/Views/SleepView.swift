@@ -26,7 +26,7 @@ struct SleepView: View {
                 Color(.systemGroupedBackground).ignoresSafeArea()
 
                 Group {
-                    if !HealthKitService.isAvailable {
+                    if !HealthKitServiceFactory.isDataAvailable {
                         unavailableView
                     } else if viewModel.isLoading {
                         loadingView

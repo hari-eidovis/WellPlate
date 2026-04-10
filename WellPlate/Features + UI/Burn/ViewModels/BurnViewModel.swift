@@ -23,14 +23,8 @@ final class BurnViewModel: ObservableObject {
 
     private let service: HealthKitServiceProtocol
 
-    init(service: HealthKitServiceProtocol? = nil) {
-        if let service {
-            self.service = service
-        } else if AppConfig.shared.mockDataInjected {
-            self.service = MockHealthKitService(snapshot: .default)
-        } else {
-            self.service = HealthKitService()
-        }
+    init(service: HealthKitServiceProtocol = HealthKitServiceFactory.shared) {
+        self.service = service
     }
 
     // MARK: - Computed — Today
@@ -104,14 +98,7 @@ final class BurnViewModel: ObservableObject {
     // MARK: - Actions
 
     func requestPermissionAndLoad() async {
-        if AppConfig.shared.mockDataInjected {
-            isLoading = true
-            defer { isLoading = false }
-            isAuthorized = true
-            await loadData()
-            return
-        }
-        guard HealthKitService.isAvailable else { return }
+        guard HealthKitServiceFactory.isDataAvailable else { return }
         isLoading = true
         defer { isLoading = false }
         do {

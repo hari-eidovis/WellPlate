@@ -141,7 +141,7 @@ final class StressViewModel: ObservableObject {
     // MARK: - Init
 
     init(
-        healthService: HealthKitServiceProtocol = HealthKitService(),
+        healthService: HealthKitServiceProtocol = HealthKitServiceFactory.shared,
         modelContext: ModelContext,
         mockSnapshot: StressMockSnapshot? = nil
     ) {

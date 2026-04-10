@@ -95,8 +95,7 @@ struct ProfilePlaceholderView: View {
     #if DEBUG
     @State private var mockModeEnabled: Bool = AppConfig.shared.mockMode
     @State private var hasGroqAPIKey: Bool = AppConfig.shared.hasGroqAPIKey
-    @State private var mockDataInjected: Bool = AppConfig.shared.mockDataInjected
-    @State private var showMockDataRestartAlert = false
+    @State private var showMockModeRestartAlert = false
     #endif
 
     private let profile = UserProfileManager.shared
@@ -162,23 +161,17 @@ struct ProfilePlaceholderView: View {
                     .padding(.horizontal, 16)
 
                     #if DEBUG
-                    NutritionSourceDebugCard(
+                    MockModeDebugCard(
                         isMockMode: $mockModeEnabled,
-                        hasGroqAPIKey: hasGroqAPIKey
-                    )
-                    .padding(.horizontal, 16)
-
-                    MockDataDebugCard(
-                        isInjected: $mockDataInjected,
-                        onInject: {
-                            MockDataInjector.inject(into: modelContext)
-                            mockDataInjected = AppConfig.shared.mockDataInjected
-                            showMockDataRestartAlert = true
-                        },
-                        onDelete: {
-                            MockDataInjector.deleteAll(from: modelContext)
-                            mockDataInjected = AppConfig.shared.mockDataInjected
-                            showMockDataRestartAlert = true
+                        hasGroqAPIKey: hasGroqAPIKey,
+                        onToggle: { enabled in
+                            AppConfig.shared.mockMode = enabled
+                            if enabled {
+                                MockDataInjector.inject(into: modelContext)
+                            } else {
+                                MockDataInjector.deleteAll(from: modelContext)
+                            }
+                            showMockModeRestartAlert = true
                         }
                     )
                     .padding(.horizontal, 16)
@@ -202,16 +195,12 @@ struct ProfilePlaceholderView: View {
                 #endif
             }
             #if DEBUG
-            .onChange(of: mockModeEnabled) { _, newValue in
-                AppConfig.shared.mockMode = newValue
-                refreshDebugNutritionState()
-            }
-            .alert("Mock Data Updated", isPresented: $showMockDataRestartAlert) {
+            .alert("Restart Required", isPresented: $showMockModeRestartAlert) {
                 Button("OK") { }
             } message: {
-                Text(mockDataInjected
-                     ? "30 days of mock data injected. Restart the app for HealthKit-backed screens (Burn, Stress) to reflect changes."
-                     : "Mock data cleared. Restart the app for full cleanup of HealthKit-backed screens.")
+                Text(mockModeEnabled
+                     ? "Mock mode enabled. Restart the app for all screens to use mock data."
+                     : "Mock mode disabled. Restart the app to use real data.")
             }
             #endif
             .navigationDestination(isPresented: $showGoals) {
@@ -1056,7 +1045,6 @@ struct ProfilePlaceholderView: View {
     private func refreshDebugNutritionState() {
         mockModeEnabled = AppConfig.shared.mockMode
         hasGroqAPIKey = AppConfig.shared.hasGroqAPIKey
-        mockDataInjected = AppConfig.shared.mockDataInjected
     }
     #endif
 }
@@ -1555,52 +1543,6 @@ private struct InstructionRow: View {
 }
 
 #if DEBUG
-private struct NutritionSourceDebugCard: View {
-    @Binding var isMockMode: Bool
-    let hasGroqAPIKey: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.purple.opacity(0.12))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: "hammer.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.purple)
-                }
-                Text("Debug")
-                    .font(.r(.headline, .semibold))
-            }
-
-            Toggle("Use Mock Nutrition", isOn: $isMockMode)
-                .font(.r(.subheadline, .semibold))
-                .tint(AppColors.brand)
-
-            if isMockMode {
-                Text("Using local deterministic nutrition JSON responses.")
-                    .font(.r(.caption, .medium))
-                    .foregroundStyle(.secondary)
-            } else {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(hasGroqAPIKey ? Color.green : Color.orange)
-                        .frame(width: 8, height: 8)
-                    Text(hasGroqAPIKey ? "GROQ_API_KEY detected in Secrets.plist" : "GROQ_API_KEY missing. Add WellPlate/Resources/Secrets.plist")
-                        .font(.r(.caption, .medium))
-                        .foregroundStyle(hasGroqAPIKey ? Color.green : Color.orange)
-                }
-            }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
-    }
-}
 #endif
 
 #Preview {
