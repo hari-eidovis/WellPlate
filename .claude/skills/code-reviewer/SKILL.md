@@ -54,6 +54,16 @@ If there are CRITICAL or HIGH issues, list them briefly (1 line each). The devel
   - Unnecessary re-renders
   - Large bundle sizes
 
+- **Flexibility & Extensibility**:
+  - Hardcoded logic that should be configurable (e.g., thresholds, limits, feature flags)
+  - Tight coupling between components that should be independent
+  - Missing protocol/interface abstractions where dependency injection would help
+  - Switch/if-else chains that will need modification when new cases are added (prefer enums, strategy pattern, or registry)
+  - Data models that are too rigid — no room for new fields or variants without breaking changes
+  - View components tightly bound to specific data sources instead of accepting generic inputs
+  - Business logic embedded directly in views instead of extracted into reusable ViewModels/services
+  - Missing extension points where future features are likely (e.g., new metric types, new chart styles)
+
 - **Best Practices**:
   - Magic numbers (use constants)
   - Commented-out code
@@ -83,6 +93,9 @@ If there are CRITICAL or HIGH issues, list them briefly (1 line each). The devel
 ## Medium Priority Issues 💡
 [List MEDIUM issues for consideration]
 
+## Flexibility & Extensibility 🔧
+[Flag areas that are rigid or tightly coupled — hard to extend for future updates]
+
 ## Positive Observations ✅
 [Highlight good practices observed]
 
@@ -110,6 +123,9 @@ If there are CRITICAL or HIGH issues, list them briefly (1 line each). The devel
 - [ ] No hardcoded values
 - [ ] Efficient algorithms
 - [ ] Good naming conventions
+- [ ] Code is flexible for future changes (no hardcoded logic, loose coupling)
+- [ ] Abstractions/protocols used where dependency injection helps
+- [ ] No rigid switch/if-else chains that break when new cases are added
 
 ## Language-Specific Checks
 

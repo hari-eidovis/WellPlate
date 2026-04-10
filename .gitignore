@@ -23,3 +23,15 @@ DerivedData/
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# code-review-graph
+.code-review-graph/
+setup-crg.sh
+setup-crg.ps1
+check-crg.sh
+crg-cheatsheet.pdf
+CRG-README.md
+.cursorrules
+.opencode.json
+.windsurfrules
+GEMINI.md

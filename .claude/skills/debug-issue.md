@@ -1,7 +1,6 @@
 ---
 name: Debug Issue
 description: Systematically debug issues using graph-powered code navigation
-model: opus
 ---
 
 ## Debug Issue
