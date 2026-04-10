@@ -1,0 +1,26 @@
+{
+  "_comment": "Single source of truth for agent/skill model assignments. Edit this file to change any agent's or skill's model.",
+  "_values": "opus | sonnet | haiku",
+  "agents": {
+    "audit": "opus",
+    "brainstorm": "opus",
+    "checklist": "opus",
+    "code-reviewer": "opus",
+    "fix": "opus",
+    "implement": "opus",
+    "plan": "sonnet",
+    "resolve": "opus",
+    "strategize": "opus"
+  },
+  "skills": {
+    "brainstorm": "opus",
+    "code-reviewer": "opus",
+    "commit": "haiku",
+    "develop": "opus",
+    "ui-ux-pro-max": "opus",
+    "debug-issue": "opus",
+    "explore-codebase": "sonnet",
+    "refactor-safely": "sonnet",
+    "review-changes": "sonnet"
+  }
+}

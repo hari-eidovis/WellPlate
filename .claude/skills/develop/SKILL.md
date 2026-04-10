@@ -2,7 +2,7 @@
 name: develop
 description: "Feature development orchestrator. Sub-commands: brainstorm, strategize, plan, audit, checklist, resolve, implement, fix"
 tools: ["Read", "Grep", "Glob", "Write", "Edit", "Bash", "WebSearch"]
-model: sonnet
+model: opus
 extended_thinking: true
 ---
 

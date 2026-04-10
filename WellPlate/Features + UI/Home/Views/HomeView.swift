@@ -28,6 +28,7 @@ struct HomeView: View {
     @Query(sort: \FoodLogEntry.createdAt, order: .forward) private var allFoodLogs: [FoodLogEntry]
     @Query private var allWellnessDayLogs: [WellnessDayLog]
     @Query private var allJournalEntries: [JournalEntry]
+    @Query(sort: \StressReading.timestamp) private var allStressReadings: [StressReading]
 
     @Binding var selectedTab: Int
 
@@ -98,6 +99,15 @@ struct HomeView: View {
                             case .stress:   selectedTab = 1
                             }
                         }
+                    )
+                    .padding(.horizontal, 16)
+
+                    // 2b. Stress Sparkline Strip
+                    StressSparklineStrip(
+                        readings: todayStressReadings,
+                        stressLevel: todayWellnessLog?.stressLevel,
+                        scoreDelta: stressScoreDelta,
+                        onTap: { selectedTab = 1 }
                     )
                     .padding(.horizontal, 16)
 
@@ -421,6 +431,23 @@ struct HomeView: View {
 
     private var todayWellnessLog: WellnessDayLog? {
         allWellnessDayLogs.first { Calendar.current.isDate($0.day, inSameDayAs: Date()) }
+    }
+
+    // MARK: - Stress Sparkline Data
+
+    private var todayStressReadings: [StressReading] {
+        allStressReadings.filter { Calendar.current.isDateInToday($0.timestamp) }
+    }
+
+    private var yesterdayLastStressReading: StressReading? {
+        allStressReadings.last { Calendar.current.isDateInYesterday($0.timestamp) }
+    }
+
+    private var stressScoreDelta: Int? {
+        guard let today = todayStressReadings.last,
+              let yesterday = yesterdayLastStressReading else { return nil }
+        let delta = Int(today.score.rounded()) - Int(yesterday.score.rounded())
+        return delta == 0 ? nil : delta
     }
 
     private var todayCalories: Int {
