@@ -289,10 +289,10 @@ struct HomeView: View {
         ContextualActionBar(
             state: contextualBarState,
             onLogMeal: { showLogMeal = true },
-            onAddWater: {
-                guard hydrationGlasses < currentGoals.waterDailyCups else { return }
-                hydrationGlasses += 1
-            },
+//            onAddWater: {
+//                guard hydrationGlasses < currentGoals.waterDailyCups else { return }
+//                hydrationGlasses += 1
+//            },
             onStressTab: { selectedTab = 1 },
             onSeeInsight: {
                 showInsightsHub = true

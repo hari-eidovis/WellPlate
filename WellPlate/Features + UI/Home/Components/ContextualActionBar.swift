@@ -16,7 +16,6 @@ enum ContextualBarState: Equatable, Hashable {
 struct ContextualActionBar: View {
     let state: ContextualBarState
     var onLogMeal: () -> Void
-    var onAddWater: () -> Void
     var onStressTab: () -> Void
     var onSeeInsight: () -> Void
     var onLogSymptom: () -> Void
@@ -110,24 +109,13 @@ struct ContextualActionBar: View {
     private var trailingActions: some View {
         switch state {
         case .defaultActions, .logNextMeal:
-            HStack(spacing: 8) {
-                trailingIconButton(
-                    icon: "drop.fill",
-                    color: Color(hue: 0.58, saturation: 0.68, brightness: 0.82),
-                    label: "Add water"
-                ) {
-                    HapticService.impact(.light)
-                    SoundService.play("water_log_sound", ext: "mp3")
-                    onAddWater()
-                }
-                trailingIconButton(
-                    icon: "heart.text.square.fill",
-                    color: AppColors.brand.opacity(0.8),
-                    label: "Log symptom"
-                ) {
-                    HapticService.impact(.light)
-                    onLogSymptom()
-                }
+            trailingIconButton(
+                icon: "heart.text.square.fill",
+                color: AppColors.brand.opacity(0.8),
+                label: "Log symptom"
+            ) {
+                HapticService.impact(.light)
+                onLogSymptom()
             }
         case .goalsCelebration:
             trailingIconButton(
@@ -169,7 +157,7 @@ struct ContextualActionBar: View {
 #Preview("Default") {
     ContextualActionBar(
         state: .defaultActions,
-        onLogMeal: {}, onAddWater: {},
+        onLogMeal: {},
         onStressTab: {}, onSeeInsight: {}, onLogSymptom: {}
     )
     .padding()
