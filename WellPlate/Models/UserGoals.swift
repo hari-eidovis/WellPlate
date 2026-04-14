@@ -36,6 +36,10 @@ final class UserGoals {
 
     var sleepGoalHours: Double
 
+    // MARK: - Home Layout
+
+    var homeLayoutJSON: String = "{}"
+
     // MARK: - Init
 
     init(
@@ -58,7 +62,8 @@ final class UserGoals {
         workoutMinThu: Int = 45,
         workoutMinFri: Int = 45,
         workoutMinSat: Int = 0,
-        sleepGoalHours: Double = 8.0
+        sleepGoalHours: Double = 8.0,
+        homeLayoutJSON: String = "{}"
     ) {
         self.waterCupSizeML = waterCupSizeML
         self.waterDailyCups = waterDailyCups
@@ -80,6 +85,7 @@ final class UserGoals {
         self.workoutMinFri = workoutMinFri
         self.workoutMinSat = workoutMinSat
         self.sleepGoalHours = sleepGoalHours
+        self.homeLayoutJSON = homeLayoutJSON
     }
 
     static func defaults() -> UserGoals { UserGoals() }
@@ -164,5 +170,27 @@ extension UserGoals {
         workoutMinFri = 45
         workoutMinSat = 0
         sleepGoalHours = 8.0
+        homeLayoutJSON = "{}"
+    }
+}
+
+// MARK: - Home Layout Accessor
+
+extension UserGoals {
+
+    var homeLayout: HomeLayoutConfig {
+        get {
+            guard let data = homeLayoutJSON.data(using: .utf8),
+                  var config = try? JSONDecoder().decode(HomeLayoutConfig.self, from: data)
+            else { return .default }
+            config.reconcileWithCurrentCards()
+            return config
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue),
+               let json = String(data: data, encoding: .utf8) {
+                homeLayoutJSON = json
+            }
+        }
     }
 }

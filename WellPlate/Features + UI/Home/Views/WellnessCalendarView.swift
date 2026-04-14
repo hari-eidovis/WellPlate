@@ -9,7 +9,11 @@ struct WellnessCalendarView: View {
     @Query private var allWellnessDayLogs: [WellnessDayLog]
     @Query private var allFoodEntries: [FoodLogEntry]
     @StateObject private var viewModel = WellnessCalendarViewModel()
+    @StateObject private var supplementService = SupplementService()
     @State private var showCalendar = false
+    @State private var showJournalHistory = false
+    @State private var showSymptomHistory = false
+    @State private var showSupplementList = false
 
     private let weekdaySymbols = Calendar.current.veryShortWeekdaySymbols
     private var currentGoals: UserGoals { userGoalsList.first ?? UserGoals.defaults() }
@@ -26,7 +30,46 @@ struct WellnessCalendarView: View {
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .scrollIndicators(.hidden)
-        .navigationBarHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    HapticService.impact(.light)
+                    showJournalHistory = true
+                } label: {
+                    Image(systemName: "book.fill")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .accessibilityLabel("Journal history")
+
+                Button {
+                    HapticService.impact(.light)
+                    showSymptomHistory = true
+                } label: {
+                    Image(systemName: "heart.text.square.fill")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .accessibilityLabel("Symptom history")
+
+                Button {
+                    HapticService.impact(.light)
+                    showSupplementList = true
+                } label: {
+                    Image(systemName: "pill.fill")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .accessibilityLabel("Health regimen")
+            }
+        }
+        .navigationDestination(isPresented: $showJournalHistory) {
+            JournalHistoryView()
+        }
+        .navigationDestination(isPresented: $showSymptomHistory) {
+            SymptomHistoryView()
+        }
+        .navigationDestination(isPresented: $showSupplementList) {
+            SupplementListView(service: supplementService)
+        }
         .onAppear {
             viewModel.bind(modelContext)
         }

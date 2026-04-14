@@ -75,14 +75,13 @@ struct ProfilePlaceholderView: View {
     @State private var isWidgetInstalled            = false
     @State private var activeSheet: ProfileSheet?
     @State private var showGoals                    = false
+    @State private var showHomeLayout               = false
     // Symptom state
-    @State private var showSymptomHistory           = false
     @State private var showSymptomCorrelation       = false
     @State private var selectedSymptomForCorrelation: String?
     @Query(sort: \SymptomEntry.timestamp, order: .reverse) private var allSymptomEntries: [SymptomEntry]
     @StateObject private var correlationEngine      = SymptomCorrelationEngine()
     // Supplement state
-    @State private var showSupplementList            = false
     @Query private var allSupplements: [SupplementEntry]
     @Query(sort: \AdherenceLog.day, order: .reverse) private var allAdherenceLogs: [AdherenceLog]
     @StateObject private var supplementService       = SupplementService()
@@ -135,6 +134,10 @@ struct ProfilePlaceholderView: View {
 
                     // ── Goals snapshot ────────────────────────
                     goalsSnapshotCard
+                        .padding(.horizontal, 16)
+
+                    // ── Home layout ─────────────────────
+                    homeLayoutCard
                         .padding(.horizontal, 16)
 
                     // ── Symptom tracking ─────────────────────
@@ -206,16 +209,20 @@ struct ProfilePlaceholderView: View {
             .navigationDestination(isPresented: $showGoals) {
                 GoalsView(viewModel: GoalsViewModel(modelContext: modelContext))
             }
-            .navigationDestination(isPresented: $showSymptomHistory) {
-                SymptomHistoryView()
+            .navigationDestination(isPresented: $showHomeLayout) {
+                HomeLayoutEditor(layout: Binding(
+                    get: { (userGoalsList.first ?? UserGoals.defaults()).homeLayout },
+                    set: { newValue in
+                        let goals = UserGoals.current(in: modelContext)
+                        goals.homeLayout = newValue
+                        try? modelContext.save()
+                    }
+                ))
             }
             .navigationDestination(isPresented: $showSymptomCorrelation) {
                 if let name = selectedSymptomForCorrelation {
                     SymptomCorrelationView(symptomName: name, engine: correlationEngine)
                 }
-            }
-            .navigationDestination(isPresented: $showSupplementList) {
-                SupplementListView(service: supplementService)
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
@@ -441,6 +448,49 @@ struct ProfilePlaceholderView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Home Layout
+
+    private var homeLayoutCard: some View {
+        Button {
+            showHomeLayout = true
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(AppColors.brand.opacity(0.12))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "square.grid.2x2")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(AppColors.brand)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Home Layout")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
+                    let goals = userGoalsList.first ?? UserGoals.defaults()
+                    let hidden = goals.homeLayout.hiddenCount
+                    Text(hidden > 0 ? "\(hidden) card\(hidden == 1 ? "" : "s") hidden" : "All cards visible")
+                        .font(.system(size: 12, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -802,18 +852,6 @@ struct ProfilePlaceholderView: View {
                     .frame(height: 6)
                 }
 
-                Button {
-                    HapticService.impact(.light)
-                    showSupplementList = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("View All")
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .medium))
-                    }
-                    .foregroundStyle(AppColors.brand)
-                }
             }
         }
         .padding(16)
@@ -895,18 +933,6 @@ struct ProfilePlaceholderView: View {
                     }
                 }
 
-                Button {
-                    HapticService.impact(.light)
-                    showSymptomHistory = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("View History")
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .medium))
-                    }
-                    .foregroundStyle(AppColors.brand)
-                }
             }
         }
         .padding(16)

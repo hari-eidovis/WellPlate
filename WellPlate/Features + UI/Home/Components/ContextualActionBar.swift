@@ -5,7 +5,6 @@ import SwiftUI
 enum ContextualBarState: Equatable, Hashable {
     case defaultActions
     case logNextMeal(mealLabel: String)
-    case waterBehindPace(glassesNeeded: Int)
     case goalsCelebration
     case stressActionable(level: String)
 }
@@ -18,7 +17,6 @@ struct ContextualActionBar: View {
     let state: ContextualBarState
     var onLogMeal: () -> Void
     var onAddWater: () -> Void
-    var onAddCoffee: () -> Void
     var onStressTab: () -> Void
     var onSeeInsight: () -> Void
     var onLogSymptom: () -> Void
@@ -69,15 +67,6 @@ struct ContextualActionBar: View {
             actionPill(icon: "fork.knife", label: "Log \(label)", color: AppColors.brand) {
                 HapticService.impact(.medium)
                 onLogMeal()
-            }
-        case .waterBehindPace(let n):
-            actionPill(
-                icon: "drop.fill",
-                label: "\(n) more to stay on track",
-                color: Color(hue: 0.58, saturation: 0.68, brightness: 0.82)
-            ) {
-                HapticService.impact(.light)
-                onAddWater()
             }
         case .goalsCelebration:
             actionPill(icon: "party.popper", label: "All goals met!", color: AppColors.success) {
@@ -132,15 +121,6 @@ struct ContextualActionBar: View {
                     onAddWater()
                 }
                 trailingIconButton(
-                    icon: "cup.and.saucer.fill",
-                    color: Color(hue: 0.08, saturation: 0.70, brightness: 0.72),
-                    label: "Add coffee"
-                ) {
-                    HapticService.impact(.light)
-                    SoundService.playConfirmation()
-                    onAddCoffee()
-                }
-                trailingIconButton(
                     icon: "heart.text.square.fill",
                     color: AppColors.brand.opacity(0.8),
                     label: "Log symptom"
@@ -148,16 +128,6 @@ struct ContextualActionBar: View {
                     HapticService.impact(.light)
                     onLogSymptom()
                 }
-            }
-        case .waterBehindPace:
-            trailingIconButton(
-                icon: "plus",
-                color: Color(hue: 0.58, saturation: 0.68, brightness: 0.82),
-                label: "Add water glass"
-            ) {
-                HapticService.impact(.light)
-                SoundService.play("water_log_sound", ext: "mp3")
-                onAddWater()
             }
         case .goalsCelebration:
             trailingIconButton(
@@ -199,16 +169,7 @@ struct ContextualActionBar: View {
 #Preview("Default") {
     ContextualActionBar(
         state: .defaultActions,
-        onLogMeal: {}, onAddWater: {}, onAddCoffee: {},
-        onStressTab: {}, onSeeInsight: {}, onLogSymptom: {}
-    )
-    .padding()
-}
-
-#Preview("Water Behind Pace") {
-    ContextualActionBar(
-        state: .waterBehindPace(glassesNeeded: 3),
-        onLogMeal: {}, onAddWater: {}, onAddCoffee: {},
+        onLogMeal: {}, onAddWater: {},
         onStressTab: {}, onSeeInsight: {}, onLogSymptom: {}
     )
     .padding()

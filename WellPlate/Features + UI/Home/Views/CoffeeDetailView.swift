@@ -95,12 +95,11 @@ struct CoffeeDetailView: View {
             guard !isShowing else { return }
             if let type = pendingType {
                 pendingType = nil
+                updateCups(cupsConsumed + 1)
                 saveType(type)
                 showWaterAlert = true
-            } else {
-                // User swiped picker away without selecting — revert the cup increment.
-                updateCups(max(0, cupsConsumed - 1))
             }
+            // No type selected (user dismissed) — nothing to revert since we didn't pre-increment.
         }
         .alert("Stay Hydrated!", isPresented: $showWaterAlert) {
             Button("Log Water") { logOneWater() }
@@ -293,15 +292,8 @@ struct CoffeeDetailView: View {
         guard cupsConsumed < totalCups else { return }
         HapticService.impact(.light)
         SoundService.playConfirmation()
-        let newCount = cupsConsumed + 1
-        updateCups(newCount)
-
-        if newCount == 1 && todayLog?.coffeeType == nil {
-            // First cup, no type set — show picker; alert fires after picker closes.
-            showTypePicker = true
-        } else {
-            showWaterAlert = true
-        }
+        // Always show type picker — cup is added after selection.
+        showTypePicker = true
     }
 
     private func removeCup() {
@@ -313,16 +305,12 @@ struct CoffeeDetailView: View {
     private func toggleCup(at index: Int) {
         HapticService.impact(.light)
         SoundService.playConfirmation()
-        let newCount = index < cupsConsumed ? index : index + 1
-        let wasAdding = newCount > cupsConsumed
-        updateCups(newCount)
-
-        if wasAdding {
-            if newCount == 1 && todayLog?.coffeeType == nil {
-                showTypePicker = true
-            } else {
-                showWaterAlert = true
-            }
+        if index < cupsConsumed {
+            // Removing cups — no picker needed.
+            updateCups(index)
+        } else {
+            // Adding a cup — always show type picker; cup added after selection.
+            showTypePicker = true
         }
     }
 

@@ -14,14 +14,9 @@ struct QuickStatsRow: View {
     let cupSizeML: Int
     var onWaterTap: () -> Void
     var onCoffeeTap: () -> Void
-    var onCoffeeFirstCup: () -> Void
-    var onCoffeeAdded: () -> Void
-
-    // MARK: - Private Helpers
-
-    private var isFirstCupNoType: Bool {
-        coffeeCups == 0 && coffeeType == nil
-    }
+    var onCoffeeLog: () -> Void
+    var showWater: Bool = true
+    var showCoffee: Bool = true
 
     private var waterDeltaText: String? {
         let diff = hydrationGlasses - yesterdayWater
@@ -49,6 +44,7 @@ struct QuickStatsRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
+            if showWater {
             LiquidGaugeTile(
                 style: .water,
                 emoji: "💧",
@@ -65,7 +61,9 @@ struct QuickStatsRow: View {
                     hydrationGlasses += 1
                 }
             )
+            }
 
+            if showCoffee {
             LiquidGaugeTile(
                 style: .coffee,
                 emoji: "☕",
@@ -78,16 +76,11 @@ struct QuickStatsRow: View {
                 showIncrementButton: coffeeCups < coffeeGoal,
                 onTap: { onCoffeeTap() },
                 onIncrement: {
-                    let wasFirst = isFirstCupNoType
                     SoundService.playConfirmation()
-                    coffeeCups += 1
-                    if wasFirst {
-                        onCoffeeFirstCup()
-                    } else {
-                        onCoffeeAdded()
-                    }
+                    onCoffeeLog()
                 }
             )
+            }
         }
         .padding(.horizontal, 16)
     }
@@ -105,7 +98,7 @@ struct QuickStatsRow: View {
         yesterdayWater: 4,
         yesterdayCoffee: 3,
         cupSizeML: 250,
-        onWaterTap: {}, onCoffeeTap: {}, onCoffeeFirstCup: {}, onCoffeeAdded: {}
+        onWaterTap: {}, onCoffeeTap: {}, onCoffeeLog: {}
     )
     .padding()
 }

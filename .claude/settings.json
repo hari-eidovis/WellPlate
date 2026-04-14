@@ -11,18 +11,6 @@
           }
         ]
       }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "crg-dev-kit status --json",
-            "timeout": 3000
-          }
-        ]
-      }
     ]
   }
 }
