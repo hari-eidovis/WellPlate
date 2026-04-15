@@ -49,7 +49,4 @@ This directory configures [Claude Code](https://claude.ai/code) for the WellPlat
 
 ## Hooks
 
-Configured in `settings.json`:
-- **PostToolUse**: Updates the code-review-graph after file edits
-- **SessionStart**: Checks graph status on conversation start
-- **PreCommit**: Runs change detection before commits
+Configured in `settings.json` (currently empty — no active hooks).

@@ -298,21 +298,16 @@ struct StressView: View {
     // MARK: - Score Header
 
     private var scoreHeader: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Big number row
-            HStack(alignment: .lastTextBaseline, spacing: 4) {
-                Text("\(Int(viewModel.totalScore))")
-                    .font(.system(size: 72, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
-                    .contentTransition(.numericText())
+        HStack(alignment: .lastTextBaseline, spacing: 4) {
+            Text("\(Int(viewModel.totalScore))")
+                .font(.system(size: 72, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+                .contentTransition(.numericText())
 
-                Text("/100")
-                    .font(.system(size: 20, weight: .medium, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .padding(.bottom, 6)
-            }
-            // Level badge pill
-            levelBadgePill
+            Text("/100")
+                .font(.system(size: 20, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .padding(.bottom, 6)
         }
     }
 
@@ -320,37 +315,6 @@ struct StressView: View {
         let f = DateFormatter()
         f.dateFormat = "EEE MMM d"
         return f.string(from: Date())
-    }
-
-    private var levelBadgePill: some View {
-        HStack(spacing: 5) {
-            Image(systemName: levelBadgeIcon)
-                .font(.system(size: 11, weight: .semibold))
-            Text(viewModel.stressLevel.label.lowercased())
-                .font(.system(size: 12, weight: .semibold))
-                .tracking(0.2)
-        }
-        .foregroundColor(Self.themeBlue)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(
-            Capsule()
-                .fill(Self.themeBlue.opacity(0.14))
-        )
-        .overlay(
-            Capsule()
-                .strokeBorder(Self.themeBlue.opacity(0.30), lineWidth: 1)
-        )
-    }
-
-    private var levelBadgeIcon: String {
-        switch viewModel.stressLevel {
-        case .excellent: return "checkmark.circle.fill"
-        case .good:      return "checkmark.circle"
-        case .moderate:  return "triangle"
-        case .high:      return "triangle.fill"
-        case .veryHigh:  return "exclamationmark.triangle.fill"
-        }
     }
 
     // MARK: - Week Colour Bar
@@ -497,56 +461,55 @@ struct StressView: View {
 
     private var adviceCard: some View {
         let topFactor = sortedFactors.first
-        let factorName = topFactor?.factor.title.uppercased() ?? "LIFESTYLE"
-        let detailText = topFactor?.factor.detailText ?? "Focus on balanced habits to keep stress in check."
+        let factorIcon = topFactor?.factor.icon ?? "leaf.fill"
+        let accent = topFactor?.factor.accentColor ?? Self.themeBlue
         let sheet = topFactor?.sheet
 
-        return VStack(alignment: .leading, spacing: 0) {
-            // Header row: • TOP FACTOR · SCREEN TIME
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(Color.secondary.opacity(0.55))
-                    .frame(width: 7, height: 7)
-                Text("TOP FACTOR · \(factorName)")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .tracking(0.8)
-            }
-            .padding(.bottom, 10)
+        return HStack(spacing: 0) {
+            // Leading accent strip
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(accent)
+                .frame(width: 4)
+                .padding(.vertical, 20)
 
-            // Main insight text
-            Text(adviceText(for: topFactor?.factor))
-                .font(.system(size: 15, weight: .regular))
-                .foregroundColor(.primary.opacity(0.92))
-                .lineSpacing(3)
-                .padding(.bottom, 16)
-
-            Divider()
-                .background(Color.secondary.opacity(0.2))
-                .padding(.bottom, 12)
-
-            // Action button
-            Button {
-                HapticService.impact(.light)
-                if let s = sheet { activeSheet = s }
-            } label: {
-                HStack {
-                    Text(actionLabel(for: topFactor?.factor))
-                        .font(.system(size: 13, weight: .medium))
+            VStack(alignment: .leading, spacing: 12) {
+                // Icon + factor label
+                HStack(spacing: 8) {
+                    Image(systemName: factorIcon)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(accent)
+                    Text(topFactor?.factor.title.uppercased() ?? "LIFESTYLE")
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.secondary)
-                    Spacer()
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.secondary.opacity(0.6))
+                        .tracking(0.8)
                 }
+
+                // Insight text
+                Text(adviceText(for: topFactor?.factor))
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.primary.opacity(0.88))
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                // CTA
+                Button {
+                    HapticService.impact(.light)
+                    if let s = sheet { activeSheet = s }
+                } label: {
+                        Text(actionLabel(for: topFactor?.factor))
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(accent)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+            .padding(.leading, 14)
+            .padding(.trailing, 18)
+            .padding(.vertical, 18)
         }
-        .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemGray5).opacity(0.95))
-                .shadow(color: .black.opacity(0.06), radius: 12, x: 0, y: 4)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 15, y: 5)
         )
     }
 
@@ -571,15 +534,15 @@ struct StressView: View {
     }
 
     private func actionLabel(for factor: StressFactorResult?) -> String {
-        guard let f = factor else { return "view details →" }
+        guard let f = factor else { return "view details" }
         switch f.title.lowercased() {
-        case let n where n.contains("screen"): return "set screen reminder →"
-        case let n where n.contains("sleep"):  return "view sleep details →"
+        case let n where n.contains("screen"): return "set screen reminder"
+        case let n where n.contains("sleep"):  return "view sleep details"
         case let n where n.contains("diet"),
-             let n where n.contains("food"):   return "view nutrition →"
+             let n where n.contains("food"):   return "view nutrition"
         case let n where n.contains("exercise"),
-             let n where n.contains("activ"):  return "view activity →"
-        default: return "view details →"
+             let n where n.contains("activ"):  return "view activity"
+        default: return "view details"
         }
     }
 
@@ -751,7 +714,7 @@ struct StressView: View {
             FactorItem(factor: viewModel.exerciseFactor,   sheet: .exercise),
             FactorItem(factor: viewModel.sleepFactor,      sheet: .sleep),
             FactorItem(factor: viewModel.dietFactor,       sheet: .diet),
-            FactorItem(factor: viewModel.screenTimeFactor, sheet: nil),
+            FactorItem(factor: viewModel.screenTimeFactor, sheet: .screenTimeDetail),
         ]
         .sorted { $0.factor.stressContribution > $1.factor.stressContribution }
     }

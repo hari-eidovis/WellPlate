@@ -113,13 +113,14 @@ struct StressFactorResult: Identifiable {
         return higherIsBetter ? (maxScore - score) : score
     }
 
-    /// Green = healthy end, Red = stressed end — direction depends on `higherIsBetter`.
+    /// Accent tint based on factor score — uses the app's blue theme at varying intensity.
     var accentColor: Color {
         guard hasValidData else { return Color(.systemGray3) }
         let t = min(max(score / maxScore, 0), 1)
-        // stressRatio: 0 → green, 1 → red
+        // stressRatio: 0 → calm (lighter), 1 → stressed (full intensity)
         let stressRatio = higherIsBetter ? (1.0 - t) : t
-        return Color(hue: 0.33 * (1.0 - stressRatio), saturation: 0.75, brightness: 0.80)
+        let blue = Color(hue: 0.61, saturation: 0.62, brightness: 1.0) // #5E9FFF
+        return blue.opacity(0.45 + stressRatio * 0.55)
     }
 
     /// Default factor when no data is available (does not contribute to stress).

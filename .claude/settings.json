@@ -1,16 +1,4 @@
 {
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "crg-dev-kit update --quiet --skip-flows",
-            "timeout": 5000
-          }
-        ]
-      }
-    ]
   }
 }
