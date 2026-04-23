@@ -79,7 +79,7 @@ struct DietDetailView: View {
                 (Text(String(format: "%.0f", factor.score))
                     .font(.r(22, .bold))
                     .foregroundColor(factor.accentColor)
-                + Text(" /25")
+                + Text(" /\(Int(factor.maxScore))")
                     .font(.r(.caption, .medium))
                     .foregroundColor(.secondary))
                 Text("stress pts")

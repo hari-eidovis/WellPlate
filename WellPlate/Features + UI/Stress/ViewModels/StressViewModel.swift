@@ -231,19 +231,19 @@ final class StressViewModel: ObservableObject {
         #endif
 
         // Compute exercise factor
-        let exerciseScore = StressScoring.exerciseScore(steps: steps, energy: energy)
+        let exerciseScore: Double? = StressScoring.exerciseScore(steps: steps, energy: energy)
         exerciseFactor = buildExerciseFactor(score: exerciseScore, steps: steps, energy: energy)
 
         #if DEBUG
-        log("🏃 Exercise  → score=\(fmt2(exerciseScore))/25  stressContrib=\(fmt2(exerciseFactor.stressContribution))/25  [\(exerciseFactor.detailText)]")
+        log("🏃 Exercise  → score=\(fmt2(exerciseScore ?? 0))/\(Int(StressScoring.Weights.exercise))  stressContrib=\(fmt2(exerciseFactor.stressContribution))/\(Int(StressScoring.Weights.exercise))  [\(exerciseFactor.detailText)]")
         #endif
 
         // Compute sleep factor
-        let sleepScore = StressScoring.sleepScore(summary: sleepSummary)
+        let sleepScore: Double? = StressScoring.sleepScore(summary: sleepSummary)
         sleepFactor = buildSleepFactor(score: sleepScore, summary: sleepSummary)
 
         #if DEBUG
-        log("🌙 Sleep     → score=\(fmt2(sleepScore))/25  stressContrib=\(fmt2(sleepFactor.stressContribution))/25  [\(sleepFactor.detailText)]")
+        log("🌙 Sleep     → score=\(fmt2(sleepScore ?? 0))/\(Int(StressScoring.Weights.sleep))  stressContrib=\(fmt2(sleepFactor.stressContribution))/\(Int(StressScoring.Weights.sleep))  [\(sleepFactor.detailText)]")
         #endif
 
         // Refresh diet synchronously from SwiftData
@@ -325,7 +325,7 @@ final class StressViewModel: ObservableObject {
             let fiber   = snap.currentDayLogs.map(\.fiber).reduce(0, +)
             let fat     = snap.currentDayLogs.map(\.fat).reduce(0, +)
             let carbs   = snap.currentDayLogs.map(\.carbs).reduce(0, +)
-            let score   = StressScoring.dietScore(protein: protein, fiber: fiber, fat: fat, carbs: carbs, hasLogs: !snap.currentDayLogs.isEmpty)
+            let score: Double? = StressScoring.dietScore(protein: protein, fiber: fiber, fat: fat, carbs: carbs, hasLogs: !snap.currentDayLogs.isEmpty)
             dietFactor  = buildDietFactor(score: score, logs: snap.currentDayLogs)
             return
         }
@@ -341,15 +341,15 @@ final class StressViewModel: ObservableObject {
         let fiber   = logs.map(\.fiber).reduce(0, +)
         let fat     = logs.map(\.fat).reduce(0, +)
         let carbs   = logs.map(\.carbs).reduce(0, +)
-        let score   = StressScoring.dietScore(protein: protein, fiber: fiber, fat: fat, carbs: carbs, hasLogs: !logs.isEmpty)
+        let score: Double? = StressScoring.dietScore(protein: protein, fiber: fiber, fat: fat, carbs: carbs, hasLogs: !logs.isEmpty)
         dietFactor  = buildDietFactor(score: score, logs: logs)
 
         #if DEBUG
         if logs.isEmpty {
-            log("🥗 Diet      → no food logged today  score=\(fmt2(score))/25  stressContrib=\(fmt2(dietFactor.stressContribution))/25")
+            log("🥗 Diet      → no food logged today  score=\(fmt2(score ?? 0))/\(Int(StressScoring.Weights.diet))  stressContrib=\(fmt2(dietFactor.stressContribution))/\(Int(StressScoring.Weights.diet))")
         } else {
             log("🥗 Diet      → \(logs.count) entries  protein=\(fmt1(protein))g  fiber=\(fmt1(fiber))g  fat=\(fmt1(fat))g  carbs=\(fmt1(carbs))g")
-            log("             → score=\(fmt2(score))/25  stressContrib=\(fmt2(dietFactor.stressContribution))/25  [\(dietFactor.detailText)]")
+            log("             → score=\(fmt2(score ?? 0))/\(Int(StressScoring.Weights.diet))  stressContrib=\(fmt2(dietFactor.stressContribution))/\(Int(StressScoring.Weights.diet))  [\(dietFactor.detailText)]")
         }
         #endif
     }
@@ -546,8 +546,8 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - Factor Builders
 
-    private func buildExerciseFactor(score: Double, steps: Double?, energy: Double?) -> StressFactorResult {
-        let hasData = steps != nil || energy != nil
+    private func buildExerciseFactor(score: Double?, steps: Double?, energy: Double?) -> StressFactorResult {
+        let hasData = score != nil
         let stepsStr = steps.map { NumberFormatter.localizedString(from: NSNumber(value: Int($0)), number: .decimal) } ?? "—"
         let energyStr = energy.map { "\(Int($0)) kcal" } ?? "—"
 
@@ -562,18 +562,20 @@ final class StressViewModel: ObservableObject {
             status = energyStr
         }
 
+        let effectiveScore = score ?? 0
         let detail: String
         if !hasData { detail = "No activity data yet" }
-        else if score >= 18 { detail = "Great activity level!" }
-        else if score >= 10 { detail = "Moderate activity today" }
+        else if effectiveScore >= 18 { detail = "Great activity level!" }
+        else if effectiveScore >= 10 { detail = "Moderate activity today" }
         else { detail = "Try to move more today" }
+        // NOTE: thresholds still anchored to the old /25 scale for Exercise (weight unchanged at 25).
 
-        return StressFactorResult(title: "Exercise", score: hasData ? score : 0, maxScore: 25, icon: "figure.run",
+        return StressFactorResult(title: "Exercise", score: effectiveScore, maxScore: StressScoring.Weights.exercise, icon: "figure.run",
                                   statusText: status, detailText: detail, higherIsBetter: true, hasValidData: hasData)
     }
 
-    private func buildSleepFactor(score: Double, summary: DailySleepSummary?) -> StressFactorResult {
-        let hasData = summary != nil
+    private func buildSleepFactor(score: Double?, summary: DailySleepSummary?) -> StressFactorResult {
+        let hasData = score != nil
         let status: String
         if let s = summary {
             status = String(format: "%.1fh total · %.1fh deep", s.totalHours, s.deepHours)
@@ -581,20 +583,21 @@ final class StressViewModel: ObservableObject {
             status = "No data"
         }
 
+        let effectiveScore = score ?? 0
         let detail: String
         if !hasData { detail = "No sleep data yet" }
-        else if score >= 18 { detail = "Well rested!" }
-        else if score >= 10 { detail = "Decent sleep" }
+        else if effectiveScore >= 18 { detail = "Well rested!" }
+        else if effectiveScore >= 10 { detail = "Decent sleep" }
         else { detail = "Try to sleep more tonight" }
 
-        return StressFactorResult(title: "Sleep", score: hasData ? score : 0, maxScore: 25, icon: "moon.fill",
+        return StressFactorResult(title: "Sleep", score: effectiveScore, maxScore: StressScoring.Weights.sleep, icon: "moon.fill",
                                   statusText: status, detailText: detail, higherIsBetter: true, hasValidData: hasData)
     }
 
-    private func buildDietFactor(score: Double, logs: [FoodLogEntry]) -> StressFactorResult {
-        let hasData = !logs.isEmpty
+    private func buildDietFactor(score: Double?, logs: [FoodLogEntry]) -> StressFactorResult {
+        let hasData = score != nil
         let status: String
-        if !hasData {
+        if logs.isEmpty {
             status = "No food logged"
         } else {
             let protein = Int(logs.map(\.protein).reduce(0, +))
@@ -602,13 +605,14 @@ final class StressViewModel: ObservableObject {
             status = "\(protein)g protein · \(fiber)g fiber"
         }
 
+        let effectiveScore = score ?? 0
         let detail: String
         if !hasData { detail = "No diet data yet" }
-        else if score >= 18 { detail = "Balanced diet today!" }
-        else if score >= 10 { detail = "Fair nutritional balance" }
+        else if effectiveScore >= 18 { detail = "Balanced diet today!" }
+        else if effectiveScore >= 10 { detail = "Fair nutritional balance" }
         else { detail = "Consider healthier choices" }
 
-        return StressFactorResult(title: "Diet", score: hasData ? score : 0, maxScore: 25, icon: "leaf.fill",
+        return StressFactorResult(title: "Diet", score: effectiveScore, maxScore: StressScoring.Weights.diet, icon: "leaf.fill",
                                   statusText: status, detailText: detail, higherIsBetter: true, hasValidData: hasData)
     }
 
@@ -616,12 +620,13 @@ final class StressViewModel: ObservableObject {
         if let snap = mockSnapshot {
             screenTimeSource = .auto
             screenTimeDisplayHours = snap.screenTimeHours
-            let score = StressScoring.screenTimeScore(hours: snap.screenTimeHours)
-            let detail = score < 8 ? "Low screen time 👍" : score < 16 ? "Moderate screen usage" : "Consider reducing screen time"
+            let score: Double? = StressScoring.screenTimeScore(hours: snap.screenTimeHours)
+            let effective = score ?? 0
+            let detail = effective < 6 ? "Low screen time 👍" : effective < 13 ? "Moderate screen usage" : "Consider reducing screen time"
             screenTimeFactor = StressFactorResult(
-                title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
+                title: "Screen Time", score: effective, maxScore: StressScoring.Weights.screenTime, icon: "iphone",
                 statusText: String(format: "%.1fh (mock)", snap.screenTimeHours),
-                detailText: detail, higherIsBetter: false, hasValidData: true
+                detailText: detail, higherIsBetter: false, hasValidData: score != nil
             )
             return
         }
@@ -629,22 +634,23 @@ final class StressViewModel: ObservableObject {
         if let reading = ScreenTimeManager.shared.currentAutoDetectedReading {
             screenTimeSource = .auto
             screenTimeDisplayHours = reading.rawHours
-            let score = StressScoring.screenTimeScore(hours: reading.rawHours)
-            let detail = score < 8 ? "Low screen time 👍" : score < 16 ? "Moderate screen usage" : "Consider reducing screen time"
+            let score: Double? = StressScoring.screenTimeScore(hours: reading.rawHours)
+            let effective = score ?? 0
+            let detail = effective < 6 ? "Low screen time 👍" : effective < 13 ? "Moderate screen usage" : "Consider reducing screen time"
             screenTimeFactor = StressFactorResult(
-                title: "Screen Time", score: score, maxScore: 25, icon: "iphone",
+                title: "Screen Time", score: effective, maxScore: StressScoring.Weights.screenTime, icon: "iphone",
                 statusText: "\(reading.displayRoundedHours)h detected (±15m)",
-                detailText: detail, higherIsBetter: false, hasValidData: true
+                detailText: detail, higherIsBetter: false, hasValidData: score != nil
             )
             #if DEBUG
             log("📱 ScrnTime  → rawHours=\(String(format: "%.3f h", reading.rawHours))  source=auto")
-            log("             → score=\(fmt2(score))/25  stressContrib=\(fmt2(screenTimeFactor.stressContribution))/25  [\(detail)]")
+            log("             → score=\(fmt2(score ?? 0))/\(Int(StressScoring.Weights.screenTime))  stressContrib=\(fmt2(screenTimeFactor.stressContribution))/\(Int(StressScoring.Weights.screenTime))  [\(detail)]")
             #endif
         } else {
             screenTimeSource = .none
             screenTimeDisplayHours = nil
             screenTimeFactor = StressFactorResult(
-                title: "Screen Time", score: 0, maxScore: 25, icon: "iphone",
+                title: "Screen Time", score: 0, maxScore: StressScoring.Weights.screenTime, icon: "iphone",
                 statusText: "Under 15 min today",
                 detailText: "No screen time detected yet", higherIsBetter: false, hasValidData: false
             )

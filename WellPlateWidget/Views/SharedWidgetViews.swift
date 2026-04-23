@@ -101,12 +101,12 @@ struct StressFactorBar: View {
 
     private var fraction: Double {
         guard factor.maxScore > 0 else { return 0 }
-        return min(factor.contribution / 25.0, 1.0)
+        return min(factor.contribution / factor.maxScore, 1.0)
     }
 
     private var barColor: Color {
         guard factor.hasValidData else { return Color(.systemGray3) }
-        let stressRatio = min(max(factor.contribution / 25.0, 0), 1)
+        let stressRatio = min(max(factor.contribution / factor.maxScore, 0), 1)
         return Color(hue: 0.33 * (1.0 - stressRatio), saturation: 0.65, brightness: 0.75)
     }
 
@@ -121,7 +121,7 @@ struct StressFactorBar: View {
                     .font(.caption2)
                     .foregroundStyle(factor.hasValidData ? .primary : .secondary)
                 Spacer()
-                Text("\(Int(factor.contribution))/25")
+                Text("\(Int(factor.contribution))/\(Int(factor.maxScore))")
                     .font(.caption2)
                     .fontWeight(.medium)
                     .monospacedDigit()
