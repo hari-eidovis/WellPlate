@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:WellPlate}",
+            "name": "Debug WellPlatePlaygrounds",
+            "target": "WellPlatePlaygrounds",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug WellPlatePlaygrounds"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:WellPlate}",
+            "name": "Release WellPlatePlaygrounds",
+            "target": "WellPlatePlaygrounds",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release WellPlatePlaygrounds"
+        }
+    ]
+}

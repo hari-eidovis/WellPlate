@@ -30,7 +30,7 @@ final class AppConfig {
         get {
             #if DEBUG
             guard UserDefaults.standard.object(forKey: Keys.mockMode) != nil else {
-                return false // ⚠️ Set to false before release
+                return true // ⚠️ Set to false before release
             }
             return UserDefaults.standard.bool(forKey: Keys.mockMode)
             #else
