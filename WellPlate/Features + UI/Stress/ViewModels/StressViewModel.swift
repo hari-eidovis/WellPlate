@@ -94,6 +94,22 @@ final class StressViewModel: ObservableObject {
         allFactors.sorted { $0.stressContribution > $1.stressContribution }.prefix(2).map { $0 }
     }
 
+    /// Number of factors (0–4) that have valid input data for today.
+    var factorCoverage: Int { allFactors.filter(\.hasValidData).count }
+
+    /// Confidence level based on how many factors have valid data. `.low` is never surfaced —
+    /// honest mode (Task 15) takes over at `factorCoverage < 2` before the badge renders.
+    var stressConfidence: StressViewModel.Confidence {
+        switch factorCoverage {
+        case 4: .high
+        case 2, 3: .medium
+        default: .low
+        }
+    }
+
+    /// Phase-1 honest mode: <2 factors → hide the score (Task 15).
+    var shouldHideScoreForLowConfidence: Bool { factorCoverage < 2 }
+
     /// Returns the 30-day history array for a given vital metric.
     func vitalHistory(for metric: VitalMetric) -> [DailyMetricSample] {
         switch metric {
@@ -682,4 +698,28 @@ final class StressViewModel: ObservableObject {
     private func fmt2(_ v: Double) -> String { String(format: "%.2f", v) }
     private func fmt1(_ v: Double) -> String { String(format: "%.1f", v) }
     #endif
+}
+
+// MARK: - Confidence
+
+extension StressViewModel {
+    enum Confidence: String {
+        case low, medium, high
+
+        var label: String {
+            switch self {
+            case .low: "Low confidence"       // not rendered at runtime — honest mode supersedes
+            case .medium: "Medium confidence"
+            case .high: "High confidence"
+            }
+        }
+
+        var systemImage: String {
+            switch self {
+            case .low: "gauge.with.dots.needle.0percent"
+            case .medium: "gauge.with.dots.needle.50percent"
+            case .high: "gauge.with.dots.needle.100percent"
+            }
+        }
+    }
 }
