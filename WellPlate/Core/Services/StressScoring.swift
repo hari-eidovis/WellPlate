@@ -8,7 +8,17 @@ import Foundation
 
 enum StressScoring {
 
-    // MARK: - Exercise (0–25, higher = more activity = lower stress)
+    // MARK: - Factor Weights (Phase 1: Sleep 35 / Exercise 25 / Diet 20 / Screen 20)
+
+    enum Weights {
+        static let sleep: Double      = 35
+        static let exercise: Double   = 25
+        static let diet: Double       = 20
+        static let screenTime: Double = 20
+        // total = 100
+    }
+
+    // MARK: - Exercise (0–Weights.exercise, higher = more activity = lower stress)
 
     /// Returns 0–25. Neutral (12.5) when both inputs are nil.
     static func exerciseScore(steps: Double?, energy: Double?) -> Double {
