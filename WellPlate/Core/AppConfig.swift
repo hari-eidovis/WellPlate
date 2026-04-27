@@ -19,6 +19,7 @@ final class AppConfig {
         static let apiTimeout = "app.networking.apiTimeout"
         static let mockInjectedDates = "app.mock.injectedDates"
         static let mockInjectedRecordIDs = "app.mock.injectedRecordIDs"
+        static let stressAlgorithmV2 = "app.stress.algorithmV2"
     }
 
     private init() {}
@@ -41,6 +42,28 @@ final class AppConfig {
             #if DEBUG
             UserDefaults.standard.set(newValue, forKey: Keys.mockMode)
             WPLogger.app.info("Mock Mode → \(newValue ? "ENABLED" : "DISABLED")")
+            #endif
+        }
+    }
+
+    /// Feature flag for the Phase 2 bipolar stress scoring service.
+    /// - DEBUG only. Release builds always return `false` in Phase 1.
+    /// - Phase 1 reads: nothing (placeholder). Phase 2 StressScoringV2 will gate on this.
+    var stressAlgorithmV2: Bool {
+        get {
+            #if DEBUG
+            guard UserDefaults.standard.object(forKey: Keys.stressAlgorithmV2) != nil else {
+                return false
+            }
+            return UserDefaults.standard.bool(forKey: Keys.stressAlgorithmV2)
+            #else
+            return false
+            #endif
+        }
+        set {
+            #if DEBUG
+            UserDefaults.standard.set(newValue, forKey: Keys.stressAlgorithmV2)
+            WPLogger.app.info("Stress Algorithm V2 → \(newValue ? "ENABLED" : "DISABLED")")
             #endif
         }
     }
@@ -153,7 +176,8 @@ final class AppConfig {
             "Mock Data   : \(mockMode ? "INJECTED" : "NONE")",
             "Nutrition   : \(nutritionSourceLabel)",
             "Groq API Key: \(hasGroqAPIKey ? "PRESENT ✅" : "MISSING ❌")",
-            "Groq Model  : \(groqModel)"
+            "Groq Model  : \(groqModel)",
+            "Stress v2  : \(stressAlgorithmV2 ? "ENABLED" : "disabled")"
         ])
     }
 }
