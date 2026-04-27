@@ -298,17 +298,34 @@ struct StressView: View {
     // MARK: - Score Header
 
     private var scoreHeader: some View {
-        HStack(alignment: .lastTextBaseline, spacing: 4) {
-            Text("\(Int(viewModel.totalScore))")
-                .font(.system(size: 72, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
-                .contentTransition(.numericText())
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .lastTextBaseline, spacing: 4) {
+                Text("\(Int(viewModel.totalScore))")
+                    .font(.system(size: 72, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                    .contentTransition(.numericText())
 
-            Text("/100")
-                .font(.system(size: 20, weight: .medium, design: .rounded))
-                .foregroundColor(.secondary)
-                .padding(.bottom, 6)
+                Text("/100")
+                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, 6)
+            }
+            confidenceBadge
         }
+    }
+
+    private var confidenceBadge: some View {
+        HStack(spacing: 6) {
+            Image(systemName: viewModel.stressConfidence.systemImage)
+                .font(.system(size: 13, weight: .semibold))
+            Text("\(viewModel.stressConfidence.label) · \(viewModel.factorCoverage)/4 factors")
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .tracking(0.4)
+        }
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Capsule().fill(Color(.systemGray6)))
     }
 
     private var formattedToday: String {

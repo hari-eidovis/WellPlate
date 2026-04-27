@@ -74,8 +74,8 @@ enum StressLevel: String, CaseIterable {
 struct StressFactorResult: Identifiable {
     let id = UUID()
     let title: String
-    let score: Double          // 0–25
-    let maxScore: Double       // always 25
+    let score: Double          // 0–maxScore
+    let maxScore: Double       // varies per factor (sleep 35, exercise 25, diet 20, screen 20)
     let icon: String           // SF Symbol name
     let statusText: String     // e.g. "7,245 steps"
     let detailText: String     // e.g. "Above average today"

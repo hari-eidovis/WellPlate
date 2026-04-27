@@ -8,52 +8,75 @@ import Foundation
 
 enum StressScoring {
 
-    // MARK: - Exercise (0–25, higher = more activity = lower stress)
+    // MARK: - Factor Weights (Phase 1: Sleep 35 / Exercise 25 / Diet 20 / Screen 20)
 
-    /// Returns 0–25. Neutral (12.5) when both inputs are nil.
-    static func exerciseScore(steps: Double?, energy: Double?) -> Double {
-        guard steps != nil || energy != nil else { return 12.5 }
+    enum Weights {
+        static let sleep: Double      = 35
+        static let exercise: Double   = 25
+        static let diet: Double       = 20
+        static let screenTime: Double = 20
+        // total = 100
+    }
+
+    // MARK: - Exercise (0–Weights.exercise, higher = more activity = lower stress)
+
+    /// Returns 0–`Weights.exercise`. Returns nil when both inputs are nil (missing data).
+    /// Q3: step target lowered 10k → 7k per Research §4a (benefits plateau at 5–7k).
+    static func exerciseScore(steps: Double?, energy: Double?) -> Double? {
+        guard steps != nil || energy != nil else { return nil }
+        let max = Weights.exercise
         var scores: [Double] = []
-        if let s = steps  { scores.append(25.0 * clamp(s / 10_000.0)) }
-        if let e = energy { scores.append(25.0 * clamp(e / 600.0)) }
+        if let s = steps  { scores.append(max * clamp(s / 7_000.0)) }
+        if let e = energy { scores.append(max * clamp(e / 600.0)) }
         return scores.reduce(0, +) / Double(scores.count)
     }
 
-    // MARK: - Sleep (0–25, higher = better sleep = lower stress)
+    // MARK: - Sleep (0–Weights.sleep, higher = better sleep = lower stress)
 
-    /// Returns 0–25. Neutral (12.5) when summary is nil.
-    static func sleepScore(summary: DailySleepSummary?) -> Double {
-        guard let s = summary else { return 12.5 }
+    /// Returns 0–`Weights.sleep`. Returns nil when summary is missing.
+    /// Encodes Research §3b: deep sleep <45 min caps the score regardless of total hours.
+    static func sleepScore(summary: DailySleepSummary?) -> Double? {
+        guard let s = summary else { return nil }
+        let max = Weights.sleep
         let h = s.totalHours
 
-        let baseScore: Double
+        // Duration curve — was anchored to 0…25; re-scaled to a 0…0.80 fraction of `max` (35).
+        let durationFraction: Double
         switch h {
-        case ..<4:   baseScore = 0
-        case 4..<5:  baseScore = lerp(from: 0,  to: 5,  t: (h - 4) / 1)
-        case 5..<6:  baseScore = lerp(from: 5,  to: 12, t: (h - 5) / 1)
-        case 6..<7:  baseScore = lerp(from: 12, to: 18, t: (h - 6) / 1)
-        case 7..<9:  baseScore = lerp(from: 18, to: 20, t: (h - 7) / 2)
-        case 9..<10: baseScore = lerp(from: 20, to: 16, t: (h - 9) / 1)
-        default:     baseScore = 14
+        case ..<4:   durationFraction = 0.0
+        case 4..<5:  durationFraction = lerp(from: 0.00, to: 0.20, t: (h - 4) / 1)
+        case 5..<6:  durationFraction = lerp(from: 0.20, to: 0.48, t: (h - 5) / 1)
+        case 6..<7:  durationFraction = lerp(from: 0.48, to: 0.72, t: (h - 6) / 1)
+        case 7..<9:  durationFraction = lerp(from: 0.72, to: 0.80, t: (h - 7) / 2)
+        case 9..<10: durationFraction = lerp(from: 0.80, to: 0.64, t: (h - 9) / 1)
+        default:     durationFraction = 0.56
         }
+        var score = max * durationFraction
 
-        let deepBonus: Double
+        // Deep-sleep ratio bonus (scaled to new ceiling — up to 20% of max).
         if h > 0 {
             let deepRatio = s.deepHours / h
-            deepBonus = clamp(deepRatio / 0.18) * 5
-        } else {
-            deepBonus = 2.5
+            score += clamp(deepRatio / 0.18) * (max * 0.20)
         }
 
-        return Swift.min(25, baseScore + deepBonus)
+        // Q4: absolute deep-sleep floor — cap at 70% of max if <45 min even if hours are optimal.
+        // Research §3b: "If deep sleep duration falls below 45 minutes, cortisol clearance is incomplete".
+        // NOTE (M1): 70% is an engineering choice (no research anchor for magnitude).
+        // Re-evaluated in Phase 3 alongside age-band lowered thresholds (S3).
+        let deepMinutes = s.deepHours * 60.0
+        if deepMinutes < 45 {
+            score = Swift.min(score, max * 0.70)
+        }
+
+        return Swift.min(max, score)
     }
 
-    // MARK: - Diet (0–25, higher = more balanced = lower stress)
+    // MARK: - Diet (0–Weights.diet, higher = more balanced = lower stress)
 
-    /// Returns 0–25 based on protein/fiber balance vs fat/carb excess.
-    /// Neutral (12.5) when logs are empty.
-    static func dietScore(protein: Double, fiber: Double, fat: Double, carbs: Double, hasLogs: Bool) -> Double {
-        guard hasLogs else { return 12.5 }
+    /// Returns 0–`Weights.diet`. Returns nil when `hasLogs == false`.
+    static func dietScore(protein: Double, fiber: Double, fat: Double, carbs: Double, hasLogs: Bool) -> Double? {
+        guard hasLogs else { return nil }
+        let max = Weights.diet
 
         let proteinRatio  = clamp(protein / 60.0)
         let fiberRatio    = clamp(fiber / 25.0)
@@ -64,15 +87,17 @@ enum StressScoring {
         let excessScore = fatRatio * 0.45 + carbRatio * 0.55
 
         let netBalance = clamp((balancedScore - excessScore * 0.6 + 0.5) / 1.0)
-        return 25.0 * netBalance
+        return max * netBalance
     }
 
-    // MARK: - Screen Time (0–25, higher = more usage = higher stress)
+    // MARK: - Screen Time (0–Weights.screenTime, higher = more usage = higher stress)
 
-    /// Returns 0–25. Returns 0 when hours is nil (no data detected).
-    static func screenTimeScore(hours: Double?) -> Double {
-        guard let h = hours else { return 0 }
-        return Swift.min(25, h * 2.0)
+    // Q5 evening ×1.5 multiplier ships in StressScoringV2 — requires hourly-bucket refactor of ScreenTimeManager, tracked in Phase 2.
+    /// Returns 0–`Weights.screenTime`. Returns nil when hours is nil.
+    static func screenTimeScore(hours: Double?) -> Double? {
+        guard let h = hours else { return nil }
+        let max = Weights.screenTime
+        return Swift.min(max, h * (max / 8.0))
     }
 
     // MARK: - Private Helpers

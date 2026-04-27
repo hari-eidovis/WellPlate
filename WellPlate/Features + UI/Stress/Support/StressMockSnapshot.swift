@@ -48,6 +48,49 @@ struct StressMockSnapshot {
 
     static let `default`: StressMockSnapshot = makeDefault()
 
+    /// Sparse-data variant — only sleep + screen time have valid data (2 of 4 factors).
+    /// Exercises the Q2 missing-data plumbing and Q6 "Medium confidence" badge.
+    /// - Exercise: nil via stepsHistory last-entry = 0 → fetchStepsSafely's `total > 0 ? total : nil` returns nil
+    /// - Energy: nil via same pattern on energyHistory
+    /// - Diet: nil via currentDayLogs = []
+    /// - Sleep + Screen Time: retained from default
+    static let sparse: StressMockSnapshot = makeSparse()
+
+    private static func makeSparse() -> StressMockSnapshot {
+        let base = makeDefault()
+        // Override today's last history sample to 0 so MockHealthKitService returns it
+        // and fetchStepsSafely/fetchEnergySafely coerce `total > 0 ? total : nil` to nil.
+        var stepsHist = base.stepsHistory
+        var energyHist = base.energyHistory
+        if !stepsHist.isEmpty {
+            stepsHist[stepsHist.count - 1] = DailyMetricSample(date: stepsHist.last!.date, value: 0)
+        }
+        if !energyHist.isEmpty {
+            energyHist[energyHist.count - 1] = DailyMetricSample(date: energyHist.last!.date, value: 0)
+        }
+        return StressMockSnapshot(
+            steps: 0,
+            energy: 0,
+            sleepSummary: base.sleepSummary,
+            screenTimeHours: base.screenTimeHours,
+            stepsHistory: stepsHist,
+            energyHistory: energyHist,
+            sleepHistory: base.sleepHistory,
+            heartRateHistory: base.heartRateHistory,
+            restingHRHistory: base.restingHRHistory,
+            hrvHistory: base.hrvHistory,
+            systolicBPHistory: base.systolicBPHistory,
+            diastolicBPHistory: base.diastolicBPHistory,
+            respiratoryRateHistory: base.respiratoryRateHistory,
+            daylightHistory: base.daylightHistory,
+            waterHistory: base.waterHistory,
+            exerciseMinutesHistory: base.exerciseMinutesHistory,
+            todayReadings: base.todayReadings,
+            weekReadings: base.weekReadings,
+            currentDayLogs: []
+        )
+    }
+
     // swiftlint:disable function_body_length
     private static func makeDefault() -> StressMockSnapshot {
         let cal = Calendar.current

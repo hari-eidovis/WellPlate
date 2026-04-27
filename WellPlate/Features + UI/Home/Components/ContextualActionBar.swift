@@ -57,15 +57,10 @@ struct ContextualActionBar: View {
     @ViewBuilder
     private var primaryPill: some View {
         switch state {
-        case .defaultActions:
-            actionPill(icon: "fork.knife", label: "Log Meal", color: AppColors.brand) {
-                HapticService.impact(.medium)
-                onLogMeal()
-            }
-        case .logNextMeal(let label):
-            actionPill(icon: "fork.knife", label: "Log \(label)", color: AppColors.brand) {
-                HapticService.impact(.medium)
-                onLogMeal()
+        case .defaultActions, .logNextMeal:
+            symptomPill {
+                HapticService.impact(.light)
+                onLogSymptom()
             }
         case .goalsCelebration:
             actionPill(icon: "party.popper", label: "All goals met!", color: AppColors.success) {
@@ -83,6 +78,29 @@ struct ContextualActionBar: View {
     }
 
     // MARK: - Action Pill Helper
+
+    private func mealPill(label: String, action: @escaping () -> Void) -> some View {
+        MealBowlButton(label: label, action: action)
+    }
+
+    private func symptomPill(action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: "pills.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("Symptom")
+                    .font(.r(13, .semibold))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(Capsule().fill(Color.black))
+        }
+        .buttonStyle(.plain)
+        .frame(minWidth: 44, minHeight: 44)
+        .accessibilityLabel("Log symptom")
+    }
 
     private func actionPill(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -108,14 +126,15 @@ struct ContextualActionBar: View {
     @ViewBuilder
     private var trailingActions: some View {
         switch state {
-        case .defaultActions, .logNextMeal:
-            trailingIconButton(
-                icon: "heart.text.square.fill",
-                color: AppColors.brand.opacity(0.8),
-                label: "Log symptom"
-            ) {
-                HapticService.impact(.light)
-                onLogSymptom()
+        case .defaultActions:
+            mealPill(label: "Log Meal") {
+                HapticService.impact(.medium)
+                onLogMeal()
+            }
+        case .logNextMeal(let label):
+            mealPill(label: "Log \(label)") {
+                HapticService.impact(.medium)
+                onLogMeal()
             }
         case .goalsCelebration:
             trailingIconButton(
@@ -149,6 +168,48 @@ struct ContextualActionBar: View {
         .buttonStyle(.plain)
         .frame(minWidth: 44, minHeight: 44)
         .accessibilityLabel(label)
+    }
+}
+
+// MARK: - Meal Bowl Button
+
+private struct MealBowlButton: View {
+    let label: String
+    let action: () -> Void
+
+    @State private var bob = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: action) {
+            Image("bowl")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 96, height: 96)
+                .shadow(color: .black.opacity(0.32), radius: 8, x: 2, y: 6)
+                .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
+                .overlay(alignment: .topTrailing) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 20, height: 20)
+                        .background(Circle().fill(Color.black))
+                        .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 1.5))
+                        .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
+                        .offset(x: -2, y: 6)
+                }
+                .offset(x: 8, y: bob ? -14 : -8)
+                .rotationEffect(.degrees(bob ? 2 : -2), anchor: .bottom)
+        }
+        .buttonStyle(.plain)
+        .frame(width: 88, height: 52, alignment: .trailing)
+        .accessibilityLabel(label)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
+                bob = true
+            }
+        }
     }
 }
 

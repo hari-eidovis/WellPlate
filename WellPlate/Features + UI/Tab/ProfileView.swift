@@ -1430,9 +1430,9 @@ private struct LargePreview: View {
 private struct MiniFactorBar: View {
     let factor: WidgetStressFactor
 
-    private var fraction: Double { min(factor.contribution / 25.0, 1.0) }
+    private var fraction: Double { min(factor.contribution / factor.maxScore, 1.0) }
     private var barColor: Color {
-        let ratio = min(max(factor.contribution / 25.0, 0), 1)
+        let ratio = min(max(factor.contribution / factor.maxScore, 0), 1)
         return Color(hue: 0.33 * (1.0 - ratio), saturation: 0.65, brightness: 0.75)
     }
 
@@ -1442,7 +1442,7 @@ private struct MiniFactorBar: View {
                 Image(systemName: factor.icon).font(.system(size: 7)).foregroundStyle(barColor)
                 Text(factor.title).font(.system(size: 8)).foregroundStyle(.secondary)
                 Spacer()
-                Text("\(Int(factor.contribution))/25").font(.system(size: 8, weight: .medium)).foregroundStyle(.secondary)
+                Text("\(Int(factor.contribution))/\(Int(factor.maxScore))").font(.system(size: 8, weight: .medium)).foregroundStyle(.secondary)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {

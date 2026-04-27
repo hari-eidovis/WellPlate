@@ -43,7 +43,7 @@ struct StressFactorCardView: View {
                         .tracking(0.5)
                     Spacer()
                     // Score pill
-                    Text("\(Int(factor.score))/25")
+                    Text("\(Int(factor.score))/\(Int(factor.maxScore))")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundColor(factor.accentColor)
                         .padding(.horizontal, 8)

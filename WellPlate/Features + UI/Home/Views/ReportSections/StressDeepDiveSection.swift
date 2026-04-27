@@ -72,12 +72,12 @@ struct StressDeepDiveSection: View {
     private var factorDecompItems: [(label: String, exercise: Double, sleep: Double, diet: Double, screenTime: Double)] {
         let scored = data.context.days.compactMap { d -> (date: Date, stress: Double, exercise: Double, sleep: Double, diet: Double, screen: Double)? in
             guard let stress = d.stressScore else { return nil }
-            let ex = StressScoring.exerciseScore(steps: d.steps.map(Double.init), energy: d.activeCalories.map(Double.init))
+            let ex = StressScoring.exerciseScore(steps: d.steps.map(Double.init), energy: d.activeCalories.map(Double.init)) ?? 0
             let sl = StressScoring.sleepScore(summary: d.sleepHours.map { h in
                 DailySleepSummary(date: d.date, totalHours: h, coreHours: 0, remHours: 0, deepHours: d.deepSleepHours ?? 0)
-            })
-            let dt = StressScoring.dietScore(protein: d.totalProteinG ?? 0, fiber: d.totalFiberG ?? 0, fat: d.totalFatG ?? 0, carbs: d.totalCarbsG ?? 0, hasLogs: d.totalCalories != nil)
-            let sc = StressScoring.screenTimeScore(hours: nil)
+            }) ?? 0
+            let dt = StressScoring.dietScore(protein: d.totalProteinG ?? 0, fiber: d.totalFiberG ?? 0, fat: d.totalFatG ?? 0, carbs: d.totalCarbsG ?? 0, hasLogs: d.totalCalories != nil) ?? 0
+            let sc = StressScoring.screenTimeScore(hours: nil) ?? 0
             return (date: d.date, stress: stress, exercise: ex, sleep: sl, diet: dt, screen: sc)
         }
 

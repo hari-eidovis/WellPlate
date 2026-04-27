@@ -66,9 +66,9 @@ struct WidgetStressData: Codable {
             encouragement:  "Keep up the good work!",
             factors: [
                 WidgetStressFactor(title: "Exercise",    icon: "figure.run", score: 20, maxScore: 25, contribution: 5,  hasValidData: true),
-                WidgetStressFactor(title: "Sleep",       icon: "moon.fill",  score: 17, maxScore: 25, contribution: 8,  hasValidData: true),
-                WidgetStressFactor(title: "Diet",        icon: "leaf.fill",  score: 13, maxScore: 25, contribution: 12, hasValidData: true),
-                WidgetStressFactor(title: "Screen Time", icon: "iphone",     score: 7,  maxScore: 25, contribution: 7,  hasValidData: true)
+                WidgetStressFactor(title: "Sleep",       icon: "moon.fill",  score: 17, maxScore: 35, contribution: 8,  hasValidData: true),
+                WidgetStressFactor(title: "Diet",        icon: "leaf.fill",  score: 13, maxScore: 20, contribution: 12, hasValidData: true),
+                WidgetStressFactor(title: "Screen Time", icon: "iphone",     score: 7,  maxScore: 20, contribution: 7,  hasValidData: true)
             ],
             restingHR:      62,
             hrv:            42,
@@ -91,9 +91,9 @@ struct WidgetStressData: Codable {
 struct WidgetStressFactor: Codable {
     let title: String
     let icon: String
-    let score: Double           // 0–25 (factor score, not stress contribution)
-    let maxScore: Double        // 25
-    let contribution: Double    // stress contribution 0–25 (= stressContribution from StressFactorResult)
+    let score: Double           // 0–maxScore (factor score, not stress contribution)
+    let maxScore: Double        // per-factor weight (sleep 35, exercise 25, diet 20, screen 20)
+    let contribution: Double    // stress contribution 0–maxScore (= stressContribution from StressFactorResult)
     let hasValidData: Bool
 }
 
