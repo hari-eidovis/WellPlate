@@ -29,6 +29,7 @@ struct ContextualActionBar: View {
             .id(state)
             .transition(reduceMotion ? .identity : .opacity.combined(with: .scale(scale: 0.97)))
             .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.8), value: state)
+            .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.horizontal, 32)
             .padding(.bottom, 8)
             .accessibilityElement(children: .contain)
@@ -38,12 +39,12 @@ struct ContextualActionBar: View {
     // MARK: - Bar Content
 
     private var barContent: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: -4) {
             primaryPill
-            Spacer()
             trailingActions
         }
-        .padding(.horizontal, 20)
+        .padding(.leading, 12)
+        .padding(.trailing, 4)
         .frame(height: 52)
         .background(
             Capsule()
@@ -85,17 +86,11 @@ struct ContextualActionBar: View {
 
     private func symptomPill(action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: "pills.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                Text("Symptom")
-                    .font(.r(13, .semibold))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
-            .background(Capsule().fill(Color.black))
+            Image(systemName: "pill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(Color.black))
         }
         .buttonStyle(.plain)
         .frame(minWidth: 44, minHeight: 44)
