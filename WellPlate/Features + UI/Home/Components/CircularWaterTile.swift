@@ -33,13 +33,13 @@ struct CircularLiquidTile: View {
     // Liquid colors per style
     private var darkLiquid: Color {
         switch style {
-        case .water:  Color(red: 0.000, green: 0.7137, blue: 0.9961)
+        case .water:  Color(hue: 0.58, saturation: 0.65, brightness: 0.82)
         case .coffee: Color(hue: 0.08, saturation: 0.78, brightness: 0.45)
         }
     }
     private var lightLiquid: Color {
         switch style {
-        case .water:  Color(red: 0.6902, green: 0.9098, blue: 0.9922)
+        case .water:  Color(hue: 0.58, saturation: 0.22, brightness: 0.96)
         case .coffee: Color(hue: 0.08, saturation: 0.55, brightness: 0.78)
         }
     }
