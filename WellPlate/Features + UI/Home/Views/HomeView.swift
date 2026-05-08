@@ -296,7 +296,6 @@ struct HomeView: View {
             onStressTab: { selectedTab = 1 },
             onSeeInsight: {
                 showInsightsHub = true
-                Task { await insightEngine.generateInsights() }
             },
             onLogSymptom: {
                 HapticService.impact(.light)
@@ -529,7 +528,6 @@ struct HomeView: View {
             Button {
                 HapticService.impact(.light)
                 showInsightsHub = true
-                Task { await insightEngine.generateInsights() }
             } label: {
                 headerIcon("sparkles")
             }
@@ -878,13 +876,15 @@ struct HomeView: View {
     }
 
     private var greeting: String {
-        // TODO: replace "Alex" with user's actual name when UserGoals.userName is available.
         let hour = Calendar.current.component(.hour, from: Date())
+        let base: String
         switch hour {
-        case 5..<12:  return "Good Morning, Alex"
-        case 12..<17: return "Good Afternoon, Alex"
-        default:      return "Good Evening, Alex"
+        case 5..<12:  base = "Good Morning"
+        case 12..<17: base = "Good Afternoon"
+        default:      base = "Good Evening"
         }
+        let name = UserProfileManager.shared.userName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? base : "\(base), \(name)"
     }
 
     // MARK: - Mood Logging
