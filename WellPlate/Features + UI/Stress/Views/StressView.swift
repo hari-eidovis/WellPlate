@@ -593,8 +593,10 @@ struct StressView: View {
                         .offset(x: 120, y: -90)
                         .allowsHitTesting(false)
                 }
+                .compositingGroup()
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             )
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .strokeBorder(

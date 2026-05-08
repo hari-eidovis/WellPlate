@@ -31,6 +31,7 @@ struct StressSparklineStrip: View {
     // MARK: - Animation
 
     @State private var lineDrawn = false
+    @State private var nowPulse = false
 
     // MARK: - Computed Helpers
 
@@ -40,19 +41,21 @@ struct StressSparklineStrip: View {
         latestScore.map { StressLevel(score: $0) }
     }
 
-    private var emoji: String {
-        switch stressLevel?.lowercased() {
-        case "excellent": return "😄"
-        case "good":      return "😌"
-        case "moderate":  return "😐"
-        case "high":      return "😣"
-        case "very high": return "😰"
-        default:          return "—"
-        }
-    }
-
     private var accentColor: Color {
         latestLevel?.color ?? Color(.systemGray3)
+    }
+
+    private var peakScore: Double? { readings.map(\.score).max() }
+    private var avgScore: Double? {
+        guard !readings.isEmpty else { return nil }
+        return readings.map(\.score).reduce(0, +) / Double(readings.count)
+    }
+
+    private var startTimeLabel: String? {
+        guard let first = readings.first?.timestamp else { return nil }
+        let f = DateFormatter()
+        f.dateFormat = "h a"
+        return f.string(from: first).lowercased()
     }
 
     /// Finds the pair of consecutive readings with the largest absolute delta.
@@ -78,9 +81,9 @@ struct StressSparklineStrip: View {
         default:      period = "Evening"
         }
         if maxDelta < 0 {
-            return "\(period) activity helped ↓\(pts) pts"
+            return "\(period) ↓\(pts)"
         } else {
-            return "\(period) spike ↑\(pts) pts"
+            return "\(period) ↑\(pts)"
         }
     }
 
@@ -88,14 +91,11 @@ struct StressSparklineStrip: View {
 
     var body: some View {
         Button(action: { HapticService.impact(.medium); onTap() }) {
-            VStack(alignment: .leading, spacing: 8) {
-                headerRow
+            VStack(alignment: .leading, spacing: 12) {
+                topBar
+                heroRow
                 chartArea
-                if let note = inflectionAnnotation {
-                    Text(note)
-                        .font(.r(.caption2, .regular))
-                        .foregroundStyle(.secondary)
-                }
+                footerRow
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
@@ -110,53 +110,76 @@ struct StressSparklineStrip: View {
             withAnimation(.spring(response: 1.0, dampingFraction: 0.75)) {
                 lineDrawn = true
             }
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                nowPulse = true
+            }
         }
     }
 
-    // MARK: - Header Row
+    // MARK: - Top Bar (caption + chevron)
 
-    private var headerRow: some View {
-        HStack(alignment: .center) {
+    private var topBar: some View {
+        HStack(spacing: 6) {
             Text("Stress today")
-                .font(.r(.subheadline, .semibold))
-                .foregroundStyle(.primary)
-
+                .font(.r(.caption, .semibold))
+                .foregroundStyle(.secondary)
             Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color(.tertiaryLabel))
+        }
+    }
 
-            // Delta badge
-            if let delta = scoreDelta {
-                let worse = delta > 0
-                Text("\(worse ? "↑" : "↓") \(abs(delta))")
-                    .font(.r(.caption2, .semibold))
-                    .foregroundStyle(worse ? AppColors.error : AppColors.success)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(
-                        Capsule()
-                            .fill((worse ? AppColors.error : AppColors.success).opacity(0.12))
-                    )
-            }
+    // MARK: - Hero Row (score + level + trend pill)
 
-            // Emoji + score + level
+    private var heroRow: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
             if let score = latestScore {
-                HStack(spacing: 4) {
-                    Text(emoji)
-                        .font(.system(size: 15))
-                    Text("\(Int(score.rounded()))")
-                        .font(.r(.subheadline, .bold))
-                        .foregroundStyle(.primary)
-                    if let lvl = stressLevel {
-                        Text(lvl)
-                            .font(.r(.caption, .regular))
-                            .foregroundStyle(.secondary)
-                    }
+                Text("\(Int(score.rounded()))")
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .contentTransition(.numericText())
+
+                if let level = stressLevel {
+                    Text(level)
+                        .font(.r(.subheadline, .semibold))
+                        .foregroundStyle(accentColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule().fill(accentColor.opacity(0.14))
+                        )
                 }
             } else {
                 Text("—")
-                    .font(.r(.subheadline, .semibold))
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
             }
+
+            Spacer()
+
+            if let delta = scoreDelta {
+                trendPill(delta: delta)
+            }
         }
+    }
+
+    private func trendPill(delta: Int) -> some View {
+        let worse = delta > 0
+        let tint = worse ? AppColors.error : AppColors.success
+        return HStack(spacing: 4) {
+            Image(systemName: worse ? "arrow.up.right" : "arrow.down.right")
+                .font(.system(size: 10, weight: .bold))
+            Text("\(abs(delta))")
+                .font(.r(.caption, .bold))
+            Text("vs yest.")
+                .font(.r(.caption2, .regular))
+                .foregroundStyle(.secondary)
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Capsule().fill(tint.opacity(0.12)))
     }
 
     // MARK: - Chart Area
@@ -169,30 +192,53 @@ struct StressSparklineStrip: View {
                 realChart
             }
         }
-        .frame(height: 52)
+        .frame(height: 64)
     }
 
     private var emptyChartPlaceholder: some View {
-        VStack(spacing: 6) {
-            RoundedRectangle(cornerRadius: 0.5)
-                .stroke(Color(.systemGray4), style: StrokeStyle(lineWidth: 1, dash: [4]))
-                .frame(height: 1)
-            Text("No stress data yet")
-                .font(.r(.caption2, .regular))
+        HStack(spacing: 8) {
+            Image(systemName: "waveform.path.ecg")
+                .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(Color(.systemGray3))
+            Text("Trend appears once we have a few readings")
+                .font(.r(.caption2, .regular))
+                .foregroundStyle(Color(.systemGray))
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxHeight: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.tertiarySystemFill).opacity(0.5))
+        )
     }
 
     private var realChart: some View {
-        Chart(chartPoints) { p in
+        let lineGradient = LinearGradient(
+            colors: [
+                StressLevel(score: 75).color,
+                StressLevel(score: 50).color,
+                StressLevel(score: 25).color
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+
+        return Chart(chartPoints) { p in
+            // Soft zone dividers at moderate (40) and high (60) thresholds.
+            RuleMark(y: .value("Moderate", 40))
+                .foregroundStyle(Color(.systemGray4).opacity(0.5))
+                .lineStyle(StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
+            RuleMark(y: .value("High", 60))
+                .foregroundStyle(Color(.systemGray4).opacity(0.5))
+                .lineStyle(StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
+
             AreaMark(
                 x: .value("Time", p.timestamp),
                 y: .value("Stress", p.score)
             )
             .foregroundStyle(
-                .linearGradient(
-                    colors: [accentColor.opacity(0.20), accentColor.opacity(0.0)],
+                LinearGradient(
+                    colors: [accentColor.opacity(0.28), accentColor.opacity(0.0)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -203,9 +249,30 @@ struct StressSparklineStrip: View {
                 x: .value("Time", p.timestamp),
                 y: .value("Stress", p.score)
             )
-            .foregroundStyle(accentColor)
-            .lineStyle(StrokeStyle(lineWidth: 2))
+            .foregroundStyle(lineGradient)
+            .lineStyle(StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
             .interpolationMethod(.catmullRom)
+
+            // Pulsing "now" dot on the latest reading.
+            if let last = readings.last {
+                PointMark(
+                    x: .value("Time", last.timestamp),
+                    y: .value("Stress", last.score)
+                )
+                .symbol {
+                    ZStack {
+                        Circle()
+                            .fill(accentColor.opacity(0.25))
+                            .frame(width: nowPulse ? 18 : 10, height: nowPulse ? 18 : 10)
+                        Circle()
+                            .fill(Color(.systemBackground))
+                            .frame(width: 9, height: 9)
+                        Circle()
+                            .fill(accentColor)
+                            .frame(width: 6, height: 6)
+                    }
+                }
+            }
         }
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
@@ -214,6 +281,55 @@ struct StressSparklineStrip: View {
             Rectangle()
                 .scaleEffect(x: lineDrawn ? 1 : 0, anchor: .leading)
         }
+    }
+
+    // MARK: - Footer Row (start time, stats, now)
+
+    private var footerRow: some View {
+        HStack(spacing: 6) {
+            if let start = startTimeLabel {
+                Text(start)
+                    .font(.r(.caption2, .regular))
+                    .foregroundStyle(Color(.tertiaryLabel))
+            }
+
+            Spacer(minLength: 4)
+
+            if let peak = peakScore, let avg = avgScore, readings.count >= 2 {
+                statChip(label: "Avg", value: Int(avg.rounded()))
+                statDivider
+                statChip(label: "Peak", value: Int(peak.rounded()))
+                if let note = inflectionAnnotation {
+                    statDivider
+                    Text(note)
+                        .font(.r(.caption2, .semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer(minLength: 4)
+
+            Text("Now")
+                .font(.r(.caption2, .semibold))
+                .foregroundStyle(accentColor)
+        }
+    }
+
+    private func statChip(label: String, value: Int) -> some View {
+        HStack(spacing: 3) {
+            Text(label)
+                .font(.r(.caption2, .regular))
+                .foregroundStyle(.secondary)
+            Text("\(value)")
+                .font(.r(.caption2, .bold))
+                .foregroundStyle(.primary)
+        }
+    }
+
+    private var statDivider: some View {
+        Text("·")
+            .font(.r(.caption2, .regular))
+            .foregroundStyle(Color(.tertiaryLabel))
     }
 }
 
