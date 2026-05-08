@@ -1,7 +1,8 @@
 import SwiftUI
 
 // MARK: - QuickStatsRow
-// Two LiquidGaugeTile views side by side: water (wave fill), coffee (gradient fill).
+// Two CircularLiquidTile views side by side — water (cyan waves) and
+// coffee (brown waves). Both use the same circular wave animation.
 
 struct QuickStatsRow: View {
     @Binding var hydrationGlasses: Int
@@ -45,41 +46,35 @@ struct QuickStatsRow: View {
     var body: some View {
         HStack(spacing: 10) {
             if showWater {
-            LiquidGaugeTile(
-                style: .water,
-                emoji: "💧",
-                label: "Water",
-                count: hydrationGlasses,
-                goal: hydrationGoal,
-                subtitle: waterSubtitle,
-                deltaText: waterDeltaText,
-                deltaPositive: hydrationGlasses >= yesterdayWater,
-                showIncrementButton: hydrationGlasses < hydrationGoal,
-                onTap: { onWaterTap() },
-                onIncrement: {
-                    SoundService.play("water_log_sound", ext: "mp3")
-                    hydrationGlasses += 1
-                }
-            )
+                CircularLiquidTile(
+                    style: .water,
+                    emoji: "💧",
+                    count: hydrationGlasses,
+                    goal: hydrationGoal,
+                    unitLabel: "cups",
+                    subtitleText: waterSubtitle,
+                    onTap: { onWaterTap() },
+                    onIncrement: {
+                        SoundService.play("water_log_sound", ext: "mp3")
+                        hydrationGlasses += 1
+                    }
+                )
             }
 
             if showCoffee {
-            LiquidGaugeTile(
-                style: .coffee,
-                emoji: "☕",
-                label: "Coffee",
-                count: coffeeCups,
-                goal: coffeeGoal,
-                subtitle: coffeeSubtitle,
-                deltaText: coffeeDeltaText,
-                deltaPositive: coffeeCups >= yesterdayCoffee,
-                showIncrementButton: coffeeCups < coffeeGoal,
-                onTap: { onCoffeeTap() },
-                onIncrement: {
-                    SoundService.playConfirmation()
-                    onCoffeeLog()
-                }
-            )
+                CircularLiquidTile(
+                    style: .coffee,
+                    emoji: "☕",
+                    count: coffeeCups,
+                    goal: coffeeGoal,
+                    unitLabel: "cups",
+                    subtitleText: coffeeSubtitle,
+                    onTap: { onCoffeeTap() },
+                    onIncrement: {
+                        SoundService.playConfirmation()
+                        onCoffeeLog()
+                    }
+                )
             }
         }
         .padding(.horizontal, 16)
