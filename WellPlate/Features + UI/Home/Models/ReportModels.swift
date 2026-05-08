@@ -26,7 +26,6 @@ struct ReportContext {
     let foodSymptomLinks: [FoodSymptomLink]
     let crossCorrelations: [CrossCorrelation]
     let interventionResults: [InterventionResult]
-    let experimentSummaries: [ExperimentSummary]
     let topFoods: [(name: String, count: Int, totalCalories: Int)]
     let perSupplementAdherence: [(name: String, rate: Double)]
     let dataQualityNote: String
@@ -112,17 +111,3 @@ struct InterventionResult: Identifiable {
     let hasMeasurableData: Bool
 }
 
-// MARK: - ExperimentSummary
-
-struct ExperimentSummary: Identifiable {
-    let id = UUID()
-    let name: String
-    let hypothesis: String?
-    let interventionType: String
-    let baselineAvg: Double?
-    let experimentAvg: Double?
-    let delta: Double?
-    let ciLow: Double?
-    let ciHigh: Double?
-    let isComplete: Bool
-}

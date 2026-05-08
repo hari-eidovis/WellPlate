@@ -5,7 +5,7 @@ import SwiftData
 //
 // Fetches all SwiftData + HealthKit data for 15-day window, builds
 // ReportContext with per-day summaries, food-symptom links, cross-domain
-// correlations, intervention results, and experiment summaries.
+// correlations, and intervention results.
 
 @MainActor
 final class ReportDataBuilder {
@@ -63,9 +63,6 @@ final class ReportDataBuilder {
             predicate: #Predicate { $0.startedAt >= windowStart }
         )
         let interventionSessions = ((try? modelContext.fetch(interventionDescriptor)) ?? []).filter { $0.completed }
-
-        let experimentDescriptor = FetchDescriptor<StressExperiment>()
-        let allExperiments = (try? modelContext.fetch(experimentDescriptor)) ?? []
 
         let goals = UserGoalsSnapshot(from: UserGoals.current(in: modelContext))
 
@@ -212,11 +209,6 @@ final class ReportDataBuilder {
             readings: allReadings
         )
 
-        let experimentSummaries = buildExperimentSummaries(
-            experiments: allExperiments,
-            windowStart: windowStart
-        )
-
         let topFoods = computeTopFoods(foodLogs: foodLogs)
         let perSupplementAdherence = computePerSupplementAdherence(
             adherenceLogs: adherenceLogs,
@@ -237,7 +229,6 @@ final class ReportDataBuilder {
             foodSymptomLinks: foodSymptomLinks,
             crossCorrelations: crossCorrelations,
             interventionResults: interventionResults,
-            experimentSummaries: experimentSummaries,
             topFoods: topFoods,
             perSupplementAdherence: perSupplementAdherence,
             dataQualityNote: qualityNote
@@ -552,30 +543,6 @@ final class ReportDataBuilder {
         }
 
         return results
-    }
-
-    // MARK: - Experiment Summaries
-
-    private func buildExperimentSummaries(
-        experiments: [StressExperiment],
-        windowStart: Date
-    ) -> [ExperimentSummary] {
-        let now = Date()
-        return experiments
-            .filter { $0.startDate <= now && $0.endDate >= windowStart }
-            .map { exp in
-                ExperimentSummary(
-                    name: exp.name,
-                    hypothesis: exp.hypothesis,
-                    interventionType: exp.interventionType,
-                    baselineAvg: exp.cachedBaselineAvg,
-                    experimentAvg: exp.cachedExperimentAvg,
-                    delta: exp.cachedDelta,
-                    ciLow: exp.cachedCILow,
-                    ciHigh: exp.cachedCIHigh,
-                    isComplete: exp.isComplete
-                )
-            }
     }
 
     // MARK: - Top Foods

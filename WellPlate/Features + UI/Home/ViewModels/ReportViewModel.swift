@@ -155,7 +155,6 @@ final class AI15DayReportViewModel: ObservableObject {
             interventionResults: [
                 InterventionResult(resetType: "pmr", sessionCount: 3, avgPreStress: 68, avgPostStress: 52, avgDelta: -16, hasMeasurableData: true)
             ],
-            experimentSummaries: [],
             topFoods: [
                 (name: "Oatmeal", count: 12, totalCalories: 3600),
                 (name: "Chicken salad", count: 10, totalCalories: 4500),

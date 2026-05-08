@@ -47,9 +47,6 @@ struct StressDeepDiveSection: View {
 
             // 2e: Interventions
             interventionSection
-
-            // 2f: Experiments
-            experimentSection
         }
     }
 
@@ -176,26 +173,4 @@ struct StressDeepDiveSection: View {
         }
     }
 
-    // MARK: - Experiments
-
-    @ViewBuilder
-    private var experimentSection: some View {
-        if !data.context.experimentSummaries.isEmpty {
-            ForEach(data.context.experimentSummaries) { exp in
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(exp.name)
-                        .font(.r(.footnote, .semibold))
-                    if let h = exp.hypothesis {
-                        Text(h).font(.r(.caption, .regular)).foregroundStyle(.secondary)
-                    }
-                    if let baseline = exp.baselineAvg, let experiment = exp.experimentAvg {
-                        ComparisonBarChart(bars: [
-                            (label: "Baseline", value: baseline, domain: .stress),
-                            (label: "Experiment", value: experiment, domain: .stress),
-                        ], highlight: experiment < baseline ? 1 : 0)
-                    }
-                }
-            }
-        }
-    }
 }
