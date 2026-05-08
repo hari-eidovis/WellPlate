@@ -36,27 +36,19 @@ struct VoiceMealLogView: View {
 
                 Spacer()
 
-                bottomSection
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 36)
+                if viewModel.isLoading {
+                    loadingPill
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 36)
+                } else {
+                    Color.clear.frame(height: 36)
+                }
             }
         }
+        .navigationTitle("Speak your meal")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button {
-                    HapticService.impact(.light)
-                    viewModel.cancelVoiceAutoLog()
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(AppColors.primary)
-                }
-                .disabled(viewModel.isLoading)
-            }
-        }
+        .toolbar { toolbarContent }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("Try Again") { viewModel.startVoiceAutoLog(selectedDate: selectedDate) }
             Button("Cancel", role: .cancel) { dismiss() }
@@ -102,9 +94,6 @@ struct VoiceMealLogView: View {
 
     private var instructionSection: some View {
         VStack(spacing: 6) {
-            Text("Speak your meal")
-                .font(.r(.title2, .semibold))
-                .foregroundColor(AppColors.textPrimary)
             Text("Say the dish name and amount")
                 .font(.r(.subheadline, .regular))
                 .foregroundColor(AppColors.textSecondary)
@@ -115,6 +104,56 @@ struct VoiceMealLogView: View {
         }
         .multilineTextAlignment(.center)
         .padding(.horizontal, 32)
+    }
+
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button {
+                HapticService.impact(.light)
+                viewModel.cancelVoiceAutoLog()
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(AppColors.textSecondary)
+                    .padding(7)
+                    .background(Circle().fill(Color(.secondarySystemBackground)))
+            }
+            .disabled(viewModel.isLoading)
+        }
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button {
+                HapticService.impact(.medium)
+                if viewModel.isTranscribing {
+                    viewModel.stopVoiceAutoLog()
+                }
+            } label: {
+                Text("Save")
+                    .font(.r(.subheadline, .semibold))
+                    .foregroundColor(canFinalizeVoiceLog && !viewModel.isLoading ? AppColors.brand : AppColors.textSecondary)
+            }
+            .disabled(!canFinalizeVoiceLog || viewModel.isLoading)
+        }
+    }
+
+    private var loadingPill: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primary))
+            Text("Logging your meal…")
+                .font(.r(.subheadline, .medium))
+                .foregroundColor(AppColors.textSecondary)
+        }
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 10, y: 3)
+        )
     }
 
     // MARK: - Mic
@@ -190,49 +229,4 @@ struct VoiceMealLogView: View {
         }
     }
 
-    // MARK: - Bottom actions
-
-    @ViewBuilder
-    private var bottomSection: some View {
-        if viewModel.isLoading {
-            HStack(spacing: 10) {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primary))
-                Text("Logging your meal…")
-                    .font(.r(.subheadline, .medium))
-                    .foregroundColor(AppColors.textSecondary)
-            }
-            .padding(.vertical, 16)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .appShadow(radius: 10, y: 3)
-            )
-        } else if viewModel.isTranscribing {
-            Button {
-                HapticService.impact(.medium)
-                viewModel.stopVoiceAutoLog()
-            } label: {
-                Text("Done")
-                    .font(.btn)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(
-                                LinearGradient(
-                                    colors: [AppColors.brand, AppColors.brand.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(!canFinalizeVoiceLog)
-            .opacity(canFinalizeVoiceLog ? 1 : AppOpacity.disabled)
-        }
-    }
 }

@@ -241,22 +241,33 @@ struct FoodJournalView: View {
                 )
             }
         }
-        .navigationDestination(isPresented: $showNotepad) {
-            MealLogView(
-                viewModel: mealLogViewModel,
-                selectedDate: selectedDate,
-                onBarcodeTap: { showBarcode = true }
-            )
+        .sheet(isPresented: $showNotepad) {
+            NavigationStack {
+                MealLogView(
+                    viewModel: mealLogViewModel,
+                    selectedDate: selectedDate,
+                    onBarcodeTap: {
+                        showNotepad = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            showBarcode = true
+                        }
+                    }
+                )
+            }
         }
-        .navigationDestination(isPresented: $showVoice) {
-            VoiceMealLogView(viewModel: mealLogViewModel, selectedDate: selectedDate)
+        .sheet(isPresented: $showVoice) {
+            NavigationStack {
+                VoiceMealLogView(viewModel: mealLogViewModel, selectedDate: selectedDate)
+            }
         }
-        .navigationDestination(isPresented: $showBarcode) {
-            BarcodeScanView(
-                viewModel: mealLogViewModel,
-                homeViewModel: viewModel,
-                selectedDate: selectedDate
-            )
+        .sheet(isPresented: $showBarcode) {
+            NavigationStack {
+                BarcodeScanView(
+                    viewModel: mealLogViewModel,
+                    homeViewModel: viewModel,
+                    selectedDate: selectedDate
+                )
+            }
         }
         .onChange(of: mealLogViewModel.shouldDismiss) { _, shouldDismiss in
             guard shouldDismiss else { return }

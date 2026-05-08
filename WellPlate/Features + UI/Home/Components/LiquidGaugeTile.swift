@@ -111,42 +111,36 @@ struct LiquidGaugeTile: View {
 
                 Spacer()
 
-                // Bottom: + button
-                if showIncrementButton {
-                    Button {
-                        HapticService.impact(.light)
-                        onIncrement?()
-                    } label: {
-                        HStack(spacing: 4) {
+                // Bottom: + button pushed to right corner
+                HStack {
+                    Spacer()
+
+                    if showIncrementButton {
+                        Button {
+                            HapticService.impact(.light)
+                            onIncrement?()
+                        } label: {
                             Image(systemName: "plus")
-                                .font(.system(size: 14, weight: .bold))
-                            Text("Add")
-                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(accentColor)
+                                .frame(width: 38, height: 38)
+                                .background(
+                                    Circle()
+                                        .fill(accentBg)
+                                )
                         }
-                        .foregroundStyle(accentColor)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 38)
-                        .background(
-                            Capsule()
-                                .fill(accentBg)
-                        )
+                        .buttonStyle(.plain)
+                    } else {
+                        // Goal reached indicator
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(AppColors.success)
+                            .frame(width: 38, height: 38)
+                            .background(
+                                Circle()
+                                    .fill(AppColors.success.opacity(0.12))
+                            )
                     }
-                    .buttonStyle(.plain)
-                } else {
-                    // Goal reached indicator
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("Done")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    }
-                    .foregroundStyle(AppColors.success)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 38)
-                    .background(
-                        Capsule()
-                            .fill(AppColors.success.opacity(0.12))
-                    )
                 }
             }
             .padding(16)
@@ -173,8 +167,13 @@ struct LiquidGaugeTile: View {
     private var liquidFill: some View {
         switch style {
         case .water:
-            WaterWaveShape(fillFraction: fillFraction, wavePhase: wavePhase)
-                .fill(fillColorLight)
+            Image("water_bg")
+                .resizable()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(0.92)
+                .mask {
+                    WaterWaveShape(fillFraction: fillFraction, wavePhase: wavePhase)
+                }
 
         case .coffee:
             // Smooth rising rectangle with a gradient

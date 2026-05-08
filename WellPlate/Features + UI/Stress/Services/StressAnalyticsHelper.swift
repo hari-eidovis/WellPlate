@@ -1,7 +1,7 @@
 import Foundation
 
-/// Shared analytics utilities used by StressLabAnalyzer, FastingInsightChart,
-/// and future correlation features.
+/// Shared analytics utilities used by FastingInsightChart and future
+/// correlation features.
 enum StressAnalyticsHelper {
 
     /// Groups StressReading rows by calendar day and returns an array of daily

@@ -64,6 +64,7 @@ struct BarcodeScanView: View {
             toastOverlay
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar { toolbarContent }
         .onChange(of: phase) { oldPhase, newPhase in
             guard case .confirmProduct(let product, _) = newPhase else { return }
             // Only initialise once when first entering confirmProduct.
@@ -407,44 +408,62 @@ struct BarcodeScanView: View {
                     }
                 }
 
-                // Actions
-                VStack(spacing: 12) {
-                    Button {
-                        HapticService.impact(.medium)
-                        saveBarcodeMeal(product: product, nutrition: nutrition)
-                    } label: {
-                        Group {
-                            if isSaving {
-                                ProgressView().tint(.white)
-                            } else {
-                                Text("Log This Food")
-                                    .font(.r(.body, .semibold))
-                            }
-                        }
+                // Edit Details fallback
+                Button {
+                    applyFallback(prefill: product.productName)
+                } label: {
+                    Text("Edit Details")
+                        .font(.r(.subheadline, .regular))
+                        .foregroundColor(AppColors.textSecondary)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Capsule().fill(AppColors.primary))
-                        .foregroundColor(AppColors.onPrimary)
-                    }
-                    .disabled(isSaving)
-                    .buttonStyle(.plain)
-
-                    Button {
-                        applyFallback(prefill: product.productName)
-                    } label: {
-                        Text("Edit Details")
-                            .font(.r(.subheadline, .regular))
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                    .buttonStyle(.plain)
+                        .padding(.top, 4)
                 }
-                .padding(.top, 4)
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 32)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("Confirm Food")
+    }
+
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button {
+                HapticService.impact(.light)
+                lookupTask?.cancel()
+                saveTask?.cancel()
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(AppColors.textSecondary)
+                    .padding(7)
+                    .background(Circle().fill(Color(.secondarySystemBackground)))
+            }
+            .disabled(isSaving)
+        }
+        if case .confirmProduct(let product, let nutrition) = phase {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    HapticService.impact(.medium)
+                    saveBarcodeMeal(product: product, nutrition: nutrition)
+                } label: {
+                    if isSaving {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: AppColors.brand))
+                    } else {
+                        Text("Save")
+                            .font(.r(.subheadline, .semibold))
+                            .foregroundColor(AppColors.brand)
+                    }
+                }
+                .disabled(isSaving)
+            }
+        }
     }
 
     private func nutritionCell(label: String, value: String) -> some View {
