@@ -3,6 +3,7 @@
 //  WellPlate
 //
 //  Created on 21.02.2026.
+//  Rewired for stress algorithm v3 (13-driver model).
 //
 
 import Foundation
@@ -20,16 +21,29 @@ enum ScreenTimeSource {
 @MainActor
 final class StressViewModel: ObservableObject {
 
-    // MARK: - Published State
+    // MARK: - Published per-factor (backed from `allFactors` for legacy UI continuity)
 
-    @Published var exerciseFactor: StressFactorResult  = .neutral(title: "Exercise",    icon: "figure.run", higherIsBetter: true)
-    @Published var sleepFactor: StressFactorResult      = .neutral(title: "Sleep",       icon: "moon.fill",  higherIsBetter: true)
-    @Published var dietFactor: StressFactorResult       = .neutral(title: "Diet",        icon: "leaf.fill",  higherIsBetter: true)
-    @Published var screenTimeFactor: StressFactorResult = .neutral(title: "Screen Time", icon: "iphone",     higherIsBetter: false)
+    @Published var exerciseFactor: StressFactorResult  = .neutral(title: "Exercise",    icon: "figure.run", higherIsBetter: false, maxScore: StressScoring.Weights.exercise)
+    @Published var sleepFactor: StressFactorResult     = .neutral(title: "Sleep",       icon: "moon.fill",  higherIsBetter: false, maxScore: StressScoring.Weights.sleep)
+    @Published var dietFactor: StressFactorResult      = .neutral(title: "Diet",        icon: "leaf.fill",  higherIsBetter: false, maxScore: StressScoring.Weights.diet)
+    @Published var screenTimeFactor: StressFactorResult = .neutral(title: "Screen Time", icon: "iphone",     higherIsBetter: false, maxScore: StressScoring.Weights.screenTime)
     @Published var isLoading = false
     @Published var isAuthorized = false
     @Published var errorMessage: String? = nil
     @Published var screenTimeSource: ScreenTimeSource = .none
+
+    // MARK: - v3 Aggregate Result State
+
+    /// Total stress score 0…100. Stored — set by `computeStress` orchestrator.
+    @Published var totalScore: Double = 0
+    /// Multiplicative HRV/RHR calibrator. 1.0 when no baseline (Watch-less).
+    @Published var calibratorMultiplier: Double = 1.0
+    /// Time-ramped engagement penalty 0…18.
+    @Published var engagementPenaltyValue: Double = 0
+    /// Multi-day pattern penalty 0…12.
+    @Published var patternPenaltyValue: Double = 0
+    /// All 13 factors in stable order (per `StressScoring.allFactors`).
+    @Published var allFactors: [StressFactorResult] = []
 
     // MARK: - Today's Vitals (display-only)
 
@@ -61,10 +75,7 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - Intraday Stress Readings (for charts)
 
-    /// All `StressReading` rows captured today — drives the day chart.
     @Published var todayReadings: [StressReading] = []
-
-    /// `StressReading` rows from the last 7 days — drives the week trend chart.
     @Published var weekReadings: [StressReading] = []
 
     // MARK: - Diet Log Cache
@@ -73,42 +84,31 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - Computed
 
-    /// Stress total 0–100.
-    /// Exercise / sleep / diet contribute (25 - score) each — more activity = less stress.
-    /// Screen time contributes its score directly — more usage = more stress.
-    var totalScore: Double {
-        exerciseFactor.stressContribution
-        + sleepFactor.stressContribution
-        + dietFactor.stressContribution
-        + screenTimeFactor.stressContribution
-    }
-
     var stressLevel: StressLevel { StressLevel(score: totalScore) }
 
-    var allFactors: [StressFactorResult] {
-        [exerciseFactor, sleepFactor, dietFactor, screenTimeFactor]
-    }
-
-    /// Top 2 factors contributing most to stress, ranked by stress contribution.
+    /// Top 5 factors contributing most to stress, ranked by stress contribution.
     var topStressors: [StressFactorResult] {
-        allFactors.sorted { $0.stressContribution > $1.stressContribution }.prefix(2).map { $0 }
+        allFactors.sorted { $0.stressContribution > $1.stressContribution }.prefix(5).map { $0 }
     }
 
-    /// Number of factors (0–4) that have valid input data for today.
+    /// Number of factors that have valid input data for today (0–13 in v3).
     var factorCoverage: Int { allFactors.filter(\.hasValidData).count }
 
-    /// Confidence level based on how many factors have valid data. `.low` is never surfaced —
-    /// honest mode (Task 15) takes over at `factorCoverage < 2` before the badge renders.
-    var stressConfidence: StressViewModel.Confidence {
-        switch factorCoverage {
-        case 4: .high
-        case 2, 3: .medium
-        default: .low
+    /// Coverage-weighted confidence per formula spec §8.
+    /// `high` ≥70%, `medium` 40–70%, `low` <40%.
+    var stressConfidence: Confidence {
+        let totalPossible: Double = 100   // sum of v3 driver weights
+        let covered = allFactors.reduce(0.0) { $0 + ($1.hasValidData ? $1.maxScore : 0) }
+        let coverage = covered / totalPossible
+        switch coverage {
+        case 0.70...:        return .high
+        case 0.40..<0.70:    return .medium
+        default:             return .low
         }
     }
 
-    /// Phase-1 honest mode: <2 factors → hide the score (Task 15).
-    var shouldHideScoreForLowConfidence: Bool { factorCoverage < 2 }
+    /// Honest mode: low confidence hides the score.
+    var shouldHideScoreForLowConfidence: Bool { stressConfidence == .low }
 
     /// Returns the 30-day history array for a given vital metric.
     func vitalHistory(for metric: VitalMetric) -> [DailyMetricSample] {
@@ -135,10 +135,8 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - Screen Time Display (view-model-owned, avoids direct singleton reads in views)
 
-    /// The hours value currently used by the screen-time factor — nil when source is .none.
     @Published var screenTimeDisplayHours: Double? = nil
 
-    /// Auto-detected hours only; nil when source is .none.
     var screenTimeAutoDetectedHours: Double? {
         screenTimeSource == .auto ? screenTimeDisplayHours : nil
     }
@@ -154,6 +152,20 @@ final class StressViewModel: ObservableObject {
     /// True when this view model is running with mock data injected.
     var usesMockData: Bool { mockSnapshot != nil }
 
+    // MARK: - HK Cache (reused by `recompute()` so we don't re-hit HealthKit)
+
+    private var lastSteps: Double? = nil
+    private var lastEnergy: Double? = nil
+    private var lastSleepSummary: DailySleepSummary? = nil
+    private var lastHRVHistory: [DailyMetricSample] = []
+    private var lastRHRHistory: [DailyMetricSample] = []
+    private var lastDaylightToday: Double? = nil
+
+    // MARK: - Combine
+
+    private var tickerCancellable: AnyCancellable?
+    private var manualInputCancellable: AnyCancellable?
+
     // MARK: - Init
 
     init(
@@ -168,6 +180,19 @@ final class StressViewModel: ObservableObject {
         if mockSnapshot == nil, ScreenTimeManager.shared.currentAutoDetectedReading != nil {
             screenTimeSource = .auto
         }
+
+        // Subscribe to engagement-ramp ticker so the score updates as the day progresses.
+        tickerCancellable = StressTimerService.shared.$tickerPulse
+            .dropFirst()
+            .sink { [weak self] _ in self?.recompute() }
+    }
+
+    /// Wires this VM to a `DailyPromptCoordinator`. Called once after the
+    /// environment object becomes available (P2 wires this from views).
+    func bindManualInputUpdates(from coordinator: any ManualInputObservable) {
+        manualInputCancellable = coordinator.manualInputSavedAtPublisher
+            .dropFirst()
+            .sink { [weak self] _ in self?.recompute() }
     }
 
     // MARK: - Actions
@@ -197,13 +222,12 @@ final class StressViewModel: ObservableObject {
         let now = Date()
         let startOfToday = calendar.startOfDay(for: now)
 
-        // Exercise window: if it's before 9 AM, yesterday's full day has more
+        // Exercise window: if it's before 3 AM, yesterday's full day has more
         // meaningful data than the handful of minutes since midnight.
         let hour = calendar.component(.hour, from: now)
         let exerciseStart: Date
         let exerciseEnd: Date
         if hour < 3 {
-            // Early morning — show yesterday's full-day activity
             exerciseStart = calendar.date(byAdding: .day, value: -1, to: startOfToday) ?? startOfToday
             exerciseEnd   = startOfToday
         } else {
@@ -216,16 +240,6 @@ final class StressViewModel: ObservableObject {
         let sleepStart = calendar.date(byAdding: .day, value: -1, to: startOfToday) ?? startOfToday
         let sleepInterval = DateInterval(start: sleepStart, end: now)
 
-        #if DEBUG
-        let fmt = DateFormatter()
-        fmt.dateFormat = "HH:mm"
-        log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        log("🔄 loadData() started  (hour=\(hour))")
-        log("   Exercise window : \(fmt.string(from: exerciseStart)) → \(fmt.string(from: exerciseEnd))\(hour < 3 ? " [yesterday fallback]" : "")")
-        log("   Sleep window    : \(fmt.string(from: sleepStart)) → \(fmt.string(from: now))")
-        log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        #endif
-
         // Fetch exercise + sleep in parallel
         async let stepsResult = fetchStepsSafely(for: exerciseInterval)
         async let energyResult = fetchEnergySafely(for: exerciseInterval)
@@ -235,56 +249,12 @@ final class StressViewModel: ObservableObject {
         let energy = await energyResult
         let sleepSummary = await sleepResult
 
-        #if DEBUG
-        log("📦 HealthKit raw fetch results:")
-        log("   Steps  : \(steps.map { String(format: "%.0f", $0) } ?? "nil (no data)")")
-        log("   Energy : \(energy.map { String(format: "%.1f kcal", $0) } ?? "nil (no data)")")
-        if let s = sleepSummary {
-            log("   Sleep  : totalHours=\(String(format: "%.2f", s.totalHours))h  deepHours=\(String(format: "%.2f", s.deepHours))h")
-        } else {
-            log("   Sleep  : nil (no data for last night)")
-        }
-        #endif
+        // Cache HK results so recompute() can skip these I/O hits.
+        lastSteps = steps
+        lastEnergy = energy
+        lastSleepSummary = sleepSummary
 
-        // Compute exercise factor
-        let exerciseScore: Double? = StressScoring.exerciseScore(steps: steps, energy: energy)
-        exerciseFactor = buildExerciseFactor(score: exerciseScore, steps: steps, energy: energy)
-
-        #if DEBUG
-        log("🏃 Exercise  → score=\(fmt2(exerciseScore ?? 0))/\(Int(StressScoring.Weights.exercise))  stressContrib=\(fmt2(exerciseFactor.stressContribution))/\(Int(StressScoring.Weights.exercise))  [\(exerciseFactor.detailText)]")
-        #endif
-
-        // Compute sleep factor
-        let sleepScore: Double? = StressScoring.sleepScore(summary: sleepSummary)
-        sleepFactor = buildSleepFactor(score: sleepScore, summary: sleepSummary)
-
-        #if DEBUG
-        log("🌙 Sleep     → score=\(fmt2(sleepScore ?? 0))/\(Int(StressScoring.Weights.sleep))  stressContrib=\(fmt2(sleepFactor.stressContribution))/\(Int(StressScoring.Weights.sleep))  [\(sleepFactor.detailText)]")
-        #endif
-
-        // Refresh diet synchronously from SwiftData
-        refreshDietFactor()
-
-        // Refresh screen time from persisted value
-        refreshScreenTimeFactor()
-
-        // ── Persist snapshot to WellnessDayLog so HomeView rings update ──
-        persistTodayWellnessSnapshot(steps: steps, energy: energy)
-        logCurrentStress(source: "auto")
-
-        #if DEBUG
-        log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        log("📊 Stress summary:")
-        log("   Exercise  score=\(fmt2(exerciseFactor.score))  contrib=\(fmt2(exerciseFactor.stressContribution))")
-        log("   Sleep     score=\(fmt2(sleepFactor.score))  contrib=\(fmt2(sleepFactor.stressContribution))")
-        log("   Diet      score=\(fmt2(dietFactor.score))  contrib=\(fmt2(dietFactor.stressContribution))")
-        log("   ScrnTime  score=\(fmt2(screenTimeFactor.score))  contrib=\(fmt2(screenTimeFactor.stressContribution))")
-        log("   ─────────────────────────────────────")
-        log("   Total stress : \(fmt2(totalScore))/100  → Level: \(stressLevel.label)")
-        log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        #endif
-
-        // Fetch 30-day histories for detail views and vitals display
+        // Fetch 30-day histories for detail views, vitals display, and HRV/RHR baseline.
         let thirtyDayStart = calendar.date(byAdding: .day, value: -30, to: now) ?? now
         let thirtyDayRange = DateInterval(start: thirtyDayStart, end: now)
 
@@ -310,7 +280,11 @@ final class StressViewModel: ObservableObject {
         respiratoryRateHistory = await rrHist
         daylightHistory        = await daylightHist
 
-        // Extract today's vitals values
+        // Cache vitals history for recompute() reuse.
+        lastHRVHistory = hrvHistory
+        lastRHRHistory = restingHRHistory
+
+        // Today's vitals (display-only — never feed into scoring path)
         todayHeartRate       = heartRateHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
         todayRestingHR       = restingHRHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
         todayHRV             = hrvHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
@@ -318,15 +292,28 @@ final class StressViewModel: ObservableObject {
         todayDiastolicBP     = diastolicBPHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
         todayRespiratoryRate = respiratoryRateHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
 
+        // Today's daylight minutes (cached for recompute reuse)
+        lastDaylightToday = daylightHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
+
         // Compute Circadian Score from last 7 days of sleep + daylight
         let sevenDayStart = calendar.date(byAdding: .day, value: -7, to: now) ?? now
         let recentSleep = sleepHistory.filter { $0.date >= sevenDayStart }
         let recentDaylight = daylightHistory.filter { $0.date >= sevenDayStart }
         circadianResult = CircadianService.compute(sleepSummaries: recentSleep, daylightSamples: recentDaylight)
 
-        #if DEBUG
-        log("🌅 Circadian → score=\(fmt2(circadianResult.score))  regularity=\(fmt2(circadianResult.regularityScore))  daylight=\(circadianResult.daylightScore.map { fmt2($0) } ?? "nil")  level=\(circadianResult.level.rawValue)  hasData=\(circadianResult.hasEnoughData)")
-        #endif
+        // Currently logged food (display + diet factor)
+        currentDayLogs = mockSnapshot?.currentDayLogs ?? fetchTodayFoodLogs()
+
+        // Build StressInputs and run computeStress
+        let inputs = usesMockData
+            ? buildInputsFromMockSnapshot(mockSnapshot!, now: now)
+            : buildInputs(now: now)
+        let result = StressScoring.computeStress(inputs: inputs, now: now)
+        applyResult(result)
+
+        // Persist snapshot to WellnessDayLog so HomeView rings update
+        persistTodayWellnessSnapshot(steps: steps, energy: energy)
+        logCurrentStress(source: "auto")
 
         // Ensure weekReadings is populated (SwiftData doesn't need HK auth)
         loadReadings()
@@ -334,49 +321,31 @@ final class StressViewModel: ObservableObject {
         WidgetRefreshHelper.refreshStress(viewModel: self)
     }
 
-    func refreshDietFactor() {
-        if let snap = mockSnapshot {
-            currentDayLogs = snap.currentDayLogs
-            let protein = snap.currentDayLogs.map(\.protein).reduce(0, +)
-            let fiber   = snap.currentDayLogs.map(\.fiber).reduce(0, +)
-            let fat     = snap.currentDayLogs.map(\.fat).reduce(0, +)
-            let carbs   = snap.currentDayLogs.map(\.carbs).reduce(0, +)
-            let score: Double? = StressScoring.dietScore(protein: protein, fiber: fiber, fat: fat, carbs: carbs, hasLogs: !snap.currentDayLogs.isEmpty)
-            dietFactor  = buildDietFactor(score: score, logs: snap.currentDayLogs)
-            return
-        }
-        let today = Calendar.current.startOfDay(for: Date())
-        let descriptor = FetchDescriptor<FoodLogEntry>(
-            predicate: #Predicate<FoodLogEntry> { entry in
-                entry.day == today
-            }
-        )
-        let logs    = (try? modelContext.fetch(descriptor)) ?? []
-        currentDayLogs = logs
-        let protein = logs.map(\.protein).reduce(0, +)
-        let fiber   = logs.map(\.fiber).reduce(0, +)
-        let fat     = logs.map(\.fat).reduce(0, +)
-        let carbs   = logs.map(\.carbs).reduce(0, +)
-        let score: Double? = StressScoring.dietScore(protein: protein, fiber: fiber, fat: fat, carbs: carbs, hasLogs: !logs.isEmpty)
-        dietFactor  = buildDietFactor(score: score, logs: logs)
+    /// Re-fetches cheap SwiftData (mood/water/food/symptoms/journal/interventions/manual/recent
+    /// wellness/active fast) and reuses cached HK from the most recent `loadData()`.
+    /// Calls `computeStress` and republishes.
+    func recompute() {
+        let now = Date()
+        currentDayLogs = mockSnapshot?.currentDayLogs ?? fetchTodayFoodLogs()
+        let inputs = usesMockData
+            ? buildInputsFromMockSnapshot(mockSnapshot!, now: now)
+            : buildInputs(now: now)
+        let result = StressScoring.computeStress(inputs: inputs, now: now)
+        applyResult(result)
+        WidgetRefreshHelper.refreshStress(viewModel: self)
+    }
 
-        #if DEBUG
-        if logs.isEmpty {
-            log("🥗 Diet      → no food logged today  score=\(fmt2(score ?? 0))/\(Int(StressScoring.Weights.diet))  stressContrib=\(fmt2(dietFactor.stressContribution))/\(Int(StressScoring.Weights.diet))")
-        } else {
-            log("🥗 Diet      → \(logs.count) entries  protein=\(fmt1(protein))g  fiber=\(fmt1(fiber))g  fat=\(fmt1(fat))g  carbs=\(fmt1(carbs))g")
-            log("             → score=\(fmt2(score ?? 0))/\(Int(StressScoring.Weights.diet))  stressContrib=\(fmt2(dietFactor.stressContribution))/\(Int(StressScoring.Weights.diet))  [\(dietFactor.detailText)]")
-        }
-        #endif
+    func refreshDietFactor() {
+        recompute()
     }
 
     func refreshDietFactorAndLogIfNeeded() {
-        refreshDietFactor()
+        recompute()
         logCurrentStress(source: "auto")
     }
 
     func refreshScreenTimeOnly() {
-        refreshScreenTimeFactor()
+        recompute()
         logCurrentStress(source: "auto")
     }
 
@@ -387,20 +356,12 @@ final class StressViewModel: ObservableObject {
     /// rounded score or level label.
     func logCurrentStress(source: String = "auto") {
         guard !usesMockData else { return }
-        guard isAuthorized else {
-            #if DEBUG
-            log("[skip] logCurrentStress(\(source)) — HealthKit not authorized yet")
-            #endif
-            return
-        }
+        guard isAuthorized else { return }
 
         let scoreToLog = roundedLoggedStressScore(totalScore)
         if let latestReading = latestReadingForToday(),
            roundedLoggedStressScore(latestReading.score) == scoreToLog,
            latestReading.levelLabel == stressLevel.label {
-            #if DEBUG
-            log("[skip] logCurrentStress(\(source)) — latest reading already matches score=\(fmt2(scoreToLog)) level=\(stressLevel.label)")
-            #endif
             return
         }
 
@@ -413,15 +374,9 @@ final class StressViewModel: ObservableObject {
         modelContext.insert(reading)
         try? modelContext.save()
 
-        // Refresh published arrays so charts update immediately.
         loadReadings()
-
-        #if DEBUG
-        log("[log] StressReading saved -> score=\(fmt2(scoreToLog))  level=\(stressLevel.label)  source=\(source)")
-        #endif
     }
 
-    /// Fetches `StressReading` rows from SwiftData for today and the last 7 days.
     func loadReadings() {
         if let snap = mockSnapshot {
             todayReadings = snap.todayReadings
@@ -433,14 +388,12 @@ final class StressViewModel: ObservableObject {
         let startOfToday = calendar.startOfDay(for: now)
         let startOfWeek = calendar.date(byAdding: .day, value: -6, to: startOfToday) ?? startOfToday
 
-        // Today's readings
         let todayDescriptor = FetchDescriptor<StressReading>(
             predicate: #Predicate { $0.timestamp >= startOfToday },
             sortBy: [SortDescriptor(\.timestamp)]
         )
         todayReadings = (try? modelContext.fetch(todayDescriptor)) ?? []
 
-        // Last 7 days readings
         let weekDescriptor = FetchDescriptor<StressReading>(
             predicate: #Predicate { $0.timestamp >= startOfWeek },
             sortBy: [SortDescriptor(\.timestamp)]
@@ -450,9 +403,6 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - WellnessDayLog Sync
 
-    /// Writes the current stress level and computed exercise minutes into today's
-    /// `WellnessDayLog` so that HomeView's wellness rings stay in sync without
-    /// requiring any shared ViewModel state.
     private func persistTodayWellnessSnapshot(steps: Double?, energy: Double?) {
         guard !usesMockData else { return }
         let today = Calendar.current.startOfDay(for: Date())
@@ -468,12 +418,8 @@ final class StressViewModel: ObservableObject {
             wellnessLog = newLog
         }
 
-        // Stress level — derive from the just-computed totalScore.
         wellnessLog.stressLevel = stressLevel.label
 
-        // Exercise minutes — estimate from active energy (~10 kcal per minute
-        // of moderate-intensity exercise). Falls back to a steps-based estimate
-        // (100 steps ≈ 1 min of walking) when energy data is unavailable.
         let estimatedMinutes: Int
         if let kcal = energy, kcal > 0 {
             estimatedMinutes = max(0, Int(kcal / 10.0))
@@ -487,18 +433,493 @@ final class StressViewModel: ObservableObject {
         wellnessLog.caloriesBurned = Int(energy ?? 0)
 
         try? modelContext.save()
-
-        #if DEBUG
-        log_debug("💾 WellnessDayLog synced → stressLevel='\(stressLevel.label)'  exerciseMinutes=\(estimatedMinutes)")
-        #endif
     }
 
-    #if DEBUG
-    private func log_debug(_ message: String) {
-        WPLogger.stress.debug(message)
-    }
-    #endif
+    // MARK: - Apply v3 Result
 
+    /// Publishes a `StressResult` into all the @Published vars. Maps the 13 factor
+    /// indices to titles/icons (in stable order matching `StressScoring.allFactors`).
+    private func applyResult(_ result: StressScoring.StressResult) {
+        totalScore = result.score
+        calibratorMultiplier = result.calibrator
+        engagementPenaltyValue = result.engagementPenalty
+        patternPenaltyValue = result.patternPenalty
+
+        let mapped: [StressFactorResult] = result.factors.enumerated().map { idx, fp in
+            StressFactorResult(
+                from: fp,
+                title: factorTitle(idx),
+                icon: factorIcon(idx),
+                higherIsBetter: false
+            )
+        }
+        allFactors = mapped
+
+        // Back legacy per-factor publisheds for callers that haven't migrated yet.
+        exerciseFactor   = mapped.first(where: { $0.title == "Exercise"  }) ?? exerciseFactor
+        sleepFactor      = mapped.first(where: { $0.title == "Sleep"     }) ?? sleepFactor
+        dietFactor       = mapped.first(where: { $0.title == "Diet"      }) ?? dietFactor
+        screenTimeFactor = mapped.first(where: { $0.title == "Screen Time" }) ?? screenTimeFactor
+
+        // Update screen-time auto/manual source bookkeeping for the legacy display.
+        if let screenInput = lastResolvedScreen {
+            screenTimeSource = .auto
+            screenTimeDisplayHours = screenInput.totalHours
+        } else if let auto = ScreenTimeManager.shared.currentAutoDetectedReading {
+            screenTimeSource = .auto
+            screenTimeDisplayHours = auto.rawHours
+        } else {
+            screenTimeSource = .none
+            screenTimeDisplayHours = nil
+        }
+    }
+
+    // MARK: - Factor Index → Display Mapping
+
+    /// Stable index → title mapping. Must match `StressScoring.allFactors` order.
+    private func factorTitle(_ idx: Int) -> String {
+        switch idx {
+        case 0:  return "Sleep"
+        case 1:  return "Exercise"
+        case 2:  return "Caffeine"
+        case 3:  return "Screen Time"
+        case 4:  return "Diet"
+        case 5:  return "Hydration"
+        case 6:  return "Circadian"
+        case 7:  return "Daylight"
+        case 8:  return "Meal Timing"
+        case 9:  return "Fasting"
+        case 10: return "Eating Triggers"
+        case 11: return "Mood"
+        case 12: return "Symptoms"
+        default: return "Unknown"
+        }
+    }
+
+    private func factorIcon(_ idx: Int) -> String {
+        switch idx {
+        case 0:  return "moon.fill"
+        case 1:  return "figure.run"
+        case 2:  return "cup.and.saucer.fill"
+        case 3:  return "iphone"
+        case 4:  return "leaf.fill"
+        case 5:  return "drop.fill"
+        case 6:  return "clock.fill"
+        case 7:  return "sun.max.fill"
+        case 8:  return "fork.knife"
+        case 9:  return "timer"
+        case 10: return "exclamationmark.bubble"
+        case 11: return "face.smiling"
+        case 12: return "bandage"
+        default: return "questionmark.circle"
+        }
+    }
+
+    // MARK: - Build Inputs
+
+    /// Tracks the resolved screen-time input from the latest build for legacy display.
+    private var lastResolvedScreen: StressScoring.ScreenInput? = nil
+
+    private func buildInputs(now: Date) -> StressScoring.StressInputs {
+        let goals = UserGoals.current(in: modelContext)
+        let manual = fetchTodayManualInput()
+        let todayWellness = fetchTodayWellnessLog()
+        let todayFoods = fetchTodayFoodLogs()
+        let todaySymptoms = fetchTodaySymptoms()
+        let todayJournal = fetchTodayJournal()
+        let todayInterventions = fetchTodayInterventions().filter { $0.completed }
+        let recentWellness = fetchRecentWellnessLogs()
+        let recentFoodPresence = fetchRecentFoodLogPresence()
+        let activeFast = fetchActiveFastingSession()
+        let lastFastEnd = fetchLastCompletedFastEnd()
+        let fastingConfigured = fetchFastingScheduleConfigured()
+
+        // Sleep
+        let sleepInput = resolveSleep(hk: lastSleepSummary, manual: manual)
+
+        // Exercise
+        let exerciseInput = resolveExercise(steps: lastSteps, energy: lastEnergy, manual: manual)
+
+        // Caffeine — tied to today's WellnessDayLog row existence (per §0.1)
+        let caffeineInput: StressScoring.CaffeineInput? = todayWellness.map { log in
+            StressScoring.CaffeineInput(
+                cups: log.coffeeCups,
+                type: log.resolvedCoffeeType,
+                hasWellnessRow: true
+            )
+        }
+
+        // Screen time
+        let autoHours: Double? = ScreenTimeManager.shared.currentAutoDetectedReading?.rawHours
+        let screenInput = resolveScreen(autoHours: autoHours, manual: manual)
+        lastResolvedScreen = screenInput
+
+        // Diet
+        let dietInput = makeDietInput(from: todayFoods)
+
+        // Hydration — tied to today's WellnessDayLog row existence (per §0.1)
+        let hydrationInput: StressScoring.HydrationInput? = todayWellness.map { log in
+            StressScoring.HydrationInput(glasses: log.waterGlasses, hasWellnessRow: true)
+        }
+
+        // Circadian
+        let manualHistory = fetchRecentManualInputHistory()
+        let circadianInput = resolveCircadian(hkSummaries: sleepHistory, manualHistory: manualHistory)
+
+        // Daylight
+        let daylightInput = resolveDaylight(hkMinutes: lastDaylightToday, manual: manual)
+
+        // Fasting
+        let activeFastHours: Double? = {
+            guard let s = activeFast else { return nil }
+            return now.timeIntervalSince(s.startedAt) / 3600.0
+        }()
+        let fastingInput = StressScoring.FastingInput(
+            activeFastHours: activeFastHours,
+            isConfigured: fastingConfigured
+        )
+
+        // Mood
+        let mood: MoodOption? = todayWellness.flatMap { log in
+            log.moodRaw.flatMap(MoodOption.init(rawValue:))
+        }
+
+        // Recovery
+        let recovery = StressScoring.RecoveryInput(
+            completedInterventionsToday: todayInterventions.count,
+            hasJournalToday: todayJournal != nil,
+            hasMoodToday: mood != nil,
+            hasMindfulSessionToday: !todayInterventions.isEmpty
+        )
+
+        // History
+        let history = StressScoring.HistoryInput(
+            recentWellnessLogs: recentWellness,
+            foodLogPresenceByDay: recentFoodPresence,
+            lastCompletedFastEnd: lastFastEnd
+        )
+
+        // Vitals
+        let vitals = StressScoring.VitalsInput(
+            todayHRV: todayHRV,
+            hrvHistory: lastHRVHistory.isEmpty ? hrvHistory : lastHRVHistory,
+            todayRHR: todayRestingHR,
+            rhrHistory: lastRHRHistory.isEmpty ? restingHRHistory : lastRHRHistory
+        )
+
+        return StressScoring.StressInputs(
+            sleep: sleepInput,
+            exercise: exerciseInput,
+            caffeine: caffeineInput,
+            screen: screenInput,
+            diet: dietInput,
+            hydration: hydrationInput,
+            circadian: circadianInput,
+            daylight: daylightInput,
+            mealLogs: todayFoods,
+            fasting: fastingInput,
+            triggerLogs: todayFoods,
+            mood: mood,
+            symptoms: todaySymptoms,
+            recovery: recovery,
+            history: history,
+            vitals: vitals,
+            goals: goals
+        )
+    }
+
+    private func buildInputsFromMockSnapshot(_ snap: StressMockSnapshot, now: Date) -> StressScoring.StressInputs {
+        let goals = UserGoals.current(in: modelContext)
+
+        let sleepInput = StressScoring.SleepInput(
+            totalHours: snap.sleepSummary.totalHours,
+            deepHours: snap.sleepSummary.deepHours,
+            source: .healthKit
+        )
+
+        let exerciseInput: StressScoring.ExerciseInput? = (snap.steps > 0 || snap.energy > 0)
+            ? StressScoring.ExerciseInput(steps: snap.steps > 0 ? snap.steps : nil,
+                                          energy: snap.energy > 0 ? snap.energy : nil,
+                                          manualMinutes: nil,
+                                          source: .healthKit)
+            : nil
+
+        // Mock caffeine reflects WellnessDayLog presence as `coffeeCups > 0 || coffeeType != nil`
+        let hasWellnessProxy = (snap.coffeeCups > 0 || snap.coffeeType != nil || snap.waterGlasses > 0 || snap.mood != nil)
+        let caffeineInput = StressScoring.CaffeineInput(
+            cups: snap.coffeeCups,
+            type: snap.coffeeType,
+            hasWellnessRow: hasWellnessProxy
+        )
+
+        let screenInput: StressScoring.ScreenInput? = snap.screenTimeHours > 0
+            ? StressScoring.ScreenInput(totalHours: snap.screenTimeHours, eveningHours: nil, source: .healthKit)
+            : nil
+        lastResolvedScreen = screenInput
+
+        let dietInput = makeDietInput(from: snap.currentDayLogs)
+
+        let hydrationInput = StressScoring.HydrationInput(
+            glasses: snap.waterGlasses,
+            hasWellnessRow: hasWellnessProxy
+        )
+
+        let circadianInput = resolveCircadian(hkSummaries: snap.sleepHistory, manualHistory: [])
+
+        let daylightInput: StressScoring.DaylightInput? = {
+            guard let today = snap.daylightHistory.first(where: { Calendar.current.isDateInToday($0.date) }),
+                  today.value > 0 else { return nil }
+            return StressScoring.DaylightInput(minutes: today.value, source: .healthKit)
+        }()
+
+        let fastingInput = StressScoring.FastingInput(
+            activeFastHours: nil,
+            isConfigured: snap.lastCompletedFastEnd != nil
+        )
+
+        let recovery = StressScoring.RecoveryInput(
+            completedInterventionsToday: snap.todayInterventions.count,
+            hasJournalToday: snap.todayJournal != nil,
+            hasMoodToday: snap.mood != nil,
+            hasMindfulSessionToday: !snap.todayInterventions.isEmpty
+        )
+
+        let recentFoodPresence: [Date: Bool] = Dictionary(
+            grouping: snap.recentFoodLogs,
+            by: { Calendar.current.startOfDay(for: $0.day) }
+        ).mapValues { !$0.isEmpty }
+
+        let history = StressScoring.HistoryInput(
+            recentWellnessLogs: snap.recentWellnessLogs,
+            foodLogPresenceByDay: recentFoodPresence,
+            lastCompletedFastEnd: snap.lastCompletedFastEnd
+        )
+
+        let todayHRVValue = snap.hrvHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
+        let todayRHRValue = snap.restingHRHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.value
+        let vitals = StressScoring.VitalsInput(
+            todayHRV: todayHRVValue,
+            hrvHistory: snap.hrvHistory,
+            todayRHR: todayRHRValue,
+            rhrHistory: snap.restingHRHistory
+        )
+
+        return StressScoring.StressInputs(
+            sleep: sleepInput,
+            exercise: exerciseInput,
+            caffeine: caffeineInput,
+            screen: screenInput,
+            diet: dietInput,
+            hydration: hydrationInput,
+            circadian: circadianInput,
+            daylight: daylightInput,
+            mealLogs: snap.currentDayLogs,
+            fasting: fastingInput,
+            triggerLogs: snap.currentDayLogs,
+            mood: snap.mood,
+            symptoms: snap.todaySymptoms,
+            recovery: recovery,
+            history: history,
+            vitals: vitals,
+            goals: goals
+        )
+    }
+
+    private func makeDietInput(from logs: [FoodLogEntry]) -> StressScoring.DietInput? {
+        guard !logs.isEmpty else { return nil }
+        let protein = logs.map(\.protein).reduce(0, +)
+        let fiber = logs.map(\.fiber).reduce(0, +)
+        let carbs = logs.map(\.carbs).reduce(0, +)
+        let fat = logs.map(\.fat).reduce(0, +)
+        return StressScoring.DietInput(
+            protein: protein,
+            fiber: fiber,
+            carbs: carbs,
+            fat: fat,
+            hasLogs: true
+        )
+    }
+
+    // MARK: - Resolution Helpers (HK first, manual second, silent third)
+
+    private func resolveSleep(hk: DailySleepSummary?, manual: ManualDailyInput?) -> StressScoring.SleepInput? {
+        if let s = hk {
+            return StressScoring.SleepInput(
+                totalHours: s.totalHours,
+                deepHours: s.deepHours,
+                source: .healthKit
+            )
+        }
+        guard let m = manual, let h = m.sleepHours else { return nil }
+        let derivedDeep: Double = {
+            switch m.sleepQuality ?? 3 {
+            case 1: return 0.25
+            case 2: return 0.5
+            case 3: return 0.75
+            case 4: return 1.0
+            case 5: return 1.33
+            default: return 0.75
+            }
+        }()
+        return StressScoring.SleepInput(totalHours: h, deepHours: derivedDeep, source: .manual)
+    }
+
+    private func resolveExercise(steps: Double?, energy: Double?, manual: ManualDailyInput?) -> StressScoring.ExerciseInput? {
+        if let s = steps, s > 0 {
+            return StressScoring.ExerciseInput(steps: s, energy: energy, manualMinutes: nil, source: .healthKit)
+        }
+        if let e = energy, e > 0 {
+            return StressScoring.ExerciseInput(steps: steps, energy: e, manualMinutes: nil, source: .healthKit)
+        }
+        guard let m = manual, let mins = m.exerciseMinutes else { return nil }
+        return StressScoring.ExerciseInput(steps: nil, energy: nil, manualMinutes: mins, source: .manual)
+    }
+
+    private func resolveScreen(autoHours: Double?, manual: ManualDailyInput?) -> StressScoring.ScreenInput? {
+        if let h = autoHours {
+            return StressScoring.ScreenInput(totalHours: h, eveningHours: nil, source: .healthKit)
+        }
+        guard let m = manual, let h = m.screenTimeHours else { return nil }
+        let evening = (m.heavyEveningScreens == true) ? 2.0 : 0.0
+        return StressScoring.ScreenInput(totalHours: h, eveningHours: evening, source: .manual)
+    }
+
+    private func resolveDaylight(hkMinutes: Double?, manual: ManualDailyInput?) -> StressScoring.DaylightInput? {
+        if let m = hkMinutes, m > 0 {
+            return StressScoring.DaylightInput(minutes: m, source: .healthKit)
+        }
+        guard let outside = manual?.amDaylightOutside else { return nil }
+        return StressScoring.DaylightInput(minutes: outside ? 30 : 5, source: .manual)
+    }
+
+    private func resolveCircadian(hkSummaries: [DailySleepSummary], manualHistory: [ManualDailyInput]) -> StressScoring.CircadianInput? {
+        let manualSummaries: [DailySleepSummary] = manualHistory.compactMap { input in
+            guard let bt = input.bedtime, let wt = input.wakeTime, let h = input.sleepHours else { return nil }
+            return DailySleepSummary(
+                date: input.day,
+                totalHours: h,
+                coreHours: 0,
+                remHours: 0,
+                deepHours: 0,
+                bedtime: bt,
+                wakeTime: wt
+            )
+        }
+        let combined = (hkSummaries + manualSummaries).sorted { $0.date < $1.date }
+        let (score, hasData) = CircadianService.sleepRegularityIndex(from: combined)
+        guard hasData else { return nil }
+        return StressScoring.CircadianInput(regularityScore: score, hasEnoughData: true)
+    }
+
+    // MARK: - SwiftData fetchers (cheap; called by recompute and buildInputs)
+
+    private func fetchTodayWellnessLog() -> WellnessDayLog? {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<WellnessDayLog>(
+            predicate: #Predicate { $0.day == today }
+        )
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private func fetchTodayFoodLogs() -> [FoodLogEntry] {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<FoodLogEntry>(
+            predicate: #Predicate { $0.day == today }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    private func fetchTodaySymptoms() -> [SymptomEntry] {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<SymptomEntry>(
+            predicate: #Predicate { $0.day == today }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    private func fetchTodayJournal() -> JournalEntry? {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<JournalEntry>(
+            predicate: #Predicate { $0.day == today }
+        )
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private func fetchTodayInterventions() -> [InterventionSession] {
+        let startOfToday = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<InterventionSession>(
+            predicate: #Predicate { $0.startedAt >= startOfToday }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    private func fetchRecentWellnessLogs() -> [WellnessDayLog] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let threeDaysAgo = cal.date(byAdding: .day, value: -2, to: today) ?? today
+        let descriptor = FetchDescriptor<WellnessDayLog>(
+            predicate: #Predicate { $0.day >= threeDaysAgo && $0.day <= today }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    private func fetchRecentFoodLogPresence() -> [Date: Bool] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let threeDaysAgo = cal.date(byAdding: .day, value: -2, to: today) ?? today
+        let descriptor = FetchDescriptor<FoodLogEntry>(
+            predicate: #Predicate { $0.day >= threeDaysAgo && $0.day <= today }
+        )
+        let logs = (try? modelContext.fetch(descriptor)) ?? []
+        let grouped = Dictionary(grouping: logs, by: { cal.startOfDay(for: $0.day) })
+        var presence: [Date: Bool] = [:]
+        for offset in 0...2 {
+            if let day = cal.date(byAdding: .day, value: -offset, to: today) {
+                presence[day] = !(grouped[day]?.isEmpty ?? true)
+            }
+        }
+        return presence
+    }
+
+    private func fetchActiveFastingSession() -> FastingSession? {
+        let descriptor = FetchDescriptor<FastingSession>(
+            predicate: #Predicate { $0.actualEndAt == nil }
+        )
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private func fetchLastCompletedFastEnd() -> Date? {
+        var descriptor = FetchDescriptor<FastingSession>(
+            predicate: #Predicate { $0.completed == true },
+            sortBy: [SortDescriptor(\.actualEndAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first?.actualEndAt
+    }
+
+    private func fetchFastingScheduleConfigured() -> Bool {
+        let descriptor = FetchDescriptor<FastingSchedule>()
+        let count = (try? modelContext.fetchCount(descriptor)) ?? 0
+        return count > 0
+    }
+
+    private func fetchTodayManualInput() -> ManualDailyInput? {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<ManualDailyInput>(
+            predicate: #Predicate { $0.day == today }
+        )
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private func fetchRecentManualInputHistory() -> [ManualDailyInput] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let sevenDaysAgo = cal.date(byAdding: .day, value: -7, to: today) ?? today
+        let descriptor = FetchDescriptor<ManualDailyInput>(
+            predicate: #Predicate { $0.day >= sevenDaysAgo }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
 
     // MARK: - Private: Safe Fetchers (return nil on error)
 
@@ -560,121 +981,7 @@ final class StressViewModel: ObservableObject {
         (try? await healthService.fetchDaylight(for: range)) ?? []
     }
 
-    // MARK: - Factor Builders
-
-    private func buildExerciseFactor(score: Double?, steps: Double?, energy: Double?) -> StressFactorResult {
-        let hasData = score != nil
-        let stepsStr = steps.map { NumberFormatter.localizedString(from: NSNumber(value: Int($0)), number: .decimal) } ?? "—"
-        let energyStr = energy.map { "\(Int($0)) kcal" } ?? "—"
-
-        let status: String
-        if !hasData {
-            status = "No data"
-        } else if steps != nil && energy != nil {
-            status = "\(stepsStr) steps · \(energyStr)"
-        } else if let _ = steps {
-            status = "\(stepsStr) steps"
-        } else {
-            status = energyStr
-        }
-
-        let effectiveScore = score ?? 0
-        let detail: String
-        if !hasData { detail = "No activity data yet" }
-        else if effectiveScore >= 18 { detail = "Great activity level!" }
-        else if effectiveScore >= 10 { detail = "Moderate activity today" }
-        else { detail = "Try to move more today" }
-        // NOTE: thresholds still anchored to the old /25 scale for Exercise (weight unchanged at 25).
-
-        return StressFactorResult(title: "Exercise", score: effectiveScore, maxScore: StressScoring.Weights.exercise, icon: "figure.run",
-                                  statusText: status, detailText: detail, higherIsBetter: true, hasValidData: hasData)
-    }
-
-    private func buildSleepFactor(score: Double?, summary: DailySleepSummary?) -> StressFactorResult {
-        let hasData = score != nil
-        let status: String
-        if let s = summary {
-            status = String(format: "%.1fh total · %.1fh deep", s.totalHours, s.deepHours)
-        } else {
-            status = "No data"
-        }
-
-        let effectiveScore = score ?? 0
-        let detail: String
-        if !hasData { detail = "No sleep data yet" }
-        else if effectiveScore >= 18 { detail = "Well rested!" }
-        else if effectiveScore >= 10 { detail = "Decent sleep" }
-        else { detail = "Try to sleep more tonight" }
-
-        return StressFactorResult(title: "Sleep", score: effectiveScore, maxScore: StressScoring.Weights.sleep, icon: "moon.fill",
-                                  statusText: status, detailText: detail, higherIsBetter: true, hasValidData: hasData)
-    }
-
-    private func buildDietFactor(score: Double?, logs: [FoodLogEntry]) -> StressFactorResult {
-        let hasData = score != nil
-        let status: String
-        if logs.isEmpty {
-            status = "No food logged"
-        } else {
-            let protein = Int(logs.map(\.protein).reduce(0, +))
-            let fiber   = Int(logs.map(\.fiber).reduce(0, +))
-            status = "\(protein)g protein · \(fiber)g fiber"
-        }
-
-        let effectiveScore = score ?? 0
-        let detail: String
-        if !hasData { detail = "No diet data yet" }
-        else if effectiveScore >= 18 { detail = "Balanced diet today!" }
-        else if effectiveScore >= 10 { detail = "Fair nutritional balance" }
-        else { detail = "Consider healthier choices" }
-
-        return StressFactorResult(title: "Diet", score: effectiveScore, maxScore: StressScoring.Weights.diet, icon: "leaf.fill",
-                                  statusText: status, detailText: detail, higherIsBetter: true, hasValidData: hasData)
-    }
-
-    private func refreshScreenTimeFactor() {
-        if let snap = mockSnapshot {
-            screenTimeSource = .auto
-            screenTimeDisplayHours = snap.screenTimeHours
-            let score: Double? = StressScoring.screenTimeScore(hours: snap.screenTimeHours)
-            let effective = score ?? 0
-            let detail = effective < 6 ? "Low screen time 👍" : effective < 13 ? "Moderate screen usage" : "Consider reducing screen time"
-            screenTimeFactor = StressFactorResult(
-                title: "Screen Time", score: effective, maxScore: StressScoring.Weights.screenTime, icon: "iphone",
-                statusText: String(format: "%.1fh (mock)", snap.screenTimeHours),
-                detailText: detail, higherIsBetter: false, hasValidData: score != nil
-            )
-            return
-        }
-
-        if let reading = ScreenTimeManager.shared.currentAutoDetectedReading {
-            screenTimeSource = .auto
-            screenTimeDisplayHours = reading.rawHours
-            let score: Double? = StressScoring.screenTimeScore(hours: reading.rawHours)
-            let effective = score ?? 0
-            let detail = effective < 6 ? "Low screen time 👍" : effective < 13 ? "Moderate screen usage" : "Consider reducing screen time"
-            screenTimeFactor = StressFactorResult(
-                title: "Screen Time", score: effective, maxScore: StressScoring.Weights.screenTime, icon: "iphone",
-                statusText: "\(reading.displayRoundedHours)h detected (±15m)",
-                detailText: detail, higherIsBetter: false, hasValidData: score != nil
-            )
-            #if DEBUG
-            log("📱 ScrnTime  → rawHours=\(String(format: "%.3f h", reading.rawHours))  source=auto")
-            log("             → score=\(fmt2(score ?? 0))/\(Int(StressScoring.Weights.screenTime))  stressContrib=\(fmt2(screenTimeFactor.stressContribution))/\(Int(StressScoring.Weights.screenTime))  [\(detail)]")
-            #endif
-        } else {
-            screenTimeSource = .none
-            screenTimeDisplayHours = nil
-            screenTimeFactor = StressFactorResult(
-                title: "Screen Time", score: 0, maxScore: StressScoring.Weights.screenTime, icon: "iphone",
-                statusText: "Under 15 min today",
-                detailText: "No screen time detected yet", higherIsBetter: false, hasValidData: false
-            )
-            #if DEBUG
-            log("📱 ScrnTime  → rawHours=nil  source=none (< 15 min)")
-            #endif
-        }
-    }
+    // MARK: - Stress reading helpers
 
     private func latestReadingForToday() -> StressReading? {
         let startOfToday = Calendar.current.startOfDay(for: Date())
@@ -688,38 +995,19 @@ final class StressViewModel: ObservableObject {
     private func roundedLoggedStressScore(_ value: Double) -> Double {
         (value * 10).rounded() / 10
     }
-
-    // MARK: - Debug Logging
-
-    #if DEBUG
-    private func log(_ message: String) {
-        WPLogger.stress.debug(message)
-    }
-    private func fmt2(_ v: Double) -> String { String(format: "%.2f", v) }
-    private func fmt1(_ v: Double) -> String { String(format: "%.1f", v) }
-    #endif
 }
 
-// MARK: - Confidence
+// MARK: - Confidence (typealias, owned by StressScoring)
 
 extension StressViewModel {
-    enum Confidence: String {
-        case low, medium, high
+    typealias Confidence = StressScoring.Confidence
+}
 
-        var label: String {
-            switch self {
-            case .low: "Low confidence"       // not rendered at runtime — honest mode supersedes
-            case .medium: "Medium confidence"
-            case .high: "High confidence"
-            }
-        }
+// MARK: - Manual Input Observable
 
-        var systemImage: String {
-            switch self {
-            case .low: "gauge.with.dots.needle.0percent"
-            case .medium: "gauge.with.dots.needle.50percent"
-            case .high: "gauge.with.dots.needle.100percent"
-            }
-        }
-    }
+/// Hook-up surface for `DailyPromptCoordinator` (P2). Kept as a protocol so the
+/// scoring core stays decoupled from coordinator internals.
+@MainActor
+protocol ManualInputObservable: AnyObject {
+    var manualInputSavedAtPublisher: Published<Date>.Publisher { get }
 }

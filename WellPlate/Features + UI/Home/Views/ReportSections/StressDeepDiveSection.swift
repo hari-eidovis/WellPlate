@@ -67,14 +67,35 @@ struct StressDeepDiveSection: View {
     // MARK: - Factor Decomposition
 
     private var factorDecompItems: [(label: String, exercise: Double, sleep: Double, diet: Double, screenTime: Double)] {
+        let goals = UserGoals.defaults()
         let scored = data.context.days.compactMap { d -> (date: Date, stress: Double, exercise: Double, sleep: Double, diet: Double, screen: Double)? in
             guard let stress = d.stressScore else { return nil }
-            let ex = StressScoring.exerciseScore(steps: d.steps.map(Double.init), energy: d.activeCalories.map(Double.init)) ?? 0
-            let sl = StressScoring.sleepScore(summary: d.sleepHours.map { h in
-                DailySleepSummary(date: d.date, totalHours: h, coreHours: 0, remHours: 0, deepHours: d.deepSleepHours ?? 0)
-            }) ?? 0
-            let dt = StressScoring.dietScore(protein: d.totalProteinG ?? 0, fiber: d.totalFiberG ?? 0, fat: d.totalFatG ?? 0, carbs: d.totalCarbsG ?? 0, hasLogs: d.totalCalories != nil) ?? 0
-            let sc = StressScoring.screenTimeScore(hours: nil) ?? 0
+
+            let exInput: StressScoring.ExerciseInput? = (d.steps != nil || d.activeCalories != nil)
+                ? StressScoring.ExerciseInput(steps: d.steps.map(Double.init),
+                                              energy: d.activeCalories.map(Double.init),
+                                              manualMinutes: nil,
+                                              source: .healthKit)
+                : nil
+            let ex = StressScoring.exercisePoints(input: exInput).points
+
+            let sleepInput: StressScoring.SleepInput? = d.sleepHours.map { h in
+                StressScoring.SleepInput(totalHours: h, deepHours: d.deepSleepHours ?? 0, source: .healthKit)
+            }
+            let sl = StressScoring.sleepPoints(input: sleepInput).points
+
+            let dietInput: StressScoring.DietInput? = (d.totalCalories != nil)
+                ? StressScoring.DietInput(protein: d.totalProteinG ?? 0,
+                                          fiber: d.totalFiberG ?? 0,
+                                          carbs: d.totalCarbsG ?? 0,
+                                          fat: d.totalFatG ?? 0,
+                                          hasLogs: true)
+                : nil
+            let dt = StressScoring.dietPoints(input: dietInput, goals: goals).points
+
+            // Historical screen time isn't recorded — leave as 0 for chart parity.
+            let sc: Double = 0
+
             return (date: d.date, stress: stress, exercise: ex, sleep: sl, diet: dt, screen: sc)
         }
 

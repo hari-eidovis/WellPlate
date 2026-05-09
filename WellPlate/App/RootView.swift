@@ -12,6 +12,7 @@ struct RootView: View {
     @State private var showSplash = false
     @State private var showOnboarding = !UserProfileManager.shared.hasCompletedOnboarding
     @State private var pendingDeepLink: URL? = nil
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack {
@@ -38,6 +39,16 @@ struct RootView: View {
         }
         .onOpenURL { url in
             pendingDeepLink = url
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .active:
+                StressTimerService.shared.start()
+            case .background, .inactive:
+                StressTimerService.shared.stop()
+            @unknown default:
+                break
+            }
         }
     }
 }

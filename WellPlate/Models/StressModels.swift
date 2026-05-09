@@ -72,15 +72,18 @@ enum StressLevel: String, CaseIterable {
 // MARK: - Stress Factor Result
 
 struct StressFactorResult: Identifiable {
-    let id = UUID()
+    /// Stable identity across recomputes — uses title so SwiftUI list animations
+    /// don't shuffle on every refresh.
+    var id: String { title }
+
     let title: String
-    let score: Double          // 0–maxScore
-    let maxScore: Double       // varies per factor (sleep 35, exercise 25, diet 20, screen 20)
+    let score: Double          // signed factor points (matches v3 `FactorPoints.points`)
+    let maxScore: Double       // factor weight (e.g. Sleep 20, Exercise 12)
     let icon: String           // SF Symbol name
-    let statusText: String     // e.g. "7,245 steps"
-    let detailText: String     // e.g. "Above average today"
-    /// true  → exercise / sleep / diet  (high score = good = green)
-    /// false → screen time              (high score = bad  = red)
+    let statusText: String
+    let detailText: String
+    /// true  → display semantics where high score = good (kept for color logic)
+    /// false → high score = bad (most v3 factors)
     let higherIsBetter: Bool
     /// false when this factor has no valid input for the current day.
     let hasValidData: Bool
@@ -105,18 +108,36 @@ struct StressFactorResult: Identifiable {
         self.hasValidData = hasValidData
     }
 
-    var progress: Double { score / maxScore }
+    /// Convenience init from v3 `FactorPoints`.
+    init(from points: StressScoring.FactorPoints, title: String, icon: String, higherIsBetter: Bool) {
+        self.title = title
+        self.score = points.points
+        self.maxScore = points.maxPoints
+        self.icon = icon
+        self.statusText = points.detail
+        self.detailText = points.detail
+        self.higherIsBetter = higherIsBetter
+        self.hasValidData = points.hasData
+    }
 
-    /// How much this factor contributes to total stress (0–25).
+    var progress: Double {
+        guard maxScore > 0 else { return 0 }
+        return min(1, max(0, score / maxScore))
+    }
+
+    /// How much this factor contributes to total stress. With v3's signed points,
+    /// negative values (e.g. `mood = great → −2`) act as recovery and don't
+    /// contribute to stress; clamp at 0.
     var stressContribution: Double {
         guard hasValidData else { return 0 }
-        return higherIsBetter ? (maxScore - score) : score
+        return max(0, score)
     }
 
     /// Accent tint based on factor score — uses the app's blue theme at varying intensity.
     var accentColor: Color {
         guard hasValidData else { return Color(.systemGray3) }
-        let t = min(max(score / maxScore, 0), 1)
+        let denom = maxScore > 0 ? maxScore : 1
+        let t = min(max(score / denom, 0), 1)
         // stressRatio: 0 → calm (lighter), 1 → stressed (full intensity)
         let stressRatio = higherIsBetter ? (1.0 - t) : t
         let blue = Color(hue: 0.61, saturation: 0.62, brightness: 1.0) // #5E9FFF
@@ -124,11 +145,11 @@ struct StressFactorResult: Identifiable {
     }
 
     /// Default factor when no data is available (does not contribute to stress).
-    static func neutral(title: String, icon: String, higherIsBetter: Bool) -> StressFactorResult {
+    static func neutral(title: String, icon: String, higherIsBetter: Bool, maxScore: Double) -> StressFactorResult {
         StressFactorResult(
             title: title,
             score: 0,
-            maxScore: 25,
+            maxScore: maxScore,
             icon: icon,
             statusText: "No data",
             detailText: "Waiting for data",
