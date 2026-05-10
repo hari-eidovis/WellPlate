@@ -49,10 +49,12 @@ struct StressView: View {
 
     @ObservedObject var viewModel: StressViewModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var promptCoordinator: DailyPromptCoordinator
     @EnvironmentObject private var tabSelector: TabSelector
     @State private var activeSheet: StressSheet? = nil
     @State private var showInsights = false
+    @State private var showActivity = false
     @State private var showV3Banner: Bool = !UserDefaults.standard.bool(forKey: "wp.stress.v3AnnouncementShown")
 
     // Entrance animation states
@@ -105,16 +107,27 @@ struct StressView: View {
                         }
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
                     if (HealthKitService.isAvailable || viewModel.usesMockData) && viewModel.isAuthorized && !viewModel.isLoading {
                         Button {
                             HapticService.impact(.light)
                             showInsights = true
                         } label: {
-                            Label("Insights", systemImage: "chart.bar.xaxis.ascending")
-                                .font(.system(size: 14, weight: .semibold))
+                            Image(systemName: "chart.bar.xaxis.ascending")
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundStyle(Self.themeBlue)
                         }
+                        .accessibilityLabel("Insights")
+
+                        Button {
+                            HapticService.impact(.light)
+                            showActivity = true
+                        } label: {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(Self.themeBlue)
+                        }
+                        .accessibilityLabel("Stress activity")
                     }
                 }
             }
@@ -125,30 +138,34 @@ struct StressView: View {
                 await ScreenTimeManager.shared.requestAuthorization()
                 ScreenTimeManager.shared.startMonitoring()
             }
-            await viewModel.requestPermissionAndLoad()
+            await viewModel.requestPermissionAndLoad(reason: .autoAppOpen)
             if viewModel.isAuthorized {
-                viewModel.refreshScreenTimeOnly()
+                viewModel.refreshScreenTimeOnly(reason: .autoOnAppear)
                 viewModel.loadReadings()
             }
         }
         .onAppear {
             if viewModel.isAuthorized {
-                viewModel.refreshDietFactorAndLogIfNeeded()
-                viewModel.refreshScreenTimeOnly()
+                viewModel.refreshDietFactorAndLogIfNeeded(reason: .autoOnAppear)
+                viewModel.refreshScreenTimeOnly(reason: .autoOnAppear)
             }
             triggerEntranceAnimations()
         }
         .onReceive(refreshTicker) { _ in
             guard viewModel.isAuthorized else { return }
-            viewModel.refreshScreenTimeOnly()
+            viewModel.refreshScreenTimeOnly(reason: .autoTicker)
         }
         .onChange(of: scenePhase) { phase in
             guard phase == .active, viewModel.isAuthorized else { return }
-            Task { await viewModel.loadData() }
+            Task { await viewModel.loadData(reason: .autoScenePhase) }
         }
         // MARK: Insights sheet
         .sheet(isPresented: $showInsights) {
             insightsSheet
+        }
+        // MARK: Activity (change log) sheet
+        .sheet(isPresented: $showActivity) {
+            StressActivityView(viewModel: viewModel, modelContext: modelContext)
         }
         // MARK: Factor / vital detail sheets
         .sheet(item: $activeSheet) { sheet in
@@ -194,7 +211,7 @@ struct StressView: View {
             case .manualLog:
                 QuickLogManualSheet()
             case .mood:
-                MoodCheckInSheet(onSaved: { viewModel.recompute() })
+                MoodCheckInSheet(onSaved: { viewModel.recompute(reason: .manualMood) })
             case .symptoms:
                 SymptomLogSheet()
             }
@@ -347,8 +364,8 @@ struct StressView: View {
             }
         }
         .refreshable {
-            await viewModel.loadData()
-            viewModel.refreshScreenTimeOnly()
+            await viewModel.loadData(reason: .autoRefreshable)
+            viewModel.refreshScreenTimeOnly(reason: .autoRefreshable)
             viewModel.loadReadings()
         }
     }
@@ -925,7 +942,7 @@ struct StressView: View {
             }
             Button {
                 HapticService.impact(.medium)
-                Task { await viewModel.requestPermissionAndLoad() }
+                Task { await viewModel.requestPermissionAndLoad(reason: .autoAppOpen) }
             } label: {
                 Text("Allow Access")
                     .font(.system(size: 17, weight: .semibold, design: .rounded))

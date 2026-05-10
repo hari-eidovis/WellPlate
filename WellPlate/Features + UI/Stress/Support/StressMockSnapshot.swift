@@ -67,6 +67,12 @@ struct StressMockSnapshot {
     /// Today's coffee type (drives caffeine factor mg per cup).
     let coffeeType: CoffeeType?
 
+    // MARK: - Change Log Fixtures
+    // MARK: keep in sync with StressChangeEntry
+    /// Pre-baked change-log entries shown in the Activity sheet under mock mode.
+    /// Defaults to empty; populated by individual factory methods (e.g. `makeDefault`).
+    var changeEntries: [MockChangeEntry] = []
+
     // MARK: - Default Factory
 
     static let `default`: StressMockSnapshot = makeDefault()
@@ -508,6 +514,11 @@ struct StressMockSnapshot {
                          confidence: 0.95, mealType: "Snack"),
         ]
 
+        // ── Change Log Fixtures ───────────────────────────────────────
+        // ~12 entries spanning today + yesterday. Hand-crafted to read like
+        // a plausible day-in-the-life narrative. Mix of kinds + sources.
+        let changeEntries: [MockChangeEntry] = makeMockChangeEntries(today: today, yesterday: cal.date(byAdding: .day, value: -1, to: today) ?? today)
+
         return StressMockSnapshot(
             steps: steps,
             energy: energy,
@@ -537,8 +548,148 @@ struct StressMockSnapshot {
             lastCompletedFastEnd: Date().addingTimeInterval(-2 * 24 * 3600),
             waterGlasses: 4,
             coffeeCups: 1,
-            coffeeType: .latte
+            coffeeType: .latte,
+            changeEntries: changeEntries
         )
     }
     // swiftlint:enable function_body_length
+
+    // MARK: - Change Log Fixtures
+
+    private static func makeMockChangeEntries(today: Date, yesterday: Date) -> [MockChangeEntry] {
+        let cal = Calendar.current
+
+        func at(_ day: Date, _ hour: Int, _ minute: Int) -> Date {
+            cal.date(bySettingHour: hour, minute: minute, second: 0, of: day) ?? day
+        }
+
+        // Today's recompute groups (each group shares timestamp + groupID).
+        let g1 = UUID()
+        let t1 = at(today, 8, 5)
+        let g2 = UUID()
+        let t2 = at(today, 11, 12)
+        let g3 = UUID()
+        let t3 = at(today, 13, 30)
+        let g4 = UUID()
+        let t4 = at(today, 17, 45)
+        let g5 = UUID()
+        let t5 = at(today, 19, 20)
+
+        // Yesterday's recompute groups.
+        let yg1 = UUID()
+        let yt1 = at(yesterday, 9, 0)
+        let yg2 = UUID()
+        let yt2 = at(yesterday, 18, 30)
+
+        return [
+            // Today — 8:05 AM: cold-launch anchor (first reading of the day)
+            MockChangeEntry(
+                id: UUID(), timestamp: t1, groupID: g1, sequence: 0,
+                kind: .anchor, subjectKey: "anchor", subjectIcon: "circle.dashed",
+                deltaPoints: 0, prevValue: 38, nextValue: 32,
+                totalBefore: 38, totalAfter: 32,
+                source: .autoAppOpen, detailText: "Day started"
+            ),
+
+            // Today — 11:12 AM: logged a healthy breakfast (food + diet improved)
+            MockChangeEntry(
+                id: UUID(), timestamp: t2, groupID: g2, sequence: 0,
+                kind: .factor, subjectKey: "diet", subjectIcon: "leaf.fill",
+                deltaPoints: -1.8, prevValue: 4.0, nextValue: 2.2,
+                totalBefore: 32, totalAfter: 30,
+                source: .manualFoodLog, detailText: "Diet improved"
+            ),
+
+            // Today — 1:30 PM: logged 16 oz water (no_water gap closed)
+            MockChangeEntry(
+                id: UUID(), timestamp: t3, groupID: g3, sequence: 0,
+                kind: .engagementGap, subjectKey: "no_water", subjectIcon: "drop.fill",
+                deltaPoints: -2.5, prevValue: 2.5, nextValue: 0,
+                totalBefore: 30, totalAfter: 28,
+                source: .manualWater, detailText: "Water gap closed"
+            ),
+
+            // Today — 5:45 PM: screen time creeping up (auto)
+            MockChangeEntry(
+                id: UUID(), timestamp: t4, groupID: g4, sequence: 0,
+                kind: .factor, subjectKey: "screen_time", subjectIcon: "iphone",
+                deltaPoints: 1.2, prevValue: 4.5, nextValue: 5.7,
+                totalBefore: 28, totalAfter: 29,
+                source: .autoTicker, detailText: "Screen Time worsened"
+            ),
+            MockChangeEntry(
+                id: UUID(), timestamp: t4, groupID: g4, sequence: 1,
+                kind: .engagementGap, subjectKey: "no_mood", subjectIcon: "face.smiling",
+                deltaPoints: 1.6, prevValue: 0, nextValue: 1.6,
+                totalBefore: 28, totalAfter: 29,
+                source: .autoTicker, detailText: "Mood gap opened"
+            ),
+
+            // Today — 7:20 PM: mood logged (great) → mood factor good + closes mood gap
+            MockChangeEntry(
+                id: UUID(), timestamp: t5, groupID: g5, sequence: 0,
+                kind: .factor, subjectKey: "mood", subjectIcon: "face.smiling",
+                deltaPoints: -2.5, prevValue: 2.0, nextValue: -0.5,
+                totalBefore: 29, totalAfter: 26,
+                source: .manualMood, detailText: "Mood improved"
+            ),
+            MockChangeEntry(
+                id: UUID(), timestamp: t5, groupID: g5, sequence: 1,
+                kind: .engagementGap, subjectKey: "no_mood", subjectIcon: "face.smiling",
+                deltaPoints: -3.2, prevValue: 3.2, nextValue: 0,
+                totalBefore: 29, totalAfter: 26,
+                source: .manualMood, detailText: "Mood gap closed"
+            ),
+
+            // Yesterday — 9:00 AM: cold-launch anchor
+            MockChangeEntry(
+                id: UUID(), timestamp: yt1, groupID: yg1, sequence: 0,
+                kind: .anchor, subjectKey: "anchor", subjectIcon: "circle.dashed",
+                deltaPoints: 0, prevValue: 41, nextValue: 35,
+                totalBefore: 41, totalAfter: 35,
+                source: .autoAppOpen, detailText: "Day started"
+            ),
+
+            // Yesterday — 6:30 PM: pattern penalty grew + calibrator tightened (vitals)
+            MockChangeEntry(
+                id: UUID(), timestamp: yt2, groupID: yg2, sequence: 0,
+                kind: .patternPenalty, subjectKey: "pattern", subjectIcon: "waveform.path.ecg",
+                deltaPoints: 2.0, prevValue: 0, nextValue: 2.0,
+                totalBefore: 35, totalAfter: 38,
+                source: .autoScenePhase, detailText: "Pattern penalty grew"
+            ),
+            MockChangeEntry(
+                id: UUID(), timestamp: yt2, groupID: yg2, sequence: 1,
+                kind: .calibrator, subjectKey: "calibrator", subjectIcon: "gauge.with.dots.needle.50percent",
+                deltaPoints: 1.4, prevValue: 1.0, nextValue: 1.04,
+                totalBefore: 35, totalAfter: 38,
+                source: .autoScenePhase, detailText: "Vitals calibrator tightened"
+            ),
+            MockChangeEntry(
+                id: UUID(), timestamp: yt2, groupID: yg2, sequence: 2,
+                kind: .engagementActivated, subjectKey: "engagement", subjectIcon: "bell.badge",
+                deltaPoints: 5.0, prevValue: 0, nextValue: 5.0,
+                totalBefore: 35, totalAfter: 38,
+                source: .autoScenePhase, detailText: "Engagement scoring activated"
+            ),
+
+            // Yesterday — earlier sleep factor improved
+            MockChangeEntry(
+                id: UUID(), timestamp: at(yesterday, 7, 15), groupID: UUID(), sequence: 0,
+                kind: .factor, subjectKey: "sleep", subjectIcon: "moon.fill",
+                deltaPoints: -3.5, prevValue: 9.0, nextValue: 5.5,
+                totalBefore: 41, totalAfter: 38,
+                source: .autoAppOpen, detailText: "Sleep improved"
+            ),
+
+            // Yesterday — symptoms logged
+            MockChangeEntry(
+                id: UUID(), timestamp: at(yesterday, 14, 0), groupID: UUID(), sequence: 0,
+                kind: .factor, subjectKey: "symptoms", subjectIcon: "bandage",
+                deltaPoints: 2.1, prevValue: 0, nextValue: 2.1,
+                totalBefore: 35, totalAfter: 37,
+                source: .manualSymptoms, detailText: "Symptoms worsened"
+            ),
+        ]
+    }
 }

@@ -12,18 +12,29 @@ struct EngagementGapsCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                Image(systemName: "exclamationmark.bubble.fill")
-                    .foregroundStyle(.orange)
+                Image(systemName: "lightbulb.fill")
+                    .foregroundStyle(Color.green)
                 Text("Quick wins")
                     .font(.r(.headline, .semibold))
                 Spacer()
-                Text("+\(Int(viewModel.engagementPenaltyValue.rounded())) stress")
-                    .font(.r(.caption, .semibold))
-                    .foregroundStyle(.orange)
+                let savings = Int(viewModel.engagementPenaltyValue.rounded())
+                if savings > 0 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.down")
+                            .font(.system(size: 9, weight: .bold))
+                        Text("Save up to \(savings)")
+                            .font(.r(.caption, .semibold))
+                    }
+                    .foregroundStyle(Color.green)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(Capsule().fill(Color.orange.opacity(0.12)))
+                    .background(Capsule().fill(Color.green.opacity(0.12)))
+                }
             }
+
+            Text("Logging these helps lower today's stress score.")
+                .font(.r(.caption, .regular))
+                .foregroundStyle(.secondary)
 
             ForEach(activeGaps, id: \.self) { gap in
                 gapRow(gap)

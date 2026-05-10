@@ -21,7 +21,7 @@ enum StressScoring {
 
     // MARK: - FactorPoints
 
-    struct FactorPoints {
+    struct FactorPoints: Codable {
         let points: Double
         let maxPoints: Double
         let hasData: Bool
@@ -138,7 +138,7 @@ enum StressScoring {
 
     // MARK: - StressResult
 
-    struct StressResult {
+    struct StressResult: Codable {
         let score: Double
         let factors: [FactorPoints]
         let driverSum: Double
@@ -152,7 +152,7 @@ enum StressScoring {
 
     // MARK: - Confidence
 
-    enum Confidence: String {
+    enum Confidence: String, Codable {
         case low, medium, high
 
         var label: String {
@@ -607,6 +607,63 @@ enum StressScoring {
         }
 
         return min(Weights.engagementCap, sum)
+    }
+
+    /// Per-key breakdown of the engagement penalty. Sum of values equals
+    /// `engagementPenalty(inputs:now:)` exactly (post engagement-cap distribution).
+    /// Keys: `no_mood`, `no_food`, `no_water`, `low_steps`, `no_reflection`.
+    static func engagementBreakdown(inputs: StressInputs, now: Date) -> [String: Double] {
+        // Activation guard: at least one driver must have data (mirrors engagementPenalty).
+        let factors = allFactors(inputs: inputs)
+        guard factors.contains(where: \.hasData) else { return [:] }
+
+        let cal = Calendar.current
+        let hour = Double(cal.component(.hour, from: now))
+                 + Double(cal.component(.minute, from: now)) / 60.0
+
+        func ramp(start: Double, end: Double) -> Double {
+            guard end > start else { return 0 }
+            return min(1, max(0, (hour - start) / (end - start)))
+        }
+
+        var perKey: [String: Double] = [:]
+
+        // no_mood: max 5, 17->21
+        if inputs.mood == nil {
+            let v = 5 * ramp(start: 17, end: 21)
+            if v > 0 { perKey["no_mood"] = v }
+        }
+        // no_food: max 4, 17->20
+        if inputs.mealLogs.isEmpty {
+            let v = 4 * ramp(start: 17, end: 20)
+            if v > 0 { perKey["no_food"] = v }
+        }
+        // no_water: max 4, 14->18
+        if (inputs.hydration?.glasses ?? 0) == 0 {
+            let v = 4 * ramp(start: 14, end: 18)
+            if v > 0 { perKey["no_water"] = v }
+        }
+        // low_steps: max 3, 16->20
+        if let s = inputs.exercise?.steps, s < 2000 {
+            let v = 3 * ramp(start: 16, end: 20)
+            if v > 0 { perKey["low_steps"] = v }
+        }
+        // no_reflection: max 2, 18->21
+        if !inputs.recovery.hasJournalToday
+            && inputs.mood == nil
+            && !inputs.recovery.hasMindfulSessionToday {
+            let v = 2 * ramp(start: 18, end: 21)
+            if v > 0 { perKey["no_reflection"] = v }
+        }
+
+        // Apply proportional cap-distribution so the breakdown sum equals
+        // the aggregate engagementPenalty exactly.
+        let rawSum = perKey.values.reduce(0, +)
+        if rawSum > Weights.engagementCap {
+            let scale = Weights.engagementCap / rawSum
+            perKey = perKey.mapValues { $0 * scale }
+        }
+        return perKey
     }
 
     // MARK: - Pattern penalty

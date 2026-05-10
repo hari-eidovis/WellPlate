@@ -184,7 +184,16 @@ final class StressViewModel: ObservableObject {
         // Subscribe to engagement-ramp ticker so the score updates as the day progresses.
         tickerCancellable = StressTimerService.shared.$tickerPulse
             .dropFirst()
-            .sink { [weak self] _ in self?.recompute() }
+            .sink { [weak self] _ in self?.recompute(reason: .autoEngagementTick) }
+
+        // Once-per-day retention purge for the change log (decoupled from tab lifecycle).
+        let purgeKey = "wp.stress.changeLog.lastPurgeDay"
+        let today = Calendar.current.startOfDay(for: Date())
+        let lastPurge = UserDefaults.standard.object(forKey: purgeKey) as? Date
+        if lastPurge.map({ !Calendar.current.isDate($0, inSameDayAs: today) }) ?? true {
+            purgeOldChangeEntries()
+            UserDefaults.standard.set(today, forKey: purgeKey)
+        }
     }
 
     /// Wires this VM to a `DailyPromptCoordinator`. Called once after the
@@ -192,17 +201,17 @@ final class StressViewModel: ObservableObject {
     func bindManualInputUpdates(from coordinator: any ManualInputObservable) {
         manualInputCancellable = coordinator.manualInputSavedAtPublisher
             .dropFirst()
-            .sink { [weak self] _ in self?.recompute() }
+            .sink { [weak self] _ in self?.recompute(reason: .manualOther) }
     }
 
     // MARK: - Actions
 
-    func requestPermissionAndLoad() async {
+    func requestPermissionAndLoad(reason: StressChangeSource = .autoAppOpen) async {
         if usesMockData {
             isLoading = true
             defer { isLoading = false }
             isAuthorized = true
-            await loadData()
+            await loadData(reason: reason)
             return
         }
         guard HealthKitService.isAvailable else { return }
@@ -211,13 +220,13 @@ final class StressViewModel: ObservableObject {
         do {
             try await healthService.requestAuthorization()
             isAuthorized = healthService.isAuthorized
-            await loadData()
+            await loadData(reason: reason)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
-    func loadData() async {
+    func loadData(reason: StressChangeSource = .autoAppOpen) async {
         let calendar = Calendar.current
         let now = Date()
         let startOfToday = calendar.startOfDay(for: now)
@@ -309,7 +318,7 @@ final class StressViewModel: ObservableObject {
             ? buildInputsFromMockSnapshot(mockSnapshot!, now: now)
             : buildInputs(now: now)
         let result = StressScoring.computeStress(inputs: inputs, now: now)
-        applyResult(result)
+        applyResult(result, inputs: inputs, reason: reason)
 
         // Persist snapshot to WellnessDayLog so HomeView rings update
         persistTodayWellnessSnapshot(steps: steps, energy: energy)
@@ -324,29 +333,29 @@ final class StressViewModel: ObservableObject {
     /// Re-fetches cheap SwiftData (mood/water/food/symptoms/journal/interventions/manual/recent
     /// wellness/active fast) and reuses cached HK from the most recent `loadData()`.
     /// Calls `computeStress` and republishes.
-    func recompute() {
+    func recompute(reason: StressChangeSource) {
         let now = Date()
         currentDayLogs = mockSnapshot?.currentDayLogs ?? fetchTodayFoodLogs()
         let inputs = usesMockData
             ? buildInputsFromMockSnapshot(mockSnapshot!, now: now)
             : buildInputs(now: now)
         let result = StressScoring.computeStress(inputs: inputs, now: now)
-        applyResult(result)
+        applyResult(result, inputs: inputs, reason: reason)
         persistTodayWellnessSnapshot(steps: lastSteps, energy: lastEnergy)
         WidgetRefreshHelper.refreshStress(viewModel: self)
     }
 
-    func refreshDietFactor() {
-        recompute()
+    func refreshDietFactor(reason: StressChangeSource = .manualFoodLog) {
+        recompute(reason: reason)
     }
 
-    func refreshDietFactorAndLogIfNeeded() {
-        recompute()
+    func refreshDietFactorAndLogIfNeeded(reason: StressChangeSource = .autoOnAppear) {
+        recompute(reason: reason)
         logCurrentStress(source: "auto")
     }
 
-    func refreshScreenTimeOnly() {
-        recompute()
+    func refreshScreenTimeOnly(reason: StressChangeSource) {
+        recompute(reason: reason)
         logCurrentStress(source: "auto")
     }
 
@@ -440,11 +449,373 @@ final class StressViewModel: ObservableObject {
         try? modelContext.save()
     }
 
+    // MARK: - Change Log Support
+
+    /// In-memory cache of the previous result (round-trips through UserDefaults
+    /// envelope on cold launch).
+    private var lastResult: StressScoring.StressResult?
+    /// In-memory cache of the previous inputs (used for engagement breakdown diff).
+    private var lastInputs: StressScoring.StressInputs?
+    /// Bumped on every successful change-log insert so `StressActivityView` can re-fetch.
+    @Published private(set) var lastChangeEmittedAt: Date = .distantPast
+
+    private let lastResultDefaultsKey = "wp.stress.lastResultEnvelope.v1"
+
+    private func loadPersistedLastResult() -> StressLastResultEnvelope? {
+        guard let data = UserDefaults.standard.data(forKey: lastResultDefaultsKey),
+              let env = try? JSONDecoder().decode(StressLastResultEnvelope.self, from: data)
+        else { return nil }
+        return env
+    }
+
+    private func persistLastResult(_ result: StressScoring.StressResult) {
+        let env = StressLastResultEnvelope(
+            version: StressLastResultEnvelope.currentVersion,
+            capturedAt: Date(),
+            result: result
+        )
+        guard let data = try? JSONEncoder().encode(env) else { return }
+        UserDefaults.standard.set(data, forKey: lastResultDefaultsKey)
+    }
+
+    /// Mock-mode accessor — `StressActivityView` reads this when `usesMockData == true`.
+    var mockChangeEntries: [MockChangeEntry] {
+        guard usesMockData, let snap = mockSnapshot else { return [] }
+        return snap.changeEntries
+    }
+
+    // MARK: - Engagement breakdown UI metadata
+
+    private struct EngagementMeta {
+        let icon: String
+        let openedDetail: String
+        let closedDetail: String
+    }
+
+    private func engagementMeta(key: String) -> EngagementMeta {
+        switch key {
+        case "no_mood":
+            return EngagementMeta(icon: "face.smiling",
+                                  openedDetail: "Mood gap opened",
+                                  closedDetail: "Mood gap closed")
+        case "no_food":
+            return EngagementMeta(icon: "fork.knife",
+                                  openedDetail: "Food gap opened",
+                                  closedDetail: "Food gap closed")
+        case "no_water":
+            return EngagementMeta(icon: "drop.fill",
+                                  openedDetail: "Water gap opened",
+                                  closedDetail: "Water gap closed")
+        case "low_steps":
+            return EngagementMeta(icon: "figure.walk",
+                                  openedDetail: "Steps gap opened",
+                                  closedDetail: "Steps gap closed")
+        case "no_reflection":
+            return EngagementMeta(icon: "book.closed",
+                                  openedDetail: "Reflection gap opened",
+                                  closedDetail: "Reflection gap closed")
+        default:
+            return EngagementMeta(icon: "circle.dashed",
+                                  openedDetail: "Engagement gap opened",
+                                  closedDetail: "Engagement gap closed")
+        }
+    }
+
+    private func factorKey(_ idx: Int) -> String {
+        switch idx {
+        case 0:  return "sleep"
+        case 1:  return "exercise"
+        case 2:  return "caffeine"
+        case 3:  return "screen_time"
+        case 4:  return "diet"
+        case 5:  return "hydration"
+        case 6:  return "circadian"
+        case 7:  return "daylight"
+        case 8:  return "meal_timing"
+        case 9:  return "fasting"
+        case 10: return "eating_triggers"
+        case 11: return "mood"
+        case 12: return "symptoms"
+        default: return "unknown"
+        }
+    }
+
+    private func factorDetailText(_ idx: Int, delta: Double, reason: StressChangeSource) -> String {
+        let title = factorTitle(idx)
+        if delta < 0 {
+            return "\(title) improved"
+        } else {
+            return "\(title) worsened"
+        }
+    }
+
+    // MARK: - Emit Change Entries
+
+    /// Diffs `next` against `prevEnvelope.result` and inserts one row per moved
+    /// factor / engagement-gap / pattern-penalty / calibrator. See plan §6.2.
+    private func emitChangeEntries(
+        prevEnvelope: StressLastResultEnvelope?,
+        next: StressScoring.StressResult,
+        nextInputs: StressScoring.StressInputs,
+        reason: StressChangeSource
+    ) {
+        guard !usesMockData else { return }
+        guard isAuthorized else { return }
+
+        let now = Date()
+        let group = UUID()
+        var sequence = 0
+        var rowsToInsert: [StressChangeEntry] = []
+
+        // Envelope-validity / day-rollover guard.
+        let prev: StressScoring.StressResult? = {
+            guard let env = prevEnvelope,
+                  env.version == StressLastResultEnvelope.currentVersion,
+                  env.result.factors.count == 13,
+                  Calendar.current.isDate(env.capturedAt, inSameDayAs: now)
+            else { return nil }
+            return env.result
+        }()
+
+        // ── First-ever / day-rollover / schema drift → emit anchor row ──
+        // L3 carve-out: when a *manual* user action triggers the rollover (e.g.,
+        // logging a meal at 00:00:30), emit anchor + full per-factor delta against
+        // a synthesized zero-prev so attribution is preserved. Engagement-gap
+        // decomposition is suppressed in this branch — a single engagementActivated
+        // row stands in. Calibrator diff is skipped (no prior multiplier to compare).
+        let prevEffective: StressScoring.StressResult
+        let suppressEngagementGapDiff: Bool
+        if let p = prev {
+            prevEffective = p
+            suppressEngagementGapDiff = false
+        } else {
+            let totalBefore = prevEnvelope?.result.score ?? 0
+            let detailText = (prevEnvelope == nil) ? "First reading" : "Day started"
+            let anchor = StressChangeEntry(
+                timestamp: now,
+                groupID: group,
+                sequence: 0,
+                kind: ChangeEntryKind.anchor.rawValue,
+                subjectKey: "anchor",
+                subjectIcon: "circle.dashed",
+                deltaPoints: 0,
+                prevValue: totalBefore,
+                nextValue: next.score,
+                totalBefore: totalBefore,
+                totalAfter: next.score,
+                sourceRaw: reason.rawValue,
+                detailText: detailText
+            )
+            rowsToInsert.append(anchor)
+            sequence = 1
+
+            // L4 fix: collapse the engagement activation transition into one row
+            // (suppress per-gap decomposition this group). Applies to both auto and
+            // manual rollovers if engagement scoring is active in the new result.
+            if next.engagementPenalty > 0 {
+                let activated = StressChangeEntry(
+                    timestamp: now,
+                    groupID: group,
+                    sequence: sequence,
+                    kind: ChangeEntryKind.engagementActivated.rawValue,
+                    subjectKey: "engagement",
+                    subjectIcon: "bell.badge",
+                    deltaPoints: next.engagementPenalty,
+                    prevValue: 0,
+                    nextValue: next.engagementPenalty,
+                    totalBefore: totalBefore,
+                    totalAfter: next.score,
+                    sourceRaw: reason.rawValue,
+                    detailText: "Engagement scoring activated"
+                )
+                rowsToInsert.append(activated)
+                sequence += 1
+            }
+
+            // Auto sources: anchor (+ activation row) only — no full-delta flood
+            // when the system woke itself up.
+            if reason.isAuto {
+                rowsToInsert.forEach { modelContext.insert($0) }
+                try? modelContext.save()
+                lastChangeEmittedAt = now
+                return
+            }
+
+            // Manual sources: synthesize zero-prev and fall through to per-factor
+            // and pattern rows. Calibrator set equal to next.calibrator so the
+            // calibrator branch below is a no-op (no prior multiplier to compare).
+            let zeroFactors: [StressScoring.FactorPoints] = next.factors.map { _ in
+                StressScoring.FactorPoints.none
+            }
+            prevEffective = StressScoring.StressResult(
+                score: totalBefore,
+                factors: zeroFactors,
+                driverSum: 0,
+                recovery: 0,
+                engagementPenalty: 0,
+                patternPenalty: 0,
+                calibrator: next.calibrator,
+                confidence: next.confidence,
+                raw: 0
+            )
+            suppressEngagementGapDiff = true
+        }
+
+        // ── Per-factor deltas (count == 13 validated above) ──
+        for (idx, n) in next.factors.enumerated() {
+            let p = prevEffective.factors[idx]
+            let delta = n.points - p.points
+            if abs(delta) < 0.01 { continue }
+            let row = StressChangeEntry(
+                timestamp: now,
+                groupID: group,
+                sequence: sequence,
+                kind: ChangeEntryKind.factor.rawValue,
+                subjectKey: factorKey(idx),
+                subjectIcon: factorIcon(idx),
+                deltaPoints: delta,
+                prevValue: p.points,
+                nextValue: n.points,
+                totalBefore: prevEffective.score,
+                totalAfter: next.score,
+                sourceRaw: reason.rawValue,
+                detailText: factorDetailText(idx, delta: delta, reason: reason)
+            )
+            rowsToInsert.append(row)
+            sequence += 1
+        }
+
+        // ── Engagement penalty decomposition / activation transition (L4) ──
+        // Skipped entirely on the manual-rollover path (anchor branch already
+        // emitted a single engagementActivated row).
+        if suppressEngagementGapDiff {
+            // no-op — anchor branch handled it
+        } else if prevEffective.engagementPenalty == 0 && next.engagementPenalty > 0 {
+            let activated = StressChangeEntry(
+                timestamp: now,
+                groupID: group,
+                sequence: sequence,
+                kind: ChangeEntryKind.engagementActivated.rawValue,
+                subjectKey: "engagement",
+                subjectIcon: "bell.badge",
+                deltaPoints: next.engagementPenalty,
+                prevValue: 0,
+                nextValue: next.engagementPenalty,
+                totalBefore: prevEffective.score,
+                totalAfter: next.score,
+                sourceRaw: reason.rawValue,
+                detailText: "Engagement scoring activated"
+            )
+            rowsToInsert.append(activated)
+            sequence += 1
+        } else if let prevInputs = lastInputs {
+            let prevGaps = StressScoring.engagementBreakdown(inputs: prevInputs, now: now)
+            let nextGaps = StressScoring.engagementBreakdown(inputs: nextInputs, now: now)
+            let allKeys = Set(prevGaps.keys).union(nextGaps.keys)
+            for key in allKeys.sorted() {
+                let prevVal = prevGaps[key] ?? 0
+                let nextVal = nextGaps[key] ?? 0
+                let delta = nextVal - prevVal
+                if abs(delta) < 0.5 { continue }
+                let meta = engagementMeta(key: key)
+                let detail = delta < 0 ? meta.closedDetail : meta.openedDetail
+                let row = StressChangeEntry(
+                    timestamp: now,
+                    groupID: group,
+                    sequence: sequence,
+                    kind: ChangeEntryKind.engagementGap.rawValue,
+                    subjectKey: key,
+                    subjectIcon: meta.icon,
+                    deltaPoints: delta,
+                    prevValue: prevVal,
+                    nextValue: nextVal,
+                    totalBefore: prevEffective.score,
+                    totalAfter: next.score,
+                    sourceRaw: reason.rawValue,
+                    detailText: detail
+                )
+                rowsToInsert.append(row)
+                sequence += 1
+            }
+        }
+
+        // ── Pattern penalty (single line) ──
+        let patternDelta = next.patternPenalty - prevEffective.patternPenalty
+        if abs(patternDelta) >= 0.01 {
+            let row = StressChangeEntry(
+                timestamp: now,
+                groupID: group,
+                sequence: sequence,
+                kind: ChangeEntryKind.patternPenalty.rawValue,
+                subjectKey: "pattern",
+                subjectIcon: "waveform.path.ecg",
+                deltaPoints: patternDelta,
+                prevValue: prevEffective.patternPenalty,
+                nextValue: next.patternPenalty,
+                totalBefore: prevEffective.score,
+                totalAfter: next.score,
+                sourceRaw: reason.rawValue,
+                detailText: patternDelta < 0 ? "Pattern penalty eased" : "Pattern penalty grew"
+            )
+            rowsToInsert.append(row)
+            sequence += 1
+        }
+
+        // ── Calibrator-isolated impact (signed; gated at >=1 pt of total-score effect) ──
+        let multiplierMoved = abs(next.calibrator - prevEffective.calibrator) > 0.001
+        let calibOnlyImpact = next.raw * (next.calibrator - prevEffective.calibrator)
+        if multiplierMoved && abs(calibOnlyImpact) >= 1.0 {
+            let row = StressChangeEntry(
+                timestamp: now,
+                groupID: group,
+                sequence: sequence,
+                kind: ChangeEntryKind.calibrator.rawValue,
+                subjectKey: "calibrator",
+                subjectIcon: "gauge.with.dots.needle.50percent",
+                deltaPoints: calibOnlyImpact,
+                prevValue: prevEffective.calibrator,
+                nextValue: next.calibrator,
+                totalBefore: prevEffective.score,
+                totalAfter: next.score,
+                sourceRaw: reason.rawValue,
+                detailText: calibOnlyImpact < 0 ? "Vitals calibrator eased" : "Vitals calibrator tightened"
+            )
+            rowsToInsert.append(row)
+            sequence += 1
+        }
+
+        if !rowsToInsert.isEmpty {
+            rowsToInsert.forEach { modelContext.insert($0) }
+            try? modelContext.save()
+            lastChangeEmittedAt = now
+        }
+    }
+
+    /// Deletes change-log rows older than 30 days. Called once per day from `init`.
+    private func purgeOldChangeEntries() {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+        let descriptor = FetchDescriptor<StressChangeEntry>(
+            predicate: #Predicate { $0.timestamp < cutoff }
+        )
+        if let stale = try? modelContext.fetch(descriptor) {
+            stale.forEach { modelContext.delete($0) }
+            try? modelContext.save()
+        }
+    }
+
     // MARK: - Apply v3 Result
 
     /// Publishes a `StressResult` into all the @Published vars. Maps the 13 factor
     /// indices to titles/icons (in stable order matching `StressScoring.allFactors`).
-    private func applyResult(_ result: StressScoring.StressResult) {
+    private func applyResult(_ result: StressScoring.StressResult, inputs: StressScoring.StressInputs, reason: StressChangeSource) {
+        // Diff/persist hooks BEFORE publish so the change log sees the truthful
+        // prev->next transition in deterministic order.
+        let prevEnvelope = loadPersistedLastResult()
+        emitChangeEntries(prevEnvelope: prevEnvelope, next: result, nextInputs: inputs, reason: reason)
+        lastResult = result
+        lastInputs = inputs
+        persistLastResult(result)
+
         totalScore = result.score
         calibratorMultiplier = result.calibrator
         engagementPenaltyValue = result.engagementPenalty

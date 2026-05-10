@@ -13,6 +13,7 @@
 		AA000011AA000011AA000011 /* ScreenTimeReport.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA000004AA000004AA000004 /* ScreenTimeReport.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AB100001AB100001AB100001 /* WellPlateWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB100004AB100004AB100004 /* WellPlateWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AB100002AB100002AB100002 /* SharedStressData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB100005AB100005AB100005 /* SharedStressData.swift */; };
+		B65FB0602193EA5FB8190E4D /* Pods_WellPlate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4851A5B3568FA0524FA259DE /* Pods_WellPlate.framework */; };
 		BF53DC452F49D20100423F77 /* FamilyControls.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF53DC442F49D20100423F77 /* FamilyControls.framework */; };
 		BF53DC472F49D20600423F77 /* ScreenTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF53DC462F49D20600423F77 /* ScreenTime.framework */; };
 		BF76276B2F49170700984E8E /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF76276A2F49170700984E8E /* HealthKit.framework */; };
@@ -63,6 +64,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4851A5B3568FA0524FA259DE /* Pods_WellPlate.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_WellPlate.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		495C0A9E23B1E4C385657752 /* Pods-WellPlate.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-WellPlate.release.xcconfig"; path = "Target Support Files/Pods-WellPlate/Pods-WellPlate.release.xcconfig"; sourceTree = "<group>"; };
+		6D01096F694AA2CFFA94D3F8 /* Pods-WellPlate.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-WellPlate.debug.xcconfig"; path = "Target Support Files/Pods-WellPlate/Pods-WellPlate.debug.xcconfig"; sourceTree = "<group>"; };
 		AA000003AA000003AA000003 /* ScreenTimeMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenTimeMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000004AA000004AA000004 /* ScreenTimeReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenTimeReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB100004AB100004AB100004 /* WellPlateWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WellPlateWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -166,6 +170,7 @@
 				BF76276D2F49170F00984E8E /* HealthKitUI.framework in Frameworks */,
 				BF9000022F70000100984E8E /* Speech.framework in Frameworks */,
 				BF53DC472F49D20600423F77 /* ScreenTime.framework in Frameworks */,
+				B65FB0602193EA5FB8190E4D /* Pods_WellPlate.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -190,6 +195,7 @@
 				BF76276C2F49170F00984E8E /* HealthKitUI.framework */,
 				BF76276A2F49170700984E8E /* HealthKit.framework */,
 				BF9000012F70000100984E8E /* Speech.framework */,
+				4851A5B3568FA0524FA259DE /* Pods_WellPlate.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -204,6 +210,7 @@
 				BF7627692F49170700984E8E /* Frameworks */,
 				BFD33EC32F27DF8100D93897 /* Products */,
 				BF2850592F4F74CA002DBFA0 /* Recovered References */,
+				CADD74A6B6941117922550D6 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -216,6 +223,15 @@
 				AB100004AB100004AB100004 /* WellPlateWidget.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CADD74A6B6941117922550D6 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				6D01096F694AA2CFFA94D3F8 /* Pods-WellPlate.debug.xcconfig */,
+				495C0A9E23B1E4C385657752 /* Pods-WellPlate.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -237,8 +253,6 @@
 				AA000005AA000005AA000005 /* ScreenTimeMonitor */,
 			);
 			name = ScreenTimeMonitor;
-			packageProductDependencies = (
-			);
 			productName = ScreenTimeMonitor;
 			productReference = AA000003AA000003AA000003 /* ScreenTimeMonitor.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -259,8 +273,6 @@
 				AA000006AA000006AA000006 /* ScreenTimeReport */,
 			);
 			name = ScreenTimeReport;
-			packageProductDependencies = (
-			);
 			productName = ScreenTimeReport;
 			productReference = AA000004AA000004AA000004 /* ScreenTimeReport.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -281,8 +293,6 @@
 				AB100007AB100007AB100007 /* WellPlateWidget */,
 			);
 			name = WellPlateWidget;
-			packageProductDependencies = (
-			);
 			productName = WellPlateWidget;
 			productReference = AB100004AB100004AB100004 /* WellPlateWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -291,10 +301,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = BFD33ECD2F27DF8200D93897 /* Build configuration list for PBXNativeTarget "WellPlate" */;
 			buildPhases = (
+				3C0706FB1482C68DBEA02947 /* [CP] Check Pods Manifest.lock */,
 				BFD33EBE2F27DF8100D93897 /* Sources */,
 				BFD33EBF2F27DF8100D93897 /* Frameworks */,
 				BFD33EC02F27DF8100D93897 /* Resources */,
 				AA000012AA000012AA000012 /* Embed Foundation Extensions */,
+				B8C1EA62D9A758C716F490E7 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -307,8 +319,6 @@
 				BFD33EC42F27DF8100D93897 /* WellPlate */,
 			);
 			name = WellPlate;
-			packageProductDependencies = (
-			);
 			productName = WellPlate;
 			productReference = BFD33EC22F27DF8100D93897 /* WellPlate.app */;
 			productType = "com.apple.product-type.application";
@@ -346,8 +356,6 @@
 			);
 			mainGroup = BFD33EB92F27DF8100D93897;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BFD33EC32F27DF8100D93897 /* Products */;
 			projectDirPath = "";
@@ -391,6 +399,52 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		3C0706FB1482C68DBEA02947 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-WellPlate-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		B8C1EA62D9A758C716F490E7 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-WellPlate/Pods-WellPlate-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-WellPlate/Pods-WellPlate-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-WellPlate/Pods-WellPlate-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AA000016AA000016AA000016 /* Sources */ = {
@@ -712,6 +766,7 @@
 		};
 		BFD33ECE2F27DF8200D93897 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6D01096F694AA2CFFA94D3F8 /* Pods-WellPlate.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -720,6 +775,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = LAP54KU2SV;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleTypeRole = Editor;
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLName = wellplate;
@@ -762,6 +818,7 @@
 		};
 		BFD33ECF2F27DF8200D93897 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 495C0A9E23B1E4C385657752 /* Pods-WellPlate.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -770,6 +827,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = LAP54KU2SV;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleTypeRole = Editor;
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLName = wellplate;

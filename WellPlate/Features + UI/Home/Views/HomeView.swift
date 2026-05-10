@@ -8,6 +8,7 @@ enum HomeSheet: Identifiable, Equatable {
     case journalEntry
     case symptomLog
     case customizeCard(HomeCardID)
+    case changeMood
 
     var id: String {
         switch self {
@@ -15,6 +16,7 @@ enum HomeSheet: Identifiable, Equatable {
         case .journalEntry: return "journalEntry"
         case .symptomLog: return "symptomLog"
         case .customizeCard(let card): return "customizeCard_\(card.rawValue)"
+        case .changeMood: return "changeMood"
         }
     }
 }
@@ -367,6 +369,8 @@ struct HomeView: View {
             SymptomLogSheet()
         case .customizeCard(let card):
             CardCustomizeSheet(card: card, layout: layoutBinding)
+        case .changeMood:
+            MoodCheckInSheet(onSaved: { stressViewModel.recompute(reason: .manualMood) })
         }
     }
 
@@ -512,6 +516,11 @@ struct HomeView: View {
             if old == .journalEntry && new == nil {
                 refreshTodayJournalState()
             }
+            if old == .changeMood && new == nil {
+                // Sheet's `onSaved` already triggered recompute(); just refresh
+                // the badge emoji from the persisted log here.
+                refreshTodayMoodState()
+            }
         }
     }
 
@@ -519,21 +528,33 @@ struct HomeView: View {
 
     private var homeHeader: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(todayString)
                     .font(.system(size: 12, weight: .regular, design: .rounded))
                     .foregroundStyle(.secondary)
-                    .padding(.bottom, 6)
 
-                LottieLoopView(name: "Loader cat")
-                    .frame(width: 64, height: 46)
-                    .padding(.leading, 2)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
+                if userName.isEmpty {
+                    Text(greetingPrefix)
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                } else {
+                    HStack(spacing: 4) {
+                        Text("\(greetingPrefix),")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
 
-                Text(greeting)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
+                        Text(userName)
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+                            .background(alignment: .top) {
+                                LottieLoopView(name: "hiddencat")
+                                    .frame(width: 60, height: 60)
+                                    .offset(y: -60)
+                                    .allowsHitTesting(false)
+                                    .accessibilityHidden(true)
+                            }
+                    }
+                }
             }
 
             Spacer()
@@ -549,19 +570,26 @@ struct HomeView: View {
 
             // Mood badge — visible only when mood is logged today (38pt to match icons)
             if hasLoggedMoodToday, let mood = selectedMood {
-                ZStack {
-                    Circle()
-                        .fill(Color(.systemBackground))
-                        .frame(width: 38, height: 38)
-                        .shadow(color: mood.accentColor.opacity(0.25), radius: 6, x: 0, y: 3)
+                Button {
+                    HapticService.impact(.light)
+                    activeSheet = .changeMood
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color(.systemBackground))
+                            .frame(width: 38, height: 38)
+                            .shadow(color: mood.accentColor.opacity(0.25), radius: 6, x: 0, y: 3)
 
-                    Circle()
-                        .stroke(mood.accentColor.opacity(0.35), lineWidth: 1.5)
-                        .frame(width: 38, height: 38)
+                        Circle()
+                            .stroke(mood.accentColor.opacity(0.35), lineWidth: 1.5)
+                            .frame(width: 38, height: 38)
 
-                    Text(mood.emoji)
-                        .font(.system(size: 19))
+                        Text(mood.emoji)
+                            .font(.system(size: 19))
+                    }
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Change today's mood")
                 .transition(.scale(scale: 0.6).combined(with: .opacity))
             }
         }
@@ -645,9 +673,9 @@ struct HomeView: View {
         }
 
         // 2. Stress actionable
-        if let level = todayWellnessLog?.stressLevel?.lowercased(),
+        if let level = effectiveStressLevel?.lowercased(),
            level == "high" || level == "very high" {
-            return .stressActionable(level: todayWellnessLog?.stressLevel ?? "High")
+            return .stressActionable(level: effectiveStressLevel ?? "High")
         }
 
         // 3. Log next meal
@@ -769,11 +797,31 @@ struct HomeView: View {
         return nil
     }
 
+    /// Resolves today's stress level from the first available source:
+    ///  1. Persisted `WellnessDayLog.stressLevel` (set by StressViewModel after a load).
+    ///  2. The shared StressViewModel's live `totalScore` (Stress tab has run).
+    ///  3. The most recent `StressReading` for today (mock injector seeds these,
+    ///     so the ring still shows a value even when MockDataInjector skipped
+    ///     today's WellnessDayLog because one already existed).
+    private var effectiveStressLevel: String? {
+        if let level = todayWellnessLog?.stressLevel, !level.isEmpty {
+            return level
+        }
+        if let score = liveStressScore {
+            return StressLevel(score: score).label
+        }
+        if let latest = todayStressReadings.last {
+            return latest.levelLabel
+        }
+        return nil
+    }
+
     private var wellnessRings: [WellnessRingItem] {
         let cupGoal = currentGoals.waterDailyCups
         let energyGoal = currentGoals.activeEnergyGoalKcal
         let calorieGoal = currentGoals.calorieGoal
         let log = todayWellnessLog
+        let stressLevel = effectiveStressLevel
 
         let calorieProgress: CGFloat = calorieGoal > 0
             ? min(1.0, CGFloat(todayCalories) / CGFloat(calorieGoal))
@@ -783,7 +831,7 @@ struct HomeView: View {
         let exerciseProgress: CGFloat = energyGoal > 0
             ? min(1.0, CGFloat(burnedKcal) / CGFloat(energyGoal))
             : 0
-        let stressProgress = stressProgressFromLevel(log?.stressLevel)
+        let stressProgress = stressProgressFromLevel(stressLevel)
 
         return [
             WellnessRingItem(
@@ -822,8 +870,8 @@ struct HomeView: View {
                 value: "",
                 progress: stressProgress,
                 color: Color(hue: 0.76, saturation: 0.50, brightness: 0.75),
-                emojiOrSymbol: stressEmojiFromLevel(log?.stressLevel),
-                inlineLabel: log?.stressLevel,
+                emojiOrSymbol: stressEmojiFromLevel(stressLevel),
+                inlineLabel: stressLevel,
                 destination: .stress
             )
         ]
@@ -862,7 +910,7 @@ struct HomeView: View {
         let waterProgress = cupGoal > 0 ? min(1.0, CGFloat(hydrationGlasses) / CGFloat(cupGoal)) : 0
         let burnedKcal = log?.caloriesBurned ?? 0
         let exerciseProgress = energyGoal > 0 ? min(1.0, CGFloat(burnedKcal) / CGFloat(energyGoal)) : 0
-        let stressProgress = stressProgressFromLevel(log?.stressLevel)
+        let stressProgress = stressProgressFromLevel(effectiveStressLevel)
 
         let average = (calorieProgress + waterProgress + exerciseProgress + stressProgress) / 4
         return min(100, Int(round(average * 100)))
@@ -898,16 +946,21 @@ struct HomeView: View {
         return f.string(from: Date())
     }
 
-    private var greeting: String {
+    private var greetingPrefix: String {
         let hour = Calendar.current.component(.hour, from: Date())
-        let base: String
         switch hour {
-        case 5..<12:  base = "Good Morning"
-        case 12..<17: base = "Good Afternoon"
-        default:      base = "Good Evening"
+        case 5..<12:  return "Good Morning"
+        case 12..<17: return "Good Afternoon"
+        default:      return "Good Evening"
         }
-        let name = UserProfileManager.shared.userName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return name.isEmpty ? base : "\(base), \(name)"
+    }
+
+    private var userName: String {
+        UserProfileManager.shared.userName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var greeting: String {
+        userName.isEmpty ? greetingPrefix : "\(greetingPrefix), \(userName)"
     }
 
     // MARK: - Mood Logging
@@ -966,6 +1019,10 @@ struct HomeView: View {
                 Task { try? await HealthKitServiceFactory.shared.writeMood(mood) }
             }
             healthSuggestedMood = nil
+            // Mood feeds the stress score (mood factor, mindful bonus, no_mood
+            // engagement penalty). Trigger the shared VM to recompute so the
+            // Stress ring + sparkline reflect the new mood immediately.
+            stressViewModel.recompute(reason: .manualMood)
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 hasLoggedMoodToday = true
             }
@@ -982,11 +1039,12 @@ struct HomeView: View {
 
     /// Pulls today's active energy + steps from HealthKit and persists them
     /// into the today `WellnessDayLog` so the Exercise ring reads non-zero
-    /// even before the user has visited the Stress tab. In mock mode the log
-    /// is pre-seeded by `MockDataInjector`, so we skip.
+    /// even before the user has visited the Stress tab. In mock mode the
+    /// factory routes to `MockHealthKitService`, which keeps Home and Burn
+    /// reading from the same source even when `MockDataInjector` skipped
+    /// today (its guard skips dates that already have a WellnessDayLog).
     private func refreshTodayActivityFromHealthKit() {
         guard HealthKitServiceFactory.isDataAvailable else { return }
-        if AppConfig.shared.mockMode { return }
 
         Task {
             let service = HealthKitServiceFactory.shared

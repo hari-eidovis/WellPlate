@@ -8,7 +8,16 @@ struct MoodCheckInSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    /// Fires after the mood is persisted, before dismissal. Lets parents
+    /// (e.g. StressView) trigger a stress recompute so derived UI like the
+    /// "Quick wins" card refreshes immediately.
+    var onSaved: (() -> Void)? = nil
+
     @State private var selectedMood: MoodOption? = nil
+    /// Snapshot of the persisted mood at sheet open. Used to ignore the
+    /// `onChange` fired by restoring `selectedMood` in `onAppear` so the
+    /// sheet doesn't save-and-dismiss the moment it appears.
+    @State private var initialMood: MoodOption? = nil
 
     var body: some View {
         NavigationStack {
@@ -27,11 +36,16 @@ struct MoodCheckInSheet: View {
                 }
             }
         }
-        .onAppear { selectedMood = todaysMood() }
+        .onAppear {
+            let loaded = todaysMood()
+            initialMood = loaded
+            selectedMood = loaded
+        }
         .onChange(of: selectedMood) { newValue in
-            if let mood = newValue {
-                saveMood(mood)
-            }
+            // Skip the restore-from-store change; only react to user picks
+            // that actually differ from what's already saved.
+            guard let mood = newValue, mood != initialMood else { return }
+            saveMood(mood)
         }
         .presentationDetents([.medium, .large])
     }
@@ -62,6 +76,7 @@ struct MoodCheckInSheet: View {
         log.moodRaw = mood.rawValue
         try? modelContext.save()
         HapticService.impact(.light)
+        onSaved?()
         dismiss()
     }
 }

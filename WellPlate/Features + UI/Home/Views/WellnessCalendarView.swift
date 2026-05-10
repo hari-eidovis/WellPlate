@@ -30,6 +30,23 @@ struct WellnessCalendarView: View {
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .scrollIndicators(.hidden)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 30)
+                .onEnded { value in
+                    let horizontal = value.translation.width
+                    let vertical = value.translation.height
+                    guard abs(horizontal) > abs(vertical) * 1.5,
+                          abs(horizontal) > 60 else { return }
+                    let dayDelta = horizontal < 0 ? 1 : -1
+                    guard let newDate = Calendar.current.date(
+                        byAdding: .day, value: dayDelta, to: viewModel.selectedDate
+                    ) else { return }
+                    HapticService.impact(.light)
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                        viewModel.loadData(for: newDate)
+                    }
+                }
+        )
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -93,7 +110,7 @@ struct WellnessCalendarView: View {
             HStack {
                 Text(selectedDateString)
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(isSelectedDateToday ? AppColors.brand : .primary)
 
                 Image(systemName: "chevron.down")
                     .font(.system(size: 13, weight: .semibold))
@@ -561,6 +578,10 @@ struct WellnessCalendarView: View {
         let f = DateFormatter()
         f.dateFormat = "EEEE, MMMM d"
         return f.string(from: viewModel.selectedDate)
+    }
+
+    private var isSelectedDateToday: Bool {
+        Calendar.current.isDateInToday(viewModel.selectedDate)
     }
 }
 

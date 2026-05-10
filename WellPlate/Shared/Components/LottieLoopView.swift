@@ -1,6 +1,8 @@
 import SwiftUI
 import Lottie
 
+/// SwiftUI wrapper around `LottieAnimationView` that auto-detects whether the
+/// resource is a dotLottie (`.lottie`) or classic JSON (`.json`) file.
 struct LottieLoopView: UIViewRepresentable {
     let name: String
     var loopMode: LottieLoopMode = .loop
@@ -8,7 +10,7 @@ struct LottieLoopView: UIViewRepresentable {
     var contentMode: UIView.ContentMode = .scaleAspectFit
 
     func makeUIView(context: Context) -> LottieAnimationView {
-        let view = LottieAnimationView(name: name)
+        let view = LottieAnimationView()
         view.loopMode = loopMode
         view.animationSpeed = speed
         view.contentMode = contentMode
@@ -17,7 +19,25 @@ struct LottieLoopView: UIViewRepresentable {
         view.setContentHuggingPriority(.defaultLow, for: .vertical)
         view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         view.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
-        view.play()
+
+        let resourceName = name
+        let loop = loopMode
+
+        if Bundle.main.url(forResource: resourceName, withExtension: "lottie") != nil {
+            DotLottieFile.named(resourceName) { result in
+                DispatchQueue.main.async {
+                    if case .success(let file) = result {
+                        view.loadAnimation(from: file)
+                        view.loopMode = loop
+                        view.play()
+                    }
+                }
+            }
+        } else {
+            view.animation = LottieAnimation.named(resourceName)
+            view.play()
+        }
+
         return view
     }
 

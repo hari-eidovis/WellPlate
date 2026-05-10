@@ -20,6 +20,8 @@ struct WellnessRingItem: Identifiable {
     let emojiOrSymbol: String?   // Optional emoji shown instead of value for Stress
     let inlineLabel: String?     // Optional text shown below emoji inside the ring
     let destination: WellnessRingDestination
+    /// Plain-language explanation shown in the ring info sheet.
+    var infoDescription: String? = nil
 }
 
 struct WellnessRingsCard: View {
@@ -30,6 +32,7 @@ struct WellnessRingsCard: View {
     var onRingTap: (WellnessRingDestination) -> Void = { _ in }
 
     @State private var animate = false
+    @State private var showRingInfo = false
 
     var body: some View {
         VStack(spacing: 32) {
@@ -38,15 +41,20 @@ struct WellnessRingsCard: View {
             HStack {
                 Spacer()
 
-                Text("Tap a ring to explore")
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(Color(.tertiarySystemFill))
-                    )
+                Button {
+                    HapticService.impact(.light)
+                    showRingInfo = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(
+                            Circle().fill(Color(.tertiarySystemFill))
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("What do these rings mean?")
             }
 
             // Rings row
@@ -74,6 +82,11 @@ struct WellnessRingsCard: View {
             withAnimation(.spring(response: 1.1, dampingFraction: 0.72).delay(0.15)) {
                 animate = true
             }
+        }
+        .sheet(isPresented: $showRingInfo) {
+            RingInfoSheet(rings: rings)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -175,6 +188,89 @@ private struct RingButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+// MARK: - RingInfoSheet
+
+private struct RingInfoSheet: View {
+    let rings: [WellnessRingItem]
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 14) {
+                    Text("Each ring tracks one part of your day. Tap any ring on the home screen to dive in.")
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.bottom, 4)
+
+                    ForEach(rings) { ring in
+                        ringInfoRow(ring: ring)
+                    }
+                }
+                .padding(20)
+            }
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .navigationTitle("Wellness Rings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func ringInfoRow(ring: WellnessRingItem) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                Circle()
+                    .stroke(ring.color.opacity(0.18), lineWidth: 5)
+                    .frame(width: 40, height: 40)
+                Circle()
+                    .trim(from: 0, to: max(0.08, ring.progress))
+                    .stroke(ring.color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 40, height: 40)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(ring.label)
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+
+                Text(ring.infoDescription ?? defaultDescription(for: ring.destination))
+                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
+    }
+
+    /// Fallback copy when the caller didn't supply `infoDescription`.
+    private func defaultDescription(for destination: WellnessRingDestination) -> String {
+        switch destination {
+        case .calories:
+            return "Calories you've eaten today vs. your daily target."
+        case .water:
+            return "Glasses of water you've logged today vs. your hydration goal."
+        case .exercise:
+            return "Active calories you've burned today, pulled from Apple Health."
+        case .stress:
+            return "Today's stress level — computed from sleep, exercise, screen time, and vitals."
+        }
     }
 }
 
