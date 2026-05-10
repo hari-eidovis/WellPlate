@@ -18,6 +18,10 @@ enum StressSheet: Identifiable {
     case interventions
     case fasting
     case circadian
+    case allFactors
+    case manualLog
+    case mood
+    case symptoms
 
     var id: String {
         switch self {
@@ -29,6 +33,10 @@ enum StressSheet: Identifiable {
         case .interventions:    return "interventions"
         case .fasting:          return "fasting"
         case .circadian:        return "circadian"
+        case .allFactors:       return "allFactors"
+        case .manualLog:        return "manualLog"
+        case .mood:             return "mood"
+        case .symptoms:         return "symptoms"
         }
     }
 }
@@ -42,8 +50,10 @@ struct StressView: View {
     @StateObject var viewModel: StressViewModel
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var promptCoordinator: DailyPromptCoordinator
+    @EnvironmentObject private var tabSelector: TabSelector
     @State private var activeSheet: StressSheet? = nil
     @State private var showInsights = false
+    @State private var showV3Banner: Bool = !UserDefaults.standard.bool(forKey: "wp.stress.v3AnnouncementShown")
 
     // Entrance animation states
     @State private var scoreAppeared   = false
@@ -180,6 +190,14 @@ struct StressView: View {
                     sleepSummaries: viewModel.sleepHistory,
                     daylightSamples: viewModel.daylightHistory
                 )
+            case .allFactors:
+                AllFactorsSheet(viewModel: viewModel)
+            case .manualLog:
+                QuickLogManualSheet()
+            case .mood:
+                MoodCheckInSheet()
+            case .symptoms:
+                SymptomLogSheet()
             }
         }
     }
@@ -224,6 +242,13 @@ struct StressView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
 
+                // ── v3 announcement banner (one-time) ─────────────
+                if showV3Banner {
+                    v3AnnouncementBanner
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+                }
+
                 // ── Score Header ──────────────────────────────────
                 scoreHeader
                     .padding(.top, 20)
@@ -240,6 +265,44 @@ struct StressView: View {
                 .padding(.top, 28)
                 .opacity(chartAppeared ? 1 : 0)
                 .offset(y: chartAppeared ? 0 : 12)
+
+                // ── TOP DRIVERS (v3 top-5) ────────────────────────
+                if !topDrivers.isEmpty {
+                    factorsSection
+                        .padding(.horizontal, 20)
+                        .padding(.top, 28)
+                }
+
+                // ── ENGAGEMENT GAPS (v3) ──────────────────────────
+                if viewModel.engagementPenaltyValue > 0 {
+                    EngagementGapsCard(viewModel: viewModel, activeSheet: $activeSheet)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 18)
+                }
+
+                // ── ALL FACTORS DISCLOSURE ────────────────────────
+                Button {
+                    HapticService.impact(.light)
+                    activeSheet = .allFactors
+                } label: {
+                    HStack {
+                        Text("View all 13 factors")
+                            .font(.r(.subheadline, .semibold))
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundStyle(AppColors.brand)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(AppColors.brand.opacity(0.08))
+                    )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
 
                 // ── THIS WEEK ─────────────────────────────────────
                 VStack(alignment: .leading, spacing: 10) {
@@ -269,12 +332,32 @@ struct StressView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 28)
-                    .padding(.bottom, 40)
                     .opacity(adviceAppeared ? 1 : 0)
                     .offset(y: adviceAppeared ? 0 : 16)
-                } else {
-                    Spacer().frame(height: 40)
                 }
+
+                // ── QUICK LOG ─────────────────────────────────────
+                Button {
+                    HapticService.impact(.light)
+                    activeSheet = .manualLog
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Quick Log")
+                    }
+                    .font(.r(.headline, .semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .foregroundStyle(.white)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Self.themeBlue)
+                    )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 20)
+                .padding(.top, 28)
+                .padding(.bottom, 40)
             }
         }
         .refreshable {
@@ -282,6 +365,40 @@ struct StressView: View {
             viewModel.refreshScreenTimeOnly()
             viewModel.loadReadings()
         }
+    }
+
+    // MARK: - V3 Announcement Banner
+
+    private var v3AnnouncementBanner: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Self.themeBlue)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Now smarter")
+                    .font(.r(.subheadline, .semibold))
+                Text("Your stress score now considers mood, hydration, symptoms, and more — 13 factors total. Vitals like HRV are used to calibrate accuracy against your personal baseline.")
+                    .font(.r(.caption, .regular))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 4)
+            Button {
+                UserDefaults.standard.set(true, forKey: "wp.stress.v3AnnouncementShown")
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    showV3Banner = false
+                }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Self.themeBlue.opacity(0.08))
+        )
     }
 
     // MARK: - Score Header
@@ -304,17 +421,24 @@ struct StressView: View {
     }
 
     private var confidenceBadge: some View {
-        HStack(spacing: 6) {
-            Image(systemName: viewModel.stressConfidence.systemImage)
-                .font(.system(size: 13, weight: .semibold))
-            Text("\(viewModel.stressConfidence.label) · \(viewModel.factorCoverage)/4 factors")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
-                .tracking(0.4)
+        HStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: viewModel.stressConfidence.systemImage)
+                    .font(.system(size: 13, weight: .semibold))
+                Text("\(viewModel.factorCoverage) of 13 factors logged")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .tracking(0.4)
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(Color(.systemGray6)))
+
+            CalibratorChip(
+                calibrator: viewModel.calibratorMultiplier,
+                hasBaseline: viewModel.todayHRV != nil || viewModel.todayRestingHR != nil
+            )
         }
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(Capsule().fill(Color(.systemGray6)))
     }
 
     private var formattedToday: String {
@@ -466,12 +590,12 @@ struct StressView: View {
     }
 
     private var adviceCard: some View {
-        let topFactor = sortedFactors.first
-        let factorIcon = topFactor?.factor.icon ?? "leaf.fill"
-        let accent = topFactor?.factor.accentColor ?? Self.themeBlue
-        let sheet = topFactor?.sheet
-        let impact = topFactor.map { Int($0.factor.stressContribution.rounded()) } ?? 0
-        let factorTitle = topFactor?.factor.title.uppercased() ?? "LIFESTYLE"
+        let topFactor = topDrivers.first
+        let factorIcon = topFactor?.icon ?? "leaf.fill"
+        let accent = topFactor?.accentColor ?? Self.themeBlue
+        let sheet = topFactor.flatMap { sheetForFactor($0) }
+        let impact = topFactor.map { Int($0.stressContribution.rounded()) } ?? 0
+        let factorTitle = topFactor?.title.uppercased() ?? "LIFESTYLE"
 
         return Button {
             HapticService.impact(.light)
@@ -536,7 +660,7 @@ struct StressView: View {
                 }
 
                 // ── Insight text
-                Text(adviceText(for: topFactor?.factor))
+                Text(adviceText(for: topFactor))
                     .font(.system(size: 14.5, weight: .regular))
                     .foregroundColor(.primary.opacity(0.88))
                     .lineSpacing(3)
@@ -546,7 +670,7 @@ struct StressView: View {
                 // ── CTA chip + chevron
                 HStack {
                     HStack(spacing: 6) {
-                        Text(actionLabel(for: topFactor?.factor))
+                        Text(actionLabel(for: topFactor))
                             .font(.system(size: 13, weight: .semibold))
                         Image(systemName: "arrow.right")
                             .font(.system(size: 11, weight: .bold))
@@ -804,32 +928,62 @@ struct StressView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Factors Section
+    // MARK: - Factors Section (v3: top-5 drivers ranked by stress contribution)
 
-    private struct FactorItem {
-        let factor: StressFactorResult
-        let sheet: StressSheet?
+    private var topDrivers: [StressFactorResult] {
+        viewModel.allFactors
+            .filter(\.hasValidData)
+            .sorted { $0.stressContribution > $1.stressContribution }
+            .prefix(5)
+            .map { $0 }
     }
 
-    private var sortedFactors: [FactorItem] {
-        [
-            FactorItem(factor: viewModel.exerciseFactor,   sheet: .exercise),
-            FactorItem(factor: viewModel.sleepFactor,      sheet: .sleep),
-            FactorItem(factor: viewModel.dietFactor,       sheet: .diet),
-            FactorItem(factor: viewModel.screenTimeFactor, sheet: .screenTimeDetail),
-        ]
-        .sorted { $0.factor.stressContribution > $1.factor.stressContribution }
+    /// Routes a factor's title to its detail sheet/action. nil = non-tappable.
+    private func sheetForFactor(_ factor: StressFactorResult) -> StressSheet? {
+        switch factor.title {
+        case "Sleep":           return .sleep
+        case "Exercise":        return .exercise
+        case "Caffeine":        return nil    // non-tappable in v3
+        case "Screen Time":     return .screenTimeDetail
+        case "Diet":            return .diet
+        case "Hydration":       return nil    // routes via TabSelector below
+        case "Circadian":       return .sleep
+        case "Daylight":        return .sleep
+        case "Meal Timing":     return .diet
+        case "Fasting":         return .fasting
+        case "Eating Triggers": return nil    // non-tappable in v3
+        case "Mood":            return .mood
+        case "Symptoms":        return .symptoms
+        default:                return nil
+        }
+    }
+
+    /// Cross-tab navigation for factors that route via TabSelector instead of a sheet.
+    private func tabActionForFactor(_ factor: StressFactorResult) -> (() -> Void)? {
+        switch factor.title {
+        case "Hydration":
+            return { tabSelector.switchTo(.home, andPresent: .water) }
+        default:
+            return nil
+        }
     }
 
     private var factorsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionLabel("STRESS FACTORS")
+            sectionLabel("TOP DRIVERS")
             VStack(spacing: 10) {
-                ForEach(sortedFactors, id: \.factor.id) { item in
-                    if let sheet = item.sheet {
-                        StressFactorCardView(factor: item.factor, onTap: { activeSheet = sheet; showInsights = false })
+                ForEach(topDrivers, id: \.id) { factor in
+                    let sheet = sheetForFactor(factor)
+                    let tabAction = tabActionForFactor(factor)
+                    if let sheet {
+                        StressFactorCardView(factor: factor, onTap: {
+                            activeSheet = sheet
+                            showInsights = false
+                        })
+                    } else if let tabAction {
+                        StressFactorCardView(factor: factor, onTap: tabAction)
                     } else {
-                        StressFactorCardView(factor: item.factor)
+                        StressFactorCardView(factor: factor)
                     }
                 }
             }
