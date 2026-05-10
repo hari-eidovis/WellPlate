@@ -574,6 +574,8 @@ struct StressMockSnapshot {
         let t4 = at(today, 17, 45)
         let g5 = UUID()
         let t5 = at(today, 19, 20)
+        let g6 = UUID()
+        let t6 = at(today, 21, 5)
 
         // Yesterday's recompute groups.
         let yg1 = UUID()
@@ -639,6 +641,15 @@ struct StressMockSnapshot {
                 deltaPoints: -3.2, prevValue: 3.2, nextValue: 0,
                 totalBefore: 29, totalAfter: 26,
                 source: .manualMood, detailText: "Mood gap closed"
+            ),
+
+            // Today — 9:05 PM: user logged screen time manually (downshift)
+            MockChangeEntry(
+                id: UUID(), timestamp: t6, groupID: g6, sequence: 0,
+                kind: .factor, subjectKey: "screen_time", subjectIcon: "iphone",
+                deltaPoints: -1.4, prevValue: 5.7, nextValue: 4.3,
+                totalBefore: 26, totalAfter: 25,
+                source: .manualScreenTime, detailText: "Screen time eased"
             ),
 
             // Yesterday — 9:00 AM: cold-launch anchor
