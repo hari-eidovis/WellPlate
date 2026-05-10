@@ -12,6 +12,7 @@ final class UserProfileManager {
 
     private enum Key: String {
         case hasCompletedOnboarding
+        case onboardingCompletedAt
         case userName
         case userWeight      // always kg
         case userHeight      // always cm
@@ -24,6 +25,14 @@ final class UserProfileManager {
     var hasCompletedOnboarding: Bool {
         get { defaults.bool(forKey: Key.hasCompletedOnboarding.rawValue) }
         set { defaults.set(newValue, forKey: Key.hasCompletedOnboarding.rawValue) }
+    }
+
+    /// Timestamp of when the user finished onboarding. Used by
+    /// `DailyPromptCoordinator` to suppress check-in prompts for the first 24h.
+    /// Legacy users may have `nil` — coordinator treats that as long-completed.
+    var onboardingCompletedAt: Date? {
+        get { defaults.object(forKey: Key.onboardingCompletedAt.rawValue) as? Date }
+        set { defaults.set(newValue, forKey: Key.onboardingCompletedAt.rawValue) }
     }
 
     // MARK: - Name

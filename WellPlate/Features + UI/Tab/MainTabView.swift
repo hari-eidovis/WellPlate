@@ -9,20 +9,29 @@ import SwiftUI
 
 struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedTab = 0
+    @EnvironmentObject private var tabSelector: TabSelector
     @Binding var pendingDeepLink: URL?
 
+    /// Bridges `tabSelector.selectedTab` (TabKind) to legacy `Binding<Int>`
+    /// consumers (currently `HomeView`).
+    private var homeIndexBinding: Binding<Int> {
+        Binding<Int>(
+            get: { tabSelector.selectedTab.legacyIndex },
+            set: { tabSelector.selectedTab = TabKind.fromLegacyIndex($0) }
+        )
+    }
+
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: $tabSelector.selectedTab) {
             // MARK: - Home
-            Tab(value: 0) {
-                HomeView(selectedTab: $selectedTab)
+            Tab(value: TabKind.home) {
+                HomeView(selectedTab: homeIndexBinding)
             } label: {
                 Label("Home", systemImage: "house.fill")
             }
 
             // MARK: - Stress
-            Tab(value: 1) {
+            Tab(value: TabKind.stress) {
                 StressView(viewModel: {
                     #if DEBUG
                     if AppConfig.shared.mockMode {
@@ -40,26 +49,39 @@ struct MainTabView: View {
             }
 
             // MARK: - History
-            Tab(value: 2) {
+            Tab(value: TabKind.history) {
                 HistoryView()
             } label: {
                 Label("History", systemImage: "calendar.badge.clock")
             }
 
             // MARK: - Profile
-            Tab(value: 3) {
+            Tab(value: TabKind.profile) {
                 ProfilePlaceholderView()
             } label: {
                 Label("Profile", systemImage: "person.crop.circle.fill")
             }
         }
-       // .tabViewStyle(.sidebarAdaptable)
-        .tint(selectedTab == 1 ? Color(hex: "5E9FFF") : AppColors.brand)
-        .sensoryFeedback(.selection, trigger: selectedTab)
+        .tint(tabSelector.selectedTab == .stress ? Color(hex: "5E9FFF") : AppColors.brand)
+        .sensoryFeedback(.selection, trigger: tabSelector.selectedTab)
+        .sheet(item: $tabSelector.presentedSheet) { kind in
+            switch kind {
+            case .water:
+                let goals = UserGoals.current(in: modelContext)
+                NavigationStack {
+                    WaterDetailView(totalGlasses: goals.waterDailyCups, cupSizeML: goals.waterCupSizeML)
+                }
+            case .foodLog:
+                // Full meal-log sheet requires HomeViewModel; for now, a
+                // tab-switch-only behaviour. HomeView's meal log button is
+                // visible once the user lands on Home.
+                Color.clear.onAppear { tabSelector.presentedSheet = nil }
+            }
+        }
         .onChange(of: pendingDeepLink) { _, url in
             guard let url, url.scheme == "wellplate" else { return }
             switch url.host {
-            case "stress": selectedTab = 1
+            case "stress": tabSelector.selectedTab = .stress
             default: break
             }
             pendingDeepLink = nil
@@ -69,4 +91,5 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView(pendingDeepLink: .constant(nil))
+        .environmentObject(TabSelector())
 }

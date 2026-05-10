@@ -11,6 +11,9 @@ import SwiftData
 
 @main
 struct WellPlateApp: App {
+    @StateObject private var promptCoordinator = DailyPromptCoordinator()
+    @StateObject private var tabSelector = TabSelector()
+
     init() {
         // Log current configuration on app start
         AppConfig.shared.logCurrentMode()
@@ -30,6 +33,8 @@ struct WellPlateApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environmentObject(promptCoordinator)
+                .environmentObject(tabSelector)
         }
         .modelContainer(for: [FoodCache.self, FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, StressReading.self, InterventionSession.self, FastingSchedule.self, FastingSession.self, JournalEntry.self, SymptomEntry.self, SupplementEntry.self, AdherenceLog.self, ManualDailyInput.self])
 

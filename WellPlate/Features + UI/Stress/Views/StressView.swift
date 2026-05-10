@@ -41,6 +41,7 @@ struct StressView: View {
 
     @StateObject var viewModel: StressViewModel
     @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject private var promptCoordinator: DailyPromptCoordinator
     @State private var activeSheet: StressSheet? = nil
     @State private var showInsights = false
 
@@ -110,6 +111,7 @@ struct StressView: View {
             }
         }
         .task {
+            viewModel.bindManualInputUpdates(from: promptCoordinator)
             if !viewModel.usesMockData {
                 await ScreenTimeManager.shared.requestAuthorization()
                 ScreenTimeManager.shared.startMonitoring()
