@@ -807,14 +807,6 @@ struct StressView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 28)
 
-                    // Stress through the day (detailed)
-                    VStack(alignment: .leading, spacing: 10) {
-                        sectionLabel("STRESS THROUGH THE DAY")
-                        StressDayChartView(readings: viewModel.todayReadings)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 28)
-
                     Spacer().frame(height: 40)
                 }
             }
