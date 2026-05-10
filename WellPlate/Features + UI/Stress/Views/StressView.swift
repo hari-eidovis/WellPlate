@@ -47,7 +47,7 @@ struct StressView: View {
 
     static let themeBlue = Color(hex: "5E9FFF")
 
-    @StateObject var viewModel: StressViewModel
+    @ObservedObject var viewModel: StressViewModel
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var promptCoordinator: DailyPromptCoordinator
     @EnvironmentObject private var tabSelector: TabSelector

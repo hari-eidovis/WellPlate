@@ -33,6 +33,10 @@ struct HomeView: View {
     @Query(sort: \StressReading.timestamp) private var allStressReadings: [StressReading]
 
     @Binding var selectedTab: Int
+    /// Shared instance from MainTabView. HomeView observes `totalScore` /
+    /// `stressLevel` directly so the sparkline card stays in sync with the
+    /// Stress tab even when the user is logging mood/water/food/etc.
+    @ObservedObject var stressViewModel: StressViewModel
 
     // MARK: - State
 
@@ -147,6 +151,7 @@ struct HomeView: View {
                 readings: todayStressReadings,
                 stressLevel: todayWellnessLog?.stressLevel,
                 scoreDelta: stressScoreDelta,
+                liveScore: liveStressScore,
                 onTap: { selectedTab = 1 }
             )
             .padding(.horizontal, 16)
@@ -512,10 +517,17 @@ struct HomeView: View {
 
     private var homeHeader: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text(todayString)
                     .font(.system(size: 12, weight: .regular, design: .rounded))
                     .foregroundStyle(.secondary)
+                    .padding(.bottom, 6)
+
+                LottieLoopView(name: "Loader cat")
+                    .frame(width: 64, height: 46)
+                    .padding(.leading, 2)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
 
                 Text(greeting)
                     .font(.system(size: 16, weight: .bold, design: .rounded))
@@ -599,6 +611,15 @@ struct HomeView: View {
               let yesterday = yesterdayLastStressReading else { return nil }
         let delta = Int(today.score.rounded()) - Int(yesterday.score.rounded())
         return delta == 0 ? nil : delta
+    }
+
+    /// Live score from the shared StressViewModel. Nil until the first
+    /// successful `loadData()` so the card can fall back to the latest
+    /// persisted reading instead of showing 0.
+    private var liveStressScore: Double? {
+        guard stressViewModel.isAuthorized || stressViewModel.usesMockData else { return nil }
+        guard stressViewModel.totalScore > 0 else { return nil }
+        return stressViewModel.totalScore
     }
 
     private var todayCalories: Int {
@@ -1066,9 +1087,12 @@ struct HomeView: View {
 #Preview("Home Dashboard") {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(
-        for: FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, JournalEntry.self,
+        for: FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, JournalEntry.self, StressReading.self,
         configurations: config
     )
-    return HomeView(selectedTab: .constant(0))
-        .modelContainer(container)
+    return HomeView(
+        selectedTab: .constant(0),
+        stressViewModel: StressViewModel(modelContext: container.mainContext)
+    )
+    .modelContainer(container)
 }

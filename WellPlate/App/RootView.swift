@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct RootView: View {
     @State private var showSplash = false
@@ -35,7 +36,7 @@ struct RootView: View {
                 }
                 .transition(.opacity)
             } else {
-                MainTabView(pendingDeepLink: $pendingDeepLink)
+                MainTabView(pendingDeepLink: $pendingDeepLink, modelContext: modelContext)
                     .transition(.opacity)
                     .sheet(item: $promptCoordinator.pendingPrompt) { kind in
                         QuickCheckInSheet(kind: kind, coordinator: promptCoordinator)

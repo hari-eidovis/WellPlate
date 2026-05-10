@@ -6,11 +6,30 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var tabSelector: TabSelector
+    @EnvironmentObject private var promptCoordinator: DailyPromptCoordinator
     @Binding var pendingDeepLink: URL?
+
+    /// Shared across Home (live score readout) and Stress (full UI).
+    @StateObject private var stressViewModel: StressViewModel
+
+    init(pendingDeepLink: Binding<URL?>, modelContext: ModelContext) {
+        self._pendingDeepLink = pendingDeepLink
+        let snapshot: StressMockSnapshot? = {
+            #if DEBUG
+            return AppConfig.shared.mockMode ? StressMockSnapshot.default : nil
+            #else
+            return nil
+            #endif
+        }()
+        _stressViewModel = StateObject(
+            wrappedValue: StressViewModel(modelContext: modelContext, mockSnapshot: snapshot)
+        )
+    }
 
     /// Bridges `tabSelector.selectedTab` (TabKind) to legacy `Binding<Int>`
     /// consumers (currently `HomeView`).
@@ -25,25 +44,14 @@ struct MainTabView: View {
         TabView(selection: $tabSelector.selectedTab) {
             // MARK: - Home
             Tab(value: TabKind.home) {
-                HomeView(selectedTab: homeIndexBinding)
+                HomeView(selectedTab: homeIndexBinding, stressViewModel: stressViewModel)
             } label: {
                 Label("Home", systemImage: "house.fill")
             }
 
             // MARK: - Stress
             Tab(value: TabKind.stress) {
-                StressView(viewModel: {
-                    #if DEBUG
-                    if AppConfig.shared.mockMode {
-                        let snap = StressMockSnapshot.default
-                        return StressViewModel(
-                            modelContext: modelContext,
-                            mockSnapshot: snap
-                        )
-                    }
-                    #endif
-                    return StressViewModel(modelContext: modelContext)
-                }())
+                StressView(viewModel: stressViewModel)
             } label: {
                 Label("Stress", systemImage: "brain.head.profile.fill")
             }
@@ -86,10 +94,26 @@ struct MainTabView: View {
             }
             pendingDeepLink = nil
         }
+        .task {
+            // Bind manual-input updates here so the shared VM responds to
+            // mood/water/food saves regardless of which tab is active.
+            // HK auth + initial loadData stay in StressView.task to preserve
+            // the existing UX where the auth prompt is tied to the Stress tab.
+            stressViewModel.bindManualInputUpdates(from: promptCoordinator)
+        }
     }
 }
 
 #Preview {
-    MainTabView(pendingDeepLink: .constant(nil))
-        .environmentObject(TabSelector())
+    let container = try! ModelContainer(
+        for: StressReading.self, WellnessDayLog.self, FoodLogEntry.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    return MainTabView(
+        pendingDeepLink: .constant(nil as URL?),
+        modelContext: container.mainContext
+    )
+    .environmentObject(TabSelector())
+    .environmentObject(DailyPromptCoordinator())
+    .modelContainer(container)
 }

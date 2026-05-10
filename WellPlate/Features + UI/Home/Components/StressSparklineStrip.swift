@@ -12,6 +12,11 @@ struct StressSparklineStrip: View {
     let readings: [StressReading]
     let stressLevel: String?
     let scoreDelta: Int?
+    /// Optional live score from the shared StressViewModel. When non-nil it
+    /// overrides the latest persisted reading for the big number, level chip,
+    /// accent color, and "now" pulse — keeping Home in sync with the Stress
+    /// tab between snapshot writes.
+    var liveScore: Double? = nil
     var onTap: () -> Void
 
     // MARK: - Chart Data Model
@@ -23,10 +28,20 @@ struct StressSparklineStrip: View {
     }
 
     private var chartPoints: [IntradayPoint] {
-        readings.enumerated().map {
+        var points = readings.enumerated().map {
             IntradayPoint(id: $0.offset, timestamp: $0.element.timestamp, score: $0.element.score)
         }
+        // Extend the line to "now" with the live score so the chart end
+        // matches the headline number when readings haven't been re-snapshotted yet.
+        if let live = liveScore,
+           let last = readings.last,
+           abs(live - last.score) >= 0.5 {
+            points.append(IntradayPoint(id: points.count, timestamp: Date(), score: live))
+        }
+        return points
     }
+
+    private var nowPoint: IntradayPoint? { chartPoints.last }
 
     // MARK: - Animation
 
@@ -35,10 +50,18 @@ struct StressSparklineStrip: View {
 
     // MARK: - Computed Helpers
 
-    private var latestScore: Double? { readings.last?.score }
+    private var latestScore: Double? { liveScore ?? readings.last?.score }
 
     private var latestLevel: StressLevel? {
         latestScore.map { StressLevel(score: $0) }
+    }
+
+    /// Live score wins so Home matches the Stress tab; otherwise fall back to
+    /// the caller-supplied label or the latest persisted reading.
+    private var displayLevel: String? {
+        if liveScore != nil { return latestLevel?.label }
+        if let s = stressLevel, !s.isEmpty { return s }
+        return latestLevel?.label
     }
 
     private var accentColor: Color {
@@ -140,7 +163,7 @@ struct StressSparklineStrip: View {
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
 
-                if let level = stressLevel {
+                if let level = displayLevel {
                     Text(level)
                         .font(.r(.subheadline, .semibold))
                         .foregroundStyle(accentColor)
@@ -253,11 +276,13 @@ struct StressSparklineStrip: View {
             .lineStyle(StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
             .interpolationMethod(.catmullRom)
 
-            // Pulsing "now" dot on the latest reading.
-            if let last = readings.last {
+            // Pulsing "now" dot — anchored on the last chart point so it sits
+            // on the line whether that's the latest snapshot or a synthetic
+            // live-score extension.
+            if let now = nowPoint {
                 PointMark(
-                    x: .value("Time", last.timestamp),
-                    y: .value("Stress", last.score)
+                    x: .value("Time", now.timestamp),
+                    y: .value("Stress", now.score)
                 )
                 .symbol {
                     ZStack {
