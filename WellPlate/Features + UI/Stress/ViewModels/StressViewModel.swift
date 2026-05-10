@@ -1014,18 +1014,45 @@ final class StressViewModel: ObservableObject {
             .flatMap(MoodOption.init(rawValue:))
         let effectiveMood: MoodOption? = liveMood ?? snap.mood
 
-        let sleepInput = StressScoring.SleepInput(
-            totalHours: snap.sleepSummary.totalHours,
-            deepHours: snap.sleepSummary.deepHours,
-            source: .healthKit
-        )
+        // Live manual input from QuickCheckInSheet overrides the seeded snapshot
+        // so mock mode reflects Quick Log saves immediately.
+        let manualInput = fetchTodayManualInput()
 
-        let exerciseInput: StressScoring.ExerciseInput? = (snap.steps > 0 || snap.energy > 0)
-            ? StressScoring.ExerciseInput(steps: snap.steps > 0 ? snap.steps : nil,
-                                          energy: snap.energy > 0 ? snap.energy : nil,
-                                          manualMinutes: nil,
-                                          source: .healthKit)
-            : nil
+        let sleepInput: StressScoring.SleepInput = {
+            if let m = manualInput, let h = m.sleepHours {
+                let derivedDeep: Double = {
+                    switch m.sleepQuality ?? 3 {
+                    case 1: return 0.25
+                    case 2: return 0.5
+                    case 3: return 0.75
+                    case 4: return 1.0
+                    case 5: return 1.33
+                    default: return 0.75
+                    }
+                }()
+                return StressScoring.SleepInput(totalHours: h, deepHours: derivedDeep, source: .manual)
+            }
+            return StressScoring.SleepInput(
+                totalHours: snap.sleepSummary.totalHours,
+                deepHours: snap.sleepSummary.deepHours,
+                source: .healthKit
+            )
+        }()
+
+        let exerciseInput: StressScoring.ExerciseInput? = {
+            if let mins = manualInput?.exerciseMinutes {
+                return StressScoring.ExerciseInput(steps: nil, energy: nil, manualMinutes: mins, source: .manual)
+            }
+            if snap.steps > 0 || snap.energy > 0 {
+                return StressScoring.ExerciseInput(
+                    steps: snap.steps > 0 ? snap.steps : nil,
+                    energy: snap.energy > 0 ? snap.energy : nil,
+                    manualMinutes: nil,
+                    source: .healthKit
+                )
+            }
+            return nil
+        }()
 
         // Mock caffeine reflects WellnessDayLog presence as `coffeeCups > 0 || coffeeType != nil`
         let hasWellnessProxy = (snap.coffeeCups > 0 || snap.coffeeType != nil || snap.waterGlasses > 0 || effectiveMood != nil)
@@ -1035,9 +1062,15 @@ final class StressViewModel: ObservableObject {
             hasWellnessRow: hasWellnessProxy
         )
 
-        let screenInput: StressScoring.ScreenInput? = snap.screenTimeHours > 0
-            ? StressScoring.ScreenInput(totalHours: snap.screenTimeHours, eveningHours: nil, source: .healthKit)
-            : nil
+        let screenInput: StressScoring.ScreenInput? = {
+            if let m = manualInput, let h = m.screenTimeHours {
+                let evening = (m.heavyEveningScreens == true) ? 2.0 : 0.0
+                return StressScoring.ScreenInput(totalHours: h, eveningHours: evening, source: .manual)
+            }
+            return snap.screenTimeHours > 0
+                ? StressScoring.ScreenInput(totalHours: snap.screenTimeHours, eveningHours: nil, source: .healthKit)
+                : nil
+        }()
         lastResolvedScreen = screenInput
 
         let dietInput = makeDietInput(from: snap.currentDayLogs)
@@ -1050,6 +1083,9 @@ final class StressViewModel: ObservableObject {
         let circadianInput = resolveCircadian(hkSummaries: snap.sleepHistory, manualHistory: [])
 
         let daylightInput: StressScoring.DaylightInput? = {
+            if let outside = manualInput?.amDaylightOutside {
+                return StressScoring.DaylightInput(minutes: outside ? 30 : 5, source: .manual)
+            }
             guard let today = snap.daylightHistory.first(where: { Calendar.current.isDateInToday($0.date) }),
                   today.value > 0 else { return nil }
             return StressScoring.DaylightInput(minutes: today.value, source: .healthKit)

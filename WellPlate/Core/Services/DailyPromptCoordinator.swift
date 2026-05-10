@@ -139,6 +139,61 @@ final class DailyPromptCoordinator: ObservableObject {
         }
     }
 
+    /// Called when the user navigates to the Stress tab. If it's ≥10:00 and
+    /// any daily-resolved driver (screen / exercise / daylight) is silent for
+    /// today (no HK data AND no manual input), surface the evening prompt for
+    /// those gaps. Honors the `eveningAskedAt` flag so once the user saves or
+    /// skips, we won't re-trigger until the next day.
+    func evaluateOnStressTabAppear(
+        now: Date,
+        modelContext: ModelContext,
+        healthService: HealthKitServiceProtocol
+    ) async {
+        guard !UserDefaults.standard.bool(forKey: Defaults.dontAskAgain) else { return }
+
+        if let completedAt = UserProfileManager.shared.onboardingCompletedAt,
+           now.timeIntervalSince(completedAt) < 24 * 3600 {
+            return
+        }
+
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: now)
+        let manualDescriptor = FetchDescriptor<ManualDailyInput>(
+            predicate: #Predicate { $0.day == today }
+        )
+        let manual = (try? modelContext.fetch(manualDescriptor))?.first
+
+        let hour = cal.component(.hour, from: now)
+        guard hour >= 10, manual?.eveningAskedAt == nil else { return }
+
+        let dayRange = DateInterval(start: today, end: now)
+        let screenSilent = ScreenTimeManager.shared.currentAutoDetectedReading == nil
+            && manual?.screenTimeHours == nil
+        let exerciseSilent: Bool
+        if healthService.isAuthorized {
+            let stepsToday = (try? await healthService.fetchSteps(for: dayRange))?.map(\.value).reduce(0, +) ?? 0
+            let energyToday = (try? await healthService.fetchActiveEnergy(for: dayRange))?.map(\.value).reduce(0, +) ?? 0
+            exerciseSilent = stepsToday <= 0 && energyToday <= 0 && manual?.exerciseMinutes == nil
+        } else {
+            exerciseSilent = manual?.exerciseMinutes == nil
+        }
+        let daylightSilent: Bool
+        if healthService.isAuthorized {
+            let dlToday = (try? await healthService.fetchDaylight(for: dayRange))?.map(\.value).reduce(0, +) ?? 0
+            daylightSilent = dlToday <= 0 && manual?.amDaylightOutside == nil
+        } else {
+            daylightSilent = manual?.amDaylightOutside == nil
+        }
+        let gaps = EveningGaps(
+            needsScreen: screenSilent,
+            needsExercise: exerciseSilent,
+            needsDaylight: daylightSilent
+        )
+        if gaps.needsScreen || gaps.needsExercise || gaps.needsDaylight {
+            pendingPrompt = .evening(gaps)
+        }
+    }
+
     // MARK: - User actions
 
     /// User chose "Skip for today" — record the skip timestamp on `ManualDailyInput`.

@@ -150,6 +150,13 @@ struct StressView: View {
                 viewModel.refreshScreenTimeOnly(reason: .autoOnAppear)
             }
             triggerEntranceAnimations()
+            Task {
+                await promptCoordinator.evaluateOnStressTabAppear(
+                    now: Date(),
+                    modelContext: modelContext,
+                    healthService: HealthKitServiceFactory.shared
+                )
+            }
         }
         .onReceive(refreshTicker) { _ in
             guard viewModel.isAuthorized else { return }
@@ -280,11 +287,12 @@ struct StressView: View {
                 .offset(y: chartAppeared ? 0 : 12)
 
                 // ── TOP DRIVERS (v3 top-5) ────────────────────────
-                if !topDrivers.isEmpty {
-                    factorsSection
-                        .padding(.horizontal, 20)
-                        .padding(.top, 28)
-                }
+                // Hidden for now
+                // if !topDrivers.isEmpty {
+                //     factorsSection
+                //         .padding(.horizontal, 20)
+                //         .padding(.top, 28)
+                // }
 
                 // ── ENGAGEMENT GAPS (v3) ──────────────────────────
                 if viewModel.engagementPenaltyValue > 0 {
@@ -340,27 +348,30 @@ struct StressView: View {
                 }
 
                 // ── QUICK LOG ─────────────────────────────────────
-                Button {
-                    HapticService.impact(.light)
-                    activeSheet = .manualLog
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus.circle.fill")
-                        Text("Quick Log")
-                    }
-                    .font(.r(.headline, .semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .foregroundStyle(.white)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Self.themeBlue)
-                    )
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 20)
-                .padding(.top, 28)
-                .padding(.bottom, 40)
+                // Hidden — sheet now auto-triggers via DailyPromptCoordinator
+                // when HK data is missing after 10 AM on Stress-tab entry.
+                // Button {
+                //     HapticService.impact(.light)
+                //     activeSheet = .manualLog
+                // } label: {
+                //     HStack(spacing: 8) {
+                //         Image(systemName: "plus.circle.fill")
+                //         Text("Quick Log")
+                //     }
+                //     .font(.r(.headline, .semibold))
+                //     .frame(maxWidth: .infinity)
+                //     .padding(.vertical, 14)
+                //     .foregroundStyle(.white)
+                //     .background(
+                //         RoundedRectangle(cornerRadius: 14)
+                //             .fill(Self.themeBlue)
+                //     )
+                // }
+                // .buttonStyle(.plain)
+                // .padding(.horizontal, 20)
+                // .padding(.top, 28)
+                // .padding(.bottom, 40)
+                Color.clear.frame(height: 40)
             }
         }
         .refreshable {

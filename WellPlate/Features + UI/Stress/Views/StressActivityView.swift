@@ -2,9 +2,9 @@
 //  StressActivityView.swift
 //  WellPlate
 //
-//  Transaction-style change log of the stress score. Each recompute is one
-//  collapsible event card; per-row deltas live inside. Hero score-arc at top.
-//  Routes via `viewModel.usesMockData`: mock path reads
+//  Transaction-style change log of the stress score. Vertical-rail timeline
+//  with one entry per `groupID`. Multi-row groups stay expandable. Routes
+//  via `viewModel.usesMockData`: mock path reads
 //  `viewModel.mockChangeEntries`; live path runs a bounded `FetchDescriptor`.
 //
 
@@ -29,6 +29,7 @@ struct StressActivityView: View {
     }
 
     private static let themeBlue = Color(hex: "5E9FFF")
+    private static let calibrationColor = Color(hue: 0.74, saturation: 0.45, brightness: 0.85)
 
     var body: some View {
         NavigationStack {
@@ -36,7 +37,7 @@ struct StressActivityView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     heroArc
                     filterChipRow
-                    sectionedList
+                    sectionedTimeline
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -215,10 +216,10 @@ struct StressActivityView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Sectioned List
+    // MARK: - Sectioned Timeline
 
     @ViewBuilder
-    private var sectionedList: some View {
+    private var sectionedTimeline: some View {
         let cal = Calendar.current
         let todayEntries = entries.filter { cal.isDateInToday($0.timestamp) }
         let yesterdayEntries = entries.filter { cal.isDateInYesterday($0.timestamp) }
@@ -226,29 +227,44 @@ struct StressActivityView: View {
             !cal.isDateInToday($0.timestamp) && !cal.isDateInYesterday($0.timestamp)
         }
 
-        VStack(alignment: .leading, spacing: 18) {
-            section(title: "TODAY", items: todayEntries, showEmpty: true)
+        VStack(alignment: .leading, spacing: 22) {
+            timelineSection(title: "TODAY", items: todayEntries, showEmpty: true)
             if !yesterdayEntries.isEmpty {
-                section(title: "YESTERDAY", items: yesterdayEntries, showEmpty: false)
+                timelineSection(title: "YESTERDAY", items: yesterdayEntries, showEmpty: false)
             }
             if !olderEntries.isEmpty {
-                section(title: "OLDER", items: olderEntries, showEmpty: false)
+                timelineSection(title: "OLDER", items: olderEntries, showEmpty: false)
             }
         }
     }
 
-    private func section(title: String, items: [any ChangeEntryDisplayable], showEmpty: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    @ViewBuilder
+    private func timelineSection(
+        title: String,
+        items: [any ChangeEntryDisplayable],
+        showEmpty: Bool
+    ) -> some View {
+        let groups = groupedByEvent(items)
+
+        VStack(alignment: .leading, spacing: 14) {
             Text(title)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.secondary)
                 .tracking(1.2)
                 .padding(.leading, 4)
 
-            if items.isEmpty && showEmpty {
+            if groups.isEmpty && showEmpty {
                 emptyStateCard
             } else {
-                eventCardList(items)
+                VStack(spacing: 0) {
+                    ForEach(groups.indices, id: \.self) { i in
+                        timelineEntry(
+                            group: groups[i].rows,
+                            isFirst: i == 0,
+                            isLast: i == groups.count - 1
+                        )
+                    }
+                }
             }
         }
     }
@@ -270,16 +286,6 @@ struct StressActivityView: View {
         )
     }
 
-    @ViewBuilder
-    private func eventCardList(_ items: [any ChangeEntryDisplayable]) -> some View {
-        let groups = groupedByEvent(items)
-        VStack(spacing: 10) {
-            ForEach(groups.indices, id: \.self) { i in
-                eventCard(group: groups[i].rows)
-            }
-        }
-    }
-
     /// Groups an already-sorted list (timestamp DESC, sequence ASC) by groupID
     /// while preserving the outer chronological order.
     private func groupedByEvent(_ items: [any ChangeEntryDisplayable]) -> [(id: UUID, rows: [any ChangeEntryDisplayable])] {
@@ -295,182 +301,249 @@ struct StressActivityView: View {
         return result
     }
 
-    // MARK: - Event Card Variants
+    // MARK: - Timeline Entry
 
     @ViewBuilder
-    private func eventCard(group: [any ChangeEntryDisplayable]) -> some View {
+    private func timelineEntry(
+        group: [any ChangeEntryDisplayable],
+        isFirst: Bool,
+        isLast: Bool
+    ) -> some View {
         let first = group.first!
         let isAnchor = first.entryKind == .anchor && group.count == 1
-        let isSingle = group.count == 1 && !isAnchor
+        let isAllCalibration = group.allSatisfy { $0.entryKind == .calibrator }
+        let isExpandable = group.count >= 2
+        let isExpanded = expandedGroups.contains(first.groupID)
+        let netDelta = first.totalAfter - first.totalBefore
 
-        if isAnchor {
-            anchorCard(first)
-        } else if isSingle {
-            singleRowCard(first)
-        } else {
-            collapsibleEventCard(group: group, isExpanded: expandedGroups.contains(first.groupID))
-        }
-    }
+        HStack(alignment: .top, spacing: 12) {
+            timeColumn(date: first.timestamp)
+                .frame(width: 50, alignment: .trailing)
 
-    private func anchorCard(_ entry: any ChangeEntryDisplayable) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle().fill(Color.gray.opacity(0.13)).frame(width: 32, height: 32)
-                Image(systemName: entry.subjectIcon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.detailText)
-                    .font(.r(.subheadline, .semibold))
-                    .foregroundStyle(.primary)
-                Text(formattedTime(entry.timestamp))
-                    .font(.r(.caption, .medium))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
-    }
+            railColumn(
+                dotColor: dotColor(forNetDelta: netDelta, isAnchor: isAnchor, isCalibration: isAllCalibration),
+                isFirst: isFirst,
+                isLast: isLast,
+                isAnchor: isAnchor
+            )
 
-    private func singleRowCard(_ entry: any ChangeEntryDisplayable) -> some View {
-        let tint = tintColor(for: entry.entryKind)
-        return HStack(alignment: .center, spacing: 0) {
-            Rectangle()
-                .fill(deltaTint(entry.deltaPoints))
-                .frame(width: 3)
-                .clipShape(RoundedRectangle(cornerRadius: 1.5))
-
-            HStack(alignment: .center, spacing: 12) {
-                ZStack {
-                    Circle().fill(tint.opacity(0.15)).frame(width: 32, height: 32)
-                    Image(systemName: entry.subjectIcon)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(tint)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.detailText)
-                        .font(.r(.subheadline, .semibold))
-                        .lineLimit(1)
-                    Text("\(formattedTime(entry.timestamp)) · \(entry.source.displayLabel)")
-                        .font(.r(.caption, .medium))
+            VStack(alignment: .leading, spacing: 6) {
+                entryHeader(
+                    group: group,
+                    isAnchor: isAnchor,
+                    isAllCalibration: isAllCalibration,
+                    isExpandable: isExpandable,
+                    isExpanded: isExpanded
+                )
+                if let subtitle = subtitleText(for: group, isAnchor: isAnchor) {
+                    Text(subtitle)
+                        .font(.r(.caption, .regular))
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: 8)
-                if entry.deltaPoints != 0 {
-                    deltaPill(delta: entry.deltaPoints)
+                if !isAnchor {
+                    sourceFooter(group: group, isAllCalibration: isAllCalibration)
+                        .padding(.top, 2)
                 }
-            }
-            .padding(.vertical, 12)
-            .padding(.leading, 10)
-            .padding(.trailing, 12)
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
-    }
 
-    private func collapsibleEventCard(group: [any ChangeEntryDisplayable], isExpanded: Bool) -> some View {
-        let first = group.first!
-        let totalBefore = first.totalBefore
-        let totalAfter = first.totalAfter
-        let netDelta = totalAfter - totalBefore
-        let count = group.count
-        let groupID = first.groupID
-        let dominant = group.max(by: { abs($0.deltaPoints) < abs($1.deltaPoints) })
-
-        return VStack(alignment: .leading, spacing: 0) {
-            Button {
-                HapticService.impact(.light)
-                withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
-                    if isExpanded { expandedGroups.remove(groupID) }
-                    else { expandedGroups.insert(groupID) }
-                }
-            } label: {
-                HStack(alignment: .top, spacing: 0) {
-                    Rectangle()
-                        .fill(deltaTint(netDelta))
-                        .frame(width: 3)
-                        .clipShape(RoundedRectangle(cornerRadius: 1.5))
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
-                            Text(formattedTime(first.timestamp))
-                                .font(.r(.subheadline, .semibold))
-                                .foregroundStyle(.primary)
-                            scoreArrowPill(before: totalBefore, after: totalAfter)
-                            Spacer(minLength: 4)
-                            deltaPill(delta: netDelta)
-                            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                        }
-                        HStack(spacing: 6) {
-                            Text("\(count) changes")
-                                .font(.r(.caption, .semibold))
-                                .foregroundStyle(.secondary)
-                            Text("·")
-                                .font(.r(.caption, .regular))
-                                .foregroundStyle(.secondary)
-                            Text(first.source.displayLabel)
-                                .font(.r(.caption, .medium))
-                                .foregroundStyle(.secondary)
-                            if let d = dominant, d.detailText != first.source.displayLabel {
-                                Text("·")
-                                    .font(.r(.caption, .regular))
-                                    .foregroundStyle(.secondary)
-                                Text(d.detailText)
-                                    .font(.r(.caption, .medium))
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                            Spacer(minLength: 0)
-                        }
-                    }
-                    .padding(.vertical, 12)
-                    .padding(.leading, 10)
-                    .padding(.trailing, 12)
-                }
-            }
-            .buttonStyle(.plain)
-
-            if isExpanded {
-                VStack(spacing: 0) {
-                    Divider().padding(.leading, 18)
-                    VStack(spacing: 9) {
+                if isExpandable && isExpanded {
+                    VStack(spacing: 8) {
                         ForEach(group.indices, id: \.self) { i in
                             expandedSubrow(group[i])
                         }
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.top, 12)
-                    .padding(.bottom, 14)
+                    .padding(.top, 10)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
-                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 22)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard isExpandable else { return }
+            HapticService.impact(.light)
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+                if isExpanded { expandedGroups.remove(first.groupID) }
+                else { expandedGroups.insert(first.groupID) }
             }
         }
+    }
+
+    // MARK: - Time Column
+
+    private func timeColumn(date: Date) -> some View {
+        let parts = formattedTimeParts(date)
+        return VStack(alignment: .trailing, spacing: 0) {
+            Text(parts.time)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(.secondary)
+            Text(parts.suffix)
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.top, 1)
+    }
+
+    // MARK: - Rail Column
+
+    private func railColumn(
+        dotColor: Color,
+        isFirst: Bool,
+        isLast: Bool,
+        isAnchor: Bool
+    ) -> some View {
+        VStack(spacing: 0) {
+            // Top segment (above the dot) — hidden for the first row in a section.
+            Rectangle()
+                .fill(railLineColor)
+                .frame(width: 1.5, height: 6)
+                .opacity(isFirst ? 0 : 1)
+
+            // Dot — solid filled, with a halo of background color so it sits on top
+            // of the rail line cleanly.
+            ZStack {
+                Circle()
+                    .fill(Color(.systemGroupedBackground))
+                    .frame(width: 14, height: 14)
+                if isAnchor {
+                    Circle()
+                        .strokeBorder(dotColor, lineWidth: 1.5)
+                        .frame(width: 9, height: 9)
+                } else {
+                    Circle()
+                        .fill(dotColor)
+                        .frame(width: 9, height: 9)
+                }
+            }
+
+            // Bottom segment — fills remaining row height; hidden for the last row.
+            Rectangle()
+                .fill(railLineColor)
+                .frame(width: 1.5)
+                .frame(maxHeight: .infinity)
+                .opacity(isLast ? 0 : 1)
+        }
+        .frame(width: 14)
+    }
+
+    private var railLineColor: Color {
+        Color(.separator).opacity(0.55)
+    }
+
+    // MARK: - Entry Header
+
+    @ViewBuilder
+    private func entryHeader(
+        group: [any ChangeEntryDisplayable],
+        isAnchor: Bool,
+        isAllCalibration: Bool,
+        isExpandable: Bool,
+        isExpanded: Bool
+    ) -> some View {
+        let first = group.first!
+        let netDelta = first.totalAfter - first.totalBefore
+
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(titleText(for: group, isAnchor: isAnchor))
+                    .font(.r(.body, .semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 4) {
+                if isAnchor {
+                    Text("score \(Int(first.totalAfter.rounded()))")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                } else {
+                    deltaBadge(delta: netDelta, isCalibration: isAllCalibration)
+                    Text("\(formatScore(first.totalBefore)) → \(formatScore(first.totalAfter))")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if isExpandable {
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+                    .padding(.top, 4)
+            }
+        }
+    }
+
+    // MARK: - Title / Subtitle Text
+
+    private func titleText(for group: [any ChangeEntryDisplayable], isAnchor: Bool) -> String {
+        let first = group.first!
+        if isAnchor || group.count == 1 {
+            return first.detailText
+        }
+        return "\(group.count) changes"
+    }
+
+    private func subtitleText(for group: [any ChangeEntryDisplayable], isAnchor: Bool) -> String? {
+        if isAnchor { return nil }
+        if group.count == 1 {
+            // Single-row entries: detailText already used as title; no extra subtitle.
+            return nil
+        }
+        // Multi-row group: " · "-joined detail texts.
+        return group.map(\.detailText).joined(separator: " · ")
+    }
+
+    // MARK: - Source Footer
+
+    private func sourceFooter(
+        group: [any ChangeEntryDisplayable],
+        isAllCalibration: Bool
+    ) -> some View {
+        let first = group.first!
+        return HStack(spacing: 8) {
+            sourceChip(source: first.source)
+            if isAllCalibration {
+                Text("CALIBRATION")
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(1.0)
+                    .foregroundStyle(Self.calibrationColor)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func sourceChip(source: StressChangeSource) -> some View {
+        HStack(spacing: 4) {
+            Text(source.isAuto ? "Auto" : "Manual")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+            Text("·")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+            Text(source.displayLabel)
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+        }
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 4)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
+            Capsule().strokeBorder(Color(.separator).opacity(0.55), lineWidth: 1)
         )
     }
 
+    // MARK: - Expanded Sub-row
+
     private func expandedSubrow(_ entry: any ChangeEntryDisplayable) -> some View {
-        let tint = tintColor(for: entry.entryKind)
+        let tint = subjectTint(for: entry.entryKind)
         return HStack(spacing: 10) {
             ZStack {
-                Circle().fill(tint.opacity(0.15)).frame(width: 26, height: 26)
+                Circle().fill(tint.opacity(0.15)).frame(width: 24, height: 24)
                 Image(systemName: entry.subjectIcon)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(tint)
             }
             Text(entry.detailText)
@@ -478,84 +551,93 @@ struct StressActivityView: View {
                 .foregroundStyle(.primary.opacity(0.88))
                 .lineLimit(1)
             Spacer(minLength: 8)
-            if entry.deltaPoints != 0 {
-                deltaPill(delta: entry.deltaPoints, compact: true)
+            if abs(entry.deltaPoints) > 0.001 {
+                deltaBadge(delta: entry.deltaPoints, isCalibration: entry.entryKind == .calibrator, compact: true)
             }
         }
     }
 
-    // MARK: - Pills
+    // MARK: - Delta Badge
 
-    private func scoreArrowPill(before: Double, after: Double) -> some View {
-        HStack(spacing: 4) {
-            Text("\(Int(before.rounded()))")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-            Image(systemName: "arrow.right")
-                .font(.system(size: 9, weight: .bold))
-            Text("\(Int(after.rounded()))")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-        }
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Capsule().fill(Color(.systemGray6)))
-    }
-
-    private func deltaPill(delta: Double, compact: Bool = false) -> some View {
-        let isImprovement = delta < 0
+    private func deltaBadge(delta: Double, isCalibration: Bool, compact: Bool = false) -> some View {
         let isFlat = abs(delta) < 0.05
-        let arrow = isFlat ? "minus" : (isImprovement ? "arrow.down" : "arrow.up")
-        let color: Color = isFlat ? .secondary : (isImprovement ? .green : .red)
-        let magnitude = abs(delta)
-        let formatted: String = {
-            if isFlat { return "0" }
-            if magnitude >= 10 { return String(format: "%.0f", magnitude) }
-            return String(format: "%.1f", magnitude)
+        let isImprovement = delta < 0
+        let color: Color = {
+            if isCalibration { return Self.calibrationColor }
+            if isFlat { return .secondary }
+            return isImprovement ? .green : .red
         }()
-        let sign = isFlat ? "" : (isImprovement ? "-" : "+")
+        let magnitude = abs(delta)
+        let formattedMag = String(format: "%.1f", magnitude)
+        let sign: String = {
+            if isFlat { return "" }
+            return isImprovement ? "-" : "+"
+        }()
+
         return HStack(spacing: 3) {
-            Image(systemName: arrow)
-                .font(.system(size: compact ? 9 : 10, weight: .bold))
-            Text("\(sign)\(formatted)")
-                .font(.system(size: compact ? 11 : 12, weight: .semibold, design: .rounded))
+            if isCalibration {
+                Text("~")
+                    .font(.system(size: compact ? 13 : 15, weight: .bold, design: .rounded))
+                    .baselineOffset(-1)
+            } else if isFlat {
+                Image(systemName: "minus")
+                    .font(.system(size: compact ? 10 : 11, weight: .bold))
+            } else {
+                Image(systemName: isImprovement ? "arrow.down" : "arrow.up")
+                    .font(.system(size: compact ? 10 : 11, weight: .bold))
+            }
+            Text(isFlat ? "0" : "\(sign)\(formattedMag)")
+                .font(.system(size: compact ? 12 : 13, weight: .semibold, design: .rounded))
         }
-        .foregroundColor(color)
-        .padding(.horizontal, compact ? 8 : 10)
-        .padding(.vertical, compact ? 4 : 5)
-        .background(Capsule().fill(color.opacity(0.13)))
-        .overlay(Capsule().strokeBorder(color.opacity(0.22), lineWidth: 0.5))
+        .foregroundStyle(color)
     }
 
-    // MARK: - Helpers
+    // MARK: - Color helpers
 
-    private func deltaTint(_ delta: Double) -> Color {
-        if delta < -0.05 { return Color.green.opacity(0.7) }
-        if delta > 0.05 { return Color.red.opacity(0.7) }
+    private func dotColor(forNetDelta delta: Double, isAnchor: Bool, isCalibration: Bool) -> Color {
+        if isAnchor { return Color(.systemGray3) }
+        if isCalibration { return Self.calibrationColor }
+        if delta < -0.05 { return .green }
+        if delta > 0.05 { return .red }
         return Color(.systemGray3)
     }
 
-    private func tintColor(for kind: ChangeEntryKind) -> Color {
+    private func subjectTint(for kind: ChangeEntryKind) -> Color {
         switch kind {
         case .factor:               return Self.themeBlue
         case .engagementGap:        return .orange
         case .patternPenalty:       return .purple
-        case .calibrator:           return .teal
+        case .calibrator:           return Self.calibrationColor
         case .anchor:               return .gray
         case .engagementActivated:  return .orange
         }
     }
 
-    private func formattedTime(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return f.string(from: date)
+    // MARK: - Formatting helpers
+
+    private func formattedTimeParts(_ date: Date) -> (time: String, suffix: String) {
+        let f1 = DateFormatter()
+        f1.dateFormat = "h:mm"
+        let f2 = DateFormatter()
+        f2.dateFormat = "a"
+        return (f1.string(from: date), f2.string(from: date))
+    }
+
+    private func formatScore(_ value: Double) -> String {
+        let rounded = (value * 10).rounded() / 10
+        if rounded == rounded.rounded() {
+            return String(format: "%.0f", rounded)
+        }
+        return String(format: "%.1f", rounded)
     }
 
     // MARK: - Loading
 
     private func loadEntries() {
         if viewModel.usesMockData {
-            entries = viewModel.mockChangeEntries
+            let filtered = viewModel.mockChangeEntries
+                .filter { matchesFilter($0) }
+            entries = filtered
                 .sorted { lhs, rhs in
                     if lhs.timestamp != rhs.timestamp { return lhs.timestamp > rhs.timestamp }
                     return lhs.sequence < rhs.sequence
@@ -567,6 +649,21 @@ struct StressActivityView: View {
         let descriptor = makeDescriptor(filter: filter, retentionStart: cutoff)
         let fetched = (try? modelContext.fetch(descriptor)) ?? []
         entries = fetched.map { $0 as any ChangeEntryDisplayable }
+    }
+
+    /// Evaluates the active filter against a single entry. Used for the mock
+    /// path (live path uses an equivalent SwiftData `#Predicate` in
+    /// `makeDescriptor`).
+    private func matchesFilter(_ entry: any ChangeEntryDisplayable) -> Bool {
+        switch filter {
+        case .all:
+            return true
+        case .calibration:
+            return entry.entryKind == .calibrator
+        case .auto, .logs, .mood, .symptoms, .screenTime, .food:
+            guard let allowed = filter.sources else { return true }
+            return allowed.contains(entry.source)
+        }
     }
 
     private func makeDescriptor(filter: StressChangeFilter, retentionStart: Date) -> FetchDescriptor<StressChangeEntry> {
