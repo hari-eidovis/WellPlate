@@ -58,7 +58,6 @@ struct StressView: View {
     // Entrance animation states
     @State private var scoreAppeared   = false
     @State private var chartAppeared   = false
-    @State private var weekAppeared    = false
     @State private var adviceAppeared  = false
 
     private let refreshTicker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
@@ -195,7 +194,7 @@ struct StressView: View {
             case .manualLog:
                 QuickLogManualSheet()
             case .mood:
-                MoodCheckInSheet()
+                MoodCheckInSheet(onSaved: { viewModel.recompute() })
             case .symptoms:
                 SymptomLogSheet()
             }
@@ -210,9 +209,6 @@ struct StressView: View {
         }
         withAnimation(.easeOut(duration: 0.4).delay(0.25)) {
             chartAppeared = true
-        }
-        withAnimation(.easeOut(duration: 0.45).delay(0.38)) {
-            weekAppeared = true
         }
         withAnimation(.spring(response: 0.5, dampingFraction: 0.78).delay(0.52)) {
             adviceAppeared = true
@@ -303,16 +299,6 @@ struct StressView: View {
                 .buttonStyle(.plain)
                 .padding(.horizontal, 20)
                 .padding(.top, 14)
-
-                // ── THIS WEEK ─────────────────────────────────────
-                VStack(alignment: .leading, spacing: 10) {
-                    sectionLabel("This Week")
-                    weekColourBar
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 28)
-                .opacity(weekAppeared ? 1 : 0)
-                .offset(y: weekAppeared ? 0 : 12)
 
                 // ── ADVICE ────────────────────────────────────────
                 VStack(alignment: .leading, spacing: 10) {
@@ -406,7 +392,7 @@ struct StressView: View {
     private var scoreHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .lastTextBaseline, spacing: 4) {
-                Text("\(Int(viewModel.totalScore))")
+                Text("\(Int(viewModel.totalScore.rounded()))")
                     .font(.system(size: 72, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
                     .contentTransition(.numericText())
@@ -445,109 +431,6 @@ struct StressView: View {
         let f = DateFormatter()
         f.dateFormat = "EEE MMM d"
         return f.string(from: Date())
-    }
-
-    // MARK: - Week Colour Bar
-
-    private var weekColourBar: some View {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        // Build Sunday-of-this-week → Saturday
-        let weekday = cal.component(.weekday, from: today) // 1=Sun
-        let sundayOffset = -(weekday - 1)
-        let sunday = cal.date(byAdding: .day, value: sundayOffset, to: today)!
-
-        // Group weekReadings by day
-        let grouped: [Date: [StressReading]] = Dictionary(
-            grouping: viewModel.weekReadings,
-            by: { cal.startOfDay(for: $0.timestamp) }
-        )
-
-        return HStack(spacing: 5) {
-            ForEach(0..<7, id: \.self) { offset in
-                let day = cal.date(byAdding: .day, value: offset, to: sunday)!
-                let isToday = cal.isDate(day, inSameDayAs: today)
-                let label = dayLetter(for: day)
-                let readings = grouped[day] ?? []
-                let avgScore = readings.isEmpty ? nil : readings.map(\.score).reduce(0, +) / Double(readings.count)
-                let barHeight: CGFloat = 56
-
-                VStack(spacing: 4) {
-                    // Mini gradient bar
-                    ZStack(alignment: .bottom) {
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .fill(Color.secondary.opacity(0.05))
-                            .frame(height: barHeight)
-
-                        if let score = avgScore, score > 0 {
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            weekDayColor(score: score).opacity(0.30),
-                                            weekDayColor(score: score)
-                                        ],
-                                        startPoint: .bottom,
-                                        endPoint: .top
-                                    )
-                                )
-                                .frame(height: max(8, barHeight * CGFloat(score / 100.0)))
-                                .padding(.horizontal, 2)
-                                .padding(.bottom, 2)
-                        }
-                    }
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .strokeBorder(
-                                isToday ? weekDayColor(score: avgScore ?? 0).opacity(0.45) : Color.clear,
-                                lineWidth: 1.5
-                            )
-                    )
-                    .opacity(weekAppeared ? 1 : 0)
-                    .animation(
-                        .easeOut(duration: 0.35).delay(Double(offset) * 0.055),
-                        value: weekAppeared
-                    )
-
-                    // Score + day label
-                    VStack(spacing: 1) {
-                        if let score = avgScore, score > 0 {
-                            Text("\(Int(score))")
-                                .font(.system(size: 9, weight: .semibold, design: .rounded))
-                                .foregroundColor(weekDayColor(score: score))
-                        } else {
-                            Text("—")
-                                .font(.system(size: 9, weight: .regular, design: .rounded))
-                                .foregroundColor(.secondary.opacity(0.25))
-                        }
-                        Text(label)
-                            .font(.system(size: 10, weight: isToday ? .bold : .regular, design: .rounded))
-                            .foregroundColor(isToday ? .primary : .secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-            }
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 4)
-        )
-    }
-
-    private func dayLetter(for date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "EEEEE" // single letter: S, M, T, W, T, F, S
-        return f.string(from: date)
-    }
-
-    private static let chartBlue = Color(hex: "5E9FFF")
-
-    private func weekDayColor(score: Double) -> Color {
-        let t = min(max(score / 100.0, 0), 1)
-        let opacity = 0.45 + t * 0.55
-        return Self.chartBlue.opacity(opacity)
     }
 
     // MARK: - Advice Card

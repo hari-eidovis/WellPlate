@@ -332,6 +332,7 @@ final class StressViewModel: ObservableObject {
             : buildInputs(now: now)
         let result = StressScoring.computeStress(inputs: inputs, now: now)
         applyResult(result)
+        persistTodayWellnessSnapshot(steps: lastSteps, energy: lastEnergy)
         WidgetRefreshHelper.refreshStress(viewModel: self)
     }
 
