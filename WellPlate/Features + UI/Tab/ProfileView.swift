@@ -85,6 +85,8 @@ struct ProfilePlaceholderView: View {
     @Query private var allSupplements: [SupplementEntry]
     @Query(sort: \AdherenceLog.day, order: .reverse) private var allAdherenceLogs: [AdherenceLog]
     @StateObject private var supplementService       = SupplementService()
+    // Daily check-in prompt toggle
+    @State private var promptsEnabled: Bool = !UserDefaults.standard.bool(forKey: "wp.stress.dontAskAgain")
     @State private var editedName                   = UserProfileManager.shared.userName
     @State private var editedWeight                 = UserProfileManager.shared.weightKg
     @State private var editedHeight                 = UserProfileManager.shared.heightCm
@@ -134,6 +136,10 @@ struct ProfilePlaceholderView: View {
 
                     // ── Goals snapshot ────────────────────────
                     goalsSnapshotCard
+                        .padding(.horizontal, 16)
+
+                    // ── Notifications & Prompts ──────────────
+                    notificationsAndPromptsCard
                         .padding(.horizontal, 16)
 
                     // ── Home layout ─────────────────────
@@ -450,6 +456,68 @@ struct ProfilePlaceholderView: View {
             .padding(.vertical, 12)
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Notifications & Prompts
+
+    private var notificationsAndPromptsCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(AppColors.brand.opacity(0.12))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "bell.badge.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppColors.brand)
+                }
+                Text("Notifications & Prompts")
+                    .font(.r(.headline, .semibold))
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 6)
+
+            Toggle(isOn: Binding(
+                get: { promptsEnabled },
+                set: { newValue in
+                    promptsEnabled = newValue
+                    UserDefaults.standard.set(!newValue, forKey: "wp.stress.dontAskAgain")
+                    if newValue {
+                        clearTodayManualAskedFlags()
+                    }
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Daily check-in prompts")
+                        .font(.r(.subheadline, .medium))
+                    Text("Quick morning + evening overlays when sensors miss data")
+                        .font(.r(.caption, .regular))
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+        .padding(.bottom, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 15, y: 5)
+        )
+    }
+
+    private func clearTodayManualAskedFlags() {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<ManualDailyInput>(
+            predicate: #Predicate { $0.day == today }
+        )
+        if let existing = (try? modelContext.fetch(descriptor))?.first {
+            existing.morningAskedAt = nil
+            existing.eveningAskedAt = nil
+            try? modelContext.save()
+        }
     }
 
     // MARK: - Home Layout

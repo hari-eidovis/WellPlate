@@ -44,22 +44,50 @@ struct StressMockSnapshot {
 
     let currentDayLogs: [FoodLogEntry]
 
+    // MARK: - v3 driver/recovery fixtures
+
+    /// Today's logged mood (drives mood factor + recovery `mindful`).
+    let mood: MoodOption?
+    /// Today's symptom entries (drives symptoms factor).
+    let todaySymptoms: [SymptomEntry]
+    /// Today's journal presence (drives recovery `journal`).
+    let todayJournal: JournalEntry?
+    /// Today's completed intervention sessions (drives recovery `intervention`).
+    let todayInterventions: [InterventionSession]
+    /// Last 3 days of WellnessDayLog (drives 3-day pattern penalties).
+    let recentWellnessLogs: [WellnessDayLog]
+    /// Last 3 days of food logs grouped by day (drives `no_food_3d` pattern).
+    let recentFoodLogs: [FoodLogEntry]
+    /// Last completed FastingSession end (drives `no_fast_14d` pattern).
+    let lastCompletedFastEnd: Date?
+    /// Today's water glasses (drives hydration factor).
+    let waterGlasses: Int
+    /// Today's coffee cups (drives caffeine factor).
+    let coffeeCups: Int
+    /// Today's coffee type (drives caffeine factor mg per cup).
+    let coffeeType: CoffeeType?
+
     // MARK: - Default Factory
 
     static let `default`: StressMockSnapshot = makeDefault()
 
-    /// Sparse-data variant — only sleep + screen time have valid data (2 of 4 factors).
-    /// Exercises the Q2 missing-data plumbing and Q6 "Medium confidence" badge.
-    /// - Exercise: nil via stepsHistory last-entry = 0 → fetchStepsSafely's `total > 0 ? total : nil` returns nil
-    /// - Energy: nil via same pattern on energyHistory
-    /// - Diet: nil via currentDayLogs = []
-    /// - Sleep + Screen Time: retained from default
+    /// Sparse-data variant — only sleep + screen time have valid data (legacy 2-of-4 coverage).
     static let sparse: StressMockSnapshot = makeSparse()
+
+    /// Driver budget mostly within healthy ranges + good vitals.
+    static let fullyLoggedBalancedDay: StressMockSnapshot = makeFullyLoggedBalancedDay()
+
+    /// Driver budget in adverse ranges — score should land in "Very High".
+    static let fullyLoggedBadDay: StressMockSnapshot = makeFullyLoggedBadDay()
+
+    /// Bad day at 21:00 with most user-logs missing (engagement penalty maxes).
+    static let disengagedBadDay21h: StressMockSnapshot = makeDisengagedBadDay21h()
+
+    /// Day-1 user — almost no data; score must hide (low confidence).
+    static let dayOneNoData: StressMockSnapshot = makeDayOneNoData()
 
     private static func makeSparse() -> StressMockSnapshot {
         let base = makeDefault()
-        // Override today's last history sample to 0 so MockHealthKitService returns it
-        // and fetchStepsSafely/fetchEnergySafely coerce `total > 0 ? total : nil` to nil.
         var stepsHist = base.stepsHistory
         var energyHist = base.energyHistory
         if !stepsHist.isEmpty {
@@ -87,7 +115,206 @@ struct StressMockSnapshot {
             exerciseMinutesHistory: base.exerciseMinutesHistory,
             todayReadings: base.todayReadings,
             weekReadings: base.weekReadings,
-            currentDayLogs: []
+            currentDayLogs: [],
+            mood: nil,
+            todaySymptoms: [],
+            todayJournal: nil,
+            todayInterventions: [],
+            recentWellnessLogs: [],
+            recentFoodLogs: [],
+            lastCompletedFastEnd: nil,
+            waterGlasses: 0,
+            coffeeCups: 0,
+            coffeeType: nil
+        )
+    }
+
+    private static func makeFullyLoggedBalancedDay() -> StressMockSnapshot {
+        let base = makeDefault()
+        // Today: 7.5h sleep, 8000 steps, 4h screen, mood good, 5 water, 1 latte.
+        return StressMockSnapshot(
+            steps: 8000,
+            energy: 380,
+            sleepSummary: base.sleepSummary,
+            screenTimeHours: 4.0,
+            stepsHistory: base.stepsHistory,
+            energyHistory: base.energyHistory,
+            sleepHistory: base.sleepHistory,
+            heartRateHistory: base.heartRateHistory,
+            restingHRHistory: base.restingHRHistory,
+            hrvHistory: base.hrvHistory,
+            systolicBPHistory: base.systolicBPHistory,
+            diastolicBPHistory: base.diastolicBPHistory,
+            respiratoryRateHistory: base.respiratoryRateHistory,
+            daylightHistory: base.daylightHistory,
+            waterHistory: base.waterHistory,
+            exerciseMinutesHistory: base.exerciseMinutesHistory,
+            todayReadings: base.todayReadings,
+            weekReadings: base.weekReadings,
+            currentDayLogs: base.currentDayLogs,
+            mood: .good,
+            todaySymptoms: [],
+            todayJournal: nil,
+            todayInterventions: [],
+            recentWellnessLogs: [],
+            recentFoodLogs: base.currentDayLogs,
+            lastCompletedFastEnd: Date().addingTimeInterval(-3 * 24 * 3600),
+            waterGlasses: 6,
+            coffeeCups: 1,
+            coffeeType: .latte
+        )
+    }
+
+    private static func makeFullyLoggedBadDay() -> StressMockSnapshot {
+        let base = makeDefault()
+        let cal = Calendar.current
+        let now = Date()
+        let today = cal.startOfDay(for: now)
+
+        // Sleep: 4.5h total, 20min deep — heavy penalty
+        let badSleep = DailySleepSummary(
+            date: today,
+            totalHours: 4.5,
+            coreHours: 3.5,
+            remHours: 0.7,
+            deepHours: 0.3,
+            bedtime: cal.date(byAdding: .hour, value: -5, to: now),
+            wakeTime: cal.date(byAdding: .hour, value: -1, to: now)
+        )
+
+        // 4 awful symptoms (cognitive + pain)
+        let symptoms = [
+            SymptomEntry(name: "Headache", category: .pain, severity: 8),
+            SymptomEntry(name: "Anxiety", category: .cognitive, severity: 8),
+            SymptomEntry(name: "Brain fog", category: .energy, severity: 7),
+            SymptomEntry(name: "Fatigue", category: .energy, severity: 7),
+        ]
+
+        return StressMockSnapshot(
+            steps: 1500,
+            energy: 70,
+            sleepSummary: badSleep,
+            screenTimeHours: 9.0,
+            stepsHistory: base.stepsHistory,
+            energyHistory: base.energyHistory,
+            sleepHistory: base.sleepHistory,
+            heartRateHistory: base.heartRateHistory,
+            restingHRHistory: base.restingHRHistory,
+            hrvHistory: base.hrvHistory,
+            systolicBPHistory: base.systolicBPHistory,
+            diastolicBPHistory: base.diastolicBPHistory,
+            respiratoryRateHistory: base.respiratoryRateHistory,
+            daylightHistory: base.daylightHistory,
+            waterHistory: base.waterHistory,
+            exerciseMinutesHistory: base.exerciseMinutesHistory,
+            todayReadings: base.todayReadings,
+            weekReadings: base.weekReadings,
+            currentDayLogs: base.currentDayLogs,
+            mood: .awful,
+            todaySymptoms: symptoms,
+            todayJournal: nil,
+            todayInterventions: [],
+            recentWellnessLogs: [],
+            recentFoodLogs: base.currentDayLogs,
+            lastCompletedFastEnd: nil,   // → no_fast_14d pattern fires
+            waterGlasses: 1,
+            coffeeCups: 5,
+            coffeeType: .coldBrew
+        )
+    }
+
+    private static func makeDisengagedBadDay21h() -> StressMockSnapshot {
+        let base = makeDefault()
+        let cal = Calendar.current
+        let now = Date()
+        let today = cal.startOfDay(for: now)
+
+        // Sleep is the only logged driver: 5h total, 30min deep.
+        let badSleep = DailySleepSummary(
+            date: today,
+            totalHours: 5.0,
+            coreHours: 3.5,
+            remHours: 1.0,
+            deepHours: 0.5,
+            bedtime: nil,
+            wakeTime: nil
+        )
+
+        return StressMockSnapshot(
+            steps: 0,
+            energy: 0,
+            sleepSummary: badSleep,
+            screenTimeHours: 0,        // no auto reading
+            stepsHistory: base.stepsHistory,
+            energyHistory: base.energyHistory,
+            sleepHistory: base.sleepHistory,
+            heartRateHistory: base.heartRateHistory,
+            restingHRHistory: base.restingHRHistory,
+            hrvHistory: base.hrvHistory,
+            systolicBPHistory: base.systolicBPHistory,
+            diastolicBPHistory: base.diastolicBPHistory,
+            respiratoryRateHistory: base.respiratoryRateHistory,
+            daylightHistory: base.daylightHistory,
+            waterHistory: base.waterHistory,
+            exerciseMinutesHistory: base.exerciseMinutesHistory,
+            todayReadings: base.todayReadings,
+            weekReadings: base.weekReadings,
+            currentDayLogs: [],
+            mood: nil,
+            todaySymptoms: [],
+            todayJournal: nil,
+            todayInterventions: [],
+            recentWellnessLogs: [],
+            recentFoodLogs: [],
+            lastCompletedFastEnd: nil,
+            waterGlasses: 0,
+            coffeeCups: 0,
+            coffeeType: nil
+        )
+    }
+
+    private static func makeDayOneNoData() -> StressMockSnapshot {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let emptySleep = DailySleepSummary(
+            date: today,
+            totalHours: 0,
+            coreHours: 0,
+            remHours: 0,
+            deepHours: 0,
+            bedtime: nil,
+            wakeTime: nil
+        )
+        return StressMockSnapshot(
+            steps: 0,
+            energy: 0,
+            sleepSummary: emptySleep,
+            screenTimeHours: 0,
+            stepsHistory: [],
+            energyHistory: [],
+            sleepHistory: [],
+            heartRateHistory: [],
+            restingHRHistory: [],
+            hrvHistory: [],
+            systolicBPHistory: [],
+            diastolicBPHistory: [],
+            respiratoryRateHistory: [],
+            daylightHistory: [],
+            waterHistory: [],
+            exerciseMinutesHistory: [],
+            todayReadings: [],
+            weekReadings: [],
+            currentDayLogs: [],
+            mood: nil,
+            todaySymptoms: [],
+            todayJournal: nil,
+            todayInterventions: [],
+            recentWellnessLogs: [],
+            recentFoodLogs: [],
+            lastCompletedFastEnd: nil,
+            waterGlasses: 0,
+            coffeeCups: 0,
+            coffeeType: nil
         )
     }
 
@@ -300,7 +527,17 @@ struct StressMockSnapshot {
             exerciseMinutesHistory: exerciseHist,
             todayReadings: todayReadings,
             weekReadings: weekReadings,
-            currentDayLogs: logs
+            currentDayLogs: logs,
+            mood: nil,
+            todaySymptoms: [],
+            todayJournal: nil,
+            todayInterventions: [],
+            recentWellnessLogs: [],
+            recentFoodLogs: logs,
+            lastCompletedFastEnd: Date().addingTimeInterval(-2 * 24 * 3600),
+            waterGlasses: 4,
+            coffeeCups: 1,
+            coffeeType: .latte
         )
     }
     // swiftlint:enable function_body_length

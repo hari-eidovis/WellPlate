@@ -17,13 +17,17 @@ struct InsightsHubView: View {
             } else if engine.insufficientData {
                 insufficientDataView
             } else if engine.insightCards.isEmpty {
-                loadingView
+                readyToGenerateView
             } else {
                 cardFeed
             }
         }
         .navigationTitle("Your Insights")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            // Cheap day-count refresh on appear; never auto-generates.
+            await engine.refreshDayCount()
+        }
         .sheet(item: $selectedCard) { card in
             InsightDetailSheet(card: card, engine: engine)
         }
@@ -48,20 +52,83 @@ struct InsightsHubView: View {
     // MARK: - Insufficient Data
 
     private var insufficientDataView: some View {
-        VStack(spacing: 20) {
+        let logged = engine.loggedDayCount
+        let target = engine.dayCountThreshold
+        let remaining = engine.daysRemaining
+        let progress = target > 0 ? min(1.0, Double(logged) / Double(target)) : 0
+
+        return VStack(spacing: 20) {
             Image(systemName: "sparkles")
                 .font(.system(size: 48, weight: .light))
                 .foregroundStyle(AppColors.brand.opacity(0.6))
 
-            Text("Not Enough Data")
+            Text(remaining == 1 ? "1 day to go" : "\(remaining) days to go")
                 .font(.r(.title3, .bold))
                 .foregroundStyle(.primary)
 
-            Text("Log your wellness data for a few more days to unlock AI insights across all domains.")
+            Text("Use WellPlate for \(remaining == 1 ? "1 more day" : "\(remaining) more days") so we have enough data to generate personalized insights for you.")
                 .font(.r(.subheadline, .regular))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
+
+            VStack(spacing: 6) {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(AppColors.brand.opacity(0.15))
+                        Capsule()
+                            .fill(AppColors.brand)
+                            .frame(width: max(0, geo.size.width * progress))
+                    }
+                }
+                .frame(height: 8)
+
+                Text("\(logged) of \(target) days logged")
+                    .font(.r(.caption, .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 60)
+            .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Ready to Generate
+
+    private var readyToGenerateView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 48, weight: .light))
+                .foregroundStyle(AppColors.brand)
+
+            Text("Ready for insights")
+                .font(.r(.title3, .bold))
+                .foregroundStyle(.primary)
+
+            Text("You've logged \(engine.loggedDayCount) days of wellness data. Tap below to generate personalized insights using on-device AI.")
+                .font(.r(.subheadline, .regular))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
+            Button {
+                HapticService.impact(.medium)
+                Task { await engine.generateInsights() }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Generate Insights")
+                        .font(.r(.subheadline, .bold))
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(Capsule().fill(AppColors.brand))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

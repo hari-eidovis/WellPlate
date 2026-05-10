@@ -86,11 +86,10 @@ struct ContextualActionBar: View {
 
     private func symptomPill(action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: "pill")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
+            Image(systemName: "pill.circle.fill")
+                .font(.system(size: 28, weight: .regular))
+                .foregroundStyle(Color.primary)
                 .frame(width: 38, height: 38)
-                .background(Circle().fill(Color.black))
         }
         .buttonStyle(.plain)
         .frame(minWidth: 44, minHeight: 44)

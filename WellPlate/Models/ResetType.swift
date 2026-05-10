@@ -2,8 +2,7 @@
 //  ResetType.swift
 //  WellPlate
 //
-//  Acute stress-relief reset exercises (distinct from Stress Lab's
-//  multi-day InterventionType experiments).
+//  Acute stress-relief reset exercises.
 //
 
 import Foundation

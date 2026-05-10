@@ -108,6 +108,7 @@ struct OnboardingView: View {
         manager.setWeight(weightValue, unit: weightUnit)
         manager.setHeight(heightValue, unit: heightUnit)
         manager.hasCompletedOnboarding = true
+        manager.onboardingCompletedAt = .now
         HapticService.impact(.medium)
         onComplete()
     }

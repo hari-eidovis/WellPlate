@@ -25,15 +25,18 @@ struct HydrationCard: View {
         // ZStack: wave fill on bottom, card content on top
         ZStack {
             // ── Water fill layer ──────────────────────────────────────────────
-            GeometryReader { geo in
-                WaterWaveShape(fillFraction: fillFraction, wavePhase: wavePhase)
-                    .fill(waveColor.opacity(0.13))
-                    .animation(
-                        .spring(response: 0.75, dampingFraction: 0.68),
-                        value: fillFraction
-                    )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            Image("water_bg")
+                .resizable()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(0.92)
+                .mask {
+                    WaterWaveShape(fillFraction: fillFraction, wavePhase: wavePhase)
+                }
+                .animation(
+                    .spring(response: 0.75, dampingFraction: 0.68),
+                    value: fillFraction
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
 
             // ── Card content ──────────────────────────────────────────────────
             VStack(spacing: 24) {

@@ -22,12 +22,16 @@ final class InsightEngine: ObservableObject {
     @Published var dailyInsight: InsightCard?
     @Published var isGenerating: Bool = false
     @Published var insufficientData: Bool = false
+    @Published var loggedDayCount: Int = 0
 
     // MARK: - Dependencies
 
     private var modelContext: ModelContext?
     private let healthService: HealthKitServiceProtocol
     private let lookbackDays: Int = 14
+    let dayCountThreshold: Int = 3
+
+    var daysRemaining: Int { max(0, dayCountThreshold - loggedDayCount) }
 
     // MARK: - Init
 
@@ -49,22 +53,30 @@ final class InsightEngine: ObservableObject {
             return
         }
 
-        isGenerating = true
-        defer { isGenerating = false }
-
-        guard let context = await buildWellnessContext() else {
+        // Cheap gate first: must have logged data on >= dayCountThreshold distinct days.
+        await refreshDayCount()
+        guard loggedDayCount >= dayCountThreshold else {
             #if DEBUG
             if AppConfig.shared.mockMode {
-                // Fallback: mock data not yet injected or SwiftData empty
                 let mocks = mockInsights()
                 insightCards = mocks
                 dailyInsight = mocks.first
+                insufficientData = false
                 return
             }
             #endif
             insufficientData = true
             return
         }
+
+        isGenerating = true
+        defer { isGenerating = false }
+
+        guard let context = await buildWellnessContext() else {
+            insufficientData = true
+            return
+        }
+        insufficientData = false
 
         // Detect all insights
         var cards: [InsightCard] = []
@@ -89,6 +101,46 @@ final class InsightEngine: ObservableObject {
         await generateInsights()
     }
 
+    /// Counts distinct calendar days within the lookback window that have any user-logged data
+    /// (food, wellness, stress, symptoms, fasting, journal). Updates `loggedDayCount` and
+    /// `insufficientData`. Cheap — SwiftData only, no HealthKit calls.
+    func refreshDayCount() async {
+        guard let ctx = modelContext else { return }
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: Date())
+        guard let windowStart = calendar.date(byAdding: .day, value: -lookbackDays, to: startOfToday) else { return }
+
+        var loggedDays: Set<Date> = []
+
+        if let stress = try? ctx.fetch(FetchDescriptor<StressReading>(
+            predicate: #Predicate { $0.timestamp >= windowStart })) {
+            loggedDays.formUnion(stress.map { calendar.startOfDay(for: $0.timestamp) })
+        }
+        if let food = try? ctx.fetch(FetchDescriptor<FoodLogEntry>(
+            predicate: #Predicate { $0.day >= windowStart })) {
+            loggedDays.formUnion(food.map(\.day))
+        }
+        if let wellness = try? ctx.fetch(FetchDescriptor<WellnessDayLog>(
+            predicate: #Predicate { $0.day >= windowStart })) {
+            loggedDays.formUnion(wellness.map { calendar.startOfDay(for: $0.day) })
+        }
+        if let symptoms = try? ctx.fetch(FetchDescriptor<SymptomEntry>(
+            predicate: #Predicate { $0.day >= windowStart })) {
+            loggedDays.formUnion(symptoms.map { calendar.startOfDay(for: $0.day) })
+        }
+        if let fasting = try? ctx.fetch(FetchDescriptor<FastingSession>(
+            predicate: #Predicate { $0.startedAt >= windowStart })) {
+            loggedDays.formUnion(fasting.map { calendar.startOfDay(for: $0.day) })
+        }
+        if let journal = try? ctx.fetch(FetchDescriptor<JournalEntry>(
+            predicate: #Predicate { $0.day >= windowStart })) {
+            loggedDays.formUnion(journal.map { calendar.startOfDay(for: $0.day) })
+        }
+
+        loggedDayCount = loggedDays.count
+        insufficientData = loggedDayCount < dayCountThreshold
+    }
+
     // MARK: - Data Aggregation
 
     private func buildWellnessContext() async -> WellnessContext? {
@@ -109,7 +161,6 @@ final class InsightEngine: ObservableObject {
             sortBy: [SortDescriptor(\.timestamp)]
         )
         let allReadings = (try? ctx.fetch(stressDescriptor)) ?? []
-        let stressDayCount = Set(allReadings.map { calendar.startOfDay(for: $0.timestamp) }).count
 
         let wellnessDescriptor = FetchDescriptor<WellnessDayLog>(
             predicate: #Predicate { $0.day >= windowStart }
@@ -141,15 +192,6 @@ final class InsightEngine: ObservableObject {
         )
         let journalEntries = (try? ctx.fetch(journalDescriptor)) ?? []
 
-        // Multi-domain gate check: require >= 2 domains with >= 2 days of data
-        let foodDayCount = Set(foodLogs.map { $0.day }).count
-        let wellnessDayCount = wellnessLogs.count
-        var domainsWith2Days = 0
-        if stressDayCount >= 2 { domainsWith2Days += 1 }
-        if foodDayCount >= 2 { domainsWith2Days += 1 }
-        if wellnessDayCount >= 2 { domainsWith2Days += 1 }
-        // Sleep/steps checked after HK fetch below
-
         // Concurrent HealthKit fetches
         async let sleepFetch = fetchSleepSafely(range: interval)
         async let stepsFetch = fetchDailyStepsSafely(range: interval)
@@ -166,10 +208,6 @@ final class InsightEngine: ObservableObject {
 
         let (sleepSummaries, stepsData, energyData, heartRateData, exerciseData) = await (sleepFetch, stepsFetch, energyFetch, heartRateFetch, exerciseFetch)
         let (restingHRData, hrvData, systolicData, diastolicData, respiratoryData, daylightData) = await (restingHRFetch, hrvFetch, systolicFetch, diastolicFetch, respiratoryFetch, daylightFetch)
-
-        if sleepSummaries.count >= 2 { domainsWith2Days += 1 }
-        if stepsData.count >= 2 { domainsWith2Days += 1 }
-        guard domainsWith2Days >= 2 else { return nil }
 
         // Build per-day summaries
         var days: [WellnessDaySummary] = []

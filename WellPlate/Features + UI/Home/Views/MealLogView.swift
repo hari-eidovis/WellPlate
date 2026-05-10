@@ -15,40 +15,31 @@ struct MealLogView: View {
     @FocusState private var isReflectionFieldFocused: Bool
     @FocusState private var isQuantityFieldFocused: Bool
 
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return f
-    }()
-
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        headerSection
-                        mealTypePicker
-                        foodInputCard
-                        triggersSection
-                        reflectionField
-                        moreContextSection
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-                    .padding(.bottom, 28)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    mealTypePicker
+                    foodInputCard
+                    triggersSection
+                    reflectionField
+                    moreContextSection
                 }
-                .scrollDismissesKeyboard(.interactively)
-
-                saveButton
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 24)
             }
+            .scrollDismissesKeyboard(.interactively)
 
             if let state = viewModel.disambiguationState {
                 disambiguationOverlay(state: state)
             }
         }
+        .navigationTitle("Log a meal")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar { toolbarContent }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -80,28 +71,43 @@ struct MealLogView: View {
         }
     }
 
-    // MARK: - Header
+    // MARK: - Toolbar
 
-    private var headerSection: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text("Log a meal")
-                .font(.r(.title3, .semibold))
-                .foregroundColor(AppColors.textPrimary)
-            Spacer()
-            HStack(spacing: 4) {
-                Text(Calendar.current.isDateInToday(selectedDate) ? "Today" : shortDate(selectedDate))
-                Text("·")
-                Text(Self.timeFormatter.string(from: Date()))
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button {
+                HapticService.impact(.light)
+                if viewModel.isTranscribing { viewModel.stopMealTranscription() }
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(AppColors.textSecondary)
+                    .padding(7)
+                    .background(Circle().fill(Color(.secondarySystemBackground)))
             }
-            .font(.r(.footnote, .regular))
-            .foregroundColor(AppColors.textSecondary)
+            .disabled(viewModel.isLoading)
+        }
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button {
+                Task { await viewModel.saveMeal(selectedDate: selectedDate) }
+            } label: {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: AppColors.brand))
+                } else {
+                    Text("Save")
+                        .font(.r(.subheadline, .semibold))
+                        .foregroundColor(saveEnabled ? AppColors.brand : AppColors.textSecondary)
+                }
+            }
+            .disabled(!saveEnabled)
         }
     }
 
-    private func shortDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        return f.string(from: date)
+    private var saveEnabled: Bool {
+        viewModel.isValid && !viewModel.isLoading && !viewModel.isTranscribing
     }
 
     // MARK: - Meal Type Picker
@@ -430,39 +436,6 @@ struct MealLogView: View {
             .foregroundColor(AppColors.textSecondary.opacity(0.7))
         }
         .accessibilityElement(children: .combine)
-    }
-
-    // MARK: - Save Button
-
-    private var saveButton: some View {
-        Button {
-            Task {
-                await viewModel.saveMeal(selectedDate: selectedDate)
-            }
-        } label: {
-            Group {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                } else {
-                    Text("Save")
-                        .font(.btn)
-                        .foregroundColor(.white)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(AppColors.brand)
-            )
-        }
-        .buttonStyle(.plain)
-        .disabled(!viewModel.isValid || viewModel.isLoading || viewModel.isTranscribing)
-        .opacity(viewModel.isValid && !viewModel.isLoading && !viewModel.isTranscribing ? 1 : AppOpacity.disabled)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 24)
-        .padding(.top, 12)
     }
 
     // MARK: - Disambiguation Overlay

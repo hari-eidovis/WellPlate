@@ -41,14 +41,22 @@ struct StressFactorCardView: View {
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundColor(.secondary)
                         .tracking(0.5)
+                    if let badge = tierBadge {
+                        Text(badge)
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Capsule().fill(Color(.systemGray5)))
+                    }
                     Spacer()
-                    // Score pill
-                    Text("\(Int(factor.score))/\(Int(factor.maxScore))")
+                    // Signed points pill (e.g. "+8" red, "−2" green)
+                    Text(signedPoints)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundColor(factor.accentColor)
+                        .foregroundColor(pointsColor)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
-                        .background(Capsule().fill(factor.accentColor.opacity(0.12)))
+                        .background(Capsule().fill(pointsColor.opacity(0.12)))
                     if onTap != nil {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 10, weight: .semibold))
@@ -93,6 +101,33 @@ struct StressFactorCardView: View {
                 .fill(Color(.systemBackground).opacity(0.88))
                 .shadow(color: .black.opacity(0.06), radius: 32, x: 0, y: 16)
         )
+    }
+
+    // MARK: - v3 helpers
+
+    private var signedPoints: String {
+        guard factor.hasValidData else { return "—" }
+        let v = factor.score
+        if v > 0 { return "+\(Int(v.rounded()))" }
+        if v < 0 { return "\(Int(v.rounded()))" }
+        return "0"
+    }
+
+    private var pointsColor: Color {
+        guard factor.hasValidData else { return .secondary }
+        let v = factor.score
+        if v > 0 { return Color(hex: "5E9FFF") }
+        if v < 0 { return .green }
+        return .secondary
+    }
+
+    private var tierBadge: String? {
+        switch factor.title {
+        case "Sleep", "Exercise", "Caffeine", "Screen Time", "Diet": return "A"
+        case "Hydration", "Circadian", "Daylight", "Meal Timing", "Fasting", "Eating Triggers": return "B"
+        case "Mood", "Symptoms": return "C"
+        default: return nil
+        }
     }
 
     private var inlineTip: String {
