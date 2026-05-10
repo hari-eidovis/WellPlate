@@ -404,7 +404,6 @@ final class StressViewModel: ObservableObject {
     // MARK: - WellnessDayLog Sync
 
     private func persistTodayWellnessSnapshot(steps: Double?, energy: Double?) {
-        guard !usesMockData else { return }
         let today = Calendar.current.startOfDay(for: Date())
         let descriptor = FetchDescriptor<WellnessDayLog>(
             predicate: #Predicate { $0.day == today }
@@ -420,17 +419,22 @@ final class StressViewModel: ObservableObject {
 
         wellnessLog.stressLevel = stressLevel.label
 
-        let estimatedMinutes: Int
-        if let kcal = energy, kcal > 0 {
-            estimatedMinutes = max(0, Int(kcal / 10.0))
-        } else if let s = steps, s > 0 {
-            estimatedMinutes = max(0, Int(s / 100.0))
-        } else {
-            estimatedMinutes = 0
+        // Activity fields only update in real mode — in mock mode the
+        // MockDataInjector seeds these and we don't want to overwrite them
+        // with whatever the mock HK service returned.
+        if !usesMockData {
+            let estimatedMinutes: Int
+            if let kcal = energy, kcal > 0 {
+                estimatedMinutes = max(0, Int(kcal / 10.0))
+            } else if let s = steps, s > 0 {
+                estimatedMinutes = max(0, Int(s / 100.0))
+            } else {
+                estimatedMinutes = 0
+            }
+            wellnessLog.exerciseMinutes = estimatedMinutes
+            wellnessLog.steps = Int(steps ?? 0)
+            wellnessLog.caloriesBurned = Int(energy ?? 0)
         }
-        wellnessLog.exerciseMinutes = estimatedMinutes
-        wellnessLog.steps = Int(steps ?? 0)
-        wellnessLog.caloriesBurned = Int(energy ?? 0)
 
         try? modelContext.save()
     }
@@ -630,6 +634,13 @@ final class StressViewModel: ObservableObject {
 
     private func buildInputsFromMockSnapshot(_ snap: StressMockSnapshot, now: Date) -> StressScoring.StressInputs {
         let goals = UserGoals.current(in: modelContext)
+        // Mood is the one snapshot field the user can mutate from the Home tab
+        // (via the mood badge / MoodCheckInCard). Prefer the live WellnessDayLog
+        // so changes update the score; fall back to the seeded snapshot mood.
+        let liveMood: MoodOption? = fetchTodayWellnessLog()
+            .flatMap { $0.moodRaw }
+            .flatMap(MoodOption.init(rawValue:))
+        let effectiveMood: MoodOption? = liveMood ?? snap.mood
 
         let sleepInput = StressScoring.SleepInput(
             totalHours: snap.sleepSummary.totalHours,
@@ -645,7 +656,7 @@ final class StressViewModel: ObservableObject {
             : nil
 
         // Mock caffeine reflects WellnessDayLog presence as `coffeeCups > 0 || coffeeType != nil`
-        let hasWellnessProxy = (snap.coffeeCups > 0 || snap.coffeeType != nil || snap.waterGlasses > 0 || snap.mood != nil)
+        let hasWellnessProxy = (snap.coffeeCups > 0 || snap.coffeeType != nil || snap.waterGlasses > 0 || effectiveMood != nil)
         let caffeineInput = StressScoring.CaffeineInput(
             cups: snap.coffeeCups,
             type: snap.coffeeType,
@@ -680,7 +691,7 @@ final class StressViewModel: ObservableObject {
         let recovery = StressScoring.RecoveryInput(
             completedInterventionsToday: snap.todayInterventions.count,
             hasJournalToday: snap.todayJournal != nil,
-            hasMoodToday: snap.mood != nil,
+            hasMoodToday: effectiveMood != nil,
             hasMindfulSessionToday: !snap.todayInterventions.isEmpty
         )
 
@@ -716,7 +727,7 @@ final class StressViewModel: ObservableObject {
             mealLogs: snap.currentDayLogs,
             fasting: fastingInput,
             triggerLogs: snap.currentDayLogs,
-            mood: snap.mood,
+            mood: effectiveMood,
             symptoms: snap.todaySymptoms,
             recovery: recovery,
             history: history,
