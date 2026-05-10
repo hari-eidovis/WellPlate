@@ -449,6 +449,7 @@ struct HomeView: View {
                 refreshTodayHydrationState()
                 refreshTodayCoffeeState()
                 refreshTodayJournalState()
+                refreshTodayActivityFromHealthKit()
             }
             .sheet(item: $activeSheet) { sheet in
                 sheetContent(for: sheet)
@@ -480,6 +481,7 @@ struct HomeView: View {
             hasCoffeeStateLoaded = true
             refreshTodayJournalState()
             foodJournalViewModel.loadYesterdayStats()
+            refreshTodayActivityFromHealthKit()
         }
         .onChange(of: showWaterDetail) { _, showing in
             if !showing { refreshTodayHydrationState() }
@@ -976,6 +978,52 @@ struct HomeView: View {
 
     private func refreshTodayHydrationState() {
         hydrationGlasses = fetchTodayWellnessLog()?.waterGlasses ?? 0
+    }
+
+    /// Pulls today's active energy + steps from HealthKit and persists them
+    /// into the today `WellnessDayLog` so the Exercise ring reads non-zero
+    /// even before the user has visited the Stress tab. In mock mode the log
+    /// is pre-seeded by `MockDataInjector`, so we skip.
+    private func refreshTodayActivityFromHealthKit() {
+        guard HealthKitServiceFactory.isDataAvailable else { return }
+        if AppConfig.shared.mockMode { return }
+
+        Task {
+            let service = HealthKitServiceFactory.shared
+            do {
+                try await service.requestAuthorization()
+                guard service.isAuthorized else { return }
+
+                let cal = Calendar.current
+                let startOfDay = cal.startOfDay(for: Date())
+                let now = Date()
+                guard now > startOfDay else { return }
+                let range = DateInterval(start: startOfDay, end: now)
+
+                async let energySamples = service.fetchActiveEnergy(for: range)
+                async let stepSamples = service.fetchSteps(for: range)
+                let (energy, steps) = try await (energySamples, stepSamples)
+
+                let burnedKcal = Int((energy.first { cal.isDateInToday($0.date) }?.value ?? 0).rounded())
+                let stepCount = Int((steps.first { cal.isDateInToday($0.date) }?.value ?? 0).rounded())
+
+                let log = fetchOrCreateTodayWellnessLog()
+                var didChange = false
+                if burnedKcal > 0, log.caloriesBurned != burnedKcal {
+                    log.caloriesBurned = burnedKcal
+                    didChange = true
+                }
+                if stepCount > 0, log.steps != stepCount {
+                    log.steps = stepCount
+                    didChange = true
+                }
+                if didChange {
+                    try? modelContext.save()
+                }
+            } catch {
+                WPLogger.healthKit.error("Home activity refresh failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     private func updateHydrationForToday(_ cups: Int) {
