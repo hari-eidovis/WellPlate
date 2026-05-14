@@ -39,16 +39,18 @@ struct CalibratorChip: View {
     }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 2) {
             Image(systemName: icon)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(size: 8, weight: .semibold))
             Text(label)
-                .font(.r(.caption, .semibold))
-                .tracking(0.3)
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .tracking(0.2)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
         }
         .foregroundStyle(tint)
-        .padding(.horizontal, 9)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
         .background(Capsule().fill(tint.opacity(hasBaseline ? 0.12 : 0.08)))
     }
 }

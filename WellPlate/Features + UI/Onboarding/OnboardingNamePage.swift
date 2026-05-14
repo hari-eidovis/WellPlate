@@ -101,6 +101,10 @@ struct OnboardingNamePage: View {
 
             Spacer().frame(height: 16)
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            isFocused = false
+        }
         .onAppear {
             withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.15)) {
                 animate = true

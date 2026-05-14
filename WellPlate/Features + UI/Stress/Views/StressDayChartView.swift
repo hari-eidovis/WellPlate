@@ -2,8 +2,8 @@
 //  StressDayChartView.swift
 //  WellPlate
 //
-//  Intraday stress chart card — bar chart on a gradient background
-//  with large score, status badge, and sun/moon time indicators.
+//  Intraday stress chart card — bar chart on a light card background
+//  with status pill and sun/moon time indicators.
 //
 
 import SwiftUI
@@ -19,7 +19,10 @@ struct StressDayChartView: View {
 
     // MARK: - Theme
 
-    private static let cardColor = Color(hex: "7B8CDE")
+    private static let barColor = Color(hex: "B6C0EE")
+
+    /// Bucket size (hours) for grouping readings — 2 yields ~7 bars across 6AM–6PM.
+    private static let bucketHours = 2
 
     // MARK: - Computed
 
@@ -46,14 +49,28 @@ struct StressDayChartView: View {
         }
     }
 
-    /// Groups readings by hour → average score per hour.
+    private var statusColor: Color {
+        switch stressLevel {
+        case .excellent, .good: return Color(hex: "1FA971")
+        case .moderate:         return Color(hex: "E08A2B")
+        case .high, .veryHigh:  return Color(hex: "D64545")
+        }
+    }
+
+    /// Groups readings into fixed-size hour buckets → average score per bucket.
+    /// Bucket key is the bucket's starting hour (e.g. 0, 2, 4, …, 22 for 2-hour buckets).
     private var hourlyBars: [HourlyStressBar] {
         let cal = Calendar.current
-        let grouped = Dictionary(grouping: readings) {
-            cal.component(.hour, from: $0.timestamp)
+        let size = Self.bucketHours
+        let grouped = Dictionary(grouping: readings) { reading -> Int in
+            let h = cal.component(.hour, from: reading.timestamp)
+            return (h / size) * size
         }
-        return grouped.map { hour, items in
-            HourlyStressBar(hour: hour, score: items.map(\.score).reduce(0, +) / Double(items.count))
+        return grouped.map { bucketHour, items in
+            HourlyStressBar(
+                hour: bucketHour,
+                score: items.map(\.score).reduce(0, +) / Double(items.count)
+            )
         }
         .sorted { $0.hour < $1.hour }
     }
@@ -71,7 +88,8 @@ struct StressDayChartView: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Self.cardColor.gradient)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 15, y: 5)
         )
     }
 
@@ -82,22 +100,22 @@ struct StressDayChartView: View {
             // Header
             HStack {
                 Text("STRESS LEVEL")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.85))
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundColor(.secondary)
                     .tracking(0.8)
                 Spacer()
                 HStack(spacing: 4) {
                     Image(systemName: statusIcon)
-                        .font(.system(size: 11))
+                        .font(.system(size: 11, weight: .semibold))
                     Text(statusText)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                 }
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundColor(statusColor)
                 .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(Color.white.opacity(0.18)))
+                .padding(.vertical, 5)
+                .background(Capsule().fill(statusColor.opacity(0.13)))
             }
-            .padding(.bottom, 12)
+            .padding(.bottom, 14)
 
             // Scrub tooltip
             if let sel = selectedReading {
@@ -108,26 +126,27 @@ struct StressDayChartView: View {
                     Text("\(Int(sel.score))")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                 }
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundColor(.secondary)
                 .padding(.bottom, 6)
                 .transition(.opacity)
             }
 
             // Chart
             chartView
-                .padding(.bottom, 4)
+                .padding(.bottom, 6)
 
             // Sun / Moon
             HStack {
-                Image(systemName: "sun.max.fill")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.4))
+                Image(systemName: "sun.min")
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.secondary.opacity(0.55))
                 Spacer()
-                Image(systemName: "moon.fill")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.4))
+                Image(systemName: "moon")
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.secondary.opacity(0.55))
             }
             .padding(.horizontal, 4)
+            .padding(.top, 4)
         }
     }
 
@@ -138,27 +157,23 @@ struct StressDayChartView: View {
             ForEach(hourlyBars) { bar in
                 BarMark(
                     x: .value("Hour", bar.hour),
-                    y: .value("Score", bar.score)
+                    y: .value("Score", bar.score),
+                    width: .fixed(22)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.55), Color.white.opacity(0.2)],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
-                .cornerRadius(2.5)
+                .foregroundStyle(Self.barColor)
+                .cornerRadius(6)
             }
         }
         .chartYScale(domain: 0...100)
         .chartYAxis {
-            AxisMarks(values: [25, 50, 75]) { value in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                    .foregroundStyle(Color.white.opacity(0.12))
+            AxisMarks(position: .trailing, values: [25, 50, 75]) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
+                    .foregroundStyle(Color.secondary.opacity(0.22))
                 AxisValueLabel {
                     if let v = value.as(Int.self) {
                         Text("\(v)")
-                            .font(.system(size: 9, weight: .medium, design: .rounded))
-                            .foregroundStyle(Color.white.opacity(0.5))
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color.secondary.opacity(0.65))
                     }
                 }
             }
@@ -169,8 +184,8 @@ struct StressDayChartView: View {
                 AxisValueLabel {
                     if let h = value.as(Int.self) {
                         Text(hourLabel(h))
-                            .font(.system(size: 9, weight: .medium, design: .rounded))
-                            .foregroundStyle(Color.white.opacity(0.5))
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color.secondary.opacity(0.7))
                     }
                 }
             }
@@ -200,7 +215,7 @@ struct StressDayChartView: View {
                     )
             }
         }
-        .frame(height: 120)
+        .frame(height: 130)
         .animation(.easeInOut(duration: 0.3), value: readings.count)
     }
 
@@ -208,19 +223,26 @@ struct StressDayChartView: View {
 
     private var emptyState: some View {
         VStack(spacing: 12) {
+            HStack {
+                Text("STRESS LEVEL")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .tracking(0.8)
+                Spacer()
+            }
             VStack(spacing: 8) {
                 Image(systemName: "waveform.path")
                     .font(.system(size: 28))
-                    .foregroundColor(.white.opacity(0.25))
+                    .foregroundColor(.secondary.opacity(0.4))
                 Text("No readings yet today")
                     .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(.secondary)
                 Text("Snapshots appear automatically when your score changes.")
                     .font(.system(size: 11, weight: .regular, design: .rounded))
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundColor(.secondary.opacity(0.7))
                     .multilineTextAlignment(.center)
             }
-            .frame(height: 120, alignment: .center)
+            .frame(height: 130, alignment: .center)
             .frame(maxWidth: .infinity)
         }
     }

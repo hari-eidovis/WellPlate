@@ -309,16 +309,18 @@ struct StressView: View {
                     HStack {
                         Text("View all 13 factors")
                             .font(.r(.subheadline, .semibold))
+                            .foregroundStyle(.primary)
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.secondary.opacity(0.5))
                     }
-                    .foregroundStyle(AppColors.brand)
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 14)
+                    .padding(.vertical, 16)
+                    .padding(.horizontal, 18)
                     .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(AppColors.brand.opacity(0.08))
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Color(.systemBackground))
+                            .appShadow(radius: 15, y: 5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -421,38 +423,86 @@ struct StressView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 Text("\(Int(viewModel.totalScore.rounded()))")
-                    .font(.system(size: 72, weight: .bold, design: .rounded))
+                    .font(.system(size: 56, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
                     .contentTransition(.numericText())
 
                 Text("/100")
-                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundColor(.secondary)
-                    .padding(.bottom, 6)
+                    .padding(.bottom, 5)
             }
             confidenceBadge
         }
     }
 
     private var confidenceBadge: some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 6) {
+        HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 Image(systemName: viewModel.stressConfidence.systemImage)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                 Text("\(viewModel.factorCoverage) of 13 factors logged")
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .tracking(0.4)
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .tracking(0.2)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             .background(Capsule().fill(Color(.systemGray6)))
+
+            strainPill
 
             CalibratorChip(
                 calibrator: viewModel.calibratorMultiplier,
                 hasBaseline: viewModel.todayHRV != nil || viewModel.todayRestingHR != nil
             )
         }
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
+    }
+
+    /// Day-over-day score change vs yesterday, shown as a colored pill.
+    /// Hidden when there's no prior baseline reading.
+    @ViewBuilder
+    private var strainPill: some View {
+        if let delta = strainDeltaPercent {
+            let isUp = delta >= 0
+            let color: Color = isUp ? Color(hex: "E08A2B") : Color(hex: "1FA971")
+            HStack(spacing: 2) {
+                Image(systemName: isUp ? "arrow.up.right" : "arrow.down.right")
+                    .font(.system(size: 8, weight: .bold))
+                Text("\(isUp ? "+" : "")\(delta)% strain")
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+            .foregroundColor(color)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(color.opacity(0.13)))
+        }
+    }
+
+    /// Returns the rounded integer % change in stress score from yesterday's
+    /// most recent reading to today's, or nil when there's no comparison data.
+    private var strainDeltaPercent: Int? {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        guard let yesterday = cal.date(byAdding: .day, value: -1, to: today) else { return nil }
+
+        let yesterdayReadings = viewModel.weekReadings.filter {
+            cal.isDate($0.timestamp, inSameDayAs: yesterday)
+        }
+        guard let yesterdayScore = yesterdayReadings.last?.score, yesterdayScore > 0 else { return nil }
+
+        let current = viewModel.totalScore
+        guard current > 0 else { return nil }
+
+        let pct = ((current - yesterdayScore) / yesterdayScore) * 100
+        let rounded = Int(pct.rounded())
+        return rounded == 0 ? nil : rounded
     }
 
     private var formattedToday: String {
@@ -503,41 +553,23 @@ struct StressView: View {
     private var adviceCard: some View {
         let topFactor = topDrivers.first
         let factorIcon = topFactor?.icon ?? "leaf.fill"
-        let accent = topFactor?.accentColor ?? Self.themeBlue
         let sheet = topFactor.flatMap { sheetForFactor($0) }
+        let tabAction = topFactor.flatMap { tabActionForFactor($0) }
         let impact = topFactor.map { Int($0.stressContribution.rounded()) } ?? 0
         let factorTitle = topFactor?.title.uppercased() ?? "LIFESTYLE"
 
         return Button {
             HapticService.impact(.light)
             if let s = sheet { activeSheet = s }
+            else if let action = tabAction { action() }
         } label: {
             VStack(alignment: .leading, spacing: 14) {
                 // ── Header row: icon + label + impact pill
                 HStack(alignment: .center, spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [accent.opacity(0.22), accent.opacity(0.10)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 46, height: 46)
-                        Circle()
-                            .strokeBorder(accent.opacity(0.28), lineWidth: 1)
-                            .frame(width: 46, height: 46)
-                        Image(systemName: factorIcon)
-                            .font(.system(size: 19, weight: .semibold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [accent, accent.opacity(0.75)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    }
+                    Image(systemName: factorIcon)
+                        .font(.system(size: 18, weight: .regular))
+                        .foregroundColor(.secondary)
+                        .frame(width: 36, height: 36)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(factorTitle)
@@ -545,129 +577,88 @@ struct StressView: View {
                             .foregroundColor(.secondary)
                             .tracking(0.8)
                         Text("Top driver today")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.primary.opacity(0.82))
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.primary)
                     }
 
                     Spacer(minLength: 8)
 
                     if impact > 0 {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 3) {
                             Image(systemName: "arrow.up.right")
                                 .font(.system(size: 9, weight: .bold))
                             Text("+\(impact) stress")
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                         }
-                        .foregroundColor(accent)
+                        .foregroundColor(Color(hex: "E08A2B"))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(
-                            Capsule().fill(accent.opacity(0.13))
-                        )
-                        .overlay(
-                            Capsule().strokeBorder(accent.opacity(0.22), lineWidth: 0.5)
-                        )
+                        .background(Capsule().fill(Color(hex: "E08A2B").opacity(0.13)))
                     }
                 }
 
-                // ── Insight text
-                Text(adviceText(for: topFactor))
-                    .font(.system(size: 14.5, weight: .regular))
-                    .foregroundColor(.primary.opacity(0.88))
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .multilineTextAlignment(.leading)
+                // ── Big value + subtitle
+                topDriverValueBlock(for: topFactor)
 
-                // ── CTA chip + chevron
-                HStack {
-                    HStack(spacing: 6) {
-                        Text(actionLabel(for: topFactor))
-                            .font(.system(size: 13, weight: .semibold))
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 11, weight: .bold))
-                    }
-                    .foregroundColor(accent)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(
-                        Capsule()
-                            .fill(accent.opacity(0.13))
-                    )
-                    .overlay(
-                        Capsule().strokeBorder(accent.opacity(0.25), lineWidth: 0.75)
-                    )
+                Divider()
+                    .padding(.vertical, 2)
 
-                    Spacer()
+                // ── Action link
+                HStack(spacing: 6) {
+                    Text(actionLabel(for: topFactor))
+                        .font(.system(size: 14, weight: .semibold))
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 11, weight: .bold))
                 }
+                .foregroundColor(Self.themeBlue)
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                ZStack {
-                    // Base card
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(Color(.systemBackground))
-
-                    // Aurora gradient wash
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    accent.opacity(0.16),
-                                    accent.opacity(0.04),
-                                    .clear
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-
-                    // Soft ambient glow in upper-right
-                    Circle()
-                        .fill(accent.opacity(0.28))
-                        .frame(width: 200, height: 200)
-                        .blur(radius: 70)
-                        .offset(x: 120, y: -90)
-                        .allowsHitTesting(false)
-                }
-                .compositingGroup()
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [accent.opacity(0.38), accent.opacity(0.06)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                    .fill(Color(.systemBackground))
+                    .appShadow(radius: 15, y: 5)
             )
-            .appShadow(radius: 15, y: 5)
         }
         .buttonStyle(PressableCardStyle())
     }
 
-    private func adviceText(for factor: StressFactorResult?) -> AttributedString {
-        guard let f = factor else {
-            return AttributedString("Track your habits daily to better understand what affects your stress.")
-        }
-        var base = AttributedString(f.detailText)
-        // Bold any number with a unit (e.g. "6.4h", "4,200 steps")
-        // This is a simple heuristic: bold words containing digits
-        let words = f.detailText.components(separatedBy: " ")
-        var result = AttributedString()
-        for (i, word) in words.enumerated() {
-            var part = AttributedString(word + (i < words.count - 1 ? " " : ""))
-            let hasDigit = word.unicodeScalars.contains { CharacterSet.decimalDigits.contains($0) }
-            if hasDigit {
-                part.font = .system(size: 15, weight: .bold)
+    /// Big numeric value + units/subtitle for the top driver, in the style of
+    /// the reference design ("4.5h" + "on screen").
+    @ViewBuilder
+    private func topDriverValueBlock(for factor: StressFactorResult?) -> some View {
+        let (value, subtitle) = topDriverDisplay(for: factor)
+        HStack(alignment: .lastTextBaseline, spacing: 8) {
+            Text(value)
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            if !subtitle.isEmpty {
+                Text(subtitle)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
             }
-            result.append(part)
         }
-        return result.runs.isEmpty ? base : result
+    }
+
+    /// Maps the top factor to a "big value + subtitle" pair. Falls back to the
+    /// factor's statusText when no specialized formatter applies.
+    private func topDriverDisplay(for factor: StressFactorResult?) -> (String, String) {
+        guard let f = factor else { return ("—", "Track your habits") }
+        let title = f.title.lowercased()
+        if title.contains("screen") {
+            let hours = viewModel.screenTimeDisplayHours ?? 0
+            return (String(format: "%.1fh", hours), "on screen")
+        }
+        if title.contains("sleep") {
+            return (f.statusText, "")
+        }
+        // Default: split statusText on " · " for a value/subtitle pair
+        let parts = f.statusText.components(separatedBy: " · ")
+        if parts.count >= 2 { return (parts[0], parts[1]) }
+        return (f.statusText, "")
     }
 
     private func actionLabel(for factor: StressFactorResult?) -> String {

@@ -75,17 +75,15 @@ struct FastingLiveActivity: Widget {
                     .scaledToFit()
                     .frame(width: 18, height: 18)
             } compactTrailing: {
-                logoProgressRing(progress: context.state.progress,
-                                 state: context.state,
-                                 logoSize: 16,
-                                 ringSize: 20,
-                                 lineWidth: 2)
+                progressRing(progress: context.state.progress,
+                             state: context.state,
+                             ringSize: 20,
+                             lineWidth: 2)
             } minimal: {
-                logoProgressRing(progress: context.state.progress,
-                                 state: context.state,
-                                 logoSize: 16,
-                                 ringSize: 20,
-                                 lineWidth: 2)
+                progressRing(progress: context.state.progress,
+                             state: context.state,
+                             ringSize: 20,
+                             lineWidth: 2)
             }
         }
     }
@@ -155,6 +153,24 @@ struct FastingLiveActivity: Widget {
                 .scaledToFill()
                 .frame(width: logoSize, height: logoSize)
                 .clipShape(Circle())
+        }
+        .frame(width: ringSize, height: ringSize)
+    }
+
+    @ViewBuilder
+    private func progressRing(progress: Double,
+                              state: FastingActivityAttributes.ContentState,
+                              ringSize: CGFloat,
+                              lineWidth: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .stroke(Color.white.opacity(0.18), lineWidth: lineWidth)
+
+            Circle()
+                .trim(from: 0, to: max(0.001, min(progress, 1.0)))
+                .stroke(ringColor(for: state).gradient,
+                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
         }
         .frame(width: ringSize, height: ringSize)
     }
