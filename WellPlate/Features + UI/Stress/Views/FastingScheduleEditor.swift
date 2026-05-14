@@ -26,7 +26,7 @@ struct FastingScheduleEditor: View {
                 caffeineCutoffSection
                 infoSection
             }
-            .navigationTitle(existingSchedule == nil ? "Fasting Schedule" : "Edit Schedule")
+            .navigationTitle(existingSchedule == nil ? "Fast Setup" : "Edit Fast")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -66,9 +66,14 @@ struct FastingScheduleEditor: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(selectedType == type ? AppColors.brand : .secondary)
                             .frame(width: 28)
-                        Text(type.label)
-                            .font(.r(.body, .medium))
-                            .foregroundColor(.primary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(type.setupTitle)
+                                .font(.r(.body, .medium))
+                                .foregroundColor(.primary)
+                            Text(type.setupSubtitle)
+                                .font(.r(.caption, .regular))
+                                .foregroundColor(.secondary)
+                        }
                         Spacer()
                         if selectedType == type {
                             Image(systemName: "checkmark")
@@ -78,9 +83,13 @@ struct FastingScheduleEditor: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(type.setupTitle)
+                .accessibilityHint(type.setupSubtitle)
             }
         } header: {
-            Text("Schedule")
+            Text("Fast Length")
+        } footer: {
+            Text("Choose the number of hours you want to fast. WellPlate calculates the eating window from that.")
         }
     }
 
@@ -90,7 +99,7 @@ struct FastingScheduleEditor: View {
                 .font(.r(.body, .regular))
                 .onChange(of: eatWindowStart) { _ in syncEndFromStart() }
 
-            DatePicker("Ends at", selection: $eatWindowEnd, displayedComponents: .hourAndMinute)
+            DatePicker("Eat until", selection: $eatWindowEnd, displayedComponents: .hourAndMinute)
                 .font(.r(.body, .regular))
                 .onChange(of: eatWindowEnd) { _ in syncTypeFromWindow() }
 
@@ -104,7 +113,7 @@ struct FastingScheduleEditor: View {
                     .foregroundColor(AppColors.brand)
             }
         } header: {
-            Text("Eat Window")
+            Text("Eating Window")
         }
     }
 
@@ -123,7 +132,7 @@ struct FastingScheduleEditor: View {
 
     private var infoSection: some View {
         Section {
-            Text("Your fasting schedule repeats daily. Notifications will remind you when your eating window opens and closes.")
+            Text("Your fast repeats daily. Notifications can remind you when eating starts and when fasting begins.")
                 .font(.r(.caption, .regular))
                 .foregroundColor(.secondary)
         }
@@ -132,18 +141,7 @@ struct FastingScheduleEditor: View {
     // MARK: - Computed
 
     private var fastDurationLabel: String {
-        let cal = Calendar.current
-        let diff = cal.dateComponents([.hour, .minute], from: eatWindowStart, to: eatWindowEnd)
-        var eatHours = diff.hour ?? 0
-        let eatMins = diff.minute ?? 0
-        if eatHours < 0 { eatHours += 24 }
-        let fastHours = 24 - eatHours
-        let fastMins = eatMins > 0 ? 60 - eatMins : 0
-        let adjustedFastHours = eatMins > 0 ? fastHours - 1 : fastHours
-        if fastMins > 0 {
-            return "\(adjustedFastHours)h \(fastMins)m"
-        }
-        return "\(fastHours)h"
+        FastingScheduleType.formatDuration(24.0 - eatWindowDurationHours)
     }
 
     private var eatWindowDurationHours: Double {
@@ -179,9 +177,7 @@ struct FastingScheduleEditor: View {
 
     private func syncTypeFromWindow() {
         // If user manually changes end, switch to custom
-        let hours = eatWindowDurationHours
-        let matchingType = FastingScheduleType.allCases.first { $0 != .custom && $0.defaultEatHours == hours }
-        selectedType = matchingType ?? .custom
+        selectedType = FastingScheduleType.preset(forFastDurationHours: 24.0 - eatWindowDurationHours)
     }
 
     private func handleSave() {

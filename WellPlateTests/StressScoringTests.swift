@@ -95,6 +95,30 @@ final class StressScoringTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(result.score, 70, "Worst day should be at least High")
     }
 
+    /// Fasting stress load is duration-segmented: <16h=0, 16-20h=1, 20-24h=2, >=24h=3.
+    func testFastingDurationSegments() {
+        let cases: [(hours: Double?, configured: Bool, expected: Double, hasData: Bool)] = [
+            (nil, false, 0, false),
+            (nil, true, 0, true),
+            (15.9, true, 0, true),
+            (16.0, true, 1, true),
+            (19.9, true, 1, true),
+            (20.0, true, 2, true),
+            (23.9, true, 2, true),
+            (24.0, true, 3, true),
+            (30.0, true, 3, true),
+            (16.0, false, 1, true),
+        ]
+
+        for item in cases {
+            let factor = StressScoring.fastingPoints(
+                input: .init(activeFastHours: item.hours, isConfigured: item.configured)
+            )
+            XCTAssertEqual(factor.points, item.expected, accuracy: 0.01)
+            XCTAssertEqual(factor.hasData, item.hasData)
+        }
+    }
+
     /// Logging mood `.great` strictly reduces score vs not logged after 21:00 with otherwise sparse data.
     func testMoodGreatStrictlyReducesScore() {
         var base = emptyInputs()

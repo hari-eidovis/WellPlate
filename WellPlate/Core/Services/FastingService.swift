@@ -221,7 +221,7 @@ final class FastingService: ObservableObject {
         let eatEndComps = cal.dateComponents([.hour, .minute], from: eatEndDate)
         let windowClosedContent = UNMutableNotificationContent()
         windowClosedContent.title = "Eating Window Closed"
-        windowClosedContent.body = "Your \(schedule.resolvedScheduleType.label) fast has begun."
+        windowClosedContent.body = "Your \(schedule.displayLabel) has begun."
         windowClosedContent.sound = .default
         let windowClosedTrigger = UNCalendarNotificationTrigger(dateMatching: eatEndComps, repeats: true)
         center.add(UNNotificationRequest(identifier: Self.notifWindowClosed,

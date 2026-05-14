@@ -195,7 +195,7 @@ struct FastingView: View {
             .frame(width: 180, height: 180)
 
             if let sched = schedule {
-                Text(sched.resolvedScheduleType.label)
+                Text(sched.displayLabel)
                     .font(.r(.footnote, .medium))
                     .foregroundColor(.secondary)
             }
@@ -330,7 +330,7 @@ struct FastingView: View {
             if fastingService.currentState.isFasting && !ActivityManager.shared.isFastingActivityActive {
                 if let session = activeSession {
                     ActivityManager.shared.startFastingActivity(
-                        scheduleLabel: schedule.resolvedScheduleType.label + " Fast",
+                        scheduleLabel: schedule.displayLabel,
                         fastStartDate: session.startedAt,
                         targetEndDate: session.targetEndAt
                     )
@@ -351,7 +351,7 @@ struct FastingView: View {
             modelContext.insert(session)
 
             ActivityManager.shared.startFastingActivity(
-                scheduleLabel: schedule.resolvedScheduleType.label + " Fast",
+                scheduleLabel: schedule.displayLabel,
                 fastStartDate: fastStart,
                 targetEndDate: fastEnd
             )

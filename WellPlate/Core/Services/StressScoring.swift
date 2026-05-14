@@ -87,6 +87,57 @@ enum StressScoring {
         let isConfigured: Bool
     }
 
+    enum FastingStressSegment: CaseIterable {
+        case notFasting
+        case under16
+        case hours16To20
+        case hours20To24
+        case hours24Plus
+
+        static func segment(for activeFastHours: Double?) -> FastingStressSegment {
+            guard let h = activeFastHours, h > 0 else { return .notFasting }
+            switch h {
+            case ..<16:   return .under16
+            case 16..<20: return .hours16To20
+            case 20..<24: return .hours20To24
+            default:      return .hours24Plus
+            }
+        }
+
+        var points: Double {
+            switch self {
+            case .notFasting, .under16:
+                return 0
+            case .hours16To20:
+                return 1
+            case .hours20To24:
+                return 2
+            case .hours24Plus:
+                return 3
+            }
+        }
+
+        var summary: String {
+            switch self {
+            case .notFasting:
+                return "Not fasting"
+            case .under16:
+                return "Under 16h"
+            case .hours16To20:
+                return "16-20h fast"
+            case .hours20To24:
+                return "20-24h fast"
+            case .hours24Plus:
+                return "24h+ fast"
+            }
+        }
+
+        func detail(activeFastHours: Double?) -> String {
+            guard let h = activeFastHours, h > 0 else { return summary }
+            return String(format: "%.1fh into fast - %@", h, summary)
+        }
+    }
+
     struct RecoveryInput {
         let completedInterventionsToday: Int
         let hasJournalToday: Bool
@@ -438,22 +489,14 @@ enum StressScoring {
     /// Fasting penalty 0…3 per formula §3.10.
     static func fastingPoints(input: FastingInput?) -> FactorPoints {
         guard let input = input else { return .none }
-        guard input.isConfigured else { return .none }
-        let h = input.activeFastHours ?? 0
-        let pts: Double
-        switch h {
-        case ..<16:    pts = 0
-        case 16..<20:  pts = 1
-        case 20..<24:  pts = 2
-        default:       pts = 3
-        }
-        let detail: String
-        if h <= 0 {
-            detail = "Not fasting"
-        } else {
-            detail = String(format: "%.1fh into fast", h)
-        }
-        return FactorPoints(points: pts, maxPoints: Weights.fasting, hasData: true, detail: detail)
+        guard input.isConfigured || input.activeFastHours != nil else { return .none }
+        let segment = FastingStressSegment.segment(for: input.activeFastHours)
+        return FactorPoints(
+            points: segment.points,
+            maxPoints: Weights.fasting,
+            hasData: true,
+            detail: segment.detail(activeFastHours: input.activeFastHours)
+        )
     }
 
     // MARK: - Tier B: Eating triggers

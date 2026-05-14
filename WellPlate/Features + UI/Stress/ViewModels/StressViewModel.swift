@@ -948,11 +948,11 @@ final class StressViewModel: ObservableObject {
         // Fasting
         let activeFastHours: Double? = {
             guard let s = activeFast else { return nil }
-            return now.timeIntervalSince(s.startedAt) / 3600.0
+            return max(0, now.timeIntervalSince(s.startedAt) / 3600.0)
         }()
         let fastingInput = StressScoring.FastingInput(
             activeFastHours: activeFastHours,
-            isConfigured: fastingConfigured
+            isConfigured: fastingConfigured || activeFast != nil
         )
 
         // Mood

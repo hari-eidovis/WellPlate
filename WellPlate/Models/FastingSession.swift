@@ -22,6 +22,19 @@ final class FastingSession {
         self.createdAt = .now
     }
 
+    convenience init(
+        startedAt: Date = .now,
+        targetHours: Double,
+        scheduleType: FastingScheduleType
+    ) {
+        let safeTargetHours = max(1, targetHours)
+        self.init(
+            startedAt: startedAt,
+            targetEndAt: startedAt.addingTimeInterval(safeTargetHours * 3600),
+            scheduleType: scheduleType
+        )
+    }
+
     var isActive: Bool { actualEndAt == nil }
 
     var actualDurationSeconds: TimeInterval {
@@ -29,8 +42,16 @@ final class FastingSession {
         return end.timeIntervalSince(startedAt)
     }
 
+    var actualDurationHours: Double {
+        actualDurationSeconds / 3600.0
+    }
+
     var targetDurationSeconds: TimeInterval {
         targetEndAt.timeIntervalSince(startedAt)
+    }
+
+    var targetDurationHours: Double {
+        targetDurationSeconds / 3600.0
     }
 
     var progress: Double {
