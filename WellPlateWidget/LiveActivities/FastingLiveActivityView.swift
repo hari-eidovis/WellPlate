@@ -12,59 +12,80 @@ struct FastingLiveActivity: Widget {
             DynamicIsland {
                 // EXPANDED — tapped/long-pressed
                 DynamicIslandExpandedRegion(.leading) {
-                    fastingProgressRing(progress: context.state.progress)
-                        .frame(width: 52, height: 52)
+                    logoProgressRing(progress: context.state.progress,
+                                     state: context.state,
+                                     logoSize: 46,
+                                     ringSize: 56,
+                                     lineWidth: 4)
+                        .padding(.leading, 4)
+                }
+                DynamicIslandExpandedRegion(.trailing) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(percentLabel(for: context.state))
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundColor(.orange)
+                            .monospacedDigit()
+                        Text("complete")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    .padding(.trailing, 4)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(context.attributes.scheduleLabel)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.7))
 
                         if context.state.isCompleted {
                             Text("Fast complete")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.green)
                         } else if context.state.isBroken {
                             Text("Fast ended early")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.red)
                         } else {
                             Text(timerInterval: Date.now...context.state.targetEndDate,
                                  countsDown: true)
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                                 .monospacedDigit()
+                                .minimumScaleFactor(0.6)
+                                .lineLimit(1)
                         }
                     }
                 }
-                DynamicIslandExpandedRegion(.trailing) {
-                    Text("left")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.top, 24)
+                DynamicIslandExpandedRegion(.bottom) {
+                    if !context.state.isCompleted && !context.state.isBroken {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.55))
+                            Text("Eat window opens \(eatWindowLabel(for: context.state.targetEndDate))")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.white.opacity(0.55))
+                        }
+                    }
                 }
             } compactLeading: {
-                Image(systemName: "fork.knife")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.orange)
+                Image("WellPlate_Logo")
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
             } compactTrailing: {
-                if context.state.isCompleted || context.state.isBroken {
-                    Image(systemName: context.state.isCompleted ? "checkmark" : "xmark")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(context.state.isCompleted ? .green : .red)
-                } else {
-                    Text(timerInterval: Date.now...context.state.targetEndDate,
-                         countsDown: true)
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(.orange)
-                        .frame(width: 40)
-                }
+                logoProgressRing(progress: context.state.progress,
+                                 state: context.state,
+                                 logoSize: 16,
+                                 ringSize: 20,
+                                 lineWidth: 2)
             } minimal: {
-                Image(systemName: "fork.knife")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.orange)
+                logoProgressRing(progress: context.state.progress,
+                                 state: context.state,
+                                 logoSize: 16,
+                                 ringSize: 20,
+                                 lineWidth: 2)
             }
         }
     }
@@ -74,8 +95,11 @@ struct FastingLiveActivity: Widget {
     @ViewBuilder
     private func lockScreenView(context: ActivityViewContext<FastingActivityAttributes>) -> some View {
         HStack(spacing: 16) {
-            fastingProgressRing(progress: context.state.progress)
-                .frame(width: 56, height: 56)
+            logoProgressRing(progress: context.state.progress,
+                             state: context.state,
+                             logoSize: 46,
+                             ringSize: 56,
+                             lineWidth: 4)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(context.attributes.scheduleLabel)
@@ -95,8 +119,7 @@ struct FastingLiveActivity: Widget {
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .monospacedDigit()
 
-                    let formatter = Date.FormatStyle.dateTime.hour().minute()
-                    Text("Eat window opens at \(context.state.targetEndDate.formatted(formatter))")
+                    Text("Eat window opens at \(eatWindowLabel(for: context.state.targetEndDate))")
                         .font(.system(size: 12, weight: .regular))
                         .foregroundColor(.secondary)
                 }
@@ -108,23 +131,48 @@ struct FastingLiveActivity: Widget {
         .activityBackgroundTint(.black.opacity(0.7))
     }
 
-    // MARK: - Progress Ring
+    // MARK: - Logo + Progress Ring
 
     @ViewBuilder
-    private func fastingProgressRing(progress: Double) -> some View {
+    private func logoProgressRing(progress: Double,
+                                  state: FastingActivityAttributes.ContentState,
+                                  logoSize: CGFloat,
+                                  ringSize: CGFloat,
+                                  lineWidth: CGFloat) -> some View {
         ZStack {
             Circle()
-                .stroke(Color.white.opacity(0.15), lineWidth: 4)
+                .stroke(Color.white.opacity(0.18), lineWidth: lineWidth)
 
             Circle()
-                .trim(from: 0, to: progress)
-                .stroke(Color.orange.gradient,
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .trim(from: 0, to: max(0.001, min(progress, 1.0)))
+                .stroke(ringColor(for: state).gradient,
+                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
-            Image(systemName: "fork.knife")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.orange)
+            Image("WellPlate_Logo")
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFill()
+                .frame(width: logoSize, height: logoSize)
+                .clipShape(Circle())
         }
+        .frame(width: ringSize, height: ringSize)
+    }
+
+    private func ringColor(for state: FastingActivityAttributes.ContentState) -> Color {
+        if state.isCompleted { return .green }
+        if state.isBroken { return .red }
+        return .orange
+    }
+
+    private func percentLabel(for state: FastingActivityAttributes.ContentState) -> String {
+        if state.isCompleted { return "100%" }
+        let clamped = max(0, min(state.progress, 1.0))
+        return "\(Int((clamped * 100).rounded()))%"
+    }
+
+    private func eatWindowLabel(for date: Date) -> String {
+        let formatter = Date.FormatStyle.dateTime.hour().minute()
+        return date.formatted(formatter)
     }
 }
