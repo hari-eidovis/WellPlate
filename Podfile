@@ -1,6 +1,6 @@
 platform :ios, '18.6'
 
-target 'WellPlate' do
+target 'Cadence' do
   use_frameworks!
   pod 'lottie-ios'
 end
@@ -8,7 +8,7 @@ end
 post_install do |installer|
   # Xcode 16 enables User Script Sandboxing by default, which blocks the
   # CocoaPods "Embed Pods Frameworks" rsync. Disable it on Pods targets and
-  # on the host WellPlate target so the script phase can run.
+  # on the host Cadence target so the script phase can run.
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
@@ -17,7 +17,7 @@ post_install do |installer|
 
   installer.aggregate_targets.each do |aggregate_target|
     aggregate_target.user_project.native_targets.each do |target|
-      next unless target.name == 'WellPlate'
+      next unless target.name == 'Cadence'
       target.build_configurations.each do |config|
         config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
       end

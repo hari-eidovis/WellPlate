@@ -31,8 +31,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "BFD33EC12F27DF8100D93897"
-               BuildableName = "WellPlate.app"
-               BlueprintName = "WellPlate"
+               BuildableName = "Cadence.app"
+               BlueprintName = "Cadence"
                ReferencedContainer = "container:WellPlate.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -66,8 +66,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BFD33EC12F27DF8100D93897"
-            BuildableName = "WellPlate.app"
-            BlueprintName = "WellPlate"
+            BuildableName = "Cadence.app"
+            BlueprintName = "Cadence"
             ReferencedContainer = "container:WellPlate.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -85,8 +85,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BFD33EC12F27DF8100D93897"
-            BuildableName = "WellPlate.app"
-            BlueprintName = "WellPlate"
+            BuildableName = "Cadence.app"
+            BlueprintName = "Cadence"
             ReferencedContainer = "container:WellPlate.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

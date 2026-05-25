@@ -11,6 +11,6 @@
 #endif
 
 
-FOUNDATION_EXPORT double Pods_WellPlateVersionNumber;
-FOUNDATION_EXPORT const unsigned char Pods_WellPlateVersionString[];
+FOUNDATION_EXPORT double Pods_CadenceVersionNumber;
+FOUNDATION_EXPORT const unsigned char Pods_CadenceVersionString[];
 
