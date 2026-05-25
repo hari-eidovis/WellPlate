@@ -87,7 +87,7 @@ struct MainTabView: View {
             }
         }
         .onChange(of: pendingDeepLink) { _, url in
-            guard let url, url.scheme == "wellplate" else { return }
+            guard let url, url.scheme == "cadence" else { return }
             switch url.host {
             case "stress": tabSelector.selectedTab = .stress
             default: break

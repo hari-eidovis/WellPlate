@@ -89,7 +89,7 @@ struct FastingScheduleEditor: View {
         } header: {
             Text("Fast Length")
         } footer: {
-            Text("Choose the number of hours you want to fast. WellPlate calculates the eating window from that.")
+            Text("Choose the number of hours you want to fast. Cadence calculates the eating window from that.")
         }
     }
 

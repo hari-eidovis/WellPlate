@@ -66,7 +66,7 @@ struct InsightsHubView: View {
                 .font(.r(.title3, .bold))
                 .foregroundStyle(.primary)
 
-            Text("Use WellPlate for \(remaining == 1 ? "1 more day" : "\(remaining) more days") so we have enough data to generate personalized insights for you.")
+            Text("Use Cadence for \(remaining == 1 ? "1 more day" : "\(remaining) more days") so we have enough data to generate personalized insights for you.")
                 .font(.r(.subheadline, .regular))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

@@ -62,7 +62,7 @@ struct VoiceMealLogView: View {
             }
             Button("Cancel", role: .cancel) { dismiss() }
         } message: {
-            Text("WellPlate needs microphone and speech recognition access. Enable both in Settings > Privacy.")
+            Text("Cadence needs microphone and speech recognition access. Enable both in Settings > Privacy.")
         }
         .onAppear {
             viewModel.startVoiceAutoLog(selectedDate: selectedDate)

@@ -415,7 +415,7 @@ struct FastingView: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.orange)
             }
-            Text("Enable notifications in Settings → WellPlate for fasting reminders.")
+            Text("Enable notifications in Settings → Cadence for fasting reminders.")
                 .font(.r(12, .medium))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.leading)

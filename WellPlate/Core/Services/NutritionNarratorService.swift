@@ -79,7 +79,7 @@ final class NutritionNarratorService: NSObject, ObservableObject, AVSpeechSynthe
         #if canImport(FoundationModels)
         let session = LanguageModelSession()
         let prompt = """
-        You are a friendly, concise nutrition coach inside a health app called WellPlate.
+        You are a friendly, concise nutrition coach inside a health app called Cadence.
         Write exactly 2–3 sentences coaching the user on their nutrition for today.
         Be specific with numbers. End with one small, actionable suggestion for tomorrow.
 

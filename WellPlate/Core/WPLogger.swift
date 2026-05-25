@@ -15,7 +15,7 @@ import Foundation
 
 // MARK: - WPLogger
 
-/// Namespace for all WellPlate logging channels.
+/// Namespace for all Cadence logging channels.
 /// All output is DEBUG-only and routes through `os.Logger` for Xcode / Console.app filtering.
 enum WPLogger {
 
@@ -43,7 +43,7 @@ enum WPLogger {
         init(category: String, icon: String) {
             self.category = category
             self.icon = icon
-            self.logger = Logger(subsystem: "com.wellplate.app", category: category)
+            self.logger = Logger(subsystem: "com.cadence.app", category: category)
         }
 
         // MARK: Single-line events

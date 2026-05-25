@@ -52,7 +52,7 @@ struct MealLogView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("WellPlate needs microphone and speech recognition access to transcribe your meal. Enable both in Settings > Privacy.")
+            Text("Cadence needs microphone and speech recognition access to transcribe your meal. Enable both in Settings > Privacy.")
         }
         .onChange(of: viewModel.showError) { _, isError in
             if isError { HapticService.notify(.error) }

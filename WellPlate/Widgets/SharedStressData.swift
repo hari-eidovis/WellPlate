@@ -48,7 +48,7 @@ struct WidgetStressData: Codable {
         WidgetStressData(
             totalScore:     0,
             levelRaw:       "Excellent",
-            encouragement:  "Open WellPlate to get started",
+            encouragement:  "Open Cadence to get started",
             factors:        [],
             restingHR:      nil,
             hrv:            nil,

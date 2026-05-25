@@ -223,7 +223,7 @@ final class ReportNarrativeGenerator {
 
     private func buildExecutiveSummaryPrompt(promptContext: ReportPromptContext) -> String {
         """
-        You are a wellness coach writing a summary for a health app called WellPlate.
+        You are a wellness coach writing a summary for a health app called Cadence.
 
         Here is the user's 15-day wellness data summary:
         \(promptContext.text)
@@ -249,7 +249,7 @@ final class ReportNarrativeGenerator {
 
     private func buildActionPlanPrompt(promptContext: ReportPromptContext) -> String {
         """
-        You are a wellness coach for a health app called WellPlate.
+        You are a wellness coach for a health app called Cadence.
 
         Here is the user's 15-day data summary:
         \(promptContext.text)

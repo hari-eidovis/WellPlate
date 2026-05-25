@@ -35,7 +35,7 @@ struct WellnessReportShareSheet: View {
                                 if let url = imageURL {
                                     ShareLink(
                                         item: url,
-                                        preview: SharePreview("WellPlate Weekly Report")
+                                        preview: SharePreview("Cadence Weekly Report")
                                     ) {
                                         Label("Share as Image", systemImage: "photo")
                                             .font(.r(.body, .semibold))
@@ -50,7 +50,7 @@ struct WellnessReportShareSheet: View {
                                 if let url = csvURL {
                                     ShareLink(
                                         item: url,
-                                        preview: SharePreview("WellPlate Weekly Data.csv")
+                                        preview: SharePreview("Cadence Weekly Data.csv")
                                     ) {
                                         Label("Export as CSV", systemImage: "tablecells")
                                             .font(.r(.body, .medium))
@@ -84,7 +84,7 @@ struct WellnessReportShareSheet: View {
             if let uiImage = await WellnessReportGenerator.renderImage(data: reportData),
                let jpegData = uiImage.jpegData(compressionQuality: 0.88) {
                 let url = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("WellPlate_Weekly_Report.jpg")
+                    .appendingPathComponent("Cadence_Weekly_Report.jpg")
                 if (try? jpegData.write(to: url)) != nil {
                     imageURL = url
                 }
@@ -97,7 +97,7 @@ struct WellnessReportShareSheet: View {
                 wellnessLogs: wellnessLogs
             )
             let csvFileURL = FileManager.default.temporaryDirectory
-                .appendingPathComponent("WellPlate_Weekly_Data.csv")
+                .appendingPathComponent("Cadence_Weekly_Data.csv")
             if (try? csvData.write(to: csvFileURL)) != nil {
                 csvURL = csvFileURL
             }

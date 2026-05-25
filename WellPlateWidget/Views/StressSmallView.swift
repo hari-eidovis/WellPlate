@@ -18,7 +18,7 @@ struct StressSmallView: View {
     }
 
     var body: some View {
-        Link(destination: URL(string: "wellplate://stress")!) {
+        Link(destination: URL(string: "cadence://stress")!) {
             if data.factors.isEmpty {
                 emptyState
             } else {

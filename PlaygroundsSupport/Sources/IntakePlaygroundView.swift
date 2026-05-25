@@ -26,7 +26,7 @@ struct IntakePlaygroundView: View {
                 .padding(16)
             }
             .background(Color.platformGroupedBackground)
-            .navigationTitle("WellPlate")
+            .navigationTitle("Cadence")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("Reset Demo") {
