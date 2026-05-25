@@ -21,6 +21,10 @@ struct WellPlateApp: App {
         // Trigger API client factory initialization to log which client is being used
         _ = APIClientFactory.shared
 
+        // Hook the global stress-drop celebration overlay into its own UIWindow
+        // so it can appear over any tab or presented sheet.
+        CelebrationWindowPresenter.shared.install()
+
         #if DEBUG
         // Verify MockData bundle inclusion (only in DEBUG builds)
         if AppConfig.shared.mockMode {

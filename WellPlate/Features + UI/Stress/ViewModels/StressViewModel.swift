@@ -816,6 +816,12 @@ final class StressViewModel: ObservableObject {
         lastInputs = inputs
         persistLastResult(result)
 
+        // Detect ≥ 8-point drop BEFORE mutating totalScore so the comparison
+        // uses the previously-published value as the baseline. Delegates to a
+        // global coordinator so the overlay can appear from any screen, not
+        // just StressView.
+        CelebrationCoordinator.shared.evaluate(previousScore: totalScore, newScore: result.score)
+
         totalScore = result.score
         calibratorMultiplier = result.calibrator
         engagementPenaltyValue = result.engagementPenalty

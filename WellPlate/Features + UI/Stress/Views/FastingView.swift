@@ -64,7 +64,7 @@ struct FastingView: View {
                 .padding(.top, 16)
                 .padding(.bottom, 32)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(backgroundCanvas)
             .navigationTitle("Fasting")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -113,6 +113,30 @@ struct FastingView: View {
         }
     }
 
+    // MARK: - Background
+
+    private var backgroundCanvas: some View {
+        ZStack(alignment: .top) {
+            Color(.systemGroupedBackground).ignoresSafeArea()
+            LinearGradient(
+                colors: [heroAccent.opacity(0.12), .clear],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 360)
+            .ignoresSafeArea(edges: .top)
+        }
+        .allowsHitTesting(false)
+    }
+
+    private var heroAccent: Color {
+        switch fastingService.currentState {
+        case .fasting: return Color(hue: 0.07, saturation: 0.78, brightness: 0.95)
+        case .eating:  return Color(hue: 0.40, saturation: 0.62, brightness: 0.72)
+        case .notConfigured: return AppColors.brand
+        }
+    }
+
     // MARK: - Timer Card
 
     private var timerCard: some View {
@@ -126,111 +150,221 @@ struct FastingView: View {
     }
 
     private var emptyStateCard: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "fork.knife.circle")
-                .font(.system(size: 44, weight: .light))
-                .foregroundColor(.secondary.opacity(0.5))
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [AppColors.brand.opacity(0.22), AppColors.brand.opacity(0.06)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 100, height: 100)
+                Image(systemName: "fork.knife.circle.fill")
+                    .font(.system(size: 46, weight: .bold))
+                    .foregroundStyle(AppColors.brand)
+            }
 
-            Text("Set up your fasting schedule")
-                .font(.r(.headline, .semibold))
-
-            Text("Track intermittent fasting and see how it correlates with your stress score.")
-                .font(.r(.footnote, .regular))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            VStack(spacing: 8) {
+                Text("Set Up Fasting")
+                    .font(.r(20, .bold))
+                    .foregroundStyle(.primary)
+                Text("Track intermittent fasting and see how it correlates with your stress score.")
+                    .font(.r(13, .regular))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 8)
+            }
 
             Button {
                 HapticService.impact(.light)
                 activeFastingSheet = .scheduleEditor
             } label: {
-                Text("Get Started")
-                    .font(.r(.body, .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(AppColors.brand)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                HStack(spacing: 8) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 15, weight: .bold))
+                    Text("Get Started")
+                        .font(.r(15, .bold))
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [AppColors.brand, AppColors.brand.opacity(0.82)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: AppColors.brand.opacity(0.35), radius: 10, x: 0, y: 4)
+                )
             }
+            .buttonStyle(.plain)
         }
-        .padding(24)
+        .padding(28)
+        .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
+                .appShadow(radius: 16, y: 6)
         )
     }
 
     private var activeTimerCard: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                // Background ring
+        VStack(spacing: 18) {
+            HStack(spacing: 6) {
                 Circle()
-                    .stroke(Color(.systemGray5), lineWidth: 10)
+                    .fill(heroAccent)
+                    .frame(width: 7, height: 7)
+                Text(stateLabel)
+                    .font(.r(11, .bold))
+                    .tracking(1.4)
+                    .foregroundStyle(heroAccent)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(heroAccent.opacity(0.14)))
 
-                // Progress ring
+            ZStack {
                 Circle()
-                    .trim(from: 0, to: fastingService.progress)
+                    .fill(
+                        RadialGradient(
+                            colors: [heroAccent.opacity(0.14), .clear],
+                            center: .center,
+                            startRadius: 5,
+                            endRadius: 120
+                        )
+                    )
+                    .frame(width: 230, height: 230)
+                    .blur(radius: 4)
+
+                Circle()
+                    .stroke(heroAccent.opacity(0.14), lineWidth: 14)
+                    .frame(width: 200, height: 200)
+
+                Circle()
+                    .trim(from: 0, to: max(fastingService.progress, 0.001))
                     .stroke(
-                        ringColor.gradient,
-                        style: StrokeStyle(lineWidth: 10, lineCap: .round)
+                        LinearGradient(
+                            colors: [heroAccent, heroAccent.opacity(0.7)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        style: StrokeStyle(lineWidth: 14, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
+                    .frame(width: 200, height: 200)
                     .animation(.linear(duration: 0.3), value: fastingService.progress)
 
-                // Center text
                 VStack(spacing: 4) {
-                    Text(stateLabel)
-                        .font(.r(.caption, .semibold))
-                        .foregroundColor(ringColor)
-
                     Text(formattedTimeRemaining)
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
-
-                    Text("remaining")
-                        .font(.r(.caption2, .regular))
-                        .foregroundColor(.secondary)
+                        .font(.r(38, .heavy))
+                        .foregroundStyle(.primary)
+                        .monospacedDigit()
+                    Text("REMAINING")
+                        .font(.r(10, .bold))
+                        .tracking(1.0)
+                        .foregroundStyle(.secondary)
+                    if fastingService.progress > 0 {
+                        Text("\(Int(fastingService.progress * 100))% complete")
+                            .font(.r(12, .semibold))
+                            .foregroundStyle(heroAccent)
+                            .padding(.top, 2)
+                    }
                 }
             }
-            .frame(width: 180, height: 180)
 
             if let sched = schedule {
-                Text(sched.displayLabel)
-                    .font(.r(.footnote, .medium))
-                    .foregroundColor(.secondary)
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.secondary)
+                    Text(sched.displayLabel)
+                        .font(.r(12, .semibold))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .padding(24)
+        .padding(28)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [heroAccent.opacity(0.10), heroAccent.opacity(0.02)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .strokeBorder(heroAccent.opacity(0.16), lineWidth: 1)
+                )
+                .appShadow(radius: 18, y: 7)
         )
     }
 
     // MARK: - Today Info Card
 
     private var todayInfoCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let eatColor = Color(hue: 0.40, saturation: 0.62, brightness: 0.72)
+        return VStack(alignment: .leading, spacing: 12) {
             if let sched = schedule {
-                HStack {
-                    Image(systemName: "clock")
-                        .foregroundColor(.secondary)
-                    Text(eatWindowLabel(for: sched))
-                        .font(.r(.footnote, .medium))
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [eatColor.opacity(0.22), eatColor.opacity(0.10)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 34, height: 34)
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(eatColor)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("EAT WINDOW")
+                            .font(.r(10, .bold))
+                            .tracking(0.7)
+                            .foregroundStyle(eatColor.opacity(0.85))
+                        Text(eatWindowDisplay(for: sched))
+                            .font(.r(14, .bold))
+                            .foregroundStyle(.primary)
+                    }
                     Spacer()
                 }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color(.tertiarySystemFill).opacity(0.55))
+                )
 
                 if fastingService.isCaffeineCutoffActive {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 10) {
                         Image(systemName: "cup.and.saucer.fill")
-                            .foregroundColor(.orange)
-                            .font(.system(size: 12))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.orange)
                         Text("Caffeine cutoff active")
-                            .font(.r(.caption, .medium))
-                            .foregroundColor(.orange)
+                            .font(.r(13, .semibold))
+                            .foregroundStyle(.orange)
+                        Spacer()
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.orange.opacity(0.12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .strokeBorder(Color.orange.opacity(0.18), lineWidth: 1)
+                            )
+                    )
                 }
 
                 if fastingService.currentState.isFasting {
@@ -238,84 +372,145 @@ struct FastingView: View {
                         HapticService.impact(.light)
                         showBreakFastAlert = true
                     } label: {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 14))
+                                .font(.system(size: 15, weight: .bold))
                             Text("Break Fast")
-                                .font(.r(.footnote, .semibold))
+                                .font(.r(14, .bold))
                         }
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Color.red.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding(.vertical, 13)
+                        .background(
+                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                .fill(Color.red.opacity(0.12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                        .strokeBorder(Color.red.opacity(0.18), lineWidth: 1)
+                                )
+                        )
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
-        .padding(16)
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
+                .appShadow(radius: 14, y: 5)
         )
     }
 
     // MARK: - Notification Hint
 
     private var notificationHint: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "bell.slash")
-                .foregroundColor(.secondary)
-                .font(.system(size: 14))
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.orange.opacity(0.18))
+                    .frame(width: 34, height: 34)
+                Image(systemName: "bell.slash.fill")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.orange)
+            }
             Text("Enable notifications in Settings → WellPlate for fasting reminders.")
-                .font(.r(.caption, .regular))
-                .foregroundColor(.secondary)
+                .font(.r(12, .medium))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+            Spacer(minLength: 0)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 10, y: 3)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.orange.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(Color.orange.opacity(0.18), lineWidth: 1)
+                )
         )
     }
 
     // MARK: - History Section
 
     private var historySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Fasts")
-                .font(.r(.headline, .semibold))
-
-            ForEach(completedSessions, id: \.persistentModelID) { session in
-                HStack(spacing: 12) {
-                    Image(systemName: session.completed ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(session.completed ? .green : .red)
-                        .font(.system(size: 16))
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(session.startedAt, style: .date)
-                            .font(.r(.footnote, .medium))
-                        Text(formattedDuration(session.actualDurationSeconds))
-                            .font(.r(.caption, .regular))
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer()
-
-                    Text(session.completed ? "Completed" : "Broken")
-                        .font(.r(.caption, .medium))
-                        .foregroundColor(session.completed ? .green : .red)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [AppColors.brand.opacity(0.22), AppColors.brand.opacity(0.10)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 34, height: 34)
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(AppColors.brand)
                 }
-                .padding(.vertical, 4)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("HISTORY")
+                        .font(.r(10, .bold))
+                        .tracking(0.7)
+                        .foregroundStyle(AppColors.brand.opacity(0.85))
+                    Text("Recent Fasts")
+                        .font(.r(16, .bold))
+                        .foregroundStyle(.primary)
+                }
+            }
+
+            VStack(spacing: 8) {
+                ForEach(completedSessions, id: \.persistentModelID) { session in
+                    fastHistoryRow(session)
+                }
             }
         }
-        .padding(20)
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
+                .appShadow(radius: 14, y: 5)
+        )
+    }
+
+    private func fastHistoryRow(_ session: FastingSession) -> some View {
+        let result: Color = session.completed ? Color(hue: 0.40, saturation: 0.62, brightness: 0.72) : .red
+        return HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(result.opacity(0.18))
+                    .frame(width: 34, height: 34)
+                Image(systemName: session.completed ? "checkmark" : "xmark")
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(result)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(session.startedAt, style: .date)
+                    .font(.r(13, .semibold))
+                    .foregroundStyle(.primary)
+                Text(formattedDuration(session.actualDurationSeconds))
+                    .font(.r(11, .medium))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+            Spacer(minLength: 0)
+            Text(session.completed ? "Completed" : "Broken")
+                .font(.r(11, .bold))
+                .foregroundStyle(result)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(result.opacity(0.14)))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.tertiarySystemFill).opacity(0.55))
         )
     }
 
@@ -414,5 +609,16 @@ struct FastingView: View {
                              second: 0, of: Date()) ?? Date()
         let end = start.addingTimeInterval(schedule.eatWindowDurationHours * 3600)
         return "Eat: \(formatter.string(from: start)) – \(formatter.string(from: end))"
+    }
+
+    private func eatWindowDisplay(for schedule: FastingSchedule) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        let cal = Calendar.current
+        let start = cal.date(bySettingHour: schedule.eatWindowStartHour,
+                             minute: schedule.eatWindowStartMinute,
+                             second: 0, of: Date()) ?? Date()
+        let end = start.addingTimeInterval(schedule.eatWindowDurationHours * 3600)
+        return "\(formatter.string(from: start)) – \(formatter.string(from: end))"
     }
 }

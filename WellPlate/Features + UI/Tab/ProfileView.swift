@@ -260,91 +260,91 @@ struct ProfilePlaceholderView: View {
     // MARK: - Hero Header
 
     private var profileHero: some View {
-        VStack(spacing: 0) {
-            // Gradient top area
+        VStack(spacing: 18) {
             ZStack {
-                // Background gradient
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                AppColors.brand.opacity(0.15),
-                                AppColors.brand.opacity(0.05)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                Circle()
+                    .fill(Color(.tertiarySystemFill).opacity(0.7))
+                    .frame(width: 104, height: 104)
 
-                VStack(spacing: 14) {
-                    // Avatar
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [AppColors.brand.opacity(0.2), AppColors.brand.opacity(0.08)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 88, height: 88)
+                Text(initials)
+                    .font(.r(34, .heavy))
+                    .foregroundStyle(.primary)
+            }
 
-                        Circle()
-                            .stroke(
-                                AngularGradient(
-                                    colors: [AppColors.brand, AppColors.brand.opacity(0.3), AppColors.brand],
-                                    center: .center
-                                ),
-                                lineWidth: 2.5
-                            )
-                            .frame(width: 88, height: 88)
-
-                        Text(initials)
-                            .font(.r(28, .bold))
-                            .foregroundStyle(AppColors.brand)
-                    }
-
-                    // Name
+            VStack(spacing: 4) {
+                HStack(spacing: 10) {
                     Text(profile.userName.isEmpty ? "Your Profile" : profile.userName)
                         .font(.r(.title2, .bold))
                         .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
 
-                    // Stats row
-                    HStack(spacing: 16) {
-                        if profile.weightKg > 0 {
-                            profileStatPill(icon: "scalemass.fill", value: profile.formattedWeight)
-                        }
-                        if profile.heightCm > 0 {
-                            profileStatPill(icon: "ruler.fill", value: profile.formattedHeight)
-                        }
-                        if let bmi {
-                            profileStatPill(
-                                icon: "heart.text.clipboard.fill",
-                                value: "BMI \(String(format: "%.1f", bmi))",
-                                tint: bmiCategory.color
-                            )
-                        }
+                    Button {
+                        HapticService.impact(.light)
+                        editedName = profile.userName
+                        activeSheet = .editName
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(Color(.tertiarySystemFill).opacity(0.6)))
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Edit name")
                 }
-                .padding(.vertical, 24)
+                Text("Welcome back")
+                    .font(.r(13, .medium))
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 10) {
+                heroStatTile(
+                    icon: "scalemass.fill",
+                    value: profile.weightKg > 0 ? profile.formattedWeight : "—",
+                    label: "Weight"
+                )
+                heroStatTile(
+                    icon: "ruler.fill",
+                    value: profile.heightCm > 0 ? profile.formattedHeight : "—",
+                    label: "Height"
+                )
+                heroStatTile(
+                    icon: "heart.text.clipboard.fill",
+                    value: bmi.map { String(format: "%.1f", $0) } ?? "—",
+                    label: bmi != nil ? bmiCategory.label : "BMI"
+                )
             }
         }
+        .padding(.vertical, 24)
+        .padding(.horizontal, 18)
+        .frame(maxWidth: .infinity)
+        .background(cardBackground())
     }
 
-    private func profileStatPill(icon: String, value: String, tint: Color = .secondary) -> some View {
-        HStack(spacing: 5) {
+    private func heroStatTile(icon: String, value: String, label: String) -> some View {
+        VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(tint)
-            Text(value)
-                .font(.r(.caption, .semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .frame(height: 18)
+            Text(value)
+                .font(.r(15, .bold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .monospacedDigit()
+            Text(label.uppercased())
+                .font(.r(9, .bold))
+                .tracking(0.7)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
         .background(
-            Capsule()
-                .fill(Color(.systemBackground).opacity(0.8))
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.tertiarySystemFill).opacity(0.5))
         )
     }
 
@@ -358,102 +358,118 @@ struct ProfilePlaceholderView: View {
         return String(name.prefix(2)).uppercased()
     }
 
+    // MARK: - Shared Card Chrome
+
+    private func cardHeader(
+        eyebrow: String? = nil,
+        title: String,
+        icon: String,
+        iconColor: Color = .primary
+    ) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(iconColor)
+                .frame(width: 34, height: 34)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(.tertiarySystemFill).opacity(0.6))
+                )
+            VStack(alignment: .leading, spacing: 2) {
+                if let eyebrow {
+                    Text(eyebrow)
+                        .font(.r(10, .bold))
+                        .tracking(0.8)
+                        .foregroundStyle(.secondary)
+                }
+                Text(title)
+                    .font(.r(16, .bold))
+                    .foregroundStyle(.primary)
+            }
+        }
+    }
+
+    private func cardBackground() -> some View {
+        RoundedRectangle(cornerRadius: 24, style: .continuous)
+            .fill(Color(.secondarySystemGroupedBackground))
+    }
+
     // MARK: - Body Metrics Card
 
     private var bodyMetricsCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Section header
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(AppColors.brand.opacity(0.12))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: "figure.stand")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AppColors.brand)
-                }
-                Text("Body")
-                    .font(.r(.headline, .semibold))
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
+        VStack(alignment: .leading, spacing: 14) {
+            cardHeader(eyebrow: "PERSONAL", title: "Body Profile", icon: "figure.stand")
 
-            // Name row
-            metricRow(
-                icon: "person.fill",
-                label: "Name",
-                value: profile.userName.isEmpty ? "Not set" : profile.userName,
-                action: {
+            VStack(spacing: 0) {
+                metricRow(
+                    icon: "person.fill",
+                    label: "Name",
+                    value: profile.userName.isEmpty ? "Not set" : profile.userName,
+                    showDivider: true
+                ) {
                     editedName = profile.userName
                     activeSheet = .editName
                 }
-            )
-
-            Divider().padding(.leading, 56)
-
-            // Weight row
-            metricRow(
-                icon: "scalemass.fill",
-                label: "Weight",
-                value: profile.formattedWeight,
-                action: {
+                metricRow(
+                    icon: "scalemass.fill",
+                    label: "Weight",
+                    value: profile.formattedWeight,
+                    showDivider: true
+                ) {
                     editedWeight = profile.weightKg
                     editWeightUnit = profile.weightUnit
                     activeSheet = .editWeight
                 }
-            )
-
-            Divider().padding(.leading, 56)
-
-            // Height row
-            metricRow(
-                icon: "ruler.fill",
-                label: "Height",
-                value: profile.formattedHeight,
-                action: {
+                metricRow(
+                    icon: "ruler.fill",
+                    label: "Height",
+                    value: profile.formattedHeight,
+                    showDivider: false
+                ) {
                     editedHeight = profile.heightCm
                     editHeightUnit = profile.heightUnit
                     activeSheet = .editHeight
                 }
-            )
+            }
         }
-        .padding(.bottom, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBackground())
     }
 
-    private func metricRow(icon: String, label: String, value: String, action: @escaping () -> Void) -> some View {
+    private func metricRow(icon: String, label: String, value: String, showDivider: Bool, action: @escaping () -> Void) -> some View {
         Button {
             HapticService.impact(.light)
             action()
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 13))
-                    .foregroundStyle(AppColors.brand.opacity(0.7))
-                    .frame(width: 24)
+            VStack(spacing: 0) {
+                HStack(spacing: 14) {
+                    Image(systemName: icon)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                    Text(label)
+                        .font(.r(15, .semibold))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text(value)
+                        .font(.r(14, .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.vertical, 12)
 
-                Text(label)
-                    .font(.r(.subheadline, .medium))
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                Text(value)
-                    .font(.r(.subheadline, .regular))
-                    .foregroundStyle(.secondary)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.tertiary)
+                if showDivider {
+                    Rectangle()
+                        .fill(Color(.separator).opacity(0.35))
+                        .frame(height: 0.5)
+                        .padding(.leading, 42)
+                }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -461,23 +477,8 @@ struct ProfilePlaceholderView: View {
     // MARK: - Notifications & Prompts
 
     private var notificationsAndPromptsCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(AppColors.brand.opacity(0.12))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: "bell.badge.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AppColors.brand)
-                }
-                Text("Notifications & Prompts")
-                    .font(.r(.headline, .semibold))
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 6)
+        VStack(alignment: .leading, spacing: 16) {
+            cardHeader(eyebrow: "REMINDERS", title: "Notifications", icon: "bell.badge.fill")
 
             Toggle(isOn: Binding(
                 get: { promptsEnabled },
@@ -489,23 +490,20 @@ struct ProfilePlaceholderView: View {
                     }
                 }
             )) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("Daily check-in prompts")
-                        .font(.r(.subheadline, .medium))
+                        .font(.r(15, .semibold))
+                        .foregroundStyle(.primary)
                     Text("Quick morning + evening overlays when sensors miss data")
-                        .font(.r(.caption, .regular))
-                        .foregroundStyle(AppColors.textSecondary)
+                        .font(.r(12, .regular))
+                        .foregroundStyle(.secondary)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .tint(.primary)
         }
-        .padding(.bottom, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBackground())
     }
 
     private func clearTodayManualAskedFlags() {
@@ -524,41 +522,43 @@ struct ProfilePlaceholderView: View {
 
     private var homeLayoutCard: some View {
         Button {
+            HapticService.impact(.light)
             showHomeLayout = true
         } label: {
             HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(AppColors.brand.opacity(0.12))
-                        .frame(width: 40, height: 40)
-                    Image(systemName: "square.grid.2x2")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(AppColors.brand)
-                }
+                Image(systemName: "square.grid.2x2.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 42, height: 42)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color(.tertiarySystemFill).opacity(0.6))
+                    )
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("CUSTOMIZE")
+                        .font(.r(10, .bold))
+                        .tracking(0.7)
+                        .foregroundStyle(.secondary)
                     Text("Home Layout")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.r(16, .bold))
                         .foregroundStyle(.primary)
                     let goals = userGoalsList.first ?? UserGoals.defaults()
                     let hidden = goals.homeLayout.hiddenCount
                     Text(hidden > 0 ? "\(hidden) card\(hidden == 1 ? "" : "s") hidden" : "All cards visible")
-                        .font(.system(size: 12, design: .rounded))
+                        .font(.r(12, .medium))
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.tertiary)
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
-            )
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(cardBackground())
         }
         .buttonStyle(.plain)
     }
@@ -571,26 +571,14 @@ struct ProfilePlaceholderView: View {
             showGoals = true
         } label: {
             VStack(alignment: .leading, spacing: 14) {
-                // Header
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(AppColors.brand.opacity(0.12))
-                            .frame(width: 32, height: 32)
-                        Image(systemName: "target")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(AppColors.brand)
-                    }
-                    Text("Daily Goals")
-                        .font(.r(.headline, .semibold))
-                        .foregroundStyle(.primary)
+                HStack {
+                    cardHeader(eyebrow: "TARGETS", title: "Daily Goals", icon: "target")
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.tertiary)
                 }
 
-                // 2x2 grid
                 LazyVGrid(columns: [
                     GridItem(.flexible(), spacing: 10),
                     GridItem(.flexible(), spacing: 10)
@@ -599,74 +587,64 @@ struct ProfilePlaceholderView: View {
                         icon: "flame.fill",
                         label: "Calories",
                         value: "\(currentGoals.calorieGoal)",
-                        unit: "cal",
-                        color: .orange
+                        unit: "cal"
                     )
                     goalMiniCard(
                         icon: "drop.fill",
                         label: "Water",
                         value: "\(currentGoals.waterDailyCups)",
-                        unit: "cups",
-                        color: .cyan
+                        unit: "cups"
                     )
                     goalMiniCard(
                         icon: "figure.run",
                         label: "Workout",
                         value: "\(currentGoals.todayWorkoutGoal)",
-                        unit: "min",
-                        color: .green
+                        unit: "min"
                     )
                     goalMiniCard(
                         icon: "moon.fill",
                         label: "Sleep",
                         value: String(format: "%.0f", currentGoals.sleepGoalHours),
-                        unit: "hrs",
-                        color: .indigo
+                        unit: "hrs"
                     )
                 }
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
-                    .appShadow(radius: 15, y: 5)
-            )
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(cardBackground())
         }
         .buttonStyle(.plain)
     }
 
-    private func goalMiniCard(icon: String, label: String, value: String, unit: String, color: Color) -> some View {
-        HStack(spacing: 10) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(color.opacity(0.12))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(color)
-            }
+    private func goalMiniCard(icon: String, label: String, value: String, unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 32, height: 32, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.r(.caption2, .medium))
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.r(22, .heavy))
+                    .foregroundStyle(.primary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Text(unit)
+                    .font(.r(11, .semibold))
                     .foregroundStyle(.secondary)
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(value)
-                        .font(.r(.subheadline, .bold))
-                        .foregroundStyle(.primary)
-                        .monospacedDigit()
-                    Text(unit)
-                        .font(.r(.caption2, .medium))
-                        .foregroundStyle(.secondary)
-                }
             }
 
-            Spacer(minLength: 0)
+            Text(label.uppercased())
+                .font(.r(10, .bold))
+                .tracking(0.6)
+                .foregroundStyle(.secondary)
         }
-        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color(.secondarySystemGroupedBackground))
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.tertiarySystemFill).opacity(0.5))
         )
     }
 
@@ -849,14 +827,9 @@ struct ProfilePlaceholderView: View {
     }
 
     private var supplementRegimenCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Image(systemName: "pill.fill")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(AppColors.brand)
-                Text("Health Regimen")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
+                cardHeader(eyebrow: "REGIMEN", title: "Health Regimen", icon: "pill.fill")
                 Spacer()
                 Button {
                     HapticService.impact(.light)
@@ -864,14 +837,16 @@ struct ProfilePlaceholderView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "plus")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.system(size: 12, weight: .bold))
                         Text("Add")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .font(.r(12, .bold))
                     }
-                    .foregroundStyle(AppColors.brand)
-                    .padding(.horizontal, 12).padding(.vertical, 6)
-                    .background(Capsule().fill(AppColors.brand.opacity(0.12)))
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
                 }
+                .buttonStyle(.plain)
             }
 
             if allSupplements.isEmpty {
@@ -879,55 +854,75 @@ struct ProfilePlaceholderView: View {
                     HapticService.impact(.light)
                     activeSheet = .addSupplement
                 } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus.circle")
-                            .foregroundStyle(AppColors.brand)
+                    HStack(spacing: 10) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.secondary)
                         Text("Add your first supplement")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundStyle(AppColors.brand)
+                            .font(.r(14, .semibold))
+                            .foregroundStyle(.primary)
+                        Spacer()
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color(.tertiarySystemFill).opacity(0.5))
+                    )
                 }
+                .buttonStyle(.plain)
             } else {
                 let pct = supplementService.todayAdherencePercent(todayLogs: todayAdherenceLogs)
                 let taken = todayAdherenceLogs.filter { $0.status == "taken" }.count
                 let total = todayAdherenceLogs.count
                 let streak = supplementService.currentStreak(allLogs: allAdherenceLogs)
 
-                VStack(spacing: 8) {
-                    HStack {
-                        Text("\(taken)/\(total) doses taken")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundStyle(.primary)
+                VStack(spacing: 12) {
+                    HStack(alignment: .firstTextBaseline) {
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text("\(taken)")
+                                .font(.r(28, .heavy))
+                                .foregroundStyle(.primary)
+                                .monospacedDigit()
+                            Text("/ \(total)")
+                                .font(.r(15, .semibold))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                            Text("doses today")
+                                .font(.r(12, .medium))
+                                .foregroundStyle(.tertiary)
+                        }
                         Spacer()
                         if streak > 0 {
-                            HStack(spacing: 3) {
+                            HStack(spacing: 4) {
                                 Image(systemName: "flame.fill")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.orange)
-                                Text("\(streak)d")
-                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(.secondary)
+                                Text("\(streak)d")
+                                    .font(.r(13, .bold))
+                                    .foregroundStyle(.primary)
                             }
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
                         }
                     }
 
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            Capsule().fill(Color(.systemFill)).frame(height: 6)
-                            Capsule().fill(AppColors.brand).frame(width: geo.size.width * CGFloat(pct), height: 6)
+                            Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)).frame(height: 7)
+                            Capsule()
+                                .fill(Color.primary.opacity(0.85))
+                                .frame(width: max(geo.size.width * CGFloat(pct), 7), height: 7)
                         }
                     }
-                    .frame(height: 6)
+                    .frame(height: 7)
                 }
-
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBackground())
     }
 
     // MARK: - Symptom Tracking Card
@@ -944,15 +939,9 @@ struct ProfilePlaceholderView: View {
     }
 
     private var symptomTrackingCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Header row
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Image(systemName: "heart.text.square.fill")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(AppColors.brand)
-                Text("Symptom Tracking")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
+                cardHeader(eyebrow: "TRACK", title: "Symptoms", icon: "heart.text.square.fill")
                 Spacer()
                 Button {
                     HapticService.impact(.light)
@@ -960,127 +949,148 @@ struct ProfilePlaceholderView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "plus")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.system(size: 12, weight: .bold))
                         Text("Log")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .font(.r(12, .bold))
                     }
-                    .foregroundStyle(AppColors.brand)
-                    .padding(.horizontal, 12)
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 11)
                     .padding(.vertical, 6)
-                    .background(Capsule().fill(AppColors.brand.opacity(0.12)))
+                    .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
                 }
+                .buttonStyle(.plain)
             }
 
-            // Recent entries
             if allSymptomEntries.isEmpty {
                 Button {
                     HapticService.impact(.light)
                     activeSheet = .symptomLog
                 } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus.circle")
-                            .foregroundStyle(AppColors.brand)
+                    HStack(spacing: 10) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.secondary)
                         Text("Log your first symptom")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundStyle(AppColors.brand)
+                            .font(.r(14, .semibold))
+                            .foregroundStyle(.primary)
+                        Spacer()
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color(.tertiarySystemFill).opacity(0.5))
+                    )
                 }
+                .buttonStyle(.plain)
             } else {
                 VStack(spacing: 8) {
                     ForEach(allSymptomEntries.prefix(3)) { entry in
-                        HStack {
+                        HStack(spacing: 12) {
                             Text(entry.name)
-                                .font(.system(size: 14, weight: .medium, design: .rounded))
+                                .font(.r(14, .semibold))
                                 .foregroundStyle(.primary)
+                                .lineLimit(1)
                             Spacer()
                             severityPill(entry.severity)
                             Text(relativeTimeString(for: entry.timestamp))
-                                .font(.system(size: 12, weight: .regular, design: .rounded))
+                                .font(.r(11, .medium))
                                 .foregroundStyle(.secondary)
+                                .monospacedDigit()
                         }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color(.tertiarySystemFill).opacity(0.5))
+                        )
                     }
                 }
-
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBackground())
     }
 
     private var symptomInsightsCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(AppColors.brand)
-                Text("Symptom Insights")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
-                Spacer()
-            }
+            cardHeader(eyebrow: "INSIGHTS", title: "Patterns", icon: "chart.line.uptrend.xyaxis")
 
             VStack(spacing: 8) {
                 ForEach(topSymptomNames, id: \.self) { symptomName in
-                    // Show strongest correlation if available
                     let corr = correlationEngine.correlations
                         .filter { $0.symptomName == symptomName && $0.isSignificant }
                         .max(by: { abs($0.spearmanR) < abs($1.spearmanR) })
 
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(symptomName)
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .font(.r(14, .bold))
                                 .foregroundStyle(.primary)
                             if let c = corr {
                                 Text("\(c.interpretation) with \(c.factorName)")
-                                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                                    .font(.r(11, .medium))
                                     .foregroundStyle(.secondary)
                             } else {
                                 Text("Analysing patterns…")
-                                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                                    .font(.r(11, .medium))
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        Spacer()
+                        Spacer(minLength: 0)
                         Button {
                             HapticService.impact(.light)
                             selectedSymptomForCorrelation = symptomName
                             showSymptomCorrelation = true
                         } label: {
-                            Text("Details")
-                                .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(AppColors.brand)
+                            HStack(spacing: 3) {
+                                Text("View")
+                                    .font(.r(11, .bold))
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
                         }
+                        .buttonStyle(.plain)
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color(.tertiarySystemFill).opacity(0.5))
+                    )
                 }
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
-        )
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBackground())
     }
 
     private func severityPill(_ severity: Int) -> some View {
-        let color: Color = {
+        let label: String = {
             switch severity {
-            case 1...3: return Color(hue: 0.38, saturation: 0.58, brightness: 0.72)
-            case 4...6: return Color(hue: 0.14, saturation: 0.72, brightness: 0.95)
-            default:    return Color(hue: 0.00, saturation: 0.72, brightness: 0.85)
+            case 1...3: return "Low"
+            case 4...6: return "Mod"
+            default:    return "High"
             }
         }()
-        return Text("\(severity)/10")
-            .font(.system(size: 11, weight: .bold, design: .rounded))
-            .foregroundStyle(color)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .background(Capsule().fill(color.opacity(0.12)))
+        return HStack(spacing: 4) {
+            Text("\(severity)/10")
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+            Text(label)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
     }
 
     private func relativeTimeString(for date: Date) -> String {
@@ -1093,24 +1103,29 @@ struct ProfilePlaceholderView: View {
     // MARK: - App Info Footer
 
     private var appInfoFooter: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 10) {
             Image(systemName: "leaf.fill")
-                .font(.system(size: 20))
-                .foregroundStyle(AppColors.brand.opacity(0.3))
-
-            Text("WellPlate")
-                .font(.r(.footnote, .semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .frame(width: 46, height: 46)
+                .background(Circle().fill(Color(.tertiarySystemFill).opacity(0.6)))
 
-            if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-               let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-                Text("v\(version) (\(build))")
-                    .font(.r(.caption2, .regular))
-                    .foregroundStyle(.tertiary)
+            VStack(spacing: 3) {
+                Text("WellPlate")
+                    .font(.r(15, .bold))
+                    .foregroundStyle(.primary)
+
+                if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+                   let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+                    Text("Version \(version) · Build \(build)")
+                        .font(.r(11, .medium))
+                        .foregroundStyle(.tertiary)
+                        .monospacedDigit()
+                }
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.bottom, 8)
+        .padding(.vertical, 16)
     }
 
     // MARK: - Helpers
@@ -1157,14 +1172,14 @@ private struct WidgetSetupCard: View {
 
             // Header row
             HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(AppColors.brand.opacity(0.12))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: "rectangle.3.group.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AppColors.brand)
-                }
+                Image(systemName: "rectangle.3.group.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color(.tertiarySystemFill).opacity(0.6))
+                    )
                 Text("Widget")
                     .font(.r(.headline, .semibold))
                 Spacer()
@@ -1172,6 +1187,7 @@ private struct WidgetSetupCard: View {
 
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                     .font(.r(14, .regular))
+                    .foregroundStyle(.secondary)
                     .contentTransition(.symbolEffect(.replace))
             }
             .contentShape(Rectangle())
@@ -1215,14 +1231,13 @@ private struct WidgetSetupCard: View {
                         Image(systemName: isInstalled ? "checkmark.circle.fill" : "plus.circle.fill")
                         Text(isInstalled ? "Widget Active — Add Another" : "Add Widget")
                             .fontWeight(.semibold)
-                            .foregroundStyle(.white)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 13)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(.systemBackground))
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(AppColors.brand)
+                            .fill(Color.primary)
                     )
                 }
                 .buttonStyle(.plain)
@@ -1231,9 +1246,8 @@ private struct WidgetSetupCard: View {
         }
         .padding(18)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 15, y: 5)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
         )
     }
 }
@@ -1246,19 +1260,17 @@ private struct StatusBadge: View {
     var body: some View {
         HStack(spacing: 5) {
             Circle()
-                .fill(isInstalled ? Color.green : Color.orange)
-                .frame(width: 7, height: 7)
+                .fill(.primary)
+                .frame(width: 6, height: 6)
+                .opacity(isInstalled ? 1 : 0.35)
             Text(isInstalled ? "Active" : "Not added")
                 .font(.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(isInstalled ? .green : .orange)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
         }
         .padding(.horizontal, 9)
         .padding(.vertical, 4)
-        .background(
-            Capsule()
-                .fill(isInstalled ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
-        )
+        .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
     }
 }
 
@@ -1273,7 +1285,7 @@ private struct SizePill: View {
         ZStack {
             if isSelected {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(AppColors.brand)
+                    .fill(Color.primary)
                     .matchedGeometryEffect(id: "pill", in: namespace)
             }
 
@@ -1283,12 +1295,12 @@ private struct SizePill: View {
                 Text(size.rawValue)
                     .font(.r(.subheadline, .medium))
             }
-            .foregroundStyle(isSelected ? .white : .secondary)
+            .foregroundStyle(isSelected ? Color(.systemBackground) : .secondary)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(isSelected ? Color.clear : Color(.secondarySystemGroupedBackground))
+                    .fill(isSelected ? Color.clear : Color(.tertiarySystemFill).opacity(0.6))
             )
         }
     }
