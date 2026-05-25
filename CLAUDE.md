@@ -5,12 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build Commands
 
 ```bash
-# Main app (workspace build picks up CocoaPods)
+# Main app (use workspace — CocoaPods Lottie is wired through the workspace)
 xcodebuild -workspace Cadence.xcworkspace -scheme Cadence -destination 'generic/platform=iOS Simulator' build
 
-# Extension targets
-xcodebuild -project Cadence.xcodeproj -scheme ScreenTimeMonitor -destination 'generic/platform=iOS Simulator' build
-xcodebuild -project Cadence.xcodeproj -scheme ScreenTimeReport -destination 'generic/platform=iOS Simulator' build
+# Extension schemes (also via workspace; building -project bypasses Pods xcconfig
+# and Lottie fails to resolve)
+xcodebuild -workspace Cadence.xcworkspace -scheme ScreenTimeMonitor -destination 'generic/platform=iOS Simulator' build
+xcodebuild -workspace Cadence.xcworkspace -scheme ScreenTimeReport -destination 'generic/platform=iOS Simulator' build
+
+# Widget target build only (project-level is fine; widget target does not import Lottie)
 xcodebuild -project Cadence.xcodeproj -target CadenceWidget -destination 'generic/platform=iOS Simulator' build
 ```
 
