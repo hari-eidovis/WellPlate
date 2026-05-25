@@ -1,6 +1,6 @@
 //
 //  StressReading.swift
-//  WellPlate
+//  Cadence
 //
 //  Persists an individual stress score snapshot captured automatically
 //  whenever the computed stress value changes.

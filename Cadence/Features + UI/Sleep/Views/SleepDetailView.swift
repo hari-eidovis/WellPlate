@@ -1,6 +1,6 @@
 //
 //  SleepDetailView.swift
-//  WellPlate
+//  Cadence
 //
 //  Created by Hari's Mac on 21.02.2026.
 //

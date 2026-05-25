@@ -1,6 +1,6 @@
 //
 //  SessionCompleteView.swift
-//  WellPlate
+//  Cadence
 //
 //  Shared post-session summary, reusable across all reset types.
 //  Watch bolt-on ready: HR delta section is nil-gated.

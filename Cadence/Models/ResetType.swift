@@ -1,6 +1,6 @@
 //
 //  ResetType.swift
-//  WellPlate
+//  Cadence
 //
 //  Acute stress-relief reset exercises.
 //

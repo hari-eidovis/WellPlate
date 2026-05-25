@@ -1,6 +1,6 @@
 //
 //  CircadianService.swift
-//  WellPlate
+//  Cadence
 //
 //  Stateless scoring for circadian health: sleep regularity + daylight exposure.
 //  Follows the StressScoring pattern — pure functions, no side effects.

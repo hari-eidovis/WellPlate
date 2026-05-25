@@ -1,8 +1,8 @@
 //
 //  WPLogger.swift
-//  WellPlate
+//  Cadence
 //
-//  Centralised, beautiful console logging for the WellPlate app.
+//  Centralised, beautiful console logging for the Cadence app.
 //
 //  Usage:
 //    WPLogger.app.info("App launched")

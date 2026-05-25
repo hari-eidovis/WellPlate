@@ -1,6 +1,6 @@
 # .claude Directory
 
-This directory configures [Claude Code](https://claude.ai/code) for the WellPlate project. It contains custom skills, agents, references, and settings that define how Claude assists with development.
+This directory configures [Claude Code](https://claude.ai/code) for the Cadence project. It contains custom skills, agents, references, and settings that define how Claude assists with development.
 
 ## Structure
 

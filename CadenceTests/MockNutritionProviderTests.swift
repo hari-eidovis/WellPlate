@@ -1,5 +1,5 @@
 import XCTest
-@testable import WellPlate
+@testable import Cadence
 
 final class MockNutritionProviderTests: XCTestCase {
     private func sampleResponse(foodName: String) -> NutritionAnalysisResponse {

@@ -1,6 +1,6 @@
 //
 //  HealthKitServiceFactory.swift
-//  WellPlate
+//  Cadence
 //
 //  Factory for providing the appropriate HealthKitServiceProtocol implementation.
 //  Returns MockHealthKitService or real HealthKitService based on AppConfig.mockMode.

@@ -1,6 +1,6 @@
 //
 //  VitalChartCardView.swift
-//  WellPlate
+//  Cadence
 //
 
 import SwiftUI

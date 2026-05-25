@@ -60,7 +60,7 @@
       <RemoteRunnable
          runnableDebuggingMode = "0"
          BundleIdentifier = "com.hariom.wellplate"
-         RemotePath = "/var/containers/Bundle/Application/68825DFD-1A50-47C9-B5F0-BE8ED72D2560/WellPlate.app">
+         RemotePath = "/var/containers/Bundle/Application/68825DFD-1A50-47C9-B5F0-BE8ED72D2560/Cadence.app">
       </RemoteRunnable>
       <MacroExpansion>
          <BuildableReference

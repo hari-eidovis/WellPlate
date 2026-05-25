@@ -1,6 +1,6 @@
 //
 //  StressCelebrationOverlay.swift
-//  WellPlate
+//  Cadence
 //
 //  Confetti + encouraging alert shown when the stress score drops by 8+ points
 //  during a session. Hosted globally by `CelebrationWindowPresenter` so it can

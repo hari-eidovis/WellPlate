@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "WellPlatePlaygrounds",
+    name: "CadencePlaygrounds",
     defaultLocalization: "en",
     platforms: [
         .iOS("18.1"),
@@ -10,13 +10,13 @@ let package = Package(
     ],
     products: [
         .executable(
-            name: "WellPlatePlaygrounds",
-            targets: ["WellPlatePlaygrounds"]
+            name: "CadencePlaygrounds",
+            targets: ["CadencePlaygrounds"]
         ),
     ],
     targets: [
         .executableTarget(
-            name: "WellPlatePlaygrounds",
+            name: "CadencePlaygrounds",
             path: "PlaygroundsSupport/Sources"
         ),
     ]

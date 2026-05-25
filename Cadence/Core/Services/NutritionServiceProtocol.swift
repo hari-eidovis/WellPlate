@@ -1,6 +1,6 @@
 //
 //  NutritionServiceProtocol.swift
-//  WellPlate
+//  Cadence
 //
 //  Created by Claude on 16.02.2026.
 //

@@ -14,10 +14,10 @@ You are a build fixer. Your job is to get all 4 build targets passing with minim
 Run these in order. If one fails, fix it before proceeding to the next:
 
 ```bash
-xcodebuild -project WellPlate.xcodeproj -scheme WellPlate -destination 'generic/platform=iOS Simulator' build 2>&1
-xcodebuild -project WellPlate.xcodeproj -scheme ScreenTimeMonitor -destination 'generic/platform=iOS Simulator' build 2>&1
-xcodebuild -project WellPlate.xcodeproj -scheme ScreenTimeReport -destination 'generic/platform=iOS Simulator' build 2>&1
-xcodebuild -project WellPlate.xcodeproj -target WellPlateWidget -destination 'generic/platform=iOS Simulator' build 2>&1
+xcodebuild -project Cadence.xcodeproj -scheme Cadence -destination 'generic/platform=iOS Simulator' build 2>&1
+xcodebuild -project Cadence.xcodeproj -scheme ScreenTimeMonitor -destination 'generic/platform=iOS Simulator' build 2>&1
+xcodebuild -project Cadence.xcodeproj -scheme ScreenTimeReport -destination 'generic/platform=iOS Simulator' build 2>&1
+xcodebuild -project Cadence.xcodeproj -target CadenceWidget -destination 'generic/platform=iOS Simulator' build 2>&1
 ```
 
 ## Fix Process

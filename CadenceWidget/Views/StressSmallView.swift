@@ -92,7 +92,7 @@ struct StressSmallView: View {
             Image(systemName: "brain.head.profile.fill")
                 .font(.title2)
                 .foregroundStyle(.secondary)
-            Text("Open WellPlate\nto get started")
+            Text("Open Cadence\nto get started")
                 .font(.caption2)
                 .fontWeight(.medium)
                 .foregroundStyle(.secondary)

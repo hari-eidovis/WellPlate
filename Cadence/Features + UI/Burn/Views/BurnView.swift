@@ -1,6 +1,6 @@
 //
 //  BurnView.swift
-//  WellPlate
+//  Cadence
 //
 //  Created by Hari's Mac on 20.02.2026.
 //

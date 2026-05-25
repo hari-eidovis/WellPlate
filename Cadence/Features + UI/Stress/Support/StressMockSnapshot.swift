@@ -1,6 +1,6 @@
 //
 //  StressMockSnapshot.swift
-//  WellPlate
+//  Cadence
 //
 //  Deterministic fixture used by StressViewModel in mock mode.
 //  Contains all data that would normally come from HealthKit,

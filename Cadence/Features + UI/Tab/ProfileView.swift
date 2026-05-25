@@ -1111,7 +1111,7 @@ struct ProfilePlaceholderView: View {
                 .background(Circle().fill(Color(.tertiarySystemFill).opacity(0.6)))
 
             VStack(spacing: 3) {
-                Text("WellPlate")
+                Text("Cadence")
                     .font(.r(15, .bold))
                     .foregroundStyle(.primary)
 
@@ -1556,7 +1556,7 @@ private struct WidgetInstructionsSheet: View {
     private let steps: [(icon: String, color: Color, text: String)] = [
         ("hand.tap.fill",               .blue,   "Long-press any empty area on your Home Screen until icons jiggle."),
         ("plus.circle.fill",            .green,  "Tap the  +  button in the top-left corner."),
-        ("magnifyingglass",             AppColors.brand, "Search for WellPlate in the widget gallery."),
+        ("magnifyingglass",             AppColors.brand, "Search for Cadence in the widget gallery."),
         ("rectangle.3.group.fill",      .purple, "Swipe to choose your preferred size, then tap Add Widget."),
         ("arrow.up.left.and.arrow.down.right", .pink, "Drag the widget wherever you like and tap Done.")
     ]

@@ -1,6 +1,6 @@
 //
 //  InterventionsView.swift
-//  WellPlate
+//  Cadence
 //
 //  Sheet root listing acute reset exercises. NavigationStack pushes
 //  into full-screen session views (PMR, Sigh).

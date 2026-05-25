@@ -1,6 +1,6 @@
 //
 //  ScreenTimeDetailView.swift
-//  WellPlate
+//  Cadence
 //
 //  Created on 25.02.2026.
 //

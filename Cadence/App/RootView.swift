@@ -1,6 +1,6 @@
 //
 //  RootView.swift
-//  WellPlate
+//  Cadence
 //
 //  Created by Hari's Mac on 16.02.2026.
 //  Updated by Claude on 20.02.2026.

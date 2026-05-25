@@ -1,6 +1,6 @@
 //
 //  SighSessionView.swift
-//  WellPlate
+//  Cadence
 //
 //  Physiological sigh breathing guide: 3 cycles of
 //  [inhale × 2 → long exhale]. ~33 seconds total.

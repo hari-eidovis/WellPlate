@@ -1,6 +1,6 @@
 //
 //  StressFactorCardView.swift
-//  WellPlate
+//  Cadence
 //
 
 import SwiftUI

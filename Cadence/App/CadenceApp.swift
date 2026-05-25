@@ -1,6 +1,6 @@
 //
 //  CadenceApp.swift
-//  WellPlate
+//  Cadence
 //
 //  Created by Hari's Mac on 26.01.2026.
 //  Updated by Claude on 16.02.2026.
@@ -55,10 +55,10 @@ struct CadenceApp: App {
                 "Mock mode is ON but all API calls will fail.",
                 "",
                 "Fix: Right-click Resources in Xcode",
-                "  → Add Files to WellPlate...",
-                "  → Choose WellPlate/Resources/MockData",
+                "  → Add Files to Cadence...",
+                "  → Choose Cadence/Resources/MockData",
                 "  → Select 'Create folder references' (blue icon)",
-                "  → Enable 'WellPlate' target",
+                "  → Enable 'Cadence' target",
                 "",
                 "Then confirm it appears under Build Phases → Copy Bundle Resources"
             ])

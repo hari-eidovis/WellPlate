@@ -1,6 +1,6 @@
 //
 //  APIClient.swift
-//  WellPlate
+//  Cadence
 //
 //  Updated by Claude on 16.02.2026.
 //

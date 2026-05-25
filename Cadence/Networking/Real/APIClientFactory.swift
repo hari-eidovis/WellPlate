@@ -1,6 +1,6 @@
 //
 //  APIClientFactory.swift
-//  WellPlate
+//  Cadence
 //
 //  Created by Claude on 16.02.2026.
 //
@@ -100,9 +100,9 @@ enum APIClientFactory {
 
  #if DEBUG
  // Enable mock mode
- defaults write com.yourapp.WellPlate app.networking.mockMode -bool true
+ defaults write com.yourapp.Cadence app.networking.mockMode -bool true
 
  // Disable mock mode
- defaults write com.yourapp.WellPlate app.networking.mockMode -bool false
+ defaults write com.yourapp.Cadence app.networking.mockMode -bool false
  #endif
  */

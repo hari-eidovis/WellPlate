@@ -1,6 +1,6 @@
 //
 //  InterventionSession.swift
-//  WellPlate
+//  Cadence
 //
 //  SwiftData history log for acute reset exercises. Biometric fields
 //  are nil on iPhone; populated by Watch companion when it ships.

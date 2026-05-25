@@ -1,6 +1,6 @@
 //
 //  PMRSessionView.swift
-//  WellPlate
+//  Cadence
 //
 //  Full-screen dark PMR (progressive muscle relaxation) exercise.
 //  8 muscle groups, tense 4s → release 3.5s, ~60 seconds total.

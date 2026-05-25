@@ -1,6 +1,6 @@
 //
 //  CelebrationCoordinator.swift
-//  WellPlate
+//  Cadence
 //
 //  Global source-of-truth for the stress-drop celebration overlay. Any place
 //  in the app that recomputes the stress score reports the prev/new pair to

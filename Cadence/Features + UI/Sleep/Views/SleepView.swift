@@ -1,6 +1,6 @@
 //
 //  SleepView.swift
-//  WellPlate
+//  Cadence
 //
 //  Created by Hari's Mac on 21.02.2026.
 //
@@ -243,7 +243,7 @@ struct SleepView: View {
             VStack(spacing: 8) {
                 Text("Connect Apple Health")
                     .font(.r(.title2, .bold))
-                Text("WellPlate needs access to your\nsleep data to show Sleep insights.")
+                Text("Cadence needs access to your\nsleep data to show Sleep insights.")
                     .font(.r(.subheadline, .regular))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)

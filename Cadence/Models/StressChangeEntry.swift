@@ -1,6 +1,6 @@
 //
 //  StressChangeEntry.swift
-//  WellPlate
+//  Cadence
 //
 //  Transaction-style change-log entry for the stress score. Each row
 //  represents a single moved factor / engagement gap / pattern penalty /

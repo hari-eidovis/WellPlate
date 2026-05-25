@@ -1,6 +1,6 @@
 //
 //  MockDataLoader.swift
-//  WellPlate
+//  Cadence
 //
 //  Created by Claude on 16.02.2026.
 //
@@ -19,7 +19,7 @@ enum MockDataError: Error {
             return """
             ❌ Mock data file not found: \(filename).json
 
-            Expected location: WellPlate/Resources/MockData/\(filename).json
+            Expected location: Cadence/Resources/MockData/\(filename).json
 
             Solutions:
             1. Create the file in Resources/MockData/

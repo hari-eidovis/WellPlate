@@ -1,6 +1,6 @@
 //
 //  InterventionTimer.swift
-//  WellPlate
+//  Cadence
 //
 //  Phase-aware countdown engine shared by reset session views
 //  (PMR, Sigh, and future resets). Uses ObservableObject +

@@ -1,6 +1,6 @@
 //
 //  StressWeekChartView.swift
-//  WellPlate
+//  Cadence
 //
 //  7-day stress trend — per-day RuleMark range (min→max) with an average
 //  PointMark on top. Visual language matches the meal-insights charts

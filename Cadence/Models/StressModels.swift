@@ -1,6 +1,6 @@
 //
 //  StressModels.swift
-//  WellPlate
+//  Cadence
 //
 //  Created on 21.02.2026.
 //

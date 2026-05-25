@@ -1,6 +1,6 @@
 //
 //  MockDataInjector.swift
-//  WellPlate
+//  Cadence
 //
 //  Generates and injects 30 days of realistic mock data into SwiftData.
 //  Controlled from ProfileView. DEBUG only.

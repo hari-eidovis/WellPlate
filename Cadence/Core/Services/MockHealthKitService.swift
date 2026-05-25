@@ -1,6 +1,6 @@
 //
 //  MockHealthKitService.swift
-//  WellPlate
+//  Cadence
 //
 //  HealthKitServiceProtocol implementation that returns deterministic data
 //  from a StressMockSnapshot without requiring a real device or HealthKit

@@ -1,5 +1,5 @@
 import XCTest
-@testable import WellPlate
+@testable import Cadence
 
 final class NutritionServiceTests: XCTestCase {
     private final class StubProvider: NutritionProvider {

@@ -1,10 +1,10 @@
 import XCTest
-@testable import WellPlate
+@testable import Cadence
 
 /// Unit tests for the v3 `StressScoring` core (formula spec §14 validation checklist).
-/// Note: The `WellPlateTests` target is not currently wired into the `WellPlate` shared
+/// Note: The `CadenceTests` target is not currently wired into the `Cadence` shared
 /// scheme — these cases require manual scheme configuration (Edit Scheme → Test action →
-/// enable WellPlateTests → mark Shared) before they will run via `xcodebuild test`.
+/// enable CadenceTests → mark Shared) before they will run via `xcodebuild test`.
 final class StressScoringTests: XCTestCase {
 
     // MARK: - Helpers

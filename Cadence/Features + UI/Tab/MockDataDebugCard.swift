@@ -1,6 +1,6 @@
 //
 //  MockModeDebugCard.swift
-//  WellPlate
+//  Cadence
 //
 //  Unified mock mode card for Profile. Replaces both NutritionSourceDebugCard
 //  and MockDataDebugCard. Single toggle controls API mock + data injection.

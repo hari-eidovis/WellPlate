@@ -1,6 +1,6 @@
 //
 //  StressActivityView.swift
-//  WellPlate
+//  Cadence
 //
 //  Transaction-style change log of the stress score. Vertical-rail timeline
 //  with one entry per `groupID`. Multi-row groups stay expandable. Routes

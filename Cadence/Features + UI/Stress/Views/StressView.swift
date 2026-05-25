@@ -1,6 +1,6 @@
 //
 //  StressView.swift
-//  WellPlate
+//  Cadence
 //
 
 import SwiftUI

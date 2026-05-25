@@ -1,6 +1,6 @@
 //
 //  HapticService.swift
-//  WellPlate
+//  Cadence
 //
 //  Created on 28.02.2026.
 //

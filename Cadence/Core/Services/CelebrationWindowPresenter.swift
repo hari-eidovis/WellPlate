@@ -1,6 +1,6 @@
 //
 //  CelebrationWindowPresenter.swift
-//  WellPlate
+//  Cadence
 //
 //  Hosts `StressCelebrationOverlay` in its own `UIWindow` so the celebration
 //  appears above whatever the user is currently looking at — including any

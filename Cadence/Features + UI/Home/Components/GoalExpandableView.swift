@@ -1,6 +1,6 @@
 
 //  GoalsExpandableView.swift
-//  WellPlate
+//  Cadence
 //
 //  Created by Claude on 17.02.2026.
 //

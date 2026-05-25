@@ -1,6 +1,6 @@
 //
 //  CircadianDetailView.swift
-//  WellPlate
+//  Cadence
 //
 
 import SwiftUI

@@ -1,6 +1,6 @@
 //
 //  StressScoreGaugeView.swift
-//  WellPlate
+//  Cadence
 //
 //  Animated circular arc gauge with tick marks, multi-stop gradient,
 //  and pulsing halo effect.

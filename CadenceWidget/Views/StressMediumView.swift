@@ -135,7 +135,7 @@ struct StressMediumView: View {
             Image(systemName: "brain.head.profile.fill")
                 .font(.title2)
                 .foregroundStyle(.secondary)
-            Text("Open WellPlate to get started")
+            Text("Open Cadence to get started")
                 .font(.caption2)
                 .fontWeight(.medium)
                 .foregroundStyle(.secondary)

@@ -1,6 +1,6 @@
 //
 //  StressDayChartView.swift
-//  WellPlate
+//  Cadence
 //
 //  Intraday stress chart card — bar chart on a light card background
 //  with status pill and sun/moon time indicators.

@@ -1,5 +1,5 @@
 import XCTest
-@testable import WellPlate
+@testable import Cadence
 
 final class GroqNutritionProviderTests: XCTestCase {
     private final class MockURLProtocol: URLProtocol {

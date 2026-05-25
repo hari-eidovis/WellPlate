@@ -1,6 +1,6 @@
 //
 //  AmbientBlobView.swift
-//  WellPlate
+//  Cadence
 //
 
 import SwiftUI
