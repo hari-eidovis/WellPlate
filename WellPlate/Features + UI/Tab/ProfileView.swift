@@ -1135,7 +1135,7 @@ struct ProfilePlaceholderView: View {
             DispatchQueue.main.async {
                 if case .success(let infos) = result {
                     isWidgetInstalled = infos.contains {
-                        $0.kind == "com.hariom.wellplate.stressWidget"
+                        $0.kind == "com.hariom.cadence.stressWidget"
                     }
                 }
             }

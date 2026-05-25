@@ -52,7 +52,7 @@ struct StressWidgetEntryView: View {
 // MARK: - Widget Declaration
 
 struct StressWidget: Widget {
-    let kind = "com.hariom.wellplate.stressWidget"
+    let kind = "com.hariom.cadence.stressWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: StressWidgetProvider()) { entry in

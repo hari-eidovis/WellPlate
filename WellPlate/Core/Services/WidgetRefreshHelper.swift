@@ -52,6 +52,6 @@ enum WidgetRefreshHelper {
             lastUpdated:     .now
         )
         widgetData.save()
-        WidgetCenter.shared.reloadTimelines(ofKind: "com.hariom.wellplate.stressWidget")
+        WidgetCenter.shared.reloadTimelines(ofKind: "com.hariom.cadence.stressWidget")
     }
 }

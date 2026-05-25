@@ -19,7 +19,7 @@ struct WidgetStressData: Codable {
         factors.contains { $0.hasValidData }
     }
 
-    static let appGroupID  = "group.com.hariom.wellplate"
+    static let appGroupID  = "group.com.hariom.cadence"
     static let defaultsKey = "widgetStressData"
 
     // MARK: - Persistence
