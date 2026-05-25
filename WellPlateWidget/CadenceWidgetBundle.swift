@@ -3,7 +3,7 @@ import SwiftUI
 import ActivityKit
 
 @main
-struct WellPlateWidgetBundle: WidgetBundle {
+struct CadenceWidgetBundle: WidgetBundle {
     var body: some Widget {
         StressWidget()
         FastingLiveActivity()

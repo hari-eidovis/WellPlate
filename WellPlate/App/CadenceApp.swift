@@ -1,5 +1,5 @@
 //
-//  WellPlateApp.swift
+//  CadenceApp.swift
 //  WellPlate
 //
 //  Created by Hari's Mac on 26.01.2026.
@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct WellPlateApp: App {
+struct CadenceApp: App {
     @StateObject private var promptCoordinator = DailyPromptCoordinator()
     @StateObject private var tabSelector = TabSelector()
 

@@ -25,7 +25,7 @@ struct StressSmallView: View {
                 content
             }
         }
-        .wellPlateWidgetBackground {
+        .cadenceWidgetBackground {
             ZStack {
                 Color(.systemBackground)
                 LinearGradient(

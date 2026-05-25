@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct WellPlatePlaygroundsApp: App {
+struct CadencePlaygroundsApp: App {
     var body: some Scene {
         WindowGroup {
             PlaygroundRootView()

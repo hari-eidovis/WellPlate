@@ -2,7 +2,7 @@ import SwiftUI
 
 extension View {
     @ViewBuilder
-    func wellPlateWidgetBackground<Background: View>(
+    func cadenceWidgetBackground<Background: View>(
         @ViewBuilder _ background: () -> Background
     ) -> some View {
         if #available(iOSApplicationExtension 17.0, *) {

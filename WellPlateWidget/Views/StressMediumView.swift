@@ -30,7 +30,7 @@ struct StressMediumView: View {
                 content
             }
         }
-        .wellPlateWidgetBackground {
+        .cadenceWidgetBackground {
             ZStack {
                 Color(.systemBackground)
                 LinearGradient(
