@@ -5,13 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build Commands
 
 ```bash
-# Main app
-xcodebuild -project WellPlate.xcodeproj -scheme WellPlate -destination 'generic/platform=iOS Simulator' build
+# Main app (workspace build picks up CocoaPods)
+xcodebuild -workspace Cadence.xcworkspace -scheme Cadence -destination 'generic/platform=iOS Simulator' build
 
 # Extension targets
-xcodebuild -project WellPlate.xcodeproj -scheme ScreenTimeMonitor -destination 'generic/platform=iOS Simulator' build
-xcodebuild -project WellPlate.xcodeproj -scheme ScreenTimeReport -destination 'generic/platform=iOS Simulator' build
-xcodebuild -project WellPlate.xcodeproj -target WellPlateWidget -destination 'generic/platform=iOS Simulator' build
+xcodebuild -project Cadence.xcodeproj -scheme ScreenTimeMonitor -destination 'generic/platform=iOS Simulator' build
+xcodebuild -project Cadence.xcodeproj -scheme ScreenTimeReport -destination 'generic/platform=iOS Simulator' build
+xcodebuild -project Cadence.xcodeproj -target CadenceWidget -destination 'generic/platform=iOS Simulator' build
 ```
 
 No Makefile or fastlane setup — use xcodebuild or Xcode IDE directly.
@@ -20,10 +20,10 @@ No Makefile or fastlane setup — use xcodebuild or Xcode IDE directly.
 
 ## Project Structure
 
-The project uses `PBXFileSystemSynchronizedRootGroup` — all files placed under `WellPlate/` are automatically included in the build. **No pbxproj edits needed when adding new files.**
+The project uses `PBXFileSystemSynchronizedRootGroup` — all files placed under `Cadence/` are automatically included in the build. **No pbxproj edits needed when adding new files.**
 
 ```
-WellPlate/
+Cadence/
 ├── App/                    # Entry point, RootView (Splash → Onboarding → MainTabView)
 ├── Core/
 │   ├── AppConfig.swift     # Debug toggle: mockMode, groqModel, API timeouts
@@ -47,7 +47,7 @@ WellPlate/
     └── Extensions/         # Font, text, normalization helpers
 ```
 
-**Extension targets:** `ScreenTimeMonitor.appex`, `ScreenTimeReport.appex`, `WellPlateWidget.appex`
+**Extension targets:** `ScreenTimeMonitor.appex`, `ScreenTimeReport.appex`, `CadenceWidget.appex`
 
 ## Architecture
 
@@ -61,7 +61,7 @@ WellPlate/
 - Feature sheets use a single enum (e.g., `StressSheet`) driving one `.sheet(item:)` — do not add multiple `.sheet()` calls
 
 **Data layer:**
-- **SwiftData** for persistence — models in `WellPlate/Models/`. ModelContainer initialized in `WellPlateApp.swift` with: `FoodCache`, `FoodLogEntry`, `WellnessDayLog`, `UserGoals`, `StressReading`
+- **SwiftData** for persistence — models in `Cadence/Models/`. ModelContainer initialized in `CadenceApp.swift` with: `FoodCache`, `FoodLogEntry`, `WellnessDayLog`, `UserGoals`, `StressReading`
 - **HealthKit** for vitals and activity — all new metrics use `fetchDailyAvg()` (not sum). HRV unit: `HKUnit(from: "ms")`. Blood pressure: `.millimeterOfMercury()`
 - SwiftData context accessed via `@Environment(\.modelContext)` in views
 
@@ -101,12 +101,12 @@ Use `/develop <sub-command>` as the single entry point for feature development:
 
 | Purpose | Path |
 |---|---|
-| App entry | `WellPlate/App/WellPlateApp.swift` |
-| Debug config | `WellPlate/Core/AppConfig.swift` |
-| HealthKit service | `WellPlate/Core/Services/HealthKitService.swift` |
-| Stress ViewModel | `WellPlate/Features + UI/Stress/ViewModels/StressViewModel.swift` |
-| Design tokens | `WellPlate/Shared/Color/AppColor.swift` |
-| SwiftData models | `WellPlate/Models/` |
-| Mock API data | `WellPlate/Resources/MockData/` |
+| App entry | `Cadence/App/CadenceApp.swift` |
+| Debug config | `Cadence/Core/AppConfig.swift` |
+| HealthKit service | `Cadence/Core/Services/HealthKitService.swift` |
+| Stress ViewModel | `Cadence/Features + UI/Stress/ViewModels/StressViewModel.swift` |
+| Design tokens | `Cadence/Shared/Color/AppColor.swift` |
+| SwiftData models | `Cadence/Models/` |
+| Mock API data | `Cadence/Resources/MockData/` |
 | /develop orchestrator | `.claude/skills/develop/SKILL.md` |
 

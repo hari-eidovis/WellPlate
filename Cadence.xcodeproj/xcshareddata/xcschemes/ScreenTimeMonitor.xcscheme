@@ -19,7 +19,7 @@
                BlueprintIdentifier = "AA000015AA000015AA000015"
                BuildableName = "ScreenTimeMonitor.appex"
                BlueprintName = "ScreenTimeMonitor"
-               ReferencedContainer = "container:WellPlate.xcodeproj">
+               ReferencedContainer = "container:Cadence.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -33,7 +33,7 @@
                BlueprintIdentifier = "BFD33EC12F27DF8100D93897"
                BuildableName = "Cadence.app"
                BlueprintName = "Cadence"
-               ReferencedContainer = "container:WellPlate.xcodeproj">
+               ReferencedContainer = "container:Cadence.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -68,7 +68,7 @@
             BlueprintIdentifier = "BFD33EC12F27DF8100D93897"
             BuildableName = "Cadence.app"
             BlueprintName = "Cadence"
-            ReferencedContainer = "container:WellPlate.xcodeproj">
+            ReferencedContainer = "container:Cadence.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </LaunchAction>
@@ -87,7 +87,7 @@
             BlueprintIdentifier = "BFD33EC12F27DF8100D93897"
             BuildableName = "Cadence.app"
             BlueprintName = "Cadence"
-            ReferencedContainer = "container:WellPlate.xcodeproj">
+            ReferencedContainer = "container:Cadence.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
