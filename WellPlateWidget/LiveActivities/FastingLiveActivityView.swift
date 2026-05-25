@@ -70,7 +70,7 @@ struct FastingLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                Image(.wellPlateLogo)
+                Image(.cadenceLogo)
                     .renderingMode(.original)
                     .resizable()
                     .scaledToFit()
@@ -206,7 +206,7 @@ private struct LogoProgressRing: View {
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
-            Image(.wellPlateLogo)
+            Image(.cadenceLogo)
                 .renderingMode(.original)
                 .resizable()
                 .scaledToFill()
@@ -260,7 +260,7 @@ private struct WatchLogoRing: View {
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
-            if let uiImage = UIImage(named: "WellPlate_Logo") {
+            if let uiImage = UIImage(named: "Cadence_Logo") {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()

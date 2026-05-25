@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "WellPlate_Logo@1x.png",
+      "filename" : "Cadence_Logo.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "WellPlate_Logo@2x.png",
+      "filename" : "Cadence_Logo@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "WellPlate_Logo@3x.png",
+      "filename" : "Cadence_Logo@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
@@ -19,5 +19,8 @@
   "info" : {
     "author" : "xcode",
     "version" : 1
+  },
+  "properties" : {
+    "template-rendering-intent" : "original"
   }
 }
