@@ -2,35 +2,48 @@
 //  StressCelebrationOverlay.swift
 //  Cadence
 //
-//  Confetti + encouraging alert shown when the stress score drops by 8+ points
-//  during a session. Hosted globally by `CelebrationWindowPresenter` so it can
-//  appear over any tab or sheet.
+//  Global overlay shown when the stress score shifts sharply during a session.
+//  Two flavors driven by `StressEventKind`:
+//    • `.drop` — gentle cream confetti + encouraging copy when stress falls 8+ pts.
+//    • `.rise` — soft breathing ring + grounding copy when stress climbs 7+ pts.
+//  Hosted globally by `CelebrationWindowPresenter` so it can appear over any
+//  tab or sheet.
+//
+//  Visual language: Claude-inspired minimalism. Warm neutral surfaces
+//  (Pampas / Cloudy) with a single Crail accent used sparingly per kind.
 //
 
 import SwiftUI
 
 // MARK: - Event Model
 
+enum StressEventKind: Equatable {
+    case drop
+    case rise
+}
+
 struct StressCelebrationEvent: Identifiable, Equatable {
     let id: UUID
-    let dropPoints: Int
+    let kind: StressEventKind
+    let magnitude: Int
     let previousScore: Double
     let newScore: Double
     let message: String
 
-    init(dropPoints: Int, previousScore: Double, newScore: Double) {
+    init(kind: StressEventKind, magnitude: Int, previousScore: Double, newScore: Double) {
         self.id = UUID()
-        self.dropPoints = dropPoints
+        self.kind = kind
+        self.magnitude = magnitude
         self.previousScore = previousScore
         self.newScore = newScore
-        self.message = StressCelebrationMessages.random(forDrop: dropPoints)
+        self.message = StressCelebrationMessages.random(forKind: kind, magnitude: magnitude)
     }
 }
 
-// MARK: - Encouraging copy
+// MARK: - Copy
 
 enum StressCelebrationMessages {
-    private static let lines: [String] = [
+    private static let dropLines: [String] = [
         "Boom! Stress just took a nosedive.",
         "Yesss — that's a serious vibe shift.",
         "Look at you go! Stress is melting.",
@@ -43,28 +56,95 @@ enum StressCelebrationMessages {
         "You're winning the day."
     ]
 
-    static func random(forDrop drop: Int) -> String {
-        lines.randomElement() ?? "Stress dropped \(drop) points!"
+    private static let riseLines: [String] = [
+        "Heads up — stress just spiked.",
+        "Whoa, your stress climbed fast.",
+        "Pause for a beat. Big jump detected.",
+        "Stress is rising — give yourself a moment.",
+        "Tension's creeping in. Time to breathe.",
+        "Your body's on alert. Slow it down.",
+        "Quick spike — let's reset before it sticks.",
+        "Stress just escalated. You've got this.",
+        "Sharp rise noticed. A breath can help.",
+        "Stress is up. Step back and steady yourself."
+    ]
+
+    static func random(forKind kind: StressEventKind, magnitude: Int) -> String {
+        let lines: [String]
+        switch kind {
+        case .drop: lines = dropLines
+        case .rise: lines = riseLines
+        }
+        return lines.randomElement() ?? fallback(forKind: kind, magnitude: magnitude)
+    }
+
+    private static func fallback(forKind kind: StressEventKind, magnitude: Int) -> String {
+        switch kind {
+        case .drop: return "Stress dropped \(magnitude) points!"
+        case .rise: return "Stress rose \(magnitude) points."
+        }
     }
 }
 
-// MARK: - Palette
+// MARK: - Palette (Claude-inspired)
 
-private enum CelebrationPalette {
-    static let badgeStart = Color(hex: "FFB14A")  // warm gold
-    static let badgeMid   = Color(hex: "FF7A3D")  // tangerine
-    static let badgeEnd   = Color(hex: "FF4E8A")  // hot pink
-    static let cta        = Color(hex: "1FA971")  // wellness green
-    static let ctaGlow    = Color(hex: "39D194")
-    static let confetti: [Color] = [
-        Color(hex: "FFD24A"),   // gold
-        Color(hex: "FF7A3D"),   // tangerine
-        Color(hex: "FF4E8A"),   // hot pink
-        Color(hex: "5E9FFF"),   // brand blue
-        Color(hex: "39D194"),   // green
-        Color(hex: "B58CFF"),   // lavender
-        Color(hex: "55E6E1")    // teal
-    ]
+private enum ClaudePalette {
+    /// Terracotta — the one saturated accent. Used once per overlay (CTA or headline).
+    static let crail  = Color(hex: "C15F3C")
+    /// Warm gray — borders, dividers, secondary surfaces.
+    static let cloudy = Color(hex: "B1ADA1")
+    /// Cream — primary soft surface for badges and card warmth.
+    static let pampas = Color(hex: "F4F3EE")
+}
+
+private struct OverlayPalette {
+    let badgeFill: Color
+    let badgeStroke: Color
+    let iconColor: Color
+    let cta: Color
+    let ctaText: Color
+    let headlineColor: Color
+    let confetti: [Color]
+    let icon: String
+    let ctaTitle: String
+    let sign: String
+    let useWarningPulse: Bool
+
+    /// Drop: cream badge, neutral headline, Crail reserved for the CTA.
+    static let drop = OverlayPalette(
+        badgeFill:     ClaudePalette.pampas,
+        badgeStroke:   ClaudePalette.cloudy.opacity(0.35),
+        iconColor:     ClaudePalette.crail,
+        cta:           ClaudePalette.crail,
+        ctaText:       .white,
+        headlineColor: .primary,
+        confetti: [
+            ClaudePalette.pampas,
+            ClaudePalette.cloudy.opacity(0.7),
+            ClaudePalette.crail.opacity(0.5),
+            Color(hex: "DED9CF")
+        ],
+        icon: "arrow.down",
+        ctaTitle: "Keep it up",
+        sign: "−",
+        useWarningPulse: false
+    )
+
+    /// Rise: tinted Crail badge + Crail headline (this is the alert), calming
+    /// `.primary` CTA so the resolution feels steady rather than urgent.
+    static let rise = OverlayPalette(
+        badgeFill:     ClaudePalette.crail.opacity(0.12),
+        badgeStroke:   ClaudePalette.crail.opacity(0.35),
+        iconColor:     ClaudePalette.crail,
+        cta:           .primary,
+        ctaText:       Color(.systemBackground),
+        headlineColor: ClaudePalette.crail,
+        confetti: [],
+        icon: "arrow.up",
+        ctaTitle: "Take a breath",
+        sign: "+",
+        useWarningPulse: true
+    )
 }
 
 // MARK: - Overlay
@@ -75,46 +155,53 @@ struct StressCelebrationOverlay: View {
 
     @State private var cardAppeared = false
     @State private var confettiActive = false
-    @State private var burstScale: CGFloat = 0.4
-    @State private var burstOpacity: Double = 0
-    @State private var raysRotation: Double = 0
-    @State private var shimmerX: CGFloat = -1
-    @State private var displayedDrop: Int = 0
+    @State private var haloScale: CGFloat = 0.6
+    @State private var haloOpacity: Double = 0
+    @State private var displayedMagnitude: Int = 0
+    @State private var warningPulse: CGFloat = 0.9
 
-    /// Auto-dismiss timing.
     private static let autoDismissAfter: TimeInterval = 4.0
+
+    private var palette: OverlayPalette {
+        switch event.kind {
+        case .drop: return .drop
+        case .rise: return .rise
+        }
+    }
 
     var body: some View {
         ZStack {
-            // Tap-anywhere-to-dismiss scrim.
-            Color.black.opacity(cardAppeared ? 0.28 : 0)
+            // Tap-anywhere-to-dismiss scrim. Softer than before to keep focus on the card.
+            Color.black.opacity(cardAppeared ? 0.22 : 0)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
                 .onTapGesture { dismiss() }
 
-            // Confetti — fills the screen, particles fall from above.
-            GeometryReader { geo in
-                ZStack {
-                    ForEach(0..<48, id: \.self) { i in
-                        StressConfettiPiece(
-                            index: i,
-                            isActive: confettiActive,
-                            canvasSize: geo.size
-                        )
+            // Confetti — drop only, reduced count, Claude-palette colors.
+            if event.kind == .drop {
+                GeometryReader { geo in
+                    ZStack {
+                        ForEach(0..<22, id: \.self) { i in
+                            StressConfettiPiece(
+                                index: i,
+                                isActive: confettiActive,
+                                canvasSize: geo.size,
+                                colors: palette.confetti
+                            )
+                        }
                     }
                 }
+                .allowsHitTesting(false)
+                .ignoresSafeArea()
             }
-            .allowsHitTesting(false)
-            .ignoresSafeArea()
 
-            // Centered alert card
-            VStack(spacing: 18) {
+            VStack(spacing: 20) {
                 heroBadge
 
                 VStack(spacing: 8) {
-                    gradientHeadline
+                    headline
                     Text(event.message)
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .font(.system(size: 14, weight: .regular, design: .rounded))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
@@ -122,13 +209,13 @@ struct StressCelebrationOverlay: View {
                 }
 
                 ctaButton
-                    .padding(.top, 6)
+                    .padding(.top, 4)
             }
-            .padding(.horizontal, 26)
-            .padding(.vertical, 28)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 30)
             .frame(maxWidth: 340)
             .background(cardBackground)
-            .scaleEffect(cardAppeared ? 1 : 0.82)
+            .scaleEffect(cardAppeared ? 1 : 0.86)
             .opacity(cardAppeared ? 1 : 0)
             .padding(.horizontal, 32)
         }
@@ -139,108 +226,57 @@ struct StressCelebrationOverlay: View {
 
     private var heroBadge: some View {
         ZStack {
-            // Soft outer glow halo
+            // Soft halo — single tone, fades out after entrance.
             Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [CelebrationPalette.badgeStart.opacity(0.45), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 80
-                    )
-                )
-                .frame(width: 180, height: 180)
-                .scaleEffect(burstScale)
-                .opacity(burstOpacity)
+                .fill(palette.iconColor.opacity(0.10))
+                .frame(width: 140, height: 140)
+                .scaleEffect(haloScale)
+                .opacity(haloOpacity)
 
-            // Rotating sunburst rays
-            SunburstRays(rayCount: 12, color: CelebrationPalette.badgeStart.opacity(0.55))
-                .frame(width: 130, height: 130)
-                .rotationEffect(.degrees(raysRotation))
-                .opacity(cardAppeared ? 0.9 : 0)
+            // Rise-only breathing ring. Slow + thin for "concerned, not alarming".
+            if palette.useWarningPulse {
+                Circle()
+                    .stroke(palette.iconColor.opacity(0.35), lineWidth: 1.5)
+                    .frame(width: 110, height: 110)
+                    .scaleEffect(warningPulse)
+                    .opacity(2 - Double(warningPulse))
+            }
 
-            // Solid gradient disc
+            // Solid badge — flat fill + 1pt warm stroke. No gradients.
             Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            CelebrationPalette.badgeStart,
-                            CelebrationPalette.badgeMid,
-                            CelebrationPalette.badgeEnd
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 88, height: 88)
-                .shadow(color: CelebrationPalette.badgeMid.opacity(0.55), radius: 18, x: 0, y: 8)
+                .fill(palette.badgeFill)
+                .frame(width: 84, height: 84)
                 .overlay(
                     Circle()
-                        .strokeBorder(.white.opacity(0.25), lineWidth: 1)
+                        .strokeBorder(palette.badgeStroke, lineWidth: 1)
                 )
 
-            // Icon — heart with a down arrow (semantic: stress dropping)
-            Image(systemName: "arrow.down.heart.fill")
-                .font(.system(size: 38, weight: .bold))
-                .foregroundStyle(.white)
-                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+            Image(systemName: palette.icon)
+                .font(.system(size: 32, weight: .medium))
+                .foregroundStyle(palette.iconColor)
         }
         .frame(height: 130)
     }
 
-    // MARK: - Gradient Headline
+    // MARK: - Headline
 
-    private var gradientHeadline: some View {
-        Text("−\(displayedDrop) stress")
-            .font(.system(size: 36, weight: .heavy, design: .rounded))
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [
-                        CelebrationPalette.badgeStart,
-                        CelebrationPalette.badgeMid,
-                        CelebrationPalette.badgeEnd
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
+    private var headline: some View {
+        Text("\(palette.sign)\(displayedMagnitude) stress")
+            .font(.system(size: 34, weight: .semibold, design: .rounded))
+            .foregroundStyle(palette.headlineColor)
             .contentTransition(.numericText())
-            .overlay(
-                // Sheen — moves across the text
-                LinearGradient(
-                    colors: [.clear, .white.opacity(0.55), .clear],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(width: 80)
-                .offset(x: shimmerX * 200)
-                .mask(
-                    Text("−\(displayedDrop) stress")
-                        .font(.system(size: 36, weight: .heavy, design: .rounded))
-                )
-                .blendMode(.plusLighter)
-                .allowsHitTesting(false)
-            )
     }
 
     // MARK: - CTA
 
     private var ctaButton: some View {
         Button { dismiss() } label: {
-            Text("Keep it up")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+            Text(palette.ctaTitle)
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundStyle(palette.ctaText)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    LinearGradient(
-                        colors: [CelebrationPalette.ctaGlow, CelebrationPalette.cta],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    in: Capsule()
-                )
-                .shadow(color: CelebrationPalette.cta.opacity(0.45), radius: 14, x: 0, y: 6)
+                .padding(.vertical, 13)
+                .background(palette.cta, in: Capsule())
         }
         .buttonStyle(.plain)
     }
@@ -248,70 +284,52 @@ struct StressCelebrationOverlay: View {
     // MARK: - Card Background
 
     private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 28, style: .continuous)
+        RoundedRectangle(cornerRadius: 26, style: .continuous)
             .fill(Color(.systemBackground))
             .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                CelebrationPalette.badgeStart.opacity(0.08),
-                                .clear,
-                                CelebrationPalette.badgeEnd.opacity(0.08)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                // Subtle Pampas warmth that survives both light + dark mode.
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(ClaudePalette.pampas.opacity(0.35))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                CelebrationPalette.badgeStart.opacity(0.35),
-                                CelebrationPalette.badgeEnd.opacity(0.35)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .strokeBorder(ClaudePalette.cloudy.opacity(0.28), lineWidth: 1)
             )
-            .appShadow(radius: 36, y: 14)
+            .appShadow(radius: 28, y: 10)
     }
 
     // MARK: - Entrance / Dismiss
 
     private func runEntrance() {
-        HapticService.celebrationBurst()
+        switch event.kind {
+        case .drop: HapticService.celebrationBurst()
+        case .rise: HapticService.stressRiseAlert()
+        }
 
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.78)) {
             cardAppeared = true
         }
-        withAnimation(.easeOut(duration: 0.6)) {
-            burstScale = 1.4
-            burstOpacity = 1
+        withAnimation(.easeOut(duration: 0.55)) {
+            haloScale = 1.25
+            haloOpacity = 1
         }
-        withAnimation(.easeIn(duration: 0.9).delay(0.3)) {
-            burstOpacity = 0
+        withAnimation(.easeIn(duration: 1.0).delay(0.3)) {
+            haloOpacity = 0
         }
-        withAnimation(.linear(duration: 18).repeatForever(autoreverses: false)) {
-            raysRotation = 360
+
+        if palette.useWarningPulse {
+            withAnimation(.easeOut(duration: 1.4).repeatForever(autoreverses: false)) {
+                warningPulse = 1.45
+            }
         }
-        withAnimation(.easeOut(duration: 0.05)) {
-            confettiActive = true
+
+        if event.kind == .drop {
+            withAnimation(.easeOut(duration: 0.05)) {
+                confettiActive = true
+            }
         }
-        // Number count-up
-        animateCountUp(to: event.dropPoints)
-        // Sheen sweep over the headline (twice)
-        withAnimation(.easeInOut(duration: 1.1).delay(0.35)) {
-            shimmerX = 1
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-            shimmerX = -1
-            withAnimation(.easeInOut(duration: 1.1)) { shimmerX = 1 }
-        }
+
+        animateCountUp(to: event.magnitude)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.autoDismissAfter) {
             dismiss()
@@ -326,13 +344,12 @@ struct StressCelebrationOverlay: View {
         for i in 1...stepCount {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * stepDelay) {
                 withAnimation(.easeOut(duration: stepDelay * 1.5)) {
-                    displayedDrop = Int(Double(target) * (Double(i) / Double(stepCount)))
+                    displayedMagnitude = Int(Double(target) * (Double(i) / Double(stepCount)))
                 }
             }
         }
-        // Snap to exact final value
         DispatchQueue.main.asyncAfter(deadline: .now() + totalDuration + 0.02) {
-            withAnimation { displayedDrop = target }
+            withAnimation { displayedMagnitude = target }
         }
     }
 
@@ -347,57 +364,21 @@ struct StressCelebrationOverlay: View {
     }
 }
 
-// MARK: - Sunburst Rays
-
-private struct SunburstRays: View {
-    let rayCount: Int
-    let color: Color
-
-    var body: some View {
-        Canvas { ctx, size in
-            let center = CGPoint(x: size.width / 2, y: size.height / 2)
-            let outerRadius = size.width / 2
-            let innerRadius = outerRadius * 0.42
-            let halfAngle = (CGFloat.pi / CGFloat(rayCount)) * 0.35
-
-            for i in 0..<rayCount {
-                let angle = CGFloat(i) * (2 * .pi / CGFloat(rayCount))
-                var path = Path()
-                let tip = CGPoint(
-                    x: center.x + cos(angle) * outerRadius,
-                    y: center.y + sin(angle) * outerRadius
-                )
-                let leftBase = CGPoint(
-                    x: center.x + cos(angle - halfAngle) * innerRadius,
-                    y: center.y + sin(angle - halfAngle) * innerRadius
-                )
-                let rightBase = CGPoint(
-                    x: center.x + cos(angle + halfAngle) * innerRadius,
-                    y: center.y + sin(angle + halfAngle) * innerRadius
-                )
-                path.move(to: tip)
-                path.addLine(to: leftBase)
-                path.addLine(to: rightBase)
-                path.closeSubpath()
-                ctx.fill(path, with: .color(color))
-            }
-        }
-    }
-}
-
 // MARK: - Confetti Piece
 
 private struct StressConfettiPiece: View {
     let index: Int
     let isActive: Bool
     let canvasSize: CGSize
+    let colors: [Color]
 
     private var color: Color {
-        CelebrationPalette.confetti[index % CelebrationPalette.confetti.count]
+        guard !colors.isEmpty else { return .clear }
+        return colors[index % colors.count]
     }
 
     private var startX: CGFloat {
-        let slot = CGFloat(index % 16) / 16.0
+        let slot = CGFloat(index % 12) / 12.0
         let jitter = CGFloat((index * 37) % 50) - 25
         return slot * canvasSize.width + jitter
     }
@@ -408,7 +389,7 @@ private struct StressConfettiPiece: View {
 
     private var startY: CGFloat { -80 - CGFloat((index * 23) % 140) }
 
-    private var fallDuration: Double { 2.0 + Double((index * 7) % 16) * 0.08 }
+    private var fallDuration: Double { 2.4 + Double((index * 7) % 16) * 0.08 }
     private var fallDelay: Double { Double((index * 11) % 11) * 0.05 }
     private var spinSpeed: Double { 1.0 + Double((index * 5) % 7) * 0.22 }
 
@@ -423,7 +404,7 @@ private struct StressConfettiPiece: View {
                 y: fallen ? endY : startY
             )
             .rotationEffect(.degrees(rotation))
-            .opacity(fallen ? 0 : 0.98)
+            .opacity(fallen ? 0 : 0.85)
             .onChange(of: isActive) { active in
                 guard active else { return }
                 withAnimation(.easeIn(duration: fallDuration).delay(fallDelay)) {
@@ -441,31 +422,14 @@ private struct StressConfettiPiece: View {
 
     @ViewBuilder
     private var shape: some View {
-        switch index % 5 {
+        switch index % 3 {
         case 0:
-            Circle().frame(width: 8, height: 8)
+            Circle().frame(width: 6, height: 6)
         case 1:
-            RoundedRectangle(cornerRadius: 1.5)
-                .frame(width: 6, height: 13)
-        case 2:
-            Image(systemName: "sparkle")
-                .font(.system(size: 13, weight: .bold))
-        case 3:
-            Image(systemName: "star.fill")
-                .font(.system(size: 11, weight: .bold))
+            RoundedRectangle(cornerRadius: 1)
+                .frame(width: 4, height: 10)
         default:
-            CelebrationTriangle().frame(width: 9, height: 9)
+            Circle().frame(width: 4, height: 4)
         }
-    }
-}
-
-private struct CelebrationTriangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        p.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        p.closeSubpath()
-        return p
     }
 }

@@ -194,7 +194,7 @@ struct ProfilePlaceholderView: View {
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 refreshProfileData()
                 checkWidgetStatus()
@@ -271,31 +271,26 @@ struct ProfilePlaceholderView: View {
                     .foregroundStyle(.primary)
             }
 
-            VStack(spacing: 4) {
-                HStack(spacing: 10) {
-                    Text(profile.userName.isEmpty ? "Your Profile" : profile.userName)
-                        .font(.r(.title2, .bold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+            HStack(spacing: 10) {
+                Text(profile.userName.isEmpty ? "Your Profile" : profile.userName)
+                    .font(.r(.title2, .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
 
-                    Button {
-                        HapticService.impact(.light)
-                        editedName = profile.userName
-                        activeSheet = .editName
-                    } label: {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 28, height: 28)
-                            .background(Circle().fill(Color(.tertiarySystemFill).opacity(0.6)))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Edit name")
+                Button {
+                    HapticService.impact(.light)
+                    editedName = profile.userName
+                    activeSheet = .editName
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(Color(.tertiarySystemFill).opacity(0.6)))
                 }
-                Text("Welcome back")
-                    .font(.r(13, .medium))
-                    .foregroundStyle(.secondary)
+                .buttonStyle(.plain)
+                .accessibilityLabel("Edit name")
             }
 
             HStack(spacing: 10) {
@@ -828,26 +823,7 @@ struct ProfilePlaceholderView: View {
 
     private var supplementRegimenCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                cardHeader(eyebrow: "REGIMEN", title: "Health Regimen", icon: "pill.fill")
-                Spacer()
-                Button {
-                    HapticService.impact(.light)
-                    activeSheet = .addSupplement
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 12, weight: .bold))
-                        Text("Add")
-                            .font(.r(12, .bold))
-                    }
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
-                }
-                .buttonStyle(.plain)
-            }
+            cardHeader(eyebrow: "REGIMEN", title: "Health Regimen", icon: "pill.fill")
 
             if allSupplements.isEmpty {
                 Button {
@@ -940,26 +916,7 @@ struct ProfilePlaceholderView: View {
 
     private var symptomTrackingCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                cardHeader(eyebrow: "TRACK", title: "Symptoms", icon: "heart.text.square.fill")
-                Spacer()
-                Button {
-                    HapticService.impact(.light)
-                    activeSheet = .symptomLog
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 12, weight: .bold))
-                        Text("Log")
-                            .font(.r(12, .bold))
-                    }
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
-                }
-                .buttonStyle(.plain)
-            }
+            cardHeader(eyebrow: "TRACK", title: "Symptoms", icon: "heart.text.square.fill")
 
             if allSymptomEntries.isEmpty {
                 Button {

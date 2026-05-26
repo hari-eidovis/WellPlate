@@ -95,6 +95,29 @@ enum HapticService {
         }
     }
 
+    /// Error-style warning burst — fired when the stress score climbs sharply.
+    /// Layers an error notification, three rigid taps that ring out like an
+    /// alert, and a closing warning notification so the sensation reads as
+    /// concerning rather than celebratory.
+    static func stressRiseAlert() {
+        notification.notificationOccurred(.error)
+        let pattern: [(delay: Double, gen: UIImpactFeedbackGenerator, intensity: CGFloat)] = [
+            (0.00, heavyImpact, 1.0),
+            (0.14, rigidImpact, 0.9),
+            (0.28, heavyImpact, 1.0),
+            (0.46, rigidImpact, 0.85),
+            (0.62, heavyImpact, 1.0)
+        ]
+        for step in pattern {
+            DispatchQueue.main.asyncAfter(deadline: .now() + step.delay) {
+                step.gen.impactOccurred(intensity: step.intensity)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.82) {
+            notification.notificationOccurred(.warning)
+        }
+    }
+
     /// Pre-warms all generators. Call early (e.g. on app launch) for best latency.
     static func prepare() {
         lightImpact.prepare()

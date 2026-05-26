@@ -28,6 +28,8 @@ struct FastingView: View {
     @State private var activeFastingSheet: FastingSheet?
     @State private var showBreakFastAlert = false
     @State private var previousState: FastingState = .notConfigured
+    @State private var lastLiveActivityProgress: Double = -1
+    @State private var celebration: FastingCompletionEvent?
 
     init() {
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
@@ -94,23 +96,44 @@ struct FastingView: View {
                     )
                 }
             }
-            .alert("End Fast?", isPresented: $showBreakFastAlert) {
-                Button("End Fast", role: .destructive) { breakCurrentFast() }
-                Button("Cancel", role: .cancel) { }
+            .alert("Break Fast Early?", isPresented: $showBreakFastAlert) {
+                Button("Break Fast", role: .destructive) { breakCurrentFast() }
+                Button("Keep Going", role: .cancel) { }
             } message: {
-                Text("This will end your current fast early.")
+                Text(breakFastAlertMessage)
             }
         }
         .presentationDragIndicator(.visible)
+        .overlay {
+            if let celebration {
+                FastingCelebrationOverlay(event: celebration) {
+                    self.celebration = nil
+                }
+                .transition(.opacity)
+                .zIndex(100)
+            }
+        }
         .onAppear { configureService() }
-        .onChange(of: scenePhase) { phase in
+        .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             configureService()
         }
-        .onChange(of: fastingService.currentState) { newState in
+        .onChange(of: fastingService.currentState) { _, newState in
             handleStateTransition(from: previousState, to: newState)
             previousState = newState
         }
+        .onChange(of: fastingService.progress) { _, newProgress in
+            syncLiveActivityProgress(newProgress)
+        }
+    }
+
+    /// Friendly elapsed-time string for the break-fast confirmation alert.
+    private var breakFastAlertMessage: String {
+        guard let session = activeSession else {
+            return "Are you sure you want to end your fast?"
+        }
+        let elapsed = Date().timeIntervalSince(session.startedAt)
+        return "You've fasted for \(formattedDuration(elapsed)). Ending now means this won't count as a completed fast."
     }
 
     // MARK: - Background
@@ -213,13 +236,20 @@ struct FastingView: View {
         )
     }
 
+    /// True when the schedule says we should be fasting but there's no active
+    /// session — typically after the user broke a fast early, or the schedule
+    /// was just configured during a fasting window.
+    private var isIdleInFastingWindow: Bool {
+        fastingService.currentState.isFasting && activeSession == nil
+    }
+
     private var activeTimerCard: some View {
         VStack(spacing: 18) {
             HStack(spacing: 6) {
                 Circle()
                     .fill(heroAccent)
                     .frame(width: 7, height: 7)
-                Text(stateLabel)
+                Text(idleHeaderLabel)
                     .font(.r(11, .bold))
                     .tracking(1.4)
                     .foregroundStyle(heroAccent)
@@ -245,37 +275,52 @@ struct FastingView: View {
                     .stroke(heroAccent.opacity(0.14), lineWidth: 14)
                     .frame(width: 200, height: 200)
 
-                Circle()
-                    .trim(from: 0, to: max(fastingService.progress, 0.001))
-                    .stroke(
-                        LinearGradient(
-                            colors: [heroAccent, heroAccent.opacity(0.7)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
-                        style: StrokeStyle(lineWidth: 14, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 200, height: 200)
-                    .animation(.linear(duration: 0.3), value: fastingService.progress)
+                if !isIdleInFastingWindow {
+                    Circle()
+                        .trim(from: 0, to: max(fastingService.progress, 0.001))
+                        .stroke(
+                            LinearGradient(
+                                colors: [heroAccent, heroAccent.opacity(0.7)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            style: StrokeStyle(lineWidth: 14, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: 200, height: 200)
+                        .animation(.linear(duration: 0.3), value: fastingService.progress)
+                }
 
                 VStack(spacing: 4) {
-                    Text(formattedTimeRemaining)
-                        .font(.r(38, .heavy))
-                        .foregroundStyle(.primary)
-                        .monospacedDigit()
-                    Text("REMAINING")
-                        .font(.r(10, .bold))
-                        .tracking(1.0)
-                        .foregroundStyle(.secondary)
-                    if fastingService.progress > 0 {
-                        Text("\(Int(fastingService.progress * 100))% complete")
-                            .font(.r(12, .semibold))
-                            .foregroundStyle(heroAccent)
-                            .padding(.top, 2)
+                    if isIdleInFastingWindow {
+                        Image(systemName: "pause.circle.fill")
+                            .font(.system(size: 44, weight: .regular))
+                            .foregroundStyle(heroAccent.opacity(0.85))
+                        Text("READY WHEN YOU ARE")
+                            .font(.r(10, .bold))
+                            .tracking(1.0)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    } else {
+                        Text(formattedTimeRemaining)
+                            .font(.r(38, .heavy))
+                            .foregroundStyle(.primary)
+                            .monospacedDigit()
+                        Text("REMAINING")
+                            .font(.r(10, .bold))
+                            .tracking(1.0)
+                            .foregroundStyle(.secondary)
+                        if fastingService.progress > 0 {
+                            Text("\(Int(fastingService.progress * 100))% complete")
+                                .font(.r(12, .semibold))
+                                .foregroundStyle(heroAccent)
+                                .padding(.top, 2)
+                        }
                     }
                 }
+                .transition(.opacity)
             }
+            .animation(.easeInOut(duration: 0.35), value: isIdleInFastingWindow)
 
             if let sched = schedule {
                 HStack(spacing: 6) {
@@ -367,7 +412,7 @@ struct FastingView: View {
                     )
                 }
 
-                if fastingService.currentState.isFasting {
+                if fastingService.currentState.isFasting && activeSession != nil {
                     Button {
                         HapticService.impact(.light)
                         showBreakFastAlert = true
@@ -388,6 +433,33 @@ struct FastingView: View {
                                     RoundedRectangle(cornerRadius: 13, style: .continuous)
                                         .strokeBorder(Color.red.opacity(0.18), lineWidth: 1)
                                 )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                } else if fastingService.currentState.isFasting && activeSession == nil {
+                    Button {
+                        HapticService.impact(.medium)
+                        startFastNow()
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "play.circle.fill")
+                                .font(.system(size: 15, weight: .bold))
+                            Text("Start Fast Now")
+                                .font(.r(14, .bold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(
+                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [heroAccent, heroAccent.opacity(0.78)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .shadow(color: heroAccent.opacity(0.35), radius: 10, x: 0, y: 4)
                         )
                     }
                     .buttonStyle(.plain)
@@ -524,11 +596,13 @@ struct FastingView: View {
             // If fasting and no Live Activity running, start one (e.g. after app relaunch or first F7 use)
             if fastingService.currentState.isFasting && !ActivityManager.shared.isFastingActivityActive {
                 if let session = activeSession {
+                    lastLiveActivityProgress = -1
                     ActivityManager.shared.startFastingActivity(
                         scheduleLabel: schedule.displayLabel,
                         fastStartDate: session.startedAt,
                         targetEndDate: session.targetEndAt
                     )
+                    syncLiveActivityProgress(fastingService.progress)
                 }
             }
         }
@@ -545,6 +619,7 @@ struct FastingView: View {
                                          scheduleType: schedule.resolvedScheduleType)
             modelContext.insert(session)
 
+            lastLiveActivityProgress = -1
             ActivityManager.shared.startFastingActivity(
                 scheduleLabel: schedule.displayLabel,
                 fastStartDate: fastStart,
@@ -552,12 +627,55 @@ struct FastingView: View {
             )
         }
 
-        // Fasting → Eating: complete active session + end Live Activity
+        // Fasting → Eating: complete active session + end Live Activity + celebrate
         if oldState.isFasting && newState.isEating, let session = activeSession {
+            let elapsedHours = session.actualDurationHours
             session.completed = true
             session.actualEndAt = .now
             HapticService.notify(.success)
             ActivityManager.shared.endFastingActivity(completed: true)
+            withAnimation(.easeOut(duration: 0.3)) {
+                celebration = FastingCompletionEvent(
+                    durationHours: elapsedHours,
+                    scheduleLabel: schedule.displayLabel
+                )
+            }
+        }
+    }
+
+    /// Manually starts a fast right now — used when the schedule says we
+    /// should be fasting but no active session exists (e.g. after the user
+    /// broke the previous fast early).
+    private func startFastNow() {
+        guard let schedule else { return }
+        let now = Date()
+        let targetEnd = fastingService.nextEatWindowStart(for: schedule)
+        let session = FastingSession(startedAt: now, targetEndAt: targetEnd,
+                                     scheduleType: schedule.resolvedScheduleType)
+        modelContext.insert(session)
+        try? modelContext.save()
+
+        lastLiveActivityProgress = -1
+        ActivityManager.shared.startFastingActivity(
+            scheduleLabel: schedule.displayLabel,
+            fastStartDate: now,
+            targetEndDate: targetEnd
+        )
+
+        // Recompute service state immediately so the timer card reflects the
+        // new session instead of waiting for the next 1s tick.
+        fastingService.configure(schedule: schedule, activeSession: session)
+        previousState = fastingService.currentState
+        syncLiveActivityProgress(fastingService.progress)
+    }
+
+    /// Pushes the current progress to the running Live Activity, throttled to
+    /// changes of ≥0.5% so the system rate limiter is happy.
+    private func syncLiveActivityProgress(_ progress: Double) {
+        guard ActivityManager.shared.isFastingActivityActive else { return }
+        if lastLiveActivityProgress < 0 || abs(progress - lastLiveActivityProgress) >= 0.005 {
+            lastLiveActivityProgress = progress
+            ActivityManager.shared.updateFastingActivity(progress: progress)
         }
     }
 
@@ -566,6 +684,7 @@ struct FastingView: View {
         session.completed = false
         session.actualEndAt = .now
         ActivityManager.shared.endFastingActivity(completed: false)
+        lastLiveActivityProgress = -1
     }
 
     // MARK: - Formatting
@@ -576,6 +695,12 @@ struct FastingView: View {
         case .eating:  return "EATING"
         case .notConfigured: return ""
         }
+    }
+
+    /// State pill copy at the top of the timer card. Shows "READY" when the
+    /// schedule says we should be fasting but no session is running yet.
+    private var idleHeaderLabel: String {
+        isIdleInFastingWindow ? "READY TO FAST" : stateLabel
     }
 
     private var ringColor: Color {

@@ -101,7 +101,7 @@ struct WellnessCalendarView: View {
             action()
         } label: {
             Image(systemName: icon)
-                .font(.system(size: 13, weight: .bold))
+                .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(AppColors.brand)
                 .frame(width: 30, height: 30)
                 .background(Circle().fill(AppColors.brand.opacity(0.14)))

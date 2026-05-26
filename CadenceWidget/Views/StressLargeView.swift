@@ -40,50 +40,38 @@ struct StressLargeView: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header
-            HStack(alignment: .center) {
-                HStack(spacing: 6) {
-                    Image(systemName: "brain.head.profile.fill")
-                        .font(.title3)
-                        .foregroundStyle(levelColor)
-                    Text("Stress Level")
-                        .font(.headline)
-                        .fontWeight(.bold)
-                }
-                Spacer()
-                Text(Date(), style: .date)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(.bottom, 12)
+        VStack(alignment: .leading, spacing: 6) {
+            // Combined header + score row
+            HStack(spacing: 10) {
+                StressRingView(data: data, ringWidth: 6)
+                    .frame(width: 50, height: 50)
 
-            // Score section
-            HStack(spacing: 14) {
-                StressRingView(data: data, ringWidth: 9)
-                    .frame(width: 80, height: 80)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(data.levelRaw)
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundStyle(levelColor)
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "brain.head.profile.fill")
+                            .font(.caption2)
+                            .foregroundStyle(levelColor)
+                        Text(data.levelRaw)
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundStyle(levelColor)
+                    }
                     Text(data.encouragement)
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                 }
+
+                Spacer(minLength: 0)
             }
-            .padding(.bottom, 10)
 
             Divider()
-                .padding(.bottom, 10)
 
-            // 4 factor rows
-            VStack(spacing: 7) {
+            // 4 factor rows (compact, large-widget-only)
+            VStack(spacing: 2) {
                 ForEach(data.factors, id: \.title) { factor in
-                    StressFactorBar(factor: factor)
+                    CompactStressFactorBar(factor: factor)
                         .padding(.horizontal, factor.contribution == highestContribution ? 4 : 0)
-                        .padding(.vertical, factor.contribution == highestContribution ? 2 : 0)
                         .background(
                             factor.contribution == highestContribution
                                 ? RoundedRectangle(cornerRadius: 6)
@@ -93,44 +81,35 @@ struct StressLargeView: View {
                 }
             }
 
-            Divider()
-                .padding(.vertical, 8)
-
             // 7-day trend
             if validWeeklyCount >= 2 {
                 trendChart
-            } else {
-                Text("Not enough data yet")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
             }
 
             // Vitals row
             if data.restingHR != nil || data.hrv != nil || data.respiratoryRate != nil {
-                Spacer(minLength: 4)
                 vitalsRow
             }
         }
-        .padding(16)
+        .padding(10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private var trendChart: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             Text("7-Day Trend")
-                .font(.system(size: 9, weight: .medium))
+                .font(.system(size: 8, weight: .medium))
                 .foregroundStyle(.tertiary)
                 .textCase(.uppercase)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(alignment: .bottom, spacing: 6) {
+            HStack(alignment: .bottom, spacing: 4) {
                 ForEach(data.weeklyScores, id: \.date) { dayScore in
-                    VStack(spacing: 3) {
+                    VStack(spacing: 2) {
                         if let score = dayScore.score {
                             RoundedRectangle(cornerRadius: 2)
                                 .fill(colorForScore(score))
-                                .frame(height: max(CGFloat(score) / 100.0 * 36, 4))
+                                .frame(height: max(CGFloat(score) / 100.0 * 18, 3))
                         } else {
                             RoundedRectangle(cornerRadius: 2)
                                 .fill(Color.gray.opacity(0.3))
@@ -143,7 +122,7 @@ struct StressLargeView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
-            .frame(height: 52)
+            .frame(height: 26)
         }
     }
 
@@ -219,5 +198,57 @@ struct StressLargeView: View {
         let symbols = Calendar.current.shortWeekdaySymbols
         let symbol = symbols[weekday - 1]
         return String(symbol.prefix(1))
+    }
+}
+
+// MARK: - Compact Factor Bar (single-row, large-widget only)
+
+private struct CompactStressFactorBar: View {
+    let factor: WidgetStressFactor
+
+    private var fraction: Double {
+        guard factor.maxScore > 0 else { return 0 }
+        return min(factor.contribution / factor.maxScore, 1.0)
+    }
+
+    private var barColor: Color {
+        guard factor.hasValidData else { return Color(.systemGray3) }
+        let stressRatio = min(max(factor.contribution / factor.maxScore, 0), 1)
+        return Color(hue: 0.33 * (1.0 - stressRatio), saturation: 0.65, brightness: 0.75)
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: factor.icon)
+                .font(.system(size: 10))
+                .foregroundStyle(factor.hasValidData ? barColor : Color(.systemGray3))
+                .frame(width: 12)
+
+            Text(factor.title)
+                .font(.system(size: 10))
+                .foregroundStyle(factor.hasValidData ? .primary : .secondary)
+                .lineLimit(1)
+                .frame(width: 56, alignment: .leading)
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .fill(barColor.opacity(0.2))
+                        .frame(height: 5)
+
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .fill(barColor)
+                        .frame(width: max(geo.size.width * fraction, 0), height: 5)
+                }
+                .frame(maxHeight: .infinity, alignment: .center)
+            }
+            .frame(height: 14)
+
+            Text("\(Int(factor.contribution))/\(Int(factor.maxScore))")
+                .font(.system(size: 10, weight: .medium))
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
+        .opacity(factor.hasValidData ? 1.0 : 0.5)
     }
 }

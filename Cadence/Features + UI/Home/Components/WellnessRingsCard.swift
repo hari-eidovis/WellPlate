@@ -49,9 +49,7 @@ struct WellnessRingsCard: View {
                         .font(.system(size: 16, weight: .regular))
                         .foregroundStyle(.secondary)
                         .frame(width: 28, height: 28)
-                        .background(
-                            Circle().fill(Color(.tertiarySystemFill))
-                        )
+                        .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("What do these rings mean?")

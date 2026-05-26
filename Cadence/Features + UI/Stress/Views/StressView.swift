@@ -22,21 +22,23 @@ enum StressSheet: Identifiable {
     case manualLog
     case mood
     case symptoms
+    case todayPatternDetail
 
     var id: String {
         switch self {
-        case .exercise:         return "exercise"
-        case .sleep:            return "sleep"
-        case .diet:             return "diet"
-        case .screenTimeDetail: return "screenTimeDetail"
-        case .vital(let m):     return "vital_\(m.id)"
-        case .interventions:    return "interventions"
-        case .fasting:          return "fasting"
-        case .circadian:        return "circadian"
-        case .allFactors:       return "allFactors"
-        case .manualLog:        return "manualLog"
-        case .mood:             return "mood"
-        case .symptoms:         return "symptoms"
+        case .exercise:           return "exercise"
+        case .sleep:              return "sleep"
+        case .diet:               return "diet"
+        case .screenTimeDetail:   return "screenTimeDetail"
+        case .vital(let m):       return "vital_\(m.id)"
+        case .interventions:      return "interventions"
+        case .fasting:            return "fasting"
+        case .circadian:          return "circadian"
+        case .allFactors:         return "allFactors"
+        case .manualLog:          return "manualLog"
+        case .mood:               return "mood"
+        case .symptoms:           return "symptoms"
+        case .todayPatternDetail: return "todayPatternDetail"
         }
     }
 }
@@ -86,25 +88,15 @@ struct StressView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if !viewModel.isLoading {
-                        Menu {
-                            // Resets are always available — no HealthKit dependency
-                            Button {
-                                HapticService.impact(.light)
-                                activeSheet = .interventions
-                            } label: {
-                                Label("Resets", systemImage: "bolt.heart.fill")
-                            }
-                            Button {
-                                HapticService.impact(.light)
-                                activeSheet = .fasting
-                            } label: {
-                                Label("Fast", systemImage: "fork.knife.circle")
-                            }
+                        Button {
+                            HapticService.impact(.light)
+                            activeSheet = .interventions
                         } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.system(size: 16, weight: .semibold))
+                            Image(systemName: "bolt.heart.fill")
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundStyle(Self.themeBlue)
                         }
+                        .accessibilityLabel("Quick reset")
                     }
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
@@ -221,6 +213,11 @@ struct StressView: View {
                 MoodCheckInSheet(onSaved: { viewModel.recompute(reason: .manualMood) })
             case .symptoms:
                 SymptomLogSheet()
+            case .todayPatternDetail:
+                StressPatternDetailView(
+                    todayReadings: viewModel.todayReadings,
+                    weekReadings: viewModel.weekReadings
+                )
             }
         }
     }
@@ -279,7 +276,10 @@ struct StressView: View {
                 // ── TODAY'S PATTERN ───────────────────────────────
                 VStack(alignment: .leading, spacing: 10) {
                     sectionLabel("Today's Pattern")
-                    StressDayChartView(readings: viewModel.todayReadings)
+                    StressDayChartView(readings: viewModel.todayReadings) {
+                        HapticService.impact(.medium)
+                        activeSheet = .todayPatternDetail
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 28)
@@ -327,15 +327,11 @@ struct StressView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 14)
 
-                // ── ADVICE ────────────────────────────────────────
-                VStack(alignment: .leading, spacing: 10) {
-                    sectionLabel("Suggestion")
-                    adviceCard
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 28)
-                .opacity(adviceAppeared ? 1 : 0)
-                .offset(y: adviceAppeared ? 0 : 16)
+                // ── TOP DRIVER (minimal pill) ─────────────────────
+                topDriverPill
+                    .padding(.horizontal, 20)
+                    .padding(.top, 14)
+                    .opacity(scoreAppeared ? 1 : 0)
 
                 // ── QUICK RESET (conditional) ─────────────────────
                 if viewModel.stressLevel == .high || viewModel.stressLevel == .veryHigh {
@@ -550,130 +546,6 @@ struct StressView: View {
         .buttonStyle(.plain)
     }
 
-    private var adviceCard: some View {
-        let topFactor = topDrivers.first
-        let factorIcon = topFactor?.icon ?? "leaf.fill"
-        let sheet = topFactor.flatMap { sheetForFactor($0) }
-        let tabAction = topFactor.flatMap { tabActionForFactor($0) }
-        let impact = topFactor.map { Int($0.stressContribution.rounded()) } ?? 0
-        let factorTitle = topFactor?.title.uppercased() ?? "LIFESTYLE"
-
-        return Button {
-            HapticService.impact(.light)
-            if let s = sheet { activeSheet = s }
-            else if let action = tabAction { action() }
-        } label: {
-            VStack(alignment: .leading, spacing: 14) {
-                // ── Header row: icon + label + impact pill
-                HStack(alignment: .center, spacing: 12) {
-                    Image(systemName: factorIcon)
-                        .font(.system(size: 18, weight: .regular))
-                        .foregroundColor(.secondary)
-                        .frame(width: 36, height: 36)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(factorTitle)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.secondary)
-                            .tracking(0.8)
-                        Text("Top driver today")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.primary)
-                    }
-
-                    Spacer(minLength: 8)
-
-                    if impact > 0 {
-                        HStack(spacing: 3) {
-                            Image(systemName: "arrow.up.right")
-                                .font(.system(size: 9, weight: .bold))
-                            Text("+\(impact) stress")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        }
-                        .foregroundColor(Color(hex: "E08A2B"))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Capsule().fill(Color(hex: "E08A2B").opacity(0.13)))
-                    }
-                }
-
-                // ── Big value + subtitle
-                topDriverValueBlock(for: topFactor)
-
-                Divider()
-                    .padding(.vertical, 2)
-
-                // ── Action link
-                HStack(spacing: 6) {
-                    Text(actionLabel(for: topFactor))
-                        .font(.system(size: 14, weight: .semibold))
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 11, weight: .bold))
-                }
-                .foregroundColor(Self.themeBlue)
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Color(.systemBackground))
-                    .appShadow(radius: 15, y: 5)
-            )
-        }
-        .buttonStyle(PressableCardStyle())
-    }
-
-    /// Big numeric value + units/subtitle for the top driver, in the style of
-    /// the reference design ("4.5h" + "on screen").
-    @ViewBuilder
-    private func topDriverValueBlock(for factor: StressFactorResult?) -> some View {
-        let (value, subtitle) = topDriverDisplay(for: factor)
-        HStack(alignment: .lastTextBaseline, spacing: 8) {
-            Text(value)
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            if !subtitle.isEmpty {
-                Text(subtitle)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
-        }
-    }
-
-    /// Maps the top factor to a "big value + subtitle" pair. Falls back to the
-    /// factor's statusText when no specialized formatter applies.
-    private func topDriverDisplay(for factor: StressFactorResult?) -> (String, String) {
-        guard let f = factor else { return ("—", "Track your habits") }
-        let title = f.title.lowercased()
-        if title.contains("screen") {
-            let hours = viewModel.screenTimeDisplayHours ?? 0
-            return (String(format: "%.1fh", hours), "on screen")
-        }
-        if title.contains("sleep") {
-            return (f.statusText, "")
-        }
-        // Default: split statusText on " · " for a value/subtitle pair
-        let parts = f.statusText.components(separatedBy: " · ")
-        if parts.count >= 2 { return (parts[0], parts[1]) }
-        return (f.statusText, "")
-    }
-
-    private func actionLabel(for factor: StressFactorResult?) -> String {
-        guard let f = factor else { return "view details" }
-        switch f.title.lowercased() {
-        case let n where n.contains("screen"): return "set screen reminder"
-        case let n where n.contains("sleep"):  return "view sleep details"
-        case let n where n.contains("diet"),
-             let n where n.contains("food"):   return "view nutrition"
-        case let n where n.contains("exercise"),
-             let n where n.contains("activ"):  return "view activity"
-        default: return "view details"
-        }
-    }
-
     // MARK: - Insights Sheet
 
     private var insightsSheet: some View {
@@ -697,14 +569,6 @@ struct StressView: View {
                             activeSheet = .circadian
                             showInsights = false
                         }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 28)
-
-                    // 7-Day Trend
-                    VStack(alignment: .leading, spacing: 10) {
-                        sectionLabel("7-DAY TREND")
-                        StressWeekChartView(readings: viewModel.weekReadings)
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 28)
@@ -830,6 +694,63 @@ struct StressView: View {
             .sorted { $0.stressContribution > $1.stressContribution }
             .prefix(5)
             .map { $0 }
+    }
+
+    /// Minimal inline pill surfacing today's #1 stress driver. Hugs content,
+    /// uses an ultra-thin material capsule (no card chrome) so it reads as
+    /// a label, not another card. Tappable when a route exists.
+    @ViewBuilder
+    private var topDriverPill: some View {
+        if let factor = topDrivers.first, factor.stressContribution > 0 {
+            let sheet = sheetForFactor(factor)
+            let tabAction = tabActionForFactor(factor)
+            let isTappable = sheet != nil || tabAction != nil
+
+            HStack {
+                Button {
+                    HapticService.impact(.light)
+                    if let sheet { activeSheet = sheet }
+                    else if let tabAction { tabAction() }
+                } label: {
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(factor.accentColor)
+                            .frame(width: 6, height: 6)
+                        Text("Top driver")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .textCase(.uppercase)
+                            .tracking(0.6)
+                        Text("·")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary.opacity(0.45))
+                        Text(factor.title)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        if isTappable {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(.secondary.opacity(0.5))
+                                .padding(.leading, 1)
+                        }
+                    }
+                    .padding(.vertical, 7)
+                    .padding(.horizontal, 12)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(.ultraThinMaterial)
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.05), lineWidth: 0.5)
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(!isTappable)
+
+                Spacer(minLength: 0)
+            }
+        }
     }
 
     /// Routes a factor's title to its detail sheet/action. nil = non-tappable.
@@ -992,16 +913,6 @@ struct StressView: View {
                 .multilineTextAlignment(.center)
         }
         .padding()
-    }
-}
-
-// MARK: - Pressable Card Style
-
-private struct PressableCardStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.975 : 1)
-            .animation(.spring(response: 0.32, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }
 

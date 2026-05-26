@@ -79,6 +79,24 @@ final class ActivityManager {
         }
     }
 
+    /// Update the running fasting Live Activity with a fresh progress value.
+    /// No-op when no activity is active. Throttling is the caller's
+    /// responsibility — the system rate-limits frequent updates anyway.
+    func updateFastingActivity(progress: Double) {
+        reconnectIfNeeded()
+        guard let activity = fastingActivity else { return }
+        let clamped = max(0, min(progress, 1.0))
+        var state = activity.content.state
+        // Avoid no-op churn that still hits the system rate limiter.
+        guard abs(state.progress - clamped) > 0.001 else { return }
+        state.progress = clamped
+        let stale = state.targetEndDate.addingTimeInterval(60)
+        let content = ActivityContent(state: state, staleDate: stale)
+        Task {
+            await activity.update(content)
+        }
+    }
+
     /// End the fasting Live Activity. Called when fast completes or is broken.
     func endFastingActivity(completed: Bool) {
         reconnectIfNeeded()

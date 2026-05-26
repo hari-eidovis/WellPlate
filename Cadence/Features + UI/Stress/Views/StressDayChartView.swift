@@ -14,6 +14,7 @@ import Charts
 struct StressDayChartView: View {
 
     let readings: [StressReading]
+    var onLongPress: (() -> Void)? = nil
 
     @State private var selectedReading: StressReading? = nil
 
@@ -90,6 +91,11 @@ struct StressDayChartView: View {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Color(.systemBackground))
                 .appShadow(radius: 15, y: 5)
+        )
+        .contentShape(Rectangle())
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.45)
+                .onEnded { _ in onLongPress?() }
         )
     }
 

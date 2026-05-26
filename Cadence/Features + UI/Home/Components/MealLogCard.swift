@@ -175,32 +175,31 @@ struct MealLogCard: View {
 
     private enum LogProvenance {
         case barcodeVerified
-        case aiHigh
-        case aiEstimated
+        case ai(Double?)
 
         init?(logSource: String?, confidence: Double?) {
             guard let source = logSource else { return nil }
             if source == "barcode" { self = .barcodeVerified; return }
-            if let c = confidence, c >= 0.8 {
-                self = .aiHigh
-            } else {
-                self = .aiEstimated
-            }
+            self = .ai(confidence)
         }
 
         var label: String {
             switch self {
             case .barcodeVerified: return "Barcode ✓"
-            case .aiHigh:          return "AI · High"
-            case .aiEstimated:     return "AI · Est."
+            case .ai(let c):
+                guard let c else { return "AI" }
+                return "AI · \(Int((c * 100).rounded()))%"
             }
         }
 
         var color: Color {
             switch self {
             case .barcodeVerified: return .green
-            case .aiHigh:          return AppColors.primary
-            case .aiEstimated:     return .orange
+            case .ai(let c):
+                guard let c else { return .orange }
+                if c >= 0.8 { return AppColors.primary }
+                if c >= 0.5 { return .orange }
+                return .red
             }
         }
     }

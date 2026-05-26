@@ -29,6 +29,28 @@ struct MainTabView: View {
         _stressViewModel = StateObject(
             wrappedValue: StressViewModel(modelContext: modelContext, mockSnapshot: snapshot)
         )
+        Self.configureTabBarAppearance()
+    }
+
+    private static func configureTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithDefaultBackground()
+
+        let item = UITabBarItemAppearance()
+        let normalFont = UIFont.systemFont(ofSize: 8, weight: .medium)
+        let selectedFont = UIFont.systemFont(ofSize: 8, weight: .semibold)
+        item.normal.titleTextAttributes = [.font: normalFont]
+        item.selected.titleTextAttributes = [.font: selectedFont]
+        // Tighten the icon→title gap so the smaller text sits closer to the icon.
+        item.normal.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -3)
+        item.selected.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -3)
+
+        appearance.stackedLayoutAppearance = item
+        appearance.inlineLayoutAppearance = item
+        appearance.compactInlineLayoutAppearance = item
+
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 
     /// Bridges `tabSelector.selectedTab` (TabKind) to legacy `Binding<Int>`
@@ -47,6 +69,7 @@ struct MainTabView: View {
                 HomeView(selectedTab: homeIndexBinding, stressViewModel: stressViewModel)
             } label: {
                 Label("Home", systemImage: "house.fill")
+                    .imageScale(.small)
             }
 
             // MARK: - Stress
@@ -54,6 +77,7 @@ struct MainTabView: View {
                 StressView(viewModel: stressViewModel)
             } label: {
                 Label("Stress", systemImage: "brain.head.profile.fill")
+                    .imageScale(.small)
             }
 
             // MARK: - History
@@ -61,6 +85,7 @@ struct MainTabView: View {
                 HistoryView()
             } label: {
                 Label("History", systemImage: "calendar.badge.clock")
+                    .imageScale(.small)
             }
 
             // MARK: - Profile
@@ -68,9 +93,11 @@ struct MainTabView: View {
                 ProfilePlaceholderView()
             } label: {
                 Label("Profile", systemImage: "person.crop.circle.fill")
+                    .imageScale(.small)
             }
         }
         .tint(tabSelector.selectedTab == .stress ? Color(hex: "5E9FFF") : AppColors.brand)
+        .animation(.smooth(duration: 0.35), value: tabSelector.selectedTab)
         .sensoryFeedback(.selection, trigger: tabSelector.selectedTab)
         .sheet(item: $tabSelector.presentedSheet) { kind in
             switch kind {

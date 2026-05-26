@@ -20,12 +20,14 @@ struct InsightCardView: View {
                     .foregroundStyle(card.domain.accentColor)
                     .tracking(1.0)
                 Spacer()
-                Text(card.type.label)
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Capsule().fill(Color(.secondarySystemBackground)))
+                if !(card.domain == .cross && card.type == .correlation) {
+                    Text(card.type.label)
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(Color(.secondarySystemBackground)))
+                }
             }
 
             // Headline

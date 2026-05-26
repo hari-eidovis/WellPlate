@@ -57,12 +57,21 @@ struct HomeView: View {
     // navigation chain. Remove both when the Profile tab relocation is implemented.
     @State private var activeSheet: HomeSheet?
     @State private var showCoffeeWaterAlert = false
+    /// Celebration when the user hits their daily water goal. Fires at most
+    /// once per calendar day (guarded by `waterGoalCelebratedDay`).
+    @State private var showWaterGoalCelebration = false
+    /// Stores yyyy-MM-dd of the last day we celebrated the water goal so the
+    /// alert doesn't fire again after dropping/re-hitting the cup count.
+    @AppStorage("waterGoalCelebratedDay") private var waterGoalCelebratedDay: String = ""
+    /// Guards against onChange(of: hydrationGlasses) firing during initial state restoration.
+    @State private var hasHydrationStateLoaded = false
     /// Guards against onChange(of: coffeeCups) firing during initial state restoration.
     @State private var hasCoffeeStateLoaded = false
     /// Handoff variable for the sheet→alert race-safe pattern.
     /// Set by the picker closure, read by onChange(of: activeSheet).
     @State private var pendingCoffeeType: CoffeeType? = nil
     @State private var showInsightsHub = false
+    @State private var showFasting = false
     @State private var showBurnView = false
     // Layout customisation
     @State private var undoState: (card: HomeCardID, previousLayout: HomeLayoutConfig, id: UUID)? = nil
@@ -431,6 +440,9 @@ struct HomeView: View {
         .navigationDestination(isPresented: $showInsightsHub) { InsightsHubView(engine: insightEngine) }
         .navigationDestination(isPresented: $showLayoutEditor) { HomeLayoutEditor(layout: layoutBinding) }
         .navigationBarHidden(true)
+        .sheet(isPresented: $showFasting) {
+            FastingView()
+        }
     }
 
     // MARK: - Body
@@ -468,6 +480,18 @@ struct HomeView: View {
             } message: {
                 Text("Coffee can cause dehydration. Want to log a glass of water too?")
             }
+            .confirmationDialog(
+                "Good job! 🎉",
+                isPresented: $showWaterGoalCelebration,
+                titleVisibility: .visible
+            ) {
+                Button("Hide water card", role: .destructive) {
+                    hideWaterTile()
+                }
+                Button("Keep it", role: .cancel) {}
+            } message: {
+                Text("You hit your daily water goal. Want to hide the water card from Home now that it's filled? You can bring it back from the layout editor.")
+            }
     }
 
     private var bodyPart1: some View {
@@ -481,6 +505,7 @@ struct HomeView: View {
             Task { await insightEngine.generateInsights() }
             refreshTodayMoodState()
             refreshTodayHydrationState()
+            hasHydrationStateLoaded = true
             refreshTodayCoffeeState()
             hasCoffeeStateLoaded = true
             refreshTodayJournalState()
@@ -497,8 +522,9 @@ struct HomeView: View {
             guard let mood else { return }
             logMoodForTodayIfNeeded(mood)
         }
-        .onChange(of: hydrationGlasses) { _, cups in
+        .onChange(of: hydrationGlasses) { oldCups, cups in
             updateHydrationForToday(cups)
+            handleWaterGoalCrossing(from: oldCups, to: cups)
         }
         .onChange(of: coffeeCups) { _, newCups in
             guard hasCoffeeStateLoaded else { return }
@@ -568,6 +594,16 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
 
+            // Fast button — opens intermittent fasting tracker
+            Button {
+                HapticService.impact(.light)
+                showFasting = true
+            } label: {
+                headerAssetIcon("fasting_icon")
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Fasting")
+
             // Mood badge — visible only when mood is logged today (38pt to match icons)
             if hasLoggedMoodToday, let mood = selectedMood {
                 Button {
@@ -601,18 +637,27 @@ struct HomeView: View {
     private func headerIcon(_ systemName: String) -> some View {
         ZStack {
             Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [AppColors.brand.opacity(0.65), AppColors.brand.opacity(0.65)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(Color.black)
                 .frame(width: 38, height: 38)
-                .shadow(color: AppColors.brand.opacity(0.12), radius: 6, x: 0, y: 3)
+                .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
             Image(systemName: systemName)
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white)
+        }
+    }
+
+    @ViewBuilder
+    private func headerAssetIcon(_ assetName: String) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color(.systemBackground))
+                .frame(width: 38, height: 38)
+                .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+
+            Image(assetName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 22, height: 22)
         }
     }
 
@@ -1095,6 +1140,40 @@ struct HomeView: View {
         } catch {
             WPLogger.home.error("Hydration save failed: \(error.localizedDescription)")
         }
+    }
+
+    /// Fires the "good job" celebration alert the first time today's hydration
+    /// crosses the daily goal. Skips if the state hasn't loaded yet, if the
+    /// user already celebrated today, or if the goal is non-positive.
+    private func handleWaterGoalCrossing(from oldCups: Int, to newCups: Int) {
+        guard hasHydrationStateLoaded else { return }
+        let goal = currentGoals.waterDailyCups
+        guard goal > 0, oldCups < goal, newCups >= goal else { return }
+        let todayKey = Self.dayKey(for: Date())
+        guard waterGoalCelebratedDay != todayKey else { return }
+        waterGoalCelebratedDay = todayKey
+        HapticService.notify(.success)
+        showWaterGoalCelebration = true
+    }
+
+    /// Hides the water tile inside the Quick Stats card. If coffee is already
+    /// hidden, `toggleElement` auto-hides the whole card.
+    private func hideWaterTile() {
+        var updated = layout
+        guard updated.isElementVisible(.waterTile, in: .quickStats) else { return }
+        updated.toggleElement(.waterTile, in: .quickStats)
+        writableGoals.homeLayout = updated
+        try? modelContext.save()
+        HapticService.impact(.light)
+    }
+
+    private static func dayKey(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
     }
 
     // MARK: - Coffee Logging

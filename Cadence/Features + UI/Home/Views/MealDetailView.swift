@@ -55,11 +55,10 @@ struct MealDetailView: View {
     }
 
     private var confidenceLabel: String? {
-        guard let c = entry.confidence else { return nil }
         if entry.logSource == "barcode" { return "Verified" }
-        if c >= 0.8 { return "High Confidence" }
-        if c >= 0.5 { return "Medium Confidence" }
-        return "Estimated"
+        guard let c = entry.confidence else { return nil }
+        let percent = Int((c * 100).rounded())
+        return "\(percent)% confident"
     }
 
     private var confidenceColor: Color {
@@ -355,7 +354,7 @@ struct MealDetailView: View {
             detailRow(icon: sourceIcon, label: "Source", value: sourceLabel)
 
             if let conf = confidenceLabel {
-                detailRow(icon: "checkmark.seal.fill", label: "Accuracy", value: conf, valueColor: confidenceColor)
+                detailRow(icon: "checkmark.seal.fill", label: "Confidence", value: conf, valueColor: confidenceColor)
             }
 
             if let barcode = entry.barcodeValue, !barcode.isEmpty {

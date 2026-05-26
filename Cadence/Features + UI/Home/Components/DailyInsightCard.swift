@@ -82,7 +82,9 @@ struct DailyInsightCard: View {
             HStack {
                 domainBadge(card: card, color: color)
                 Spacer()
-                typeBadge(card: card, color: color)
+                if !isRedundantTypeBadge(card: card) {
+                    typeBadge(card: card, color: color)
+                }
                 if let onDismiss {
                     Button {
                         HapticService.impact(.light)
@@ -145,6 +147,10 @@ struct DailyInsightCard: View {
     }
 
     // MARK: - Type Badge
+
+    private func isRedundantTypeBadge(card: InsightCard) -> Bool {
+        card.domain == .cross && card.type == .correlation
+    }
 
     private func typeBadge(card: InsightCard, color: Color) -> some View {
         HStack(spacing: 4) {
