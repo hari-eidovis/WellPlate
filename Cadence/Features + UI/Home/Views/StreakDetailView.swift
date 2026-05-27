@@ -174,7 +174,6 @@ struct StreakDetailView: View {
             Image(systemName: "flame.fill")
                 .font(.system(size: 60))
                 .foregroundColor(AppColors.brand)
-                .symbolEffect(.variableColor.iterative, options: .repeating)
 
             Text("\(streakData.currentStreak)")
                 .font(.r(64, .bold))

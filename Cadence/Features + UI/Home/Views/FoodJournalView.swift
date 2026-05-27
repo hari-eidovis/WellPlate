@@ -245,13 +245,7 @@ struct FoodJournalView: View {
             NavigationStack {
                 MealLogView(
                     viewModel: mealLogViewModel,
-                    selectedDate: selectedDate,
-                    onBarcodeTap: {
-                        showNotepad = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                            showBarcode = true
-                        }
-                    }
+                    selectedDate: selectedDate
                 )
             }
         }

@@ -45,42 +45,39 @@ struct MealLogCard: View {
     // MARK: - Meal List Card
 
     private var mealList: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 0) {
-                ForEach(Array(foodLogs.enumerated()), id: \.element.id) { index, entry in
-                    mealRow(entry: entry)
-                        .onTapGesture {
-                            HapticService.impact(.light)
-                            onTap?(entry)
-                        }
-                        .contextMenu {
-                            Button {
-                                HapticService.impact(.light)
-                                onAddAgain(entry)
-                            } label: {
-                                Label("Add Again", systemImage: "plus.circle.fill")
-                            }
-                            Divider()
-                            Button(role: .destructive) {
-                                onDelete(entry)
-                            } label: {
-                                Label("Delete", systemImage: "trash.fill")
-                            }
-                        }
-
-                    if index < foodLogs.count - 1 {
-                        Divider()
-                            .padding(.leading, 60)
+        VStack(spacing: 0) {
+            ForEach(Array(foodLogs.enumerated()), id: \.element.id) { index, entry in
+                mealRow(entry: entry)
+                    .onTapGesture {
+                        HapticService.impact(.light)
+                        onTap?(entry)
                     }
+                    .contextMenu {
+                        Button {
+                            HapticService.impact(.light)
+                            onAddAgain(entry)
+                        } label: {
+                            Label("Add Again", systemImage: "plus.circle.fill")
+                        }
+                        Divider()
+                        Button(role: .destructive) {
+                            onDelete(entry)
+                        } label: {
+                            Label("Delete", systemImage: "trash.fill")
+                        }
+                    }
+
+                if index < foodLogs.count - 1 {
+                    Divider()
+                        .padding(.leading, 60)
                 }
             }
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
-                    .appShadow(radius: 15, y: 5)
-            )
         }
-        .frame(maxHeight: 360)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+                .appShadow(radius: 15, y: 5)
+        )
         .padding(.horizontal, 16)
     }
 

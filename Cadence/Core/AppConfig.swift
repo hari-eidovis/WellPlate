@@ -7,6 +7,29 @@
 
 import Foundation
 
+#if DEBUG
+/// Debug-only override values for the fasting feature's access-state routing.
+/// Lets QA / developers force a specific branch (onboarding, care, granted)
+/// without having to seed FastingEligibility rows by hand. Defined here next
+/// to AppConfig because the only consumer is the static helper on
+/// FastingEligibility which reads `AppConfig.shared.fastingAccessOverride`.
+enum FastingAccessOverride: String, CaseIterable {
+    case live              // No override — use real FastingEligibility state
+    case forceOnboarding
+    case forceCareBlocked
+    case forceGranted
+
+    func resolved() -> FastingAccessState? {
+        switch self {
+        case .live:             return nil
+        case .forceOnboarding:  return .onboarding
+        case .forceCareBlocked: return .careBlocked
+        case .forceGranted:     return .granted
+        }
+    }
+}
+#endif
+
 /// Application-wide configuration manager.
 final class AppConfig {
     static let shared = AppConfig()
@@ -20,6 +43,7 @@ final class AppConfig {
         static let mockInjectedDates = "app.mock.injectedDates"
         static let mockInjectedRecordIDs = "app.mock.injectedRecordIDs"
         static let stressAlgorithmV2 = "app.stress.algorithmV2"
+        static let fastingAccessOverride = "app.fasting.accessOverride"
     }
 
     private init() {}
@@ -168,6 +192,26 @@ final class AppConfig {
     var nutritionSourceLabel: String {
         mockMode ? "Mock" : "Groq"
     }
+
+    #if DEBUG
+    /// Debug-only override that forces a specific FastingAccessState branch
+    /// for testing the onboarding / care / granted routing paths without
+    /// having to seed FastingEligibility rows by hand. Defaults to `.live`
+    /// (no override). Stripped from Release builds entirely.
+    var fastingAccessOverride: FastingAccessOverride {
+        get {
+            guard let raw = UserDefaults.standard.string(forKey: Keys.fastingAccessOverride),
+                  let value = FastingAccessOverride(rawValue: raw) else {
+                return .live
+            }
+            return value
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: Keys.fastingAccessOverride)
+            WPLogger.app.info("Fasting access override → \(newValue.rawValue)")
+        }
+    }
+    #endif
 
     /// Log current configuration.
     func logCurrentMode() {

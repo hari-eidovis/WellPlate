@@ -17,6 +17,7 @@ struct StressDayChartView: View {
     var onLongPress: (() -> Void)? = nil
 
     @State private var selectedReading: StressReading? = nil
+    @State private var dismissTask: Task<Void, Never>? = nil
 
     // MARK: - Theme
 
@@ -205,6 +206,8 @@ struct StressDayChartView: View {
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
+                                dismissTask?.cancel()
+                                dismissTask = nil
                                 let origin = geo[proxy.plotAreaFrame].origin
                                 let x = value.location.x - origin.x
                                 if let hour: Int = proxy.value(atX: x) {
@@ -214,9 +217,7 @@ struct StressDayChartView: View {
                                 }
                             }
                             .onEnded { _ in
-                                withAnimation(.easeOut(duration: 0.25)) {
-                                    selectedReading = nil
-                                }
+                                scheduleSelectionDismiss()
                             }
                     )
             }
@@ -260,6 +261,17 @@ struct StressDayChartView: View {
         if hour < 12 { return "\(hour)AM" }
         if hour == 12 { return "12PM" }
         return "\(hour - 12)PM"
+    }
+
+    private func scheduleSelectionDismiss() {
+        dismissTask?.cancel()
+        dismissTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.6)) {
+                selectedReading = nil
+            }
+        }
     }
 
     private func closestReading(toHour hour: Int) -> StressReading? {

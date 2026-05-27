@@ -21,6 +21,16 @@ enum QuantityUnit: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - BeverageVariantPrompt
+
+/// Drives the coffee/tea variant picker sheet on the meal-log flow.
+enum BeverageVariantPrompt: String, Identifiable {
+    case coffee
+    case tea
+
+    var id: String { rawValue }
+}
+
 // MARK: - MealLogViewModel
 
 @MainActor
@@ -45,6 +55,9 @@ final class MealLogViewModel: ObservableObject {
     @Published var showError: Bool = false
     @Published var errorMessage: String = ""
     @Published var disambiguationState: DisambiguationState?
+    /// Drives the coffee/tea variant picker sheet. Set when MealCoach canonicalises
+    /// the entry to a generic beverage term and we want the user to pick a specific variant.
+    @Published var beverageVariantPrompt: BeverageVariantPrompt?
     /// Set to true on successful save so the view can dismiss the sheet.
     @Published var shouldDismiss: Bool = false
 
@@ -62,6 +75,14 @@ final class MealLogViewModel: ObservableObject {
     private lazy var speechService: any SpeechTranscriptionServiceProtocol = {
         _injectedSpeechService ?? AppleSpeechTranscriptionService()
     }()
+
+    /// Auto-commit debounce for the voice auto-log flow. Each new partial transcript
+    /// resets this task; if no new partial arrives within `silenceAutoCommitSeconds`,
+    /// the task fires and saves automatically. SFSpeechRecognizer's built-in silence
+    /// detection (which would deliver `isFinal`) is unreliable with on-device
+    /// recognition, so this debounce is what actually drives "hands-free" saves.
+    private var silenceAutoCommitTask: Task<Void, Never>?
+    private let silenceAutoCommitSeconds: TimeInterval = 2.0
 
     var isValid: Bool {
         !foodDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -127,12 +148,55 @@ final class MealLogViewModel: ObservableObject {
             }
         }
 
+        if let prompt = Self.beverageVariantPrompt(for: extraction.foodName) {
+            beverageVariantPrompt = prompt
+            return
+        }
+
         await performLog(
             home: home,
             selectedDate: selectedDate,
             canonicalName: extraction.foodName,
             coachOverride: extraction.foodName
         )
+    }
+
+    /// Called when user picks a variant from the coffee/tea picker sheet.
+    /// Combines the bucket and variant into the final food name (e.g. "Coffee — Latte").
+    func resolveBeverageVariant(variantName: String, selectedDate: Date) async {
+        guard let prompt = beverageVariantPrompt, let home = homeViewModel else { return }
+        let bucket: String
+        switch prompt {
+        case .coffee: bucket = "Coffee"
+        case .tea:    bucket = "Tea"
+        }
+        let combined = "\(bucket) — \(variantName)"
+        beverageVariantPrompt = nil
+        isLoading = true
+        defer { isLoading = false }
+        await performLog(
+            home: home,
+            selectedDate: selectedDate,
+            canonicalName: combined,
+            coachOverride: combined
+        )
+    }
+
+    /// Returns the matching prompt when the canonical food name is a generic
+    /// beverage term. Specific variants (e.g. "latte", "green tea") are skipped.
+    static func beverageVariantPrompt(for canonicalName: String) -> BeverageVariantPrompt? {
+        let normalised = canonicalName
+            .lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: ".,!?"))
+        switch normalised {
+        case "coffee", "coffees", "a coffee", "some coffee":
+            return .coffee
+        case "tea", "teas", "chai", "a tea", "some tea":
+            return .tea
+        default:
+            return nil
+        }
     }
 
     /// Called when user selects a disambiguation chip.
@@ -305,10 +369,14 @@ final class MealLogViewModel: ObservableObject {
                 foodDescription = ""
                 try speechService.startTranscription(
                     onPartial: { [weak self] partial in
-                        self?.liveTranscript = partial
+                        guard let self else { return }
+                        self.liveTranscript = partial
+                        self.scheduleSilenceAutoCommit(selectedDate: selectedDate)
                     },
                     onFinal: { [weak self] final in
                         guard let self else { return }
+                        self.silenceAutoCommitTask?.cancel()
+                        self.silenceAutoCommitTask = nil
                         self.isTranscribing = false
                         self.liveTranscript = ""
                         let trimmed = final.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -329,6 +397,8 @@ final class MealLogViewModel: ObservableObject {
                     },
                     onError: { [weak self] error in
                         guard let self else { return }
+                        self.silenceAutoCommitTask?.cancel()
+                        self.silenceAutoCommitTask = nil
                         self.liveTranscript = ""
                         self.isTranscribing = false
                         if case .noSpeechDetected = error {
@@ -357,12 +427,67 @@ final class MealLogViewModel: ObservableObject {
     /// which applies the transcript and calls `saveMeal` automatically.
     func stopVoiceAutoLog() {
         WPLogger.speech.info("Voice auto-log stop requested — awaiting final result from recognizer")
+        silenceAutoCommitTask?.cancel()
+        silenceAutoCommitTask = nil
         speechService.stopTranscription()
+    }
+
+    /// Commits the meal using whatever partial transcript is currently visible, without
+    /// waiting for `SFSpeechRecognizer` to deliver `isFinal`. On-device recognition
+    /// sometimes fails to emit the final result after `endAudio()`, which previously
+    /// left the Save button doing nothing. The partial transcript matches what the user
+    /// sees on screen, so committing it directly is safe and matches user intent.
+    /// Also invoked by `scheduleSilenceAutoCommit` for hands-free saves.
+    func commitVoiceAutoLog(selectedDate: Date) {
+        guard !isLoading else {
+            WPLogger.speech.warning("commitVoiceAutoLog ignored — save already in progress")
+            return
+        }
+        let trimmed = liveTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            WPLogger.speech.warning("commitVoiceAutoLog skipped — liveTranscript was empty")
+            return
+        }
+
+        WPLogger.speech.block(
+            emoji: "💾",
+            title: "VOICE AUTO-LOG — COMMIT (partial)",
+            lines: [
+                "Source:     liveTranscript",
+                "Transcript: \"\(trimmed)\"",
+                "→ Cancelling recognition + saving immediately"
+            ]
+        )
+
+        silenceAutoCommitTask?.cancel()
+        silenceAutoCommitTask = nil
+        speechService.cancelTranscription()
+        isTranscribing = false
+        liveTranscript = ""
+        foodDescription = trimmed
+        Task { await self.saveMeal(selectedDate: selectedDate) }
+    }
+
+    /// Schedules (or reschedules) the auto-commit-after-silence task. Called from
+    /// `onPartial` so each new word resets the timer; if no new partial arrives for
+    /// `silenceAutoCommitSeconds`, the timer fires `commitVoiceAutoLog`.
+    private func scheduleSilenceAutoCommit(selectedDate: Date) {
+        silenceAutoCommitTask?.cancel()
+        let delay = silenceAutoCommitSeconds
+        silenceAutoCommitTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            guard !Task.isCancelled else { return }
+            guard let self else { return }
+            WPLogger.speech.info("Silence debounce fired — auto-committing voice log")
+            self.commitVoiceAutoLog(selectedDate: selectedDate)
+        }
     }
 
     /// Cancels the voice log without saving.
     func cancelVoiceAutoLog() {
         WPLogger.speech.warning("Voice auto-log cancelled — no save will occur")
+        silenceAutoCommitTask?.cancel()
+        silenceAutoCommitTask = nil
         speechService.cancelTranscription()
         isTranscribing = false
         liveTranscript = ""

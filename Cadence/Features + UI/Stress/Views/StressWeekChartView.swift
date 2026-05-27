@@ -188,10 +188,20 @@ struct StressWeekChartView: View {
 
     private var chart: some View {
         Chart {
+            // ── Today's column highlight (behind everything) ──
+            if let today = aggregates.first(where: \.isToday) {
+                RectangleMark(
+                    x: .value("Day", today.day, unit: .day),
+                    width: .ratio(0.55)
+                )
+                .foregroundStyle(Self.chartBlue.opacity(0.07))
+                .cornerRadius(10)
+            }
+
             // ── Week-average baseline ──
             if weekAvg > 0 {
                 RuleMark(y: .value("Week Avg", weekAvg))
-                    .foregroundStyle(Color.secondary.opacity(0.18))
+                    .foregroundStyle(Color.secondary.opacity(0.22))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     .annotation(position: .leading, alignment: .trailing, spacing: 4) {
                         if selectedDay == nil {
@@ -200,6 +210,18 @@ struct StressWeekChartView: View {
                                 .foregroundStyle(Color.secondary.opacity(0.55))
                         }
                     }
+            }
+
+            // ── Smooth trend line through daily averages ──
+            ForEach(aggregates.filter(\.hasData)) { item in
+                LineMark(
+                    x: .value("Day", item.day, unit: .day),
+                    y: .value("Avg", item.avgScore),
+                    series: .value("Trend", "avg")
+                )
+                .foregroundStyle(Self.chartBlue.opacity(0.30))
+                .lineStyle(StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                .interpolationMethod(.catmullRom)
             }
 
             // ── Per-day marks (range stick + avg dot) ──
@@ -232,13 +254,13 @@ struct StressWeekChartView: View {
                 if let d = value.as(Date.self),
                    let agg = aggregates.first(where: { Calendar.current.isDate($0.day, inSameDayAs: d) }) {
                     AxisValueLabel(centered: true) {
-                        VStack(spacing: 3) {
+                        VStack(spacing: 2) {
                             Text(singleLetterDay(d))
                                 .font(.system(size: 11, weight: agg.isToday ? .bold : .medium, design: .rounded))
-                                .foregroundStyle(agg.isToday ? .primary : Color.secondary.opacity(0.75))
-                            Circle()
-                                .fill(agg.isToday ? Self.chartBlue : Color.clear)
-                                .frame(width: 3, height: 3)
+                                .foregroundStyle(agg.isToday ? Self.chartBlue : Color.secondary.opacity(0.75))
+                            Text(dayNumber(d))
+                                .font(.system(size: 9, weight: agg.isToday ? .semibold : .regular, design: .rounded))
+                                .foregroundStyle(agg.isToday ? Self.chartBlue.opacity(0.85) : Color.secondary.opacity(0.5))
                         }
                         .padding(.top, 2)
                     }
@@ -246,7 +268,7 @@ struct StressWeekChartView: View {
             }
         }
         .chartLegend(.hidden)
-        .frame(height: 158)
+        .frame(height: 170)
         .animation(.easeInOut(duration: 0.3), value: readings.count)
     }
 
@@ -265,15 +287,28 @@ struct StressWeekChartView: View {
         .opacity(opacity(for: item))
     }
 
-    // ── Average dot on top of the range stick ──
+    // ── Average dot on top of the range stick — halo'd for separation from the stick ──
     @ChartContentBuilder
     private func avgPoint(for item: DayAggregate) -> some ChartContent {
+        let selected = isSelected(item)
+        let size: CGFloat = selected ? 13 : 10
         PointMark(
             x: .value("Day", item.day, unit: .day),
             y: .value("Avg", item.avgScore)
         )
-        .foregroundStyle(dotColor(for: item))
-        .symbolSize(isSelected(item) ? 90 : 50)
+        .symbol {
+            Circle()
+                .fill(dotColor(for: item))
+                .frame(width: size, height: size)
+                .overlay(
+                    Circle()
+                        .stroke(Color(.systemBackground), lineWidth: 2)
+                )
+                .shadow(
+                    color: dotColor(for: item).opacity(selected ? 0.35 : 0),
+                    radius: selected ? 5 : 0
+                )
+        }
         .opacity(opacity(for: item))
     }
 
@@ -326,6 +361,12 @@ struct StressWeekChartView: View {
     private func singleLetterDay(_ date: Date) -> String {
         let fmt = DateFormatter()
         fmt.dateFormat = "EEEEE"
+        return fmt.string(from: date)
+    }
+
+    private func dayNumber(_ date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "d"
         return fmt.string(from: date)
     }
 

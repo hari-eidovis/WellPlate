@@ -65,8 +65,9 @@ struct InterventionsView: View {
     @ViewBuilder
     private func sessionView(for type: ResetType) -> some View {
         switch type {
-        case .pmr:  PMRSessionView()
-        case .sigh: SighSessionView()
+        case .pmr:       PMRSessionView()
+        case .sigh:      SighSessionView()
+        case .grounding: GroundingSessionView()
         }
     }
 }

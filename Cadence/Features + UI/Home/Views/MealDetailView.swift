@@ -85,7 +85,6 @@ struct MealDetailView: View {
                     contextCard
                 }
                 provenanceCard
-                actionButtons
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -96,6 +95,27 @@ struct MealDetailView: View {
             ToolbarItem(placement: .principal) {
                 Text("Meal Details")
                     .font(.r(.headline, .semibold))
+            }
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    HapticService.impact(.light)
+                    onAddAgain()
+                    dismiss()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(AppColors.brand)
+                }
+                .accessibilityLabel("Add Again")
+
+                Button {
+                    HapticService.impact(.medium)
+                    onDelete()
+                    dismiss()
+                } label: {
+                    Image(systemName: "trash.fill")
+                        .foregroundColor(.red)
+                }
+                .accessibilityLabel("Delete")
             }
         }
     }
@@ -382,46 +402,6 @@ struct MealDetailView: View {
             Text(value)
                 .font(.r(.subheadline, .medium))
                 .foregroundColor(valueColor)
-        }
-    }
-
-    // MARK: - Action Buttons
-
-    private var actionButtons: some View {
-        HStack(spacing: 12) {
-            Button {
-                HapticService.impact(.light)
-                onAddAgain()
-                dismiss()
-            } label: {
-                Label("Add Again", systemImage: "plus.circle.fill")
-                    .font(.r(.subheadline, .semibold))
-                    .foregroundColor(AppColors.brand)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(AppColors.brand.opacity(0.12))
-                    )
-            }
-            .buttonStyle(.plain)
-
-            Button {
-                HapticService.impact(.medium)
-                onDelete()
-                dismiss()
-            } label: {
-                Label("Delete", systemImage: "trash.fill")
-                    .font(.r(.subheadline, .semibold))
-                    .foregroundColor(.red)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.red.opacity(0.12))
-                    )
-            }
-            .buttonStyle(.plain)
         }
     }
 

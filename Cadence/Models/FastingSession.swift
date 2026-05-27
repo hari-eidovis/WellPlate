@@ -10,6 +10,13 @@ final class FastingSession {
     var scheduleType: String
     var createdAt: Date
 
+    // v1 additive fields (optional — SwiftData auto-migrates additive optionals).
+    // `completed: Bool` is retained for backward compatibility; new code prefers
+    // `resolvedStatus` (see FastingCompletionStatus.swift).
+    var completionStatus: String? = nil
+    var contextualHRV: Double? = nil
+    var contextualSleepScore: Int? = nil
+
     init(
         startedAt: Date,
         targetEndAt: Date,

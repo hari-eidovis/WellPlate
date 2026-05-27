@@ -1,4 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild -workspace Cadence.xcworkspace -scheme Cadence -destination 'generic/platform=iOS Simulator' build)",
+      "Bash(xcodebuild -workspace Cadence.xcworkspace -scheme ScreenTimeMonitor -destination 'generic/platform=iOS Simulator' build)",
+      "Bash(xcodebuild -workspace Cadence.xcworkspace -scheme ScreenTimeReport -destination 'generic/platform=iOS Simulator' build)",
+      "Bash(xcodebuild -project Cadence.xcodeproj -target CadenceWidget -destination 'generic/platform=iOS Simulator' build)"
+    ]
+  },
   "disabledMcpjsonServers": [
     "code-review-graph"
   ]

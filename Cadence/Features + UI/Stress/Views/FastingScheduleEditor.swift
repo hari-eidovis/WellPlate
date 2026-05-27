@@ -11,6 +11,21 @@ struct FastingScheduleEditor: View {
     // Active session reference for mid-fast schedule change handling
     var activeSession: FastingSession?
 
+    /// When `true`, renders the form without NavigationStack / toolbar so it
+    /// can be hosted inside another container (e.g. `FastingOnboardingFlow`'s
+    /// step 4). The parent is then responsible for the Save action (via
+    /// `saveTrigger`) and dismissal (via `onSaveComplete`).
+    var embedded: Bool = false
+
+    /// When toggled to `true` in embedded mode, triggers `performSave()`.
+    /// Caller passes a `@State Bool` binding; we reset it to `false` after
+    /// firing so the toggle can be reused.
+    var saveTrigger: Binding<Bool> = .constant(false)
+
+    /// Called after a successful save in embedded mode (instead of `dismiss()`).
+    /// Caller advances its own flow / dismisses its own sheet.
+    var onSaveComplete: (() -> Void)? = nil
+
     @State private var selectedType: FastingScheduleType = .ratio16_8
     @State private var eatWindowStart: Date = FastingScheduleEditor.defaultTime(hour: 12, minute: 0)
     @State private var eatWindowEnd: Date = FastingScheduleEditor.defaultTime(hour: 20, minute: 0)
@@ -19,36 +34,52 @@ struct FastingScheduleEditor: View {
     @State private var showMidFastAlert = false
 
     var body: some View {
-        NavigationStack {
-            Form {
-                scheduleSection
-                eatWindowSection
-                caffeineCutoffSection
-                infoSection
-            }
-            .navigationTitle(existingSchedule == nil ? "Fast Setup" : "Edit Fast")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                        .font(.r(.body, .medium))
-                        .foregroundColor(AppColors.brand)
+        if embedded {
+            formContent
+                .padding(.horizontal, 4)
+                .onAppear { loadExisting() }
+                .onChange(of: saveTrigger.wrappedValue) { newValue in
+                    guard newValue else { return }
+                    performSave()
+                    saveTrigger.wrappedValue = false
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") { handleSave() }
-                        .font(.r(.body, .semibold))
-                        .foregroundColor(AppColors.brand)
-                }
+        } else {
+            NavigationStack {
+                formContent
+                    .navigationTitle(existingSchedule == nil ? "Fast Setup" : "Edit Fast")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button("Cancel") { dismiss() }
+                                .font(.r(.body, .medium))
+                                .foregroundColor(AppColors.brand)
+                        }
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Save") { handleSave() }
+                                .font(.r(.body, .semibold))
+                                .foregroundColor(AppColors.brand)
+                        }
+                    }
+                    .alert("Active Fast", isPresented: $showMidFastAlert) {
+                        Button("End Fast", role: .destructive) { endFastAndSave() }
+                        Button("Cancel", role: .cancel) { }
+                    } message: {
+                        Text("You have an active fast. End it and apply the new schedule?")
+                    }
             }
-            .alert("Active Fast", isPresented: $showMidFastAlert) {
-                Button("End Fast", role: .destructive) { endFastAndSave() }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("You have an active fast. End it and apply the new schedule?")
-            }
+            .presentationDetents([.large])
+            .onAppear { loadExisting() }
         }
-        .presentationDetents([.large])
-        .onAppear { loadExisting() }
+    }
+
+    @ViewBuilder
+    private var formContent: some View {
+        Form {
+            scheduleSection
+            eatWindowSection
+            caffeineCutoffSection
+            infoSection
+        }
     }
 
     // MARK: - Sections
@@ -242,7 +273,11 @@ struct FastingScheduleEditor: View {
             }
         }
 
-        dismiss()
+        if embedded {
+            onSaveComplete?()
+        } else {
+            dismiss()
+        }
     }
 
     private func computeIsFasting(startHour: Int, startMinute: Int, duration: Double) -> Bool {

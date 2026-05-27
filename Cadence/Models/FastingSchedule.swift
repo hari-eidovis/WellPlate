@@ -2,11 +2,16 @@ import Foundation
 import SwiftData
 
 /// Fasting schedule preset types.
+///
+/// Case order is significant — it drives `allCases` traversal which the
+/// schedule editor uses to render the preset list. Beginner-friendly 12:12
+/// is intentionally first; 20:4 is excluded per v1 blueprint (extreme
+/// Endurance-faster persona is de-prioritized).
 enum FastingScheduleType: String, CaseIterable, Identifiable {
-    case ratio16_8  = "16:8"
+    case ratio12_12 = "12:12"
     case ratio14_10 = "14:10"
+    case ratio16_8  = "16:8"
     case ratio18_6  = "18:6"
-    case ratio20_4  = "20:4"
     case custom     = "Custom"
 
     var id: String { rawValue }
@@ -24,26 +29,26 @@ enum FastingScheduleType: String, CaseIterable, Identifiable {
 
     var setupSubtitle: String {
         switch self {
+        case .ratio12_12:
+            return "Beginner-friendly 12h eating window"
         case .ratio14_10:
-            return "Gentle start with a 10h eating window"
+            return "Gentle plan with a 10h eating window"
         case .ratio16_8:
-            return "Most common plan with an 8h eating window"
+            return "Common plan with an 8h eating window"
         case .ratio18_6:
             return "Focused plan with a 6h eating window"
-        case .ratio20_4:
-            return "Advanced plan with a 4h eating window"
         case .custom:
-            return "Fine tune the eating window yourself"
+            return "Choose your own eating window"
         }
     }
 
     /// Default eat window duration in hours for each preset.
     var defaultEatHours: Double {
         switch self {
-        case .ratio16_8:  return 8
+        case .ratio12_12: return 12
         case .ratio14_10: return 10
+        case .ratio16_8:  return 8
         case .ratio18_6:  return 6
-        case .ratio20_4:  return 4
         case .custom:     return 8
         }
     }
@@ -51,20 +56,20 @@ enum FastingScheduleType: String, CaseIterable, Identifiable {
     /// Default eat window start hour (24h format).
     var defaultEatStartHour: Int {
         switch self {
-        case .ratio16_8:  return 12
+        case .ratio12_12: return 8
         case .ratio14_10: return 10
+        case .ratio16_8:  return 12
         case .ratio18_6:  return 12
-        case .ratio20_4:  return 12
         case .custom:     return 12
         }
     }
 
     var icon: String {
         switch self {
-        case .ratio16_8:  return "clock"
+        case .ratio12_12: return "sunrise"
         case .ratio14_10: return "clock.arrow.circlepath"
+        case .ratio16_8:  return "clock"
         case .ratio18_6:  return "clock.badge.checkmark"
-        case .ratio20_4:  return "clock.badge.exclamationmark"
         case .custom:     return "slider.horizontal.3"
         }
     }
@@ -102,10 +107,10 @@ final class FastingSchedule {
     var createdAt: Date
 
     init(
-        scheduleType: FastingScheduleType = .ratio16_8,
-        eatWindowStartHour: Int = 12,
+        scheduleType: FastingScheduleType = .ratio12_12,
+        eatWindowStartHour: Int = 8,
         eatWindowStartMinute: Int = 0,
-        eatWindowDurationHours: Double = 8,
+        eatWindowDurationHours: Double = 12,
         isActive: Bool = true,
         caffeineCutoffEnabled: Bool = false,
         caffeineCutoffMinutesBefore: Int = 120

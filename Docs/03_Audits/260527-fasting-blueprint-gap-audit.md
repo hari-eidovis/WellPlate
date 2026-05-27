@@ -191,9 +191,9 @@ Currently `Cadence/Widgets/FastingActivityAttributes.swift` is in the main app t
 
 ---
 
-## 7. Open questions blocking implementation
+## 7. Open questions blocking implementation — **RESOLVED, see §9**
 
-These need user/PM resolution before a plan can be written:
+These needed user/PM resolution before a plan could be written. All 7 resolved 2026-05-27; see §9 for the decisions and implementation consequences. Original question text retained below for the audit trail.
 
 1. **Drop `ratio18_6`?** Blueprint Table 3 only blesses 12:12, 14:10, 16:8. The current code ships 16:8, 14:10, 18:6, 20:4, Custom. Decision needed: drop 18:6, keep 18:6, keep but de-emphasize?
 2. **Schema migration approach.** Adding `completionStatus` enum + `contextualHRV` + `contextualSleepScore` to `FastingSession` requires a SwiftData migration plan. No `SchemaMigrationPlan` exists in this repo today. Are we OK with a heavyweight migration, or do we keep the binary flag and add new optional fields only?
@@ -207,12 +207,90 @@ These need user/PM resolution before a plan can be written:
 
 ## 8. Suggested next step
 
-This audit is intentionally a finding document, not a plan. Likely next moves (your call):
+This audit is intentionally a finding document, not a plan. With §7 resolved, the natural next step is `/develop plan fasting-v1-blueprint` feeding this audit + the blueprint + the §9 resolutions as inputs.
 
-- Run `/develop plan fasting-v1-blueprint` feeding this audit + the blueprint as inputs to produce a structured implementation plan, OR
-- Resolve §7 open questions first, then plan, OR
-- Pick a single high-leverage slice (SCOFF gate, or LiveActivityIntent, or copy pass + 20:4 removal) and implement directly.
+Two slicing options for the plan to consider:
 
-The lowest-risk high-impact slice is the **copy/lexicon + 20:4 removal + ring-color** pass (§3.1, §3.3, §3.4, §3.5) — pure UI/string work, no schema or new dependencies, immediately closes most of the "Anxious Beginner" violations.
+- **Lowest-risk high-impact slice:** copy/lexicon + 20:4 removal + ring-color pass (§3.1, §3.3, §3.4, §3.5) — pure UI/string work, no schema or new dependencies, immediately closes most "Anxious Beginner" violations. Good warm-up slice.
+- **Highest-impact slice:** SCOFF + 24h cap + age gate (§2.1, §2.2, §2.3) + soft-block routing (§9.6) — the regulatory/safety core. Should ship before the contextual-intelligence work.
 
-The highest-impact slice is **SCOFF + 24h cap + age gate** (§2.1, §2.2, §2.3) — the regulatory/safety core.
+---
+
+## 9. Resolutions (2026-05-27)
+
+Resolutions to §7 open questions. All seven decisions were taken via explicit user confirmation. Each entry: **decision** + **implementation consequence**.
+
+### §9.1 — Preset `ratio18_6`: keep but de-emphasize
+**Decision:** Keep the preset. Reorder the list so it appears below 12:12 / 14:10 / 16:8. Remove any "advanced" wording from `setupSubtitle` (currently `"Focused plan with a 6h eating window"` — acceptable, keep).
+**Code touch points:**
+- `Models/FastingSchedule.swift:5-91` — reorder `FastingScheduleType.allCases` traversal (it's used in `FastingScheduleEditor.swift:58` via `.allCases`). To preserve raw values, override `allCases` or introduce a separate `orderedDisplayCases` static for UI.
+- Confirm subtitle copy is non-prescriptive.
+**Note:** Implies §9.4 below — we also need to **add a missing `ratio12_12` preset** at the top of the list, since blueprint requires it as the beginner default.
+
+### §9.2 — Schema migration: additive optional fields, no VersionedSchema
+**Decision:** Add `completionStatus: String?`, `contextualHRV: Double?`, `contextualSleepScore: Int?` as optional properties on `FastingSession`. Skip the VersionedSchema/MigrationStage scaffolding. Existing `completed: Bool` stays alongside the new `completionStatus` until a future cleanup pass.
+**Code touch points:**
+- `Models/FastingSession.swift:5-23` — add three new stored optional properties + default values in initializers.
+- New computed property `resolvedStatus: CompletionStatus` (enum) derived from `(completed, completionStatus)` precedence rules. Old rows where `completionStatus == nil` fall back to `completed ? .completed : .endedEarly`.
+- Writes: anywhere we currently set `completed`, also set `completionStatus`. Locations: `FastingView.swift:633-634, 684-685`; `FastingScheduleEditor.swift:193-194`.
+- HealthKit context capture: when a session ends, query `HealthKitService` for last-night HRV + sleep score and persist onto the session. New call site at end-of-fast transitions.
+**Risk acknowledged:** Two truth sources for completion (`completed: Bool` + `completionStatus: String?`) is technical debt. Acceptable for v1; flag for v1.x cleanup.
+
+### §9.3 — Eligibility gate: fasting-specific, at first 'Get Started' tap
+**Decision:** A new gate, sequenced after the wellness disclaimer and before SCOFF, with three required yes/no questions: age ≥18, not pregnant, not lactating. Persist as fields on a single per-user record (new model or extend existing `UserGoals`). User can re-take from a Settings entry point.
+**Code touch points:**
+- New model or extension. Cleanest: new `@Model final class FastingEligibility` with `cleared: Bool`, `clearedAt: Date?`, `age18Plus: Bool`, `notPregnant: Bool`, `notLactating: Bool`, `scoffCleared: Bool`, `scoffAnswers: [Bool]?`. Register in `CadenceApp.swift:43` modelContainer list.
+- New onboarding flow lives in the fasting feature folder — likely `Features + UI/Stress/Views/FastingOnboardingFlow.swift` (new). Triggered from `FastingView.emptyStateCard` Get-Started button (currently `FastingView.swift:203-228`) — replaces the direct sheet-to-editor with a multi-step flow.
+- Failing any of the three eligibility questions routes to the same Care Intervention screen as a failing SCOFF (see §9.6).
+
+### §9.4 — Sunset reminder: defer; use bedtime heuristic in v1
+**Decision:** No `CLLocation` permission in v1. The start-reminder notification fires N hours before the user's typical bedtime derived from HealthKit sleep data. Sunset-aware version pushed to v1.1.
+**Code touch points:**
+- New helper in `FastingService` (or a small `FastingNotificationScheduler`) that on app launch/sleep-data refresh recomputes the user's avg bedtime over the past 14 days from `HealthKitService` sleep samples.
+- Schedule the start-reminder for `bedtime − 3h` (or user-configurable in v1.x).
+- If no sleep history exists (cold start, ≤2 nights of data), fall back to a sensible default (e.g. 19:00 local) and not surface the notification until the heuristic stabilizes.
+- The existing 4 `UNCalendarNotificationTrigger` notifications in `FastingService.scheduleNotifications` (lines 209-263) remain. Start-reminder is additive — a 5th identifier.
+- Notification body copy per blueprint Table 7: *"Your usual bedtime is around 11pm — a great time to give your digestion a rest is now."* (No mention of sunset.)
+
+### §9.5 — Completion UX: soft pulse + bonus-time count; celebrate on tap
+**Decision:** At target end, the timer ring stops accumulating (held at 100%), pulses gently, and the time label switches to `"+0m bonus"` and counts up. The "Break Fast" button label becomes "End Fast" (also resolves part of §3.3 copy). The existing confetti `FastingCelebrationOverlay` only fires after the user explicitly taps "End Fast."
+**Code touch points:**
+- `FastingService` needs a new state branch: `.completedActive(bonusElapsed:)` — sits between `.fasting` (running) and `.eating` (next window). Or add `isOverachieving: Bool` flag on existing `.fasting` state.
+- `FastingView.swift:294-322` timer label — switch to `"+\(formattedDuration(bonus))"` + `"BONUS TIME"` subtitle when overachieving.
+- `FastingView.swift:415-466` action button — re-label to "End Fast" once target is reached. Same destructive style is fine but copy must change.
+- Auto-transition logic at `handleStateTransition` (lines 611-644) — currently fires celebration on `fasting → eating`. Now must only fire celebration when user explicitly taps end. The scheduled `eating` transition (eat window starts) becomes a passive cleanup, not a celebration trigger.
+- Soft haptic pulse + ring pulse animation at the moment target is hit (no confetti yet).
+- **Open sub-decision deferred to implementation:** what happens if user never taps End Fast and the next eat window starts? Recommend: at that point, auto-close the session as `completionStatus = .overachieved`, no celebration (they already saw the soft pulse and moved on). This pairs naturally with §9.7 (which caps the runaway at 24h anyway).
+
+### §9.6 — SCOFF positive: soft block
+**Decision:** Hide initiation surfaces; keep retrospective surfaces. Specifically:
+- **Hide:** "Get Started" CTA in `FastingView.emptyStateCard` (replace with Care message + resources link). Hide the Home fasting launcher button (`HomeView.swift:593-601`).
+- **Keep visible:** Fasting × Stress insight chart (`FastingInsightChart.swift`); Reports section (`ReportSections/FastingSection.swift`); Stress factor card (so it remains in the factor list, but tapping it opens the Care message instead of FastingView).
+**Code touch points:**
+- New view: `FastingCareInterventionView.swift` with the soft message + link to National Alliance for Eating Disorders + "Re-take screening" CTA.
+- A single source of truth: `FastingEligibility.canInitiate: Bool` computed from `(cleared && scoffCleared && age18Plus && notPregnant && notLactating)`. Every initiation surface checks this and routes accordingly.
+- `HomeView.swift:443-445` sheet wiring — `FastingView()` either runs normally (cleared), or shows the Care view (not cleared).
+- `StressView.swift:198` factor sheet — same conditional routing.
+
+### §9.7 — 24h cap: auto-pause + push notification, no auto-end
+**Decision:** At 24h elapsed since `FastingSession.startedAt`, the timer UI freezes at 24h, the Live Activity stops progressing, and a local push fires: *"You've been fasting for 24h. Did you forget to end your fast? Tap to adjust the end time."* The session stays open in the DB until the user explicitly acts.
+**Code touch points:**
+- `FastingService.updateState` (line 93-143) — clamp displayed elapsed/progress at 24h when active session > 24h old.
+- `ActivityManager.updateFastingActivity` (line 85-98) — same clamp.
+- New scheduled notification: when a session is created (or on app launch with active session), schedule a one-shot `UNTimeIntervalNotificationTrigger` to fire at `startedAt + 24h`. ID: `wp.fasting.cap24h`. Add to `clearNotifications` list.
+- "Tap to adjust" notification action — opens FastingView with the edit-previous-fast sheet pre-targeting the active session (this couples to §2.7's edit UI work).
+- Acceptable behavior if user dismisses the push: session continues to log in the DB but UI is frozen — `actualDurationSeconds` will still report true elapsed for historical aggregates (or — alternative — we cap `actualDurationSeconds` at 24h to prevent skewing averages). **Sub-decision deferred to implementation:** cap or not for historical math. Recommend cap for averages, no cap for the raw `actualEndAt` if user eventually ends manually.
+
+---
+
+### Resolution summary table (for planning quick reference)
+
+| # | Topic | Decision | Net effect on v1 |
+|---|---|---|---|
+| 9.1 | 18:6 preset | Keep, de-emphasize | Add `12:12`, reorder presets |
+| 9.2 | Schema migration | Additive optionals only | New nullable fields on `FastingSession`; no VersionedSchema |
+| 9.3 | Eligibility gate | Fasting-specific, in-feature | New `FastingEligibility` model + onboarding flow |
+| 9.4 | Sunset reminder | Defer to v1.1 | Use bedtime heuristic from HealthKit sleep; no CLLocation |
+| 9.5 | Completion UX | Soft pulse + bonus time | New `isOverachieving` state; celebration on explicit end only |
+| 9.6 | SCOFF positive | Soft block | Hide initiation, keep retrospective; new Care view |
+| 9.7 | 24h cap | Auto-pause + push | New cap-24h notification; UI freeze at 24h; no auto-end |

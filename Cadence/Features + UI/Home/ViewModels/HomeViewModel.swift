@@ -45,7 +45,12 @@ final class HomeViewModel: ObservableObject {
 
     func logFood(on date: Date, coachOverride: String? = nil, context: MealContext? = nil) async {
         let rawInput = foodDescription.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !rawInput.isEmpty else { showErrorMessage("Please enter a food description"); return }
+        let trimmedOverride = coachOverride?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        // When an override is supplied (e.g. disambiguation chip), it's the source of truth
+        // and `foodDescription` may have already been cleared by the caller.
+        guard !rawInput.isEmpty || !trimmedOverride.isEmpty else {
+            showErrorMessage("Please enter a food description"); return
+        }
 
         isLoading = true
         defer { isLoading = false }

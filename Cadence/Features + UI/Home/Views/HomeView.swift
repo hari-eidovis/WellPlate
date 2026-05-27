@@ -485,12 +485,32 @@ struct HomeView: View {
                 isPresented: $showWaterGoalCelebration,
                 titleVisibility: .visible
             ) {
-                Button("Hide water card", role: .destructive) {
-                    hideWaterTile()
+                let waterVisible = layout.isElementVisible(.waterTile, in: .quickStats)
+                let coffeeVisible = layout.isElementVisible(.coffeeTile, in: .quickStats)
+
+                if waterVisible && coffeeVisible {
+                    Button("Hide water & coffee tiles", role: .destructive) {
+                        hideWaterTile()
+                        hideCoffeeTile()
+                    }
+                    Button("Hide water tile only", role: .destructive) {
+                        hideWaterTile()
+                    }
+                    Button("Hide coffee tile only", role: .destructive) {
+                        hideCoffeeTile()
+                    }
+                } else if waterVisible {
+                    Button("Hide water tile", role: .destructive) {
+                        hideWaterTile()
+                    }
+                } else if coffeeVisible {
+                    Button("Hide coffee tile", role: .destructive) {
+                        hideCoffeeTile()
+                    }
                 }
-                Button("Keep it", role: .cancel) {}
+                Button("Keep them", role: .cancel) {}
             } message: {
-                Text("You hit your daily water goal. Want to hide the water card from Home now that it's filled? You can bring it back from the layout editor.")
+                Text("You hit your daily water goal. Hide the water tile now that it's filled? More coffee can cause dehydration, so consider hiding the coffee tile too. You can bring tiles back from the layout editor.")
             }
     }
 
@@ -505,9 +525,16 @@ struct HomeView: View {
             Task { await insightEngine.generateInsights() }
             refreshTodayMoodState()
             refreshTodayHydrationState()
-            hasHydrationStateLoaded = true
             refreshTodayCoffeeState()
-            hasCoffeeStateLoaded = true
+            // Defer flipping the *StateLoaded guards to the next runloop so
+            // the initial 0 → restored-value onChange fires while the guards
+            // are still false. Otherwise SwiftUI batches both @State writes
+            // and the celebration trips on app launch, burning
+            // waterGoalCelebratedDay for the rest of the day.
+            DispatchQueue.main.async {
+                hasHydrationStateLoaded = true
+                hasCoffeeStateLoaded = true
+            }
             refreshTodayJournalState()
             foodJournalViewModel.loadYesterdayStats()
             refreshTodayActivityFromHealthKit()
@@ -1162,6 +1189,17 @@ struct HomeView: View {
         var updated = layout
         guard updated.isElementVisible(.waterTile, in: .quickStats) else { return }
         updated.toggleElement(.waterTile, in: .quickStats)
+        writableGoals.homeLayout = updated
+        try? modelContext.save()
+        HapticService.impact(.light)
+    }
+
+    /// Hides the coffee tile inside the Quick Stats card. Offered after a
+    /// water-goal crossing because additional coffee can negate hydration.
+    private func hideCoffeeTile() {
+        var updated = layout
+        guard updated.isElementVisible(.coffeeTile, in: .quickStats) else { return }
+        updated.toggleElement(.coffeeTile, in: .quickStats)
         writableGoals.homeLayout = updated
         try? modelContext.save()
         HapticService.impact(.light)

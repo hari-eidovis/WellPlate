@@ -10,26 +10,30 @@ struct MealLogView: View {
     @ObservedObject var viewModel: MealLogViewModel
 
     let selectedDate: Date
-    var onBarcodeTap: (() -> Void)? = nil
     @FocusState private var isFoodFieldFocused: Bool
-    @FocusState private var isReflectionFieldFocused: Bool
     @FocusState private var isQuantityFieldFocused: Bool
+
+    // MARK: Claude palette (inline — view-scoped to avoid touching shared tokens)
+    private let cBackground = Color(red: 0.957, green: 0.953, blue: 0.933) // Pampas  #F4F3EE
+    private let cSurface    = Color.white                                  // White   #FFFFFF
+    private let cMuted      = Color(red: 0.694, green: 0.678, blue: 0.631) // Cloudy  #B1ADA1
+    private let cInk        = Color(red: 0.118, green: 0.118, blue: 0.118) // #1E1E1E
+    private let cDivider    = Color(red: 0.894, green: 0.886, blue: 0.859)
 
     var body: some View {
         ZStack {
-            Color(.systemGroupedBackground).ignoresSafeArea()
+            cBackground.ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 24) {
+                    headerSection
                     mealTypePicker
                     foodInputCard
-                    triggersSection
-                    reflectionField
-                    moreContextSection
+                    quantityCard
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 24)
                 .padding(.top, 8)
-                .padding(.bottom, 24)
+                .padding(.bottom, 32)
             }
             .scrollDismissesKeyboard(.interactively)
 
@@ -37,10 +41,11 @@ struct MealLogView: View {
                 disambiguationOverlay(state: state)
             }
         }
-        .navigationTitle("Log a meal")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
-        .alert("Error", isPresented: $viewModel.showError) {
+        .toolbarBackground(cBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .alert("Something went wrong", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage)
@@ -52,7 +57,7 @@ struct MealLogView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Cadence needs microphone and speech recognition access to transcribe your meal. Enable both in Settings > Privacy.")
+            Text("Cadence needs microphone and speech recognition access to transcribe your meal. Enable both in Settings → Privacy.")
         }
         .onChange(of: viewModel.showError) { _, isError in
             if isError { HapticService.notify(.error) }
@@ -75,31 +80,28 @@ struct MealLogView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
-            Button {
-                HapticService.impact(.light)
-                if viewModel.isTranscribing { viewModel.stopMealTranscription() }
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(AppColors.textSecondary)
-                    .padding(7)
-                    .background(Circle().fill(Color(.secondarySystemBackground)))
-            }
-            .disabled(viewModel.isLoading)
+        ToolbarItem(placement: .principal) {
+            Text("Log a meal")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(cInk)
         }
         ToolbarItem(placement: .navigationBarTrailing) {
             Button {
+                isFoodFieldFocused = false
+                isQuantityFieldFocused = false
+                UIApplication.shared.sendAction(
+                    #selector(UIResponder.resignFirstResponder),
+                    to: nil, from: nil, for: nil
+                )
                 Task { await viewModel.saveMeal(selectedDate: selectedDate) }
             } label: {
                 if viewModel.isLoading {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: AppColors.brand))
+                        .progressViewStyle(CircularProgressViewStyle(tint: cInk))
                 } else {
                     Text("Save")
-                        .font(.r(.subheadline, .semibold))
-                        .foregroundColor(saveEnabled ? AppColors.brand : AppColors.textSecondary)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(saveEnabled ? cInk : cMuted)
                 }
             }
             .disabled(!saveEnabled)
@@ -110,332 +112,135 @@ struct MealLogView: View {
         viewModel.isValid && !viewModel.isLoading && !viewModel.isTranscribing
     }
 
+    // MARK: - Header
+
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("What did you eat?")
+                .font(.system(size: 28, weight: .semibold, design: .serif))
+                .foregroundColor(cInk)
+                .tracking(-0.4)
+            Text("A few words is enough. We'll figure out the rest.")
+                .font(.system(size: 14))
+                .foregroundColor(cMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     // MARK: - Meal Type Picker
 
     private var mealTypePicker: some View {
-        HStack(spacing: 8) {
-            ForEach(MealType.allCases) { type in
-                let isSelected = viewModel.selectedMealType == type
-                Button {
-                    HapticService.selectionChanged()
-                    viewModel.selectedMealType = type
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: type.icon)
-                            .font(.system(size: 11, weight: .medium))
-                        Text(type.displayName)
-                            .font(.r(.caption, .semibold))
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(MealType.allCases) { type in
+                    let isSelected = viewModel.selectedMealType == type
+                    Button {
+                        HapticService.selectionChanged()
+                        viewModel.selectedMealType = type
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: type.icon)
+                                .font(.system(size: 11, weight: .medium))
+                            Text(type.displayName)
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundColor(isSelected ? cSurface : cInk.opacity(0.75))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule().fill(isSelected ? cInk : cSurface)
+                        )
+                        .overlay(
+                            Capsule().stroke(isSelected ? Color.clear : cDivider, lineWidth: 1)
+                        )
                     }
-                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(
-                        Capsule()
-                            .fill(isSelected
-                                  ? AppColors.primaryContainer
-                                  : Color(.secondarySystemBackground))
-                    )
+                    .buttonStyle(.plain)
+                    .animation(.easeInOut(duration: 0.15), value: isSelected)
                 }
-                .buttonStyle(.plain)
-                .animation(.easeInOut(duration: 0.15), value: isSelected)
             }
+            .padding(.horizontal, 1)
         }
     }
 
     // MARK: - Food Input Card
 
     private var foodInputCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Food description field with trailing actions
-            HStack(alignment: .center, spacing: 10) {
-                TextField("What did you eat?", text: $viewModel.foodDescription, axis: .vertical)
-                    .font(.r(16, .regular))
-                    .textFieldStyle(.plain)
-                    .focused($isFoodFieldFocused)
-                    .disabled(viewModel.isLoading)
-                    .tint(AppColors.primary)
-                    .lineLimit(1...3)
-
-                HStack(spacing: 2) {
-                    micButton
-                    barcodeButton
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-
-            // Live transcript hint
-            if viewModel.isTranscribing {
-                Divider().padding(.horizontal, 16)
-                HStack(spacing: 6) {
-                    Image(systemName: "waveform")
-                        .font(.system(size: 10))
-                        .foregroundColor(AppColors.primary)
-                    Text(viewModel.liveTranscript.isEmpty
-                         ? "Listening…"
-                         : viewModel.liveTranscript)
-                        .font(.r(.caption, .regular))
-                        .foregroundColor(viewModel.liveTranscript.isEmpty
-                                         ? AppColors.textSecondary
-                                         : AppColors.textPrimary)
-                        .lineLimit(2)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-
-            Divider().padding(.horizontal, 16)
-
-            // Quantity row
-            HStack(spacing: 10) {
-                Image(systemName: viewModel.quantityUnit == .millilitres ? "drop" : "scalemass")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(AppColors.textSecondary)
-                    .frame(width: 16)
-
-                TextField("Amount", text: $viewModel.quantity)
-                    .font(.r(15, .regular))
-                    .keyboardType(.decimalPad)
-                    .textFieldStyle(.plain)
-                    .focused($isQuantityFieldFocused)
-                    .disabled(viewModel.isLoading)
-                    .tint(AppColors.primary)
-                    .foregroundColor(AppColors.textPrimary)
-
-                Picker("", selection: $viewModel.quantityUnit) {
-                    ForEach(QuantityUnit.allCases) { unit in
-                        Text(unit.label).tag(unit)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 84)
-                .disabled(viewModel.isLoading)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 12, y: 4)
-        )
-        .animation(.easeInOut(duration: 0.2), value: viewModel.isTranscribing)
-        .animation(.easeInOut(duration: 0.15), value: viewModel.liveTranscript)
-    }
-
-    private var micButton: some View {
-        Button {
-            HapticService.impact(.light)
-            viewModel.startMealTranscription()
-        } label: {
-            micIcon
-                .frame(width: 34, height: 34)
-                .background(
-                    Circle()
-                        .fill(viewModel.isTranscribing
-                              ? AppColors.primaryContainer
-                              : Color.clear)
-                )
-        }
-        .buttonStyle(.plain)
-        .disabled(viewModel.isLoading)
-        .animation(.easeInOut(duration: 0.2), value: viewModel.isTranscribing)
-        .accessibilityLabel(viewModel.isTranscribing ? "Stop recording" : "Speak meal")
-    }
-
-    @ViewBuilder
-    private var micIcon: some View {
-        let color = viewModel.isTranscribing ? AppColors.primary : AppColors.textSecondary
-        if #available(iOS 17, *) {
-            Image(systemName: viewModel.isTranscribing ? "waveform" : "mic")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(color)
-                .symbolEffect(.variableColor.iterative, isActive: viewModel.isTranscribing)
-        } else {
-            Image(systemName: viewModel.isTranscribing ? "waveform" : "mic")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(color)
-        }
-    }
-
-    private var barcodeButton: some View {
-        Button {
-            HapticService.impact(.light)
-            onBarcodeTap?()
-        } label: {
-            Image(systemName: "barcode.viewfinder")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(AppColors.textSecondary)
-                .frame(width: 34, height: 34)
-        }
-        .buttonStyle(.plain)
-        .disabled(viewModel.isLoading)
-        .accessibilityLabel("Scan barcode")
-    }
-
-    // MARK: - Eating Triggers
-
-    private var triggersSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("What brought you here?")
-                .font(.r(.caption, .semibold))
-                .foregroundColor(AppColors.textSecondary)
-                .textCase(.uppercase)
-                .kerning(0.4)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(EatingTrigger.allCases) { trigger in
-                        let isSelected = viewModel.selectedTriggers.contains(trigger)
-                        Button {
-                            HapticService.selectionChanged()
-                            if isSelected {
-                                viewModel.selectedTriggers.remove(trigger)
-                            } else {
-                                viewModel.selectedTriggers.insert(trigger)
-                            }
-                        } label: {
-                            HStack(spacing: 5) {
-                                Text(trigger.emoji)
-                                    .font(.system(size: 13))
-                                Text(trigger.displayName)
-                                    .font(.r(.caption, .medium))
-                            }
-                            .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
-                            .padding(.horizontal, 11)
-                            .padding(.vertical, 7)
-                            .background(
-                                Capsule()
-                                    .fill(isSelected
-                                          ? AppColors.primaryContainer
-                                          : Color(.secondarySystemBackground))
-                            )
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(
-                                        isSelected ? AppColors.primary.opacity(0.35) : Color.clear,
-                                        lineWidth: 1
-                                    )
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .animation(.easeInOut(duration: 0.15), value: isSelected)
-                        .accessibilityLabel("\(trigger.displayName)")
-                        .accessibilityAddTraits(isSelected ? .isSelected : [])
-                    }
-                }
-                .padding(.horizontal, 1)
-            }
-        }
-    }
-
-    // MARK: - Reflection Field
-
-    private var reflectionField: some View {
-        TextField("Any thoughts or feelings? (optional)", text: $viewModel.reflection, axis: .vertical)
-            .font(.r(15, .regular))
+        TextField("", text: $viewModel.foodDescription, prompt: Text("e.g. Avocado toast").foregroundColor(cMuted), axis: .vertical)
+            .font(.system(size: 17, weight: .regular))
+            .foregroundColor(cInk)
             .textFieldStyle(.plain)
-            .focused($isReflectionFieldFocused)
-            .lineLimit(2...5)
-            .foregroundColor(AppColors.textPrimary)
-            .tint(AppColors.primary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .focused($isFoodFieldFocused)
+            .disabled(viewModel.isLoading)
+            .tint(cInk)
+            .lineLimit(1...4)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color(.systemBackground))
-                    .appShadow(radius: 12, y: 4)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(cSurface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(cDivider, lineWidth: 1)
+                    )
             )
     }
 
-    // MARK: - More Context (Expandable)
+    // MARK: - Quantity Card
 
-    private var moreContextSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    viewModel.showMoreContext.toggle()
-                }
-                HapticService.impact(.light)
-            } label: {
-                HStack {
-                    Text("More context")
-                        .font(.r(.subheadline, .medium))
-                        .foregroundColor(AppColors.textPrimary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(AppColors.textSecondary)
-                        .rotationEffect(.degrees(viewModel.showMoreContext ? 90 : 0))
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-            }
-            .buttonStyle(.plain)
+    private var quantityCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: viewModel.quantityUnit == .millilitres ? "drop" : "scalemass")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(cMuted)
+                .frame(width: 18)
 
-            if viewModel.showMoreContext {
-                Divider().padding(.horizontal, 16)
+            TextField("", text: $viewModel.quantity, prompt: Text("Amount").foregroundColor(cMuted))
+                .font(.system(size: 16))
+                .foregroundColor(cInk)
+                .keyboardType(.decimalPad)
+                .textFieldStyle(.plain)
+                .focused($isQuantityFieldFocused)
+                .disabled(viewModel.isLoading)
+                .tint(cInk)
 
-                VStack(alignment: .leading, spacing: 20) {
-                    sliderRow(
-                        label: "Hunger",
-                        leftEmoji: "🙂", rightEmoji: "😩",
-                        leftLabel: "Not hungry", rightLabel: "Starving",
-                        value: $viewModel.hungerLevel
-                    )
-                    .accessibilityValue("\(Int(viewModel.hungerLevel * 100))% hungry")
-
-                    sliderRow(
-                        label: "Mindfulness",
-                        leftEmoji: "🤦‍♀️", rightEmoji: "🧘‍♀️",
-                        leftLabel: "Distracted", rightLabel: "Fully present",
-                        value: $viewModel.presenceLevel
-                    )
-                    .accessibilityValue("\(Int(viewModel.presenceLevel * 100))% present")
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 16)
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
+            unitToggle
         }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
         .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color(.systemBackground))
-                .appShadow(radius: 12, y: 4)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(cSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(cDivider, lineWidth: 1)
+                )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
-    private func sliderRow(
-        label: String,
-        leftEmoji: String, rightEmoji: String,
-        leftLabel: String, rightLabel: String,
-        value: Binding<Double>
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(label)
-                .font(.r(.footnote, .semibold))
-                .foregroundColor(AppColors.textSecondary)
-                .textCase(.uppercase)
-                .kerning(0.4)
-
-            HStack(spacing: 8) {
-                Text(leftEmoji).font(.system(size: 14))
-                Slider(value: value, in: 0...1)
-                    .tint(AppColors.primary)
-                Text(rightEmoji).font(.system(size: 14))
+    private var unitToggle: some View {
+        HStack(spacing: 0) {
+            ForEach(QuantityUnit.allCases) { unit in
+                let isSelected = viewModel.quantityUnit == unit
+                Button {
+                    HapticService.selectionChanged()
+                    viewModel.quantityUnit = unit
+                } label: {
+                    Text(unit.label)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(isSelected ? cSurface : cInk.opacity(0.7))
+                        .frame(width: 32, height: 26)
+                        .background(
+                            Capsule().fill(isSelected ? cInk : Color.clear)
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(viewModel.isLoading)
             }
-
-            HStack {
-                Text(leftLabel)
-                Spacer()
-                Text(rightLabel)
-            }
-            .font(.r(.caption2, .regular))
-            .foregroundColor(AppColors.textSecondary.opacity(0.7))
         }
-        .accessibilityElement(children: .combine)
+        .padding(2)
+        .background(
+            Capsule().fill(cBackground)
+        )
     }
 
     // MARK: - Disambiguation Overlay
@@ -574,8 +379,7 @@ struct MealLogSheetContent: View {
                 case .notepad:
                     MealLogView(
                         viewModel: mealLogViewModel,
-                        selectedDate: selectedDate,
-                        onBarcodeTap: { navigationPath.append(MealLogEntryMode.barcode) }
+                        selectedDate: selectedDate
                     )
                 case .mic:
                     VoiceMealLogView(viewModel: mealLogViewModel, selectedDate: selectedDate)
@@ -588,11 +392,44 @@ struct MealLogSheetContent: View {
                 }
             }
         }
+        .sheet(item: $mealLogViewModel.beverageVariantPrompt) { prompt in
+            switch prompt {
+            case .coffee:
+                CoffeeTypePickerSheet { type in
+                    Task {
+                        await mealLogViewModel.resolveBeverageVariant(
+                            variantName: type.displayName,
+                            selectedDate: selectedDate
+                        )
+                    }
+                }
+            case .tea:
+                TeaTypePickerSheet { type in
+                    Task {
+                        await mealLogViewModel.resolveBeverageVariant(
+                            variantName: type.displayName,
+                            selectedDate: selectedDate
+                        )
+                    }
+                }
+            }
+        }
         .onChange(of: mealLogViewModel.shouldDismiss) { _, shouldDismiss in
             if shouldDismiss {
                 didSave?.wrappedValue = true
                 mealLogViewModel.resetDismissState()
                 dismiss()
+            }
+        }
+        .onChange(of: mealLogViewModel.beverageVariantPrompt) { _, prompt in
+            // Belt-and-braces: even if the Save button forgot to dismiss focus
+            // (or save was triggered from the voice flow), force the keyboard
+            // down before the variant picker presents.
+            if prompt != nil {
+                UIApplication.shared.sendAction(
+                    #selector(UIResponder.resignFirstResponder),
+                    to: nil, from: nil, for: nil
+                )
             }
         }
     }

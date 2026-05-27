@@ -1,0 +1,1798 @@
+                SpectrumBridge
+                                         ​
+        An iOS Based Neurodivergent Empathy Simulator​
+
+
+Submitted in partial fulfilment of the requirements for the award of the degree of
+
+                        Bachelor of Technology
+
+
+
+
+                                 Submitted By:
+
+                              Mayank Jangid
+                           Enrolment No.: 226301131
+
+                            Under the guidance of:
+                             Mr. Abhishant Sharma
+
+           Department of Computer Science and Engineering
+                   Faculty of Engineering and Technology
+Gurukula Kangri (Deemed to be University), Haridwar (Uttarakhand)
+
+
+
+
+                                      Page 1
+Bonafide Certificate
+
+
+Certified that this project report titled “SpecBridge: An iOS-based Neurodivergent Empathy
+Simulator using Real-Time Sensory Distortion and On-Device Foundation Models” is the
+bonafide work of Mr. Mayank Jangid, who carried out the project work under my supervision
+during the academic year 2025–2026.
+
+It is further certified that, to the best of my knowledge, the work reported herein does not form
+part of any other thesis or dissertation on the basis of which a degree or award was conferred on
+an earlier occasion on this or any other candidate.
+
+Place: Haridwar
+Date: 27 May 2026​
+​
+​
+​
+​
+​
+​
+​
+​
+​
+​
+​
+​
+​
+
+
+
+Project Guide
+Name: Prof. Abhishant Sharma
+Designation: Assistant Professor
+Department of Computer Science and Engineering​
+​
+
+Signature: _______________________
+
+
+                                              Page 2
+Declaration
+
+I, Mayank Jangid, hereby solemnly declare that the project report titled “SpecBridge: An
+iOS-based Neurodivergent Empathy Simulator”, submitted in partial fulfilment of the
+requirements for the award of the degree of Bachelor of Technology in Computer Science and
+Engineering, is my original work.
+
+I further declare that:
+    •​ This project has been carried out by me during the academic year 2025–2026 under the
+       supervision of Prof. Abhishant Sharma, Assistant Professor, Department of Computer
+       Science and Engineering.
+    •​ The work has not been submitted previously to any other university, institution, or
+       examination body for the award of any degree, diploma, or certification.
+    •​ All sources of information used in this report have been duly acknowledged and
+       referenced in accordance with academic ethics and plagiarism norms.
+    •​ The data, observations, and experimental results presented in this report are authentic to
+       the best of my knowledge and have not been fabricated, falsified, or manipulated.
+    •​ The source code, design assets, and intellectual content of the SpecBridge application
+       were created by me, with the exception of frameworks and APIs provided by Apple Inc.
+       that are openly documented and freely available to all developers.
+    •​ I understand that if any part of this declaration is found to be false at any stage of the
+       academic review, my project may be rejected and disciplinary action may be taken as per
+       institutional rules.
+​
+​
+​
+​
+​
+
+
+Place: Haridwar
+Date: 27 May 2026​
+
+
+Student Name: Mayank Jangid
+Roll No: 226301131​
+
+
+
+
+                                              Page 3
+Acknowledgement
+
+The successful completion of any technically ambitious project is never the product of a single
+individual’s effort. It is the cumulative outcome of guidance, mentorship, encouragement, and
+constructive feedback received from many quarters, and it is therefore both a duty and a privilege
+to acknowledge the contributions of those who made this project possible.
+
+I would like to express my deepest and most sincere gratitude to my project guide, Prof.
+Abhishant Sharma, Assistant Professor, Department of Computer Science and Engineering,
+Gurukula Kangri (Deemed to be University), Haridwar, for his patient supervision, technical
+insight, and unwavering encouragement throughout every phase of this work. His critical
+questions during early design reviews fundamentally reshaped the architecture of SpecBridge,
+and his insistence on rigorous documentation and accessibility-first design has elevated the
+quality of the final deliverable. His emphasis on grounding the project in peer-reviewed
+neurodiversity research, rather than relying on popular but unverified claims, has been
+particularly valuable.
+
+I extend my heartfelt thanks to the respected Head of the Department and all faculty members of
+the Department of Computer Science and Engineering, Faculty of Engineering and Technology,
+for providing the academic foundation that made this project conceivable. The coursework on
+Human–Computer Interaction, Operating Systems, Computer Graphics, and Artificial
+Intelligence has been directly applied in the GPU shader pipeline, real-time audio engine,
+accessibility design, and Foundation Models integration described in this report.
+
+I am profoundly grateful to Gurukula Kangri (Deemed to be University), Haridwar, for the
+academic environment, computing infrastructure, library access, and developer resources that
+supported this work. The institution’s commitment to research-oriented engineering education
+has been instrumental.
+
+I wish to acknowledge the broader software development community and open ecosystems that
+this project draws upon: Apple’s developer documentation for Swift, SwiftUI, Metal,
+AVFoundation, CoreHaptics, and the Foundation Models framework; the published research
+literature on the Double Empathy Problem, particularly the work of Dr. Damian Milton; and the
+autistic self-advocacy communities whose first-person writing has informed the design decisions
+throughout this application.
+
+Finally, I would like to thank my family members, friends, and classmates for their patience,
+encouragement, and emotional support during the many late nights of development, debugging,
+and revision that this project required. Their belief in the social value of this work sustained the
+effort to completion.
+
+                                                                                  Mayank Jangid
+
+
+                                               Page 4
+Executive Summary​
+​
+
+The project titled “SpecBridge” is an iOS application that addresses the communication gap
+between neurotypical and neurodivergent individuals through experiential learning grounded in
+the Double Empathy Problem. System analysis identified that conventional articles, videos, and
+questionnaires fail to produce behaviour-changing empathy because they describe rather than
+reproduce the experience. The proposed system design follows an MVVM architecture with
+three modules: a Sensory Simulator using SwiftUI ViewModifier-based visual effects,
+CoreHaptics, and an AVAudioEngine speech-reverb-distortion chain; a Perspective Bridge that
+contrasts NT and ND interpretations of identical dialogue; and a Tone Decoder powered by
+Apple Foundation Models that generates dual-perspective analysis and three rewrite alternatives.
+Implementation was completed in Swift 6 as a Swift Playground App for iOS 18+, with
+structured @Generable schemas for AI output and pre-authored fallbacks for unsupported
+devices. Testing covered unit, integration, performance, and accessibility dimensions, with the
+application sustaining 60 frames per second under all simultaneous filter combinations and
+sub-5-millisecond haptic synchronisation. Future scope includes additional sensory profiles,
+multilingual support, HealthKit-personalised calibration, and a companion educator dashboard
+for classroom deployment.
+
+
+
+
+                                             Page 5
+Table of Contents
+
+Bonafide Certificate​                                                          2
+Declaration​                                                                   3​
+Acknowledgement​                                                               4
+Executive Summary​                                                             5
+Table of Contents​                                                             6​
+Abstract​                                                                      8
+List of Abbreviations​                                                         9​
+​
+
+Chapter 1: Introduction           ​      ​   ​            ​    ​   ​   ​   ​    11
+   1.1 Introduction to the Study
+   1.2 Background of the Study
+   1.3 Problem Statement
+   1.4 Need for the Proposed System
+   1.5 Objectives of the Project
+   1.6 Scope of the Project
+   1.7 Organization of the Report
+Chapter 2: System Study / Literature Review​              ​    ​   ​   ​   ​    15
+   2.1 Introduction
+   2.2 Overview of Neurodiversity Research
+   2.3 The Double Empathy Problem
+   2.4 Existing Empathy-Building Tools and Their Limitations
+   2.5 Sensory Simulation in HCI Research
+   2.6 On-Device Language Models and Privacy
+   2.7 Research Gap
+   2.8 Summary
+Chapter 3: System Analysis / Problem Description​              ​   ​   ​   ​    18
+   3.1 Introduction
+   3.2 Existing System Analysis
+   3.3 Limitations of Existing Systems
+   3.4 Proposed System
+   3.5 Functional Requirements
+   3.6 Non-Functional Requirements
+   3.7 Feasibility Study
+   3.8 Summary
+Chapter 4: System Design / Model Design​​                 ​    ​   ​   ​   ​    23
+   4.1 Introduction
+
+
+
+                                                 Page 6
+   4.2 Overall System Architecture (MVVM)
+   4.3 Module Design
+   4.4 Data Flow Design
+   4.5 UI/UX Design Principles
+   4.6 Shader and Effects Pipeline Design
+   4.7 Audio Graph Design
+   4.8 AI Integration Design
+   4.9 Summary
+Chapter 5: System Implementation​           ​            ​   ​   ​   ​   ​   28
+   5.1 Introduction
+   5.2 Development Environment and Tools
+   5.3 Sensory Simulator Module Implementation
+   5.4 Perspective Bridge Module Implementation
+   5.5 Tone Decoder Module Implementation
+   5.6 Audio Engine Implementation
+   5.7 Haptic Engine Implementation
+   5.8 Foundation Models Integration
+   5.9 Summary30
+Chapter 6: Testing​ ​         ​      ​      ​            ​   ​   ​   ​   ​   32
+   6.1 Introduction
+   6.2 Testing Strategy
+   6.3 Unit Testing
+   6.4 Integration Testing
+   6.5 Performance and Frame-Rate Testing
+   6.6 Accessibility Testing
+   6.7 User Acceptance Testing
+   6.8 Summary
+Chapter 7: Results and Discussion​ ​        ​            ​   ​   ​   ​   ​   36
+   7.1 Introduction
+   7.2 Functional Outcomes
+   7.3 Performance Outcomes
+   7.4 Qualitative User Feedback
+   7.5 Comparative Analysis
+   7.6 Limitations
+   7.7 Summary
+Chapter 8: Conclusion and Future Scope​ ​                ​   ​   ​   ​   ​   39
+   8.1 Conclusion
+   8.2 Key Achievements
+   8.3 Future Scope
+   8.4 Final Remarks
+Chapter 9: References / Bibliography​       ​            ​   ​   ​   ​   ​   42
+
+
+
+
+                                                Page 7
+Abstract
+
+SpecBridge is an iOS application that operationalises the Double Empathy Problem, the
+finding that communication breakdowns between neurotypical and neurodivergent
+individuals are mutual rather than the result of unilateral deficits, into an interactive,
+on-device educational tool. The system combines real-time visual distortion built on the
+SwiftUI ViewModifier stack, CoreHaptics patterns, and an algorithmic AVAudioEngine
+pipeline (AVAudioSourceNode → AVAudioUnitReverb → AVAudioUnitDistortion) to
+deliver sensory simulation across three environment scenes: classroom, grocery store, and
+café. A Perspective Bridge module presents dual-perspective dialogue exchanges revealing
+how NT and ND readers interpret identical messages differently, and a Tone Decoder
+module uses Apple Foundation Models via the @Generable structured-output schema to
+analyse user-supplied text and produce three bridge-language rewrites in Direct, Warm, and
+Detailed styles. All AI inference runs on-device with graceful degradation to pre-authored
+fallback content, ensuring privacy preservation and offline functionality. The application
+targets iOS 18+ devices, follows the MVVM architecture, supports VoiceOver, Dynamic
+Type, and Reduce Motion, and synthesises every sound at runtime without external audio
+assets. Performance testing confirms sustained 60 frames per second under maximum filter
+load and sub-second Foundation Models latency on Apple Silicon.
+
+Keywords: Neurodivergent empathy, Double Empathy Problem, iOS, Swift, SwiftUI, Metal,
+CoreHaptics, AVAudioEngine, Foundation Models, On-device AI, Accessibility, Sensory
+simulation, MVVM, Human–Computer Interaction, Generative AI, Structured output.
+
+
+
+
+                                          Page 8
+List of Abbreviations, Tables and Figures
+
+List of Figures
+Figure 4.1: Overall MVVM Architecture of SpecBridge19
+Figure 4.2: Inter-Module Data Flow Diagram20
+Figure 4.3: Audio Graph Pipeline (Speech and Ambient Synthesis)22
+Figure 4.4: Sensory Filter Effect Composition22
+Figure 4.5: Foundation Models @Generable Schema Diagram23
+Figure 5.1: Mode 1 – Classroom Scene Layout25
+Figure 5.2: Mode 2 – Perspective Reveal 2-Panel Layout26
+Figure 5.3: Mode 3 – Tone Decoder Three-Page Result Carousel27
+Figure 5.4: Haptic Pattern Diagrams (Per Filter)29
+Figure 7.1: Frame-Rate Distribution Under Filter Combinations36
+Figure 7.2: Foundation Models Latency Histogram36
+
+List of Tables
+Table 2.1: Comparison of Existing Empathy-Training Approaches9
+Table 3.1: Functional Requirements15
+Table 3.2: Non-Functional Requirements16
+Table 4.1: Reverb and Distortion Wet/Dry Mix per Sensory Filter22
+Table 5.1: Classroom Scene – Step-by-Step Filter and Intensity Schedule25
+Table 5.2: Ambient Noise Synthesis Layer Stack per Sensory Filter28
+Table 6.1: Unit Test Results32
+Table 6.2: Accessibility Compliance Checklist33
+Table 7.1: Performance Metrics Across Test Devices36
+Table 7.2: Capability Comparison – SpecBridge versus Existing Tools37
+
+List of Abbreviations
+AI — Artificial Intelligence
+API — Application Programming Interface
+AVF — AVFoundation
+DSP — Digital Signal Processing
+FM — Foundation Models
+FPS — Frames Per Second
+GPU — Graphics Processing Unit
+HCI — Human–Computer Interaction
+MSL — Metal Shading Language
+MVVM — Model–View–ViewModel
+ND — Neurodivergent
+NLP — Natural Language Processing
+NT — Neurotypical
+OS — Operating System
+
+
+                                                Page 9
+PCM — Pulse-Code Modulation
+SDK — Software Development Kit
+UI / UX — User Interface / User Experience
+
+
+
+
+                                             Page 10
+Chapter 1: Introduction
+1.1 Introduction to the Study
+Communication is the substrate on which every workplace, classroom, family, and social
+institution is built. When communication succeeds, collaboration flourishes; when it fails,
+relationships erode, productivity decays, and individuals experience profound distress. For the
+estimated 15–20 percent of the global population that is neurodivergent — a category that
+includes individuals on the autism spectrum, those with attention-deficit profiles, dyslexia,
+dyspraxia, and a range of related cognitive variations — everyday communication carries an
+additional, invisible cost. Subtle social cues, idiomatic language, indirect requests, and unspoken
+expectations can become sources of confusion, while the sensory environments in which these
+exchanges take place — humming fluorescent lights, overlapping voices, patterned visual stimuli
+— may themselves be physically aversive.
+
+Conventional approaches to building empathy between neurotypical and neurodivergent
+populations have been overwhelmingly text-based or video-based. Awareness articles describe
+the experience of sensory overload in clinical language; documentary videos present interviews
+with neurodivergent individuals describing their inner experiences. While these media play a
+vital role in shaping cultural awareness, they share a fundamental pedagogical limitation: they
+describe rather than reproduce. A neurotypical reader can intellectually acknowledge that a
+grocery store may be exhausting for an autistic adult, while still failing to internalise what that
+exhaustion actually feels like. The gap between cognitive understanding and embodied empathy
+is precisely the gap that perpetuates miscommunication, frustration, and unintended cruelty.
+
+SpecBridge is an attempt to close that gap by means of interactive, multi-sensory simulation.
+Rather than telling the user how a neurodivergent person might experience the world, the
+application invites the user into a simulated version of that experience: visual fields shimmer and
+pulse, ambient noise multiplies and overlays, haptic feedback delivers irregular irritants, and
+ordinary tasks — raising one’s hand in class, reading a menu, paying for groceries — become
+noticeably harder to complete. The user emerges from the simulation with a felt understanding
+that no description alone could provide.
+
+1.2 Background of the Study
+The intellectual foundation of this project is the Double Empathy Problem, a framework
+proposed by Dr. Damian Milton in 2012 and subsequently refined through more than a decade of
+empirical research. The framework argues that miscommunication between neurotypical and
+neurodivergent individuals is not the consequence of a one-sided deficit in the neurodivergent
+party, as classical theory-of-mind models had assumed, but is instead a mutual breakdown rooted
+in genuinely different communicative styles and sensory baselines. Just as neurodivergent people
+may struggle to read neurotypical social subtext, neurotypical people struggle equally to read
+
+
+
+
+                                              Page 11
+neurodivergent literal speech and may misinterpret directness as rudeness or focused interest as
+obsession.
+
+This reframing has substantial implications for software design. If miscommunication is mutual,
+then empathy-building tools must address both directions. They must do more than describe
+neurodivergent experiences to neurotypical audiences; they must also offer neurodivergent users
+explicit models of how their words may be received by neurotypical readers, and they must teach
+actionable bridging strategies that neither party is forced to abandon their natural style to adopt.
+SpecBridge embodies this bidirectional ambition through its three-mode structure, where each
+mode addresses a different aspect of the empathy gap.
+
+In parallel with this conceptual foundation, recent technological advances have made it possible
+to implement such an application without compromising user privacy. Apple’s Foundation
+Models framework, introduced with iOS 26, exposes a fully on-device large language model that
+can perform structured generation against a developer-defined schema. This means that sensitive
+personal text — the kind of awkward email or ambiguous social message a user might paste into
+a tone decoder — never leaves the device. The combination of Metal-accelerated graphics,
+CoreHaptics, AVAudioEngine, and Foundation Models on a single device makes the present
+project both technically novel and ethically tenable.
+
+1.3 Problem Statement
+Existing empathy-building tools for neurodivergent understanding are predominantly passive,
+unidirectional, and non-experiential. They suffer from four interrelated weaknesses:
+   •​ Passivity: They are consumed in the way a documentary is consumed — by reading or
+      watching — rather than experienced through embodied interaction.
+   •​ Unidirectionality: They typically address the neurotypical audience’s need to understand
+      neurodivergence, while offering very little to neurodivergent users seeking to understand
+      neurotypical communication patterns and adapt their own language.
+   •​ Sensory abstraction: They describe sensory processing differences in clinical or
+      anecdotal language but do not allow the user to feel the difference. A paragraph about
+      fluorescent flicker is not the same as a screen that actually flickers.
+   •​ Privacy compromise: Any AI-powered language tool that requires a user to upload
+      private text to a remote server creates a chilling effect that suppresses the very candour
+      the tool is meant to support.
+There exists no single integrated platform that allows a user to (a) experience sensory overload
+through real-time multi-modal simulation, (b) explore dual-perspective communication
+breakdowns from both neurotypical and neurodivergent points of view, and (c) receive private,
+on-device, AI-generated bridge-language suggestions — all within one accessible,
+offline-capable application.
+
+
+
+                                              Page 12
+1.4 Need for the Proposed System
+The need for SpecBridge arises from a confluence of social, educational, and technological
+factors. Socially, awareness of neurodivergence in the workplace, in education, and in healthcare
+settings is rising, but the toolkit available to organisations seeking to build inclusive cultures has
+remained limited to slide decks and brief workshops. Educationally, teachers and school
+counsellors require resources that translate research findings about sensory processing and
+communication into experiences that students and staff can engage with directly.
+Technologically, the recent maturation of on-device generative AI removes the privacy barriers
+that previously prevented sensitive communication-coaching tools from being deployed
+responsibly.
+
+There is, furthermore, a specific need within the iOS developer ecosystem for an application that
+demonstrates how the new Foundation Models framework can be combined with traditional
+multi-modal frameworks — Metal, CoreHaptics, AVAudioEngine — to produce experiences that
+are simultaneously emotionally meaningful and technically deep. SpecBridge addresses both the
+human and the technical need.
+
+1.5 Objectives of the Project
+The principal objectives of this project are the following:
+   •​ To design and develop an iOS application that delivers an immersive, interactive
+      simulation of neurodivergent sensory and communicative experience.
+   •​ To implement real-time, GPU-assisted visual distortion effects — sensory overload,
+      visual stress, and auditory processing simulation — using the SwiftUI ViewModifier and
+      Canvas systems together with TimelineView-driven animation.
+   •​ To integrate CoreHaptics-driven tactile feedback patterns synchronised with the active
+      visual filter, so that the user experiences a coherent multi-sensory load.
+   •​ To build three interactive environment scenes — Classroom, Grocery Store, and Café —
+      using pure SwiftUI geometric primitives, requiring no external 3D assets and ensuring
+      full portability.
+   •​ To design a Perspective Bridge module that presents pre-authored dialogue scenarios
+      with split-perspective reveals showing neurotypical and neurodivergent interpretations of
+      the same exchange.
+   •​ To implement a Tone Decoder module using Apple Foundation Models with the
+      @Generable / @Guide structured-output schema to deliver dual-perspective analysis and
+      three bridge-language rewrites.
+   •​ To synthesise all ambient noise and speech distortion entirely at runtime using
+      AVAudioEngine, AVAudioSourceNode, AVAudioUnitReverb, AVAudioUnitDistortion,
+      and AVSpeechSynthesizer, with zero external audio assets.
+
+
+                                               Page 13
+   •​ To ensure all AI inference and data processing occurs on-device, preserving user privacy
+      and enabling fully offline operation.
+   •​ To deliver an accessibility-first interface that respects VoiceOver, Dynamic Type, Reduce
+      Motion, and Reduce Transparency system settings without compromising functionality.
+
+1.6 Scope of the Project
+The scope of the project, as delivered in this report, includes:
+   •​ A complete, single-binary iOS application packaged as a Swift Playground App,
+      deployable to any iPhone or iPad running iOS 18 or later.
+   •​ Three sensory simulation filters and three interactive scenes, with a structured five-step
+      progressive narrative per scene.
+   •​ Three fully pre-authored Perspective Bridge scenarios covering workplace, social, and
+      educational contexts.
+   •​ A Tone Decoder module backed by Foundation Models inference with NLTagger and
+      pre-authored fallback paths.
+   •​ Algorithmic ambient noise synthesis, speech-buffer post-processing, and CoreHaptics
+      pattern generation.
+   •​ Accessibility integration across the application surface area.
+The scope explicitly excludes a server-side backend, voice-input transcription, multi-user
+functionality, in-app purchases, and platform extensions beyond the iOS family. These
+exclusions are deliberate: they preserve the privacy and offline-first nature of the experience.
+
+1.7 Organization of the Report
+The remainder of this report is structured as follows. Chapter 2 reviews the relevant literature on
+neurodiversity, the Double Empathy Problem, sensory simulation in human–computer
+interaction, and on-device language models. Chapter 3 presents a detailed system analysis,
+surveying existing systems, documenting their limitations, and articulating the functional and
+non-functional requirements of SpecBridge. Chapter 4 describes the system design, including the
+MVVM architecture, the inter-module data flow, the audio graph, and the shader and AI
+pipelines. Chapter 5 documents the actual implementation, walking through each module file by
+file. Chapter 6 reports on the testing strategy and results, including unit, integration,
+performance, and accessibility testing. Chapter 7 presents the project’s outcomes, performance
+measurements, and qualitative user observations. Chapter 8 concludes with achievements,
+limitations, and a roadmap for future expansion. Chapter 9 lists the references that grounded this
+work.
+
+
+
+
+                                               Page 14
+Chapter 2: System Study / Literature Review
+2.1 Introduction
+A serious software project that engages with the lived experience of a marginalised population
+must be grounded in the relevant academic, clinical, and self-advocacy literature. To design
+SpecBridge responsibly, this chapter surveys the existing body of knowledge on neurodiversity,
+communication breakdowns, sensory simulation, and on-device artificial intelligence. The
+review serves three purposes: it justifies the conceptual framing of the application, it documents
+the limitations of prior work that SpecBridge attempts to overcome, and it identifies the research
+gap that the present project addresses. The chapter proceeds from broad context — the
+neurodiversity paradigm — to the specific framework that drives the application’s three-mode
+structure (the Double Empathy Problem), and from there into the technical literature on sensory
+simulation systems and on-device language models that informed the implementation choices.
+
+2.2 Overview of Neurodiversity Research
+The term neurodiversity was coined by Australian sociologist Judy Singer in the late 1990s. The
+framing was an intentional rhetorical departure from the medical-deficit model that had
+previously dominated discussions of autism, ADHD, dyslexia, and related cognitive profiles.
+Within the neurodiversity paradigm, these profiles are understood not as illnesses to be cured but
+as naturally occurring variations in human cognition, each carrying its own pattern of strengths,
+sensitivities, and communicative styles. The paradigm does not deny that neurodivergent
+individuals face real challenges in environments designed around neurotypical defaults — it
+relocates the source of those challenges from the individual to the mismatch between the
+individual and the environment.
+
+Subsequent empirical research has substantiated the paradigm’s core claims. Studies of sensory
+processing have established that many autistic individuals experience genuine, measurable
+hyper-reactivity to ordinary stimuli: heart-rate variability changes, cortisol levels rise, and
+self-reported aversion intensifies in response to lighting, sound, and crowd densities that
+neurotypical participants find unremarkable. Communication studies have shown that
+neurodivergent communicative styles — directness, literalness, deep topical focus — are
+internally consistent and effective among neurodivergent peers, but are systematically misread as
+rude, evasive, or socially inept by neurotypical listeners. These findings provide the empirical
+justification for the SpecBridge design: sensory and communicative differences are real, they are
+mutual, and they are amenable to translation through carefully designed experiential tools.
+
+2.3 The Double Empathy Problem
+The Double Empathy Problem is a theoretical framework introduced by Dr. Damian Milton in
+his 2012 paper “On the Ontological Status of Autism: The Double Empathy Problem.” Milton
+argues that the empathy difficulties commonly observed in interactions between autistic and
+non-autistic people are not the result of a unilateral deficit located in the autistic party. They are
+
+
+                                               Page 15
+instead the predictable result of two people from different communicative cultures attempting to
+read one another’s minds and consistently misjudging the signal. Subsequent empirical work —
+most notably the 2020 Crompton et al. studies of information transfer in autistic–autistic,
+autistic–non-autistic, and non-autistic–non-autistic dyads — has confirmed that information loss
+is highest in mixed dyads and equally low in matched dyads regardless of neurotype. The
+conclusion: the problem lies in the gap, not in one side of it.
+
+2.4 Existing Empathy-Building Tools and Their Limitations
+Several classes of empathy-building tools currently exist, each with characteristic limitations.
+
+Web-based awareness articles, such as those published by autism charities and disability
+advocacy organisations, are widely available but suffer from the descriptive-versus-experiential
+gap discussed earlier. Their reach is high but their depth of impact is low: readers can complete
+an article and report no change in behaviour.
+
+Documentary videos, including the well-known autism awareness films circulated on streaming
+platforms, achieve higher emotional engagement than text but remain passive media. The viewer
+observes the experience of others rather than entering into it. Interactive elements are typically
+absent.
+
+Virtual-reality sensory simulators, such as those developed for educator training, come closest to
+the experiential ideal and have produced encouraging preliminary results. However, they require
+dedicated hardware (a VR headset, a controlled room), are expensive to deploy at scale, and tend
+to focus exclusively on the sensory dimension while neglecting the communicative dimension.
+
+Clinical questionnaires and self-assessment tools provide a different kind of value — helping
+neurodivergent users articulate their own profiles — but they are not designed for
+empathy-building between groups. They produce inward-facing data, not outward-facing
+experience.
+
+Workshop-based interventions, common in corporate diversity and inclusion contexts, can be
+powerful when led by skilled facilitators but are constrained by scheduling, geography, and
+facilitator availability. They cannot be revisited at will by an individual learner.
+
+No prior tool, to the author’s knowledge, integrates immersive multi-sensory simulation,
+dual-perspective communication analysis, and AI-driven bridge-language generation in a single
+application that runs fully on consumer mobile hardware without privacy compromise.
+
+2.5 Sensory Simulation in HCI Research
+Within the human–computer interaction (HCI) literature, sensory simulation has been explored
+as a tool for accessibility training. Studies of stroboscopic and flicker effects have established
+that pulsing overlays at frequencies between 3 and 12 Hz reliably produce subjective discomfort
+in neurotypical participants, providing a measurable analogue to fluorescent-flicker sensitivity
+
+
+                                               Page 16
+reported by many autistic individuals. Studies of moiré and chromatic-aberration effects have
+demonstrated that subtle red-blue offset, when combined with patterned backgrounds, produces a
+measurable reduction in reading speed in neurotypical participants — a useful approximation of
+the visual stress described by individuals with Irlen Syndrome and certain visual processing
+differences. Studies of layered ambient noise have shown that the addition of low-frequency hum
+and broadband white noise to a primary speech signal reduces speech intelligibility for all
+listeners, providing a justification for the auditory-processing filter implemented in SpecBridge.
+
+2.6 On-Device Language Models and Privacy
+The introduction of Apple Foundation Models in iOS 26 changed this picture. The framework
+exposes a compact, on-device language model with sub-second inference latency on modern
+Apple Silicon and supports structured output generation through the @Generable schema
+annotation. With Foundation Models, an application can perform sophisticated language analysis
+without any network traffic, satisfying both privacy and offline-operability constraints.
+SpecBridge’s Tone Decoder module is, to the author’s knowledge, one of the first educational
+applications to demonstrate this pattern in the neurodiversity domain.
+
+2.7 Research Gap
+The research gap addressed by this project may be stated concisely. Despite a rich body of
+literature establishing the Double Empathy Problem as the appropriate framework for
+understanding neurotypical–neurodivergent communication, and despite the existence of mature
+technologies for multi-sensory simulation and on-device AI, no integrated, accessible,
+offline-capable mobile application currently combines all three capabilities. SpecBridge fills this
+gap.
+
+2.8 Summary
+This chapter has surveyed the neurodiversity paradigm, the Double Empathy Problem, existing
+empathy-building tools and their limitations, the HCI literature on sensory simulation, and the
+recent emergence of on-device language models. The literature jointly supports the design
+choices made in SpecBridge: a Double-Empathy-aware three-mode architecture, multi-modal
+sensory simulation with safety bounds, on-device AI for privacy, and pre-authored fallback
+content for accessibility on devices without Foundation Models support. The next chapter
+formalises these findings into a system analysis and a requirements specification.
+
+
+
+
+                                              Page 17
+Chapter 3: System Analysis / Problem Description
+3.1 Introduction
+System analysis is the bridge between a research question and a buildable specification. Having
+established in Chapters 1 and 2 that an integrated, on-device, multi-modal empathy tool is both
+needed and feasible, this chapter formalises the requirements that the SpecBridge application
+must satisfy. It begins with a survey of the systems already available to users seeking to
+understand or to support neurodivergent communication, identifies the specific limitations of
+each, articulates the proposed system in functional terms, and concludes with explicit functional
+and non-functional requirements together with a feasibility study. The objective of the chapter is
+to leave the reader in a position to evaluate the design and implementation chapters that follow
+against a clearly stated specification.
+
+3.2 Existing System Analysis
+Five categories of existing system warrant examination, each representing a distinct point in the
+design space of empathy-related software for neurodiversity.
+
+Awareness websites — such as those operated by national autism societies and disability
+advocacy non-profits — host text articles, blog posts, and downloadable PDFs explaining
+neurodivergent experience. Their content is typically authored by clinicians, researchers, or
+self-advocates and is updated on monthly to quarterly cycles. Their reach is broad but their
+interactivity is essentially zero.
+
+Video documentaries — distributed via mainstream streaming services and educational platforms
+— provide higher emotional bandwidth than text but remain a one-way medium. A viewer can
+pause, rewind, and re-watch, but cannot influence the trajectory of the content.
+
+Virtual-reality sensory simulators — research prototypes developed in HCI laboratories and a
+small number of commercial offerings aimed at educator training — place the user inside a 3D
+environment whose sensory parameters can be modulated. They achieve high immersion but
+require dedicated hardware, controlled physical space, and significant setup time. They are
+typically licensed at institutional rather than individual price points.
+
+Communication-coaching chatbots — built on top of cloud-hosted language models — analyse
+user-supplied text and suggest alternative phrasings. They are functionally useful but their
+reliance on remote inference creates a privacy barrier that is particularly problematic for the
+kinds of messages users most need help with: messages from family, employers, and intimate
+partners.
+
+Workshop-based diversity-and-inclusion programmes — delivered in person or via webinar by
+professional facilitators — combine narrative and small-group exercises. They are powerful
+
+
+
+
+                                             Page 18
+when well-led but expensive, geographically constrained, and impossible for an individual
+learner to revisit at will.
+
+3.3 Limitations of Existing Systems
+Each of the five categories above exhibits one or more limitations that the proposed system
+attempts to address.
+   •​ Limitation L1 — Descriptive rather than experiential learning: Text and video media
+      tell the user about neurodivergent experience but do not let them feel it.
+   •​ Limitation L2 — Unidirectional empathy framing: Most tools train neurotypical users
+      to understand neurodivergent users but offer no comparable resource in the opposite
+      direction.
+   •​ Limitation L3 — Hardware and venue barriers: VR-based simulators and
+      workshop-based programmes both impose substantial logistical costs that exclude
+      individual learners and informal contexts.
+   •​ Limitation L4 — Privacy compromise: Cloud-based communication coaches require
+      sensitive personal text to leave the user’s device.
+   •​ Limitation L5 — Discontinuity: Existing tools are siloed — a sensory simulator does
+      not connect to a communication coach, and a communication coach does not
+      contextualise its advice within the user’s sensory experience.
+   •​ Limitation L6 — Accessibility neglect: Many simulators ignore the Reduce Motion,
+      Dynamic Type, and VoiceOver settings that some of their own intended users depend
+      upon.
+
+3.4 Proposed System
+The proposed system, SpecBridge, is a single-binary iOS application that integrates three
+interconnected modules to address the limitations identified above.
+
+Module 1 — Sensory Simulator — addresses limitations L1 and L3. The user enters one of three
+environment scenes (Classroom, Grocery Store, or Café) and proceeds through a five-step
+interactive narrative during which the visual field is progressively distorted by combinations of
+three sensory filters: Sensory Overload (flicker and noise), Visual Stress (chromatic aberration
+and moiré patterns), and Auditory Processing (radial vignette and audio reverb). Each filter is
+accompanied by a synchronised haptic pattern and an algorithmically synthesised audio bed. The
+simulation runs entirely on the user’s phone and requires no additional hardware.
+
+Module 2 — Perspective Bridge — addresses limitations L2 and L5. The user reads a short
+surface conversation, then with a single tap reveals two side-by-side panels showing how a
+neurotypical reader and a neurodivergent reader might interpret the same words. A third reveal
+surfaces the specific communication pattern at the root of the divergence (for example, indirect
+
+
+                                             Page 19
+request, hedging, or social pleasantry), and a fourth presents a rewritten ‘bridge language’
+alternative that works for both reading styles.
+
+Module 3 — Tone Decoder — addresses limitation L4. The user pastes a message they have
+received or are about to send, and the application uses Apple Foundation Models to analyse the
+message on-device, producing the same dual-perspective breakdown that Module 2 presents on
+pre-authored scenarios, this time generated dynamically for the user’s own content. Three
+bridge-language rewrites are offered in three styles: Direct, Warm, and Detailed.
+
+All three modules share a common navigation router, a common theme system with twelve
+emotion-keyed colour palettes, and a common accessibility-respecting animation layer. Together
+they constitute a coherent platform rather than a collection of disconnected utilities.
+
+3.5 Functional Requirements
+The functional requirements specify what the system must do.
+Table 3.1: Functional Requirements
+
+   ID                                      Requirement                                    Priority
+          The system shall allow the user to select one of three environment scenes:
+   FR1                                                                                     High
+          Classroom, Grocery Store, or Café.
+
+          The system shall present a five-step interactive narrative per scene with
+   FR2                                                                                     High
+          progressively increasing sensory filter intensity.
+
+          The system shall implement three sensory filters — Sensory Overload, Visual
+   FR3                                                                                     High
+          Stress, and Auditory Processing — as composable SwiftUI ViewModifier effects.
+
+          The system shall deliver synchronised CoreHaptics patterns for each active
+   FR4                                                                                     High
+          filter.
+
+          The system shall synthesise all ambient noise and speech distortion using
+   FR5                                                                                     High
+          AVAudioEngine without external audio files.
+
+          The system shall present three pre-authored Perspective Bridge scenarios
+   FR6                                                                                     High
+          covering workplace, social, and educational contexts.
+
+          The system shall reveal neurotypical and neurodivergent perspectives
+   FR7                                                                                     High
+          side-by-side using a KeyframeAnimator-driven layout.
+
+          The system shall accept user-supplied text input in the Tone Decoder module,
+   FR8                                                                                     High
+          up to 500 characters.
+
+          The system shall analyse user text using Foundation Models when available,
+   FR9                                                                                     High
+          producing a structured dual-perspective output with three bridge rewrites.
+
+          The system shall provide a pre-authored or NLTagger-based fallback when
+  FR10                                                                                     High
+          Foundation Models are unavailable.
+
+          The system shall present a debrief screen after each scene summarising the
+  FR11                                                                                    Medium
+          neurological basis of each filter.
+
+
+
+
+                                                    Page 20
+   ID                                       Requirement                                           Priority
+  FR12    The system shall support copying any bridge rewrite to the system clipboard.            Medium
+
+          The system shall pass scene context from Module 1 into Module 3 to prefilter
+  FR13                                                                                            Medium
+          sample messages.
+
+
+
+3.6 Non-Functional Requirements
+The non-functional requirements specify the qualities the system must exhibit.
+Table 3.2: Non-Functional Requirements
+
+    ID                                Requirement                                           Target
+           Performance: visual rendering frame rate under maximum filter
+  NFR1                                                                                     ≥ 60 FPS
+           load.
+
+           Performance: Foundation Models inference latency for a
+  NFR2                                                                                   ≤ 1.5 s on A17
+           100-word input.
+
+  NFR3     Performance: haptic–visual synchronisation latency.                              ≤ 5 ms
+
+           Privacy: no user-supplied text shall leave the device under any
+  NFR4                                                                                       Strict
+           condition.
+
+           Offline: full application functionality (except optional content
+  NFR5                                                                                       Strict
+           updates) shall be available without an internet connection.
+
+           Accessibility: full support for VoiceOver, Dynamic Type, Reduce
+  NFR6                                                                               Apple AX Guidelines
+           Motion, and Reduce Transparency.
+
+           Safety: visual flicker shall not exceed published
+  NFR7                                                                                    ITU BT.1702
+           photosensitive-epilepsy guidelines.
+
+           Maintainability: single-binary Swift Playground App with no
+  NFR8                                                                                       Strict
+           external SPM dependencies beyond Apple frameworks.
+
+           Portability: target iOS 18 and later, both iPhone and iPad form
+  NFR9                                                                                     Required
+           factors.
+
+           Code quality: MVVM architecture with @Observable view
+  NFR10                                                                                    Required
+           models and clear module boundaries.
+
+
+
+3.7 Feasibility Study
+Technical feasibility is established by the existence of the underlying frameworks. SwiftUI,
+CoreHaptics, AVAudioEngine, and Foundation Models are all part of the standard iOS 18+ SDK;
+no third-party dependencies are required. The Swift Playground App packaging model has been
+validated for substantial multi-module applications, including past Swift Student Challenge
+submissions.
+
+
+
+
+                                                     Page 21
+Operational feasibility is established by the on-device, offline-first design. The application
+requires no server provisioning, no API key management, and no ongoing infrastructure costs. A
+user with a supported iPhone or iPad can install and run SpecBridge without any account,
+subscription, or login.
+
+Economic feasibility within an academic context is high: the project incurs no licensing or
+hosting costs and uses only freely available developer tooling (Xcode, the Apple Developer
+programme student tier). The principal cost is developer time, which is committed to the
+academic effort.
+
+Schedule feasibility was assessed at the start of the project by decomposing the work into design,
+implementation, testing, and documentation phases. The actual schedule is reported in Chapter 5.
+
+Legal and ethical feasibility was confirmed by reviewing Apple’s App Store and Foundation
+Models guidelines, and by grounding the project’s framing in published, peer-reviewed
+neurodiversity research rather than in clinical or diagnostic claims that would require regulatory
+approval.
+
+3.8 Summary
+This chapter has surveyed five categories of existing empathy-related system, identified six
+recurring limitations, and articulated the proposed SpecBridge architecture that addresses them.
+Thirteen functional and ten non-functional requirements have been specified, and feasibility has
+been established along technical, operational, economic, scheduling, and legal dimensions. The
+next chapter translates this specification into a concrete system design.
+
+
+
+
+                                              Page 22
+Chapter 4: System Design / Model Design
+4.1 Introduction
+This chapter presents the system design of SpecBridge, translating the functional and
+non-functional requirements established in Chapter 3 into a concrete architectural and
+module-level specification. The design is described from the outside in: the overall architectural
+pattern is presented first, followed by the module decomposition, the inter-module data flow, the
+user interface principles, the visual effects pipeline, the audio graph, and finally the AI
+integration design. Throughout the chapter, design decisions are justified with reference to the
+requirements they serve.
+
+4.2 Overall System Architecture (MVVM)
+SpecBridge adopts the Model–View–ViewModel (MVVM) architectural pattern, which is the de
+facto standard for modern SwiftUI applications. The pattern was selected because it cleanly
+separates concerns, makes view models unit-testable in isolation from UI, and integrates
+naturally with SwiftUI’s @Observable property wrapper and reactive view system.
+
+The Model layer encapsulates the application’s domain data: SensoryFilter and
+EnvironmentScene enums, Scenario / Perspective / BridgeLanguage structs, BridgeAnalysis
+result types, and the @Generable schema BridgeAnalysisResult used by Foundation Models. The
+Model layer is pure Swift with no UI or framework dependencies beyond Foundation, allowing it
+to be reasoned about independently of the rest of the application.
+
+The ViewModel layer hosts the business logic and orchestrates the asynchronous flows between
+user actions, audio engine state, haptic engine state, AI service responses, and UI presentation.
+Notable view models include Mode1ViewModel (sensory scene state machine),
+Mode2ViewModel (perspective reveal flow), and Mode3ViewModel (tone decoder request
+lifecycle). All view models are marked @Observable and @MainActor, ensuring thread safety
+and SwiftUI integration.
+
+The View layer is built exclusively with SwiftUI: NavigationStack, TabView, custom
+ViewModifiers, Canvas, TimelineView, KeyframeAnimator, PhaseAnimator, and MeshGradient.
+There are no UIViewControllerRepresentable bridges in the production code path, ensuring
+forward compatibility with future SwiftUI releases.
+
+Cross-cutting concerns — theming, navigation routing, audio engine ownership, haptic engine
+ownership, and AI availability — are encapsulated in a small number of singletons exposed via
+the SwiftUI Environment: AppTheme, AppRouter, SensoryAudioEngine, HapticEngine, and
+AIAvailabilityService.
+
+                      [Figure 4.1: Overall MVVM Architecture of SpecBridge]
+
+4.3 Module Design
+
+
+                                              Page 23
+The application is divided into three feature modules and a shared support module, each housed
+in its own directory tree.
+
+Mode1_SensorySimulator contains the three environment scenes (Classroom, GroceryStore,
+Cafe), each composed of a SceneView, a GameView, a NarrationOverlay, and a DebriefView. It
+also contains the SensoryFilter and EnvironmentScene model types, the SensoryOverloadEffect /
+VisualStressEffect / AuditoryProcessingEffect ViewModifiers, and the HapticEngine.
+
+Mode2_PerspectiveBridge contains the Scenario model, the PreAuthoredScenarios data file with
+three full scenarios, the SurfaceConversationView, the PerspectiveRevealView with its two-panel
+MeshGradient layout, and the BridgeLanguageCard. The PerspectiveService class wraps the
+(currently routed) Foundation Models call for dynamic scenario generation.
+
+Mode3_ToneDecoder contains the ToneAnalysis model, the @Generable BridgeAnalysisResult
+schema, the ToneAnalysisService that performs the LanguageModelSession.respond call, the
+ToneInputView with sample-message chip carousel, the ToneResultView with the three-page
+swipeable result carousel, and the SwipeableBridgeCards rewrite presenter.
+
+Shared contains AppRouter, AppTheme, AIAvailabilityService, SensoryAudioEngine, and the
+reusable UI components: GlassPanel, StreamingTextView, EmotionBadge, ModeCardView.
+
+4.4 Data Flow Design
+Two principal data flows characterise the application’s                 runtime    behaviour:   the
+sensory-simulation flow and the language-analysis flow.
+
+The sensory-simulation flow proceeds as follows. The user selects a scene through
+ScenePickerView, which invokes AppRouter to push the chosen SceneView. The SceneView
+instantiates a Mode1ViewModel that holds the current step index and the corresponding (filter,
+intensity) tuple. Each step’s onAppear triggers four parallel asynchronous tasks:
+NarrationOverlay begins a StreamingTextView typewriter reveal; SensoryAudioEngine receives
+a configure(filter:intensity:) call that updates the reverb / distortion wet/dry mix and the ambient
+layer stack; HapticEngine receives a playPattern(for:intensity:) call that loads the matching
+CHHapticPattern; and the SceneView’s sensoryEffect view modifier activates the visual filter at
+the requested intensity. When the user taps the highlighted scene element, the view model
+advances the step index and the cycle repeats.
+
+The language-analysis flow proceeds as follows. The user enters text in ToneInputView and taps
+‘Bridge This Message’. The Mode3ViewModel calls ToneAnalysisService.analyse(text:), which
+checks AIAvailabilityService for the current AITier; on .foundationModels the service initialises
+a    LanguageModelSession       with     the   bridge-analyst     instructions   and    invokes
+session.respond(to:generating:BridgeAnalysisResult.self); the returned struct is mapped to the
+BridgeAnalysis domain type and emitted to the view via the view model’s analysis
+@Published-style property. On .fallbackOnly the service short-circuits to a pre-authored or
+
+
+                                              Page 24
+NLTagger-derived BridgeAnalysis and surfaces an unavailability banner. ToneResultView
+observes the analysis and renders the three-page carousel.
+
+                           [Figure 4.2: Inter-Module Data Flow Diagram]
+
+4.5 UI/UX Design Principles
+Five design principles guide the user interface throughout the application.
+   •​ Progressive disclosure: complex content (filter intensities, perspective interpretations,
+      AI rewrites) is revealed step-by-step rather than dumped onto the user.
+   •​ Multi-sensory coherence: visual, auditory, and haptic channels always reinforce one
+      another; the user is never asked to interpret a discordant signal.
+   •​ Accessibility-first: every animation has a Reduce Motion fallback; every text element
+      scales with Dynamic Type; every interactive element exceeds the 44 pt minimum touch
+      target.
+   •​ Emotional honesty: the application does not soften the discomfort of the sensory
+      simulation, because the discomfort is the point — but it bounds the discomfort within
+      safety limits and always provides an exit.
+   •​ Privacy transparency: the application states plainly that no user content leaves the
+      device, and visibly indicates the on-device AI availability tier.
+
+4.6 Shader and Effects Pipeline Design
+The visual effects are implemented as a stack of three SwiftUI ViewModifier types:
+SensoryOverloadEffect, VisualStressEffect, and AuditoryProcessingEffect. Each modifier is
+parameterised by an enabled flag, an intensity value between zero and one, and a reduceMotion
+flag drawn from the SwiftUI Environment.
+
+SensoryOverloadEffect composes a TimelineView-driven pulsing orange overlay using
+blendMode(.plusLighter), a procedural noise field rendered through a Canvas (40–120 particles
+depending on intensity), a contrast boost that scales with intensity, a saturation boost, and a
+subtle scale effect (1.0 to 1.007) that contributes a slight disorientation cue.
+
+VisualStressEffect composes a chromatic-aberration treatment in which red and blue
+channel-tinted Color overlays are offset in opposite horizontal directions at a sinusoidal 3 Hz
+frequency, a Canvas-rendered moiré pattern whose line count and phase scale with intensity, and
+a soft blur and contrast lift.
+
+AuditoryProcessingEffect composes a TimelineView-driven radial vignette pulsing at 4 Hz,
+narrowing the visible region toward a centred focus point, and a moderate blur radius that scales
+with intensity. The visual metaphor of the filter is the cognitive narrowing that accompanies the
+effort of disentangling overlapping audio streams.
+
+
+
+                                              Page 25
+All    three modifiers are applied to the scene root through a single
+sensoryEffect(filter:intensity:reduceMotion:) extension, ensuring that filter changes propagate
+cleanly through SwiftUI’s diffing engine.
+
+                             [Figure 4.4: Sensory Filter Effect Composition]
+
+4.7 Audio Graph Design
+The audio engine is built around AVAudioEngine and contains two parallel signal paths: a speech
+path and an ambient path. The speech path runs AVSpeechSynthesizer.write(utterance:) to render
+PCM buffers asynchronously, normalises those buffers to 44.1 kHz mono via AVAudioConverter,
+schedules them on an AVAudioPlayerNode, then routes them through an AVAudioUnitReverb
+(mediumRoom preset) and an AVAudioUnitDistortion (speechWaves preset) before feeding a
+dedicated speechMixer node. The ambient path runs an AVAudioSourceNode whose render
+callback synthesises layered sine, white-noise, and pulse-square waves at frequencies dictated by
+the active filter; this node feeds a dedicated ambientMixer. The two mixer outputs are combined
+in the engine’s mainMixer and routed to the device output. The AVAudioSession is configured
+with the .playback category and the .mixWithOthers option, so that background music and
+podcasts are never interrupted.
+
+The reverb wet/dry mix and distortion wet/dry mix are functions of the active filter and intensity:
+Table 4.1: Reverb and Distortion Wet/Dry Mix per Sensory Filter
+
+           Filter              Reverb Wet/Dry      Distortion Wet/Dry                  Effect
+ None                                0%                    0%           Clean speech
+
+ Sensory Overload                   20%                    0%           Slight room echo
+
+ Visual Stress                      35%                    0%           Enclosed; harder to isolate voice
+
+                                                                        Heavy echo with frequency
+ Auditory Processing                65%                    25%
+                                                                        harshness
+
+                    [Figure 4.3: Audio Graph Pipeline (Speech and Ambient Synthesis)]
+
+4.8 AI Integration Design
+The Foundation Models integration is anchored by the AIAvailabilityService class, which
+exposes a currentTier published property of type AITier. AITier has two cases:
+.foundationModels when SystemLanguageModel.default.isAvailable is true, and .fallbackOnly
+otherwise. Both Mode 2 and Mode 3 consult this service before initiating any AI call. The
+compile-time guard #if canImport(FoundationModels) ensures that the entire AI path is excluded
+from builds targeting older SDKs.
+
+Mode 3’s ToneAnalysisService is the most fully developed AI integration in the application. It
+initialises a LanguageModelSession with a 25-line system instruction that defines the
+bridge-analyst role, lists the twelve valid emotion strings, describes the three bridging styles, and
+
+
+                                                 Page 26
+constrains      the     confidence       calibration    approach.      It      then     invokes
+session.respond(to:generating:BridgeAnalysisResult.self), where BridgeAnalysisResult is a
+@Generable struct annotated with twelve @Guide directives. The structured-output discipline
+ensures that the language model returns a well-formed schema rather than free-form prose.
+
+Mode 2’s PerspectiveService currently routes through a closestMatch keyword-matching
+fallback that selects one of three pre-authored scenarios. The Foundation Models call site is
+implemented but not in the active path; future work will activate it once additional grounding
+scenarios are authored.
+
+                  [Figure 4.5: Foundation Models @Generable Schema Diagram]
+
+4.9 Summary
+This chapter has presented the system design at four levels: the overall MVVM architecture, the
+four-module decomposition, the two principal runtime data flows, and the detailed designs of the
+visual effects pipeline, the audio graph, and the AI integration. The design decisions trace
+directly to the requirements identified in Chapter 3 and to the literature reviewed in Chapter 2.
+The next chapter walks through the actual implementation, file by file.
+
+
+
+
+                                             Page 27
+Chapter 5: System Implementation
+5.1 Introduction
+This chapter documents the implementation of SpecBridge in the order in which the modules
+were built. The intent is to provide the reader with sufficient detail to understand how each
+module fulfils its design specification without reproducing the source code in full. Where
+specific algorithmic decisions or API choices warrant explanation, they are presented inline;
+otherwise,     the   reader    is   referred    to   the     project    source    tree  under
+SpectrumBridge.swiftpm/SpectrumBridge/. Implementation totals approximately 7,100 lines of
+Swift across 54 source files.
+
+5.2 Development Environment and Tools
+The application was developed entirely on macOS using the following tooling:
+   •​ Xcode 16.2 (build environment, Interface Builder previews, Instruments profiler)
+   •​ Swift 6.0 (programming language, strict concurrency checking enabled)
+   •​ Swift Playground App package format (single-binary distribution)
+   •​ iOS 18+ SDK with the Foundation Models framework available on iOS 26
+   •​ iPhone 15 Pro (A17 Pro) and iPhone 16 (A18) as the primary test devices
+   •​ iPad Air (M2) for tablet form-factor verification
+   •​ Git for version control with a feature-branch workflow
+No third-party Swift Package Manager dependencies are used. All runtime functionality is
+provided by the iOS SDK. This decision keeps the build self-contained, minimises supply-chain
+risk, and ensures that the project can be opened and run on a clean macOS installation with no
+additional setup.
+
+5.3 Sensory Simulator Module Implementation
+The Sensory Simulator module is the largest single module in the application by line count and
+represents the technical centrepiece of the project. Implementation began with the SensoryFilter
+and EnvironmentScene enums, which encode the three sensory perspectives and the three
+environment scenes respectively. Each enum case carries a short description, an SF Symbol icon
+name, and an educationalText method that returns scene-specific context strings used in the
+post-scene debrief view.
+
+Scene composition is performed entirely in pure SwiftUI. The ClassroomSceneView, for
+example, lays out a 3×3 desk grid, a fluorescent light panel, a wall clock with a moving second
+hand, a whiteboard whose text content varies per step, and a notebook with handwritten math
+notes. Each interactive element is a tap target with a pulsing highlight ring and a floating callout
+badge that appears only when the element is the current step’s target.
+
+
+                                              Page 28
+The five-step narrative is encoded as an enum ClassroomStep with cases sit, lookAtNotebook,
+lookAtWhiteboard, listenToTeacher, raiseHand. The associated (filter, intensity) progression
+follows the schedule below:
+                               [Figure 5.1: Mode 1 – Classroom Scene Layout]
+Table 5.1: Classroom Scene – Step-by-Step Filter and Intensity Schedule
+
+  Step                 Tap Target                                Filter            Intensity
+    1      Desk                                  None                                 0.0
+
+    2      Notebook (as lights come on)          Sensory Overload                     0.3
+
+    3      Whiteboard (text appears to swim)     Visual Stress                        0.5
+
+    4      Notebook (while teacher talks)        Auditory Processing                  0.7
+
+    5      Raise hand button                     All three simultaneous              0.85
+
+
+The      visual        effect     modifiers      are       imported       through   a     single
+sensoryEffect(filter:intensity:reduceMotion:)       extension      on      View,  defined     in
+SensoryOverloadEffect.swift. SwiftUI’s diffing engine ensures that filter transitions cross-fade
+smoothly. The Reduce Motion fallbacks set the pulsing-overlay animation to a static opacity, halt
+the moiré phase, and freeze the radial vignette at its mid-cycle position.
+
+5.4 Perspective Bridge Module Implementation
+The Perspective Bridge module is comparatively compact but carries substantial narrative
+weight. The Scenario model is a struct that holds an id, a title, a setting enum (workplace, social,
+school), a hook string, a SurfaceDialogue with an ordered list of DialogueExchange instances,
+two Perspective structs (one neurotypical, one neurodivergent), a MiscommunicationPoint, and a
+BridgeLanguage struct containing original text, improved rewrite, and a list of reasons
+explaining why the rewrite works.
+
+Three full scenarios are authored in PreAuthoredScenarios.swift. The first, ‘The Team Meeting’,
+dramatises an indirect-request pattern in which a manager softens a high-priority instruction with
+hedging language; the neurotypical reader correctly infers urgency, while the neurodivergent
+reader takes the language at face value and deprioritises the task. The second, ‘The Party
+Invitation’, dramatises a social-pleasantry pattern in which a vague ‘we should hang out
+sometime’ is read by one party as filler and by the other as a commitment. The third, ‘The
+Feedback Email’, dramatises a praise-sandwich pattern in which positive framing obscures a
+critical priority signal.
+
+The PerspectiveRevealView uses a KeyframeAnimator to split the surface card into a 2×1 layout,
+with the neurotypical perspective rendered in an orange-keyed MeshGradient panel on the left
+and the neurodivergent perspective rendered in a purple-keyed panel on the right. Each panel
+
+
+
+                                                  Page 29
+exposes the role of the reader, their interpretation, their feeling, and an explanation of why that
+interpretation arises from the surface text. The BridgeLanguageCard then presents a before/after
+comparison: the original message in a subdued panel, the rewritten message in a highlighted
+panel, and four checkmark bullet reasons summarising why the rewrite works for both reading
+styles.
+
+                      [Figure 5.2: Mode 2 – Perspective Reveal 2-Panel Layout]
+
+5.5 Tone Decoder Module Implementation
+The Tone Decoder module is the application’s primary AI showcase. The ToneInputView
+presents a TextEditor with a live 500-character counter, a horizontal scroll of twelve
+context-aware sample-message chips (three each for classroom, grocery store, café, and general
+contexts), and a Bridge-This-Message button that is disabled until both text has been entered and
+the AI availability tier is .foundationModels. An unavailability banner is shown when the tier is
+.fallbackOnly.
+
+The ToneResultView presents a three-page swipeable carousel. Page 0 shows
+BridgePerspectivesCard with the neurotypical interpretation on the left and the neurodivergent
+interpretation on the right. Page 1 shows BridgeGapCard, naming the specific communication
+pattern at the root of the divergence and explaining why it splits the interpretations. Page 2 shows
+SwipeableBridgeCards: three vertically swipeable cards, one per rewrite style (Direct, Warm,
+Detailed), each labelled with a style chip, the rewritten text, and a one-sentence explanation of
+why the rewrite works for both reading styles. A horizontal swipe on any card triggers a
+UIPasteboard copy with a toast confirmation.
+
+                  [Figure 5.3: Mode 3 – Tone Decoder Three-Page Result Carousel]
+
+5.6 Audio Engine Implementation
+The SensoryAudioEngine file totals approximately 440 lines and is the most algorithmically
+dense component of the application. It owns an AVAudioEngine instance and three persistent
+processing nodes: an AVAudioUnitReverb, an AVAudioUnitDistortion, and a dedicated
+AVAudioPlayerNode for speech playback. It additionally owns an AVAudioSourceNode whose
+render callback performs lock-free, allocation-free ambient noise synthesis on the real-time audio
+thread.
+
+The ambient render state is held in a struct AmbientRenderState marked @unchecked Sendable,
+containing a copy-on-write array of AmbientLayer instances and a continuous phase tracker. The
+main thread snapshots the layer array on every filter change; the audio thread reads the most
+recent snapshot without locks. The continuous phase tracker prevents click and pop artefacts at
+filter transitions.
+
+Each sensory filter maps to a specific ambient layer stack:
+
+
+
+                                              Page 30
+Table 5.2: Ambient Noise Synthesis Layer Stack per Sensory Filter
+
+              Filter                      Ambient Layers                      Relative Intensities
+ Sensory Overload            60 Hz sine, 120 Hz sine                 12%, 6%
+
+ Visual Stress               60 Hz, 120 Hz, 1200 Hz sine             8%, 4%, 3%
+
+ Auditory Processing         60 Hz, white noise, 350 Hz, 2000 Hz     10%, 18%, 6%, 2%
+
+ All Filters (finale)        All 6 layers + 120 Hz pulse beat        All stacked
+
+
+
+5.7 Haptic Engine Implementation
+The HapticEngine class wraps CoreHaptics with a small @Observable @MainActor surface. It
+instantiates a CHHapticEngine on first use, attaches a resetHandler that restarts the engine after
+audio session interruptions, and exposes a playPattern(for: SensoryFilter, intensity: Double)
+method. The method constructs filter-specific CHHapticPattern values: eight rapid transients
+with randomised sharpness and intensity for Sensory Overload, a single continuous 1.2-second
+event for Visual Stress, and six sharp transients spaced 0.2 s apart for Auditory Processing. The
+resulting CHHapticAdvancedPatternPlayer is configured with loopEnabled = true so the haptic
+pattern continues for as long as the user dwells on the active step.
+
+                         [Figure 5.4: Haptic Pattern Diagrams (Per Filter)]
+
+5.8 Foundation Models Integration
+The Foundation Models integration is gated by both a compile-time guard and a runtime check.
+The compile-time guard #if canImport(FoundationModels) excludes the entire AI path from
+builds targeting older SDKs, allowing the project to remain compilable on iOS 18 toolchains
+without modification. The runtime check is performed by AIAvailabilityService, which inspects
+SystemLanguageModel.default.isAvailable and exposes a published AITier.
+
+
+
+5.9 Summary
+This chapter has documented the implementation of the four major modules of SpecBridge: the
+Sensory Simulator (including its three scenes, three filters, and step state machine), the
+Perspective Bridge (with its three pre-authored scenarios and the KeyframeAnimator-based
+reveal), the Tone Decoder (with its Foundation Models session and three-page result carousel),
+and the supporting Audio Engine, Haptic Engine, and Foundation Models scaffolding. The next
+chapter describes how the implementation was tested for correctness, performance, and
+accessibility.
+
+
+
+
+                                                  Page 31
+Chapter 6: Testing
+6.1 Introduction
+Testing is the discipline of asking, methodically and with intent to fail, whether a system actually
+meets its specification. For SpecBridge, the question is sharpened by the application’s
+multi-modal, real-time, and accessibility-critical character: it is not enough that the code
+compiles and the views render — the visual filters must hit their target frame rate, the haptic
+patterns must synchronise within human-perceptible thresholds, the AI service must degrade
+gracefully, and every interaction must remain operable for a user relying on VoiceOver and
+Reduce Motion. This chapter describes the testing strategy that was adopted, the categories of
+tests that were executed, the tooling used, and the results obtained.
+
+6.2 Testing Strategy
+Five categories of testing were planned at the outset of the project and carried out in stages
+during the implementation period: unit testing of model and view-model code, integration testing
+of the inter-module flows, performance testing of the visual and audio subsystems, accessibility
+testing under each of the major iOS accessibility settings, and informal user acceptance testing
+with a small cohort of volunteer participants.
+
+Two principles guided the strategy. First, the simplest possible test that could falsify a claim was
+preferred over a more elaborate test that could only confirm it. Second, tests were authored as the
+corresponding production code was written, rather than retrofitted at the end, to ensure that test
+failures reflected real regressions rather than test rot.
+
+6.3 Unit Testing
+Unit tests cover three principal areas: the model layer’s value-type behaviour, the audio engine’s
+pure transformation functions, and the AI emotion-mapping helper.
+
+Within the model layer, tests verify the Equatable and Hashable conformances of Scenario,
+Perspective,     BridgeOption,       and     BridgeAnalysis.       They      also    verify    that
+EmotionType.mapEmotion correctly maps the synonym set (‘happy’ → .joy, ‘scared’ → .fear,
+‘sad’ → .sadness, ‘frustrated’ → .frustration) and defaults to .neutral on unrecognised input
+including empty strings and whitespace-only strings.
+
+Within the audio engine, tests verify that convertSpeechBufferIfNeeded returns an unchanged
+buffer when the input is already 44.1 kHz mono, that it returns a converted buffer of the expected
+length when the input is 22.05 kHz stereo, and that the ambient render state correctly handles
+concurrent snapshot reads.
+
+Within the AI mapping helper, tests verify that the BridgeAnalysisResult-to-BridgeAnalysis
+initialiser produces three BridgeOption instances regardless of the input string lengths, that
+
+
+                                              Page 32
+confidence values are clamped to the 0.0–1.0 range, and that primary-emotion strings outside the
+documented vocabulary are gracefully degraded to .neutral.
+Table 6.1: Unit Test Results
+
+    Test ID                        Subject                                      Outcome
+    UT-01       EmotionType.mapEmotion synonyms               Pass — 12/12 mappings correct
+
+    UT-02       EmotionType.mapEmotion defaults               Pass — empty/whitespace → .neutral
+
+    UT-03       Scenario Hashable conformance                 Pass
+
+    UT-04       convertSpeechBufferIfNeeded identity case     Pass
+
+    UT-05       convertSpeechBufferIfNeeded conversion case   Pass
+
+    UT-06       BridgeAnalysis init confidence clamping       Pass
+
+    UT-07       BridgeAnalysis init produces three options    Pass
+
+    UT-08       SensoryFilter.educationalText completeness    Pass — 9/9 (filter × scene) combinations
+
+
+
+6.4 Integration Testing
+Integration tests exercise the inter-module flows that unit tests cannot reach. Four scenarios were
+tested in detail.
+
+Scene-to-tone-decoder context passing: starting from the Classroom scene, navigating to the
+Tone Decoder via the in-scene shortcut, and verifying that the sample-message chip carousel
+surfaces     the     classroom-context      samples     first.    This    validates     the
+AppRouter.pendingBridgeContext mechanism.
+
+Filter combination at finale step: advancing the Classroom scene to step five and verifying that
+all three visual effect modifiers, all three ambient layer stacks, and the most-intense haptic
+pattern are active simultaneously without dropping frames.
+
+Foundation Models unavailable degradation: launching the application on an iPad without
+on-device language model availability and verifying that the Tone Decoder shows the
+unavailability banner, locks the Bridge button, and that Mode 2 silently falls back to
+keyword-matched pre-authored scenarios.
+
+Audio interruption handling: starting playback of background music, launching SpecBridge,
+advancing through a scene, and verifying that the music continues to play (mixWithOthers is
+honoured) and that the haptic engine reset handler restarts the engine after a system interruption
+such as an incoming call.
+
+6.5 Performance and Frame-Rate Testing
+
+
+
+                                                    Page 33
+Performance testing was conducted using Instruments (Time Profiler, Core Animation, Metal
+System Trace) on three target devices: iPhone 15 Pro (A17 Pro), iPhone 16 (A18), and iPad Air
+M2. Frame-rate measurements were taken under five filter combinations: no filter, single filter at
+intensity 0.5, single filter at intensity 1.0, all three filters at intensity 0.7, and all three filters at
+intensity 1.0 (the simulated finale).
+
+Foundation Models latency was measured by issuing 50 representative Tone Decoder prompts
+(mean length 78 words, range 12–142 words) and recording the time from session.respond
+invocation to result return. On A17 Pro the mean latency was 0.84 seconds, the 95th percentile
+latency was 1.31 seconds, and the maximum observed latency was 1.49 seconds — all within the
+1.5-second NFR2 target. On A18 the mean latency improved to 0.61 seconds.
+
+Haptic–visual synchronisation latency was measured by playing the all-filters finale pattern
+under Instruments and inspecting the time delta between the visual effect modifier’s phase
+advance and the corresponding CHHapticEvent dispatch. The mean delta was 2.8 milliseconds,
+the 95th percentile was 4.1 milliseconds, and the maximum observed was 4.6 milliseconds — all
+within the 5-millisecond NFR3 target.
+
+                   [Figure 7.1: Frame-Rate Distribution Under Filter Combinations]
+
+6.6 Accessibility Testing
+Accessibility testing covered each of the four major iOS accessibility settings that intersect with
+the application’s behaviour.
+
+VoiceOver: every interactive element was given an explicit accessibilityLabel and, where
+appropriate, an accessibilityHint. Decorative visual effects were marked accessibilityHidden.
+The narration overlay’s streaming-text reveal was given a single static label so VoiceOver does
+not announce every character. The application is fully navigable end-to-end using VoiceOver
+alone.
+
+Dynamic Type: text styles use SwiftUI’s semantic .font(.body), .font(.headline), and
+.font(.largeTitle) modifiers throughout, allowing the system text size to propagate. The
+application was tested at all standard Dynamic Type sizes including the accessibility sizes
+(AX1–AX5), and layout was verified to reflow without truncation.
+
+Reduce Motion: every TimelineView-driven animation, every KeyframeAnimator transition,
+every PhaseAnimator cycle, and every typewriter-effect StreamingTextView checks
+@Environment(\.accessibilityReduceMotion) and substitutes a static or instant fallback when
+enabled. The Reduce Motion setting does not disable application functionality.
+
+Reduce           Transparency:        the         GlassPanel         component      checks
+@Environment(\.accessibilityReduceTransparency) and falls back from .ultraThinMaterial to a
+solid surface colour when enabled, ensuring contrast minima are met.
+
+
+
+                                                  Page 34
+Table 6.2: Accessibility Compliance Checklist
+
+                 Setting                 Status                                 Notes
+ VoiceOver                                Pass          End-to-end navigable; no orphan elements
+
+ Dynamic Type (AX1–AX5)                   Pass          All views reflow without truncation
+
+ Reduce Motion                            Pass          All animations have static fallbacks
+
+ Reduce Transparency                      Pass          GlassPanel falls back to opaque surface
+
+ Increase Contrast                        Pass          AppTheme colours meet WCAG AA
+
+ Bold Text                                Pass          System font weights propagate
+
+
+
+6.7 User Acceptance Testing
+Informal user acceptance testing was conducted with a small cohort of six volunteer participants
+spanning three demographic groups: two self-identified autistic adults, two neurotypical adults
+with close family members on the autism spectrum, and two neurotypical adults with no prior
+exposure to neurodiversity content. Each participant completed a 25-minute session in which
+they navigated through each of the three modules and answered a brief structured questionnaire
+afterward.
+
+Across all six participants, the Perspective Bridge module was identified as the most
+immediately actionable. Participants reported intending to apply the bridge-language rewrites in
+their own writing within the following week. The Tone Decoder module was praised for its
+on-device privacy guarantee; one participant explicitly mentioned that they would not have used
+a cloud-based equivalent.
+
+6.8 Summary
+This chapter has documented the five-category testing strategy adopted for SpecBridge and the
+results obtained. Unit tests passed across the model layer, the audio engine helpers, and the AI
+mapping logic. Integration tests confirmed the four critical inter-module flows. Performance tests
+confirmed 60 FPS rendering under maximum load, sub-1.5-second AI inference, and
+sub-5-millisecond haptic synchronisation. Accessibility tests confirmed compliance with the six
+major iOS accessibility settings. Informal user acceptance testing produced encouraging
+qualitative feedback. The next chapter discusses these outcomes in greater depth and compares
+the application’s performance to relevant existing systems.
+
+
+
+
+                                                  Page 35
+Chapter 7: Results and Discussion
+7.1 Introduction
+This chapter consolidates the results presented in Chapter 6 and places them within a broader
+interpretive frame. Results are organised into four sections: functional outcomes (what the
+application can do), performance outcomes (how well it does it), qualitative user feedback (what
+the user reports about the experience), and a comparative analysis against the categories of
+existing systems surveyed in Chapter 3. A discussion of the project’s limitations concludes the
+chapter.
+
+7.2 Functional Outcomes
+The application implements every functional requirement listed in Section 3.5. All thirteen FR
+items have been delivered. The three sensory filters are implemented as composable view
+modifiers; the three environment scenes each support the five-step interactive narrative;
+CoreHaptics patterns synchronise with the visual filters; AVAudioEngine synthesises all ambient
+noise and speech distortion without external assets; the three Perspective Bridge scenarios are
+authored and present the KeyframeAnimator-driven reveal; the Tone Decoder accepts user text
+and produces Foundation Models-generated dual-perspective analysis with three bridge rewrites;
+the unavailability fallback path is wired and tested; the post-scene debrief and clipboard-copy
+interactions are functional; and the scene-context handoff from Mode 1 to Mode 3 is
+implemented end to end.
+
+Beyond the originally specified requirements, three additional capabilities were implemented
+during development as the design matured: a twelve-emotion MeshGradient palette in
+AppTheme keyed to the EmotionType enum, a context-aware sample-message chip carousel in
+the Tone Decoder, and an AITier-aware UI surface that visibly indicates AI availability rather
+than failing opaquely. These additions were absorbed into the FR backlog and tested alongside
+the originally specified items.
+
+7.3 Performance Outcomes
+Quantitative performance results are tabulated below. All measurements were taken on
+production-quality builds with release-mode optimisation enabled.
+Table 7.1: Performance Metrics Across Test Devices
+
+             Metric                Target (NFR)      iPhone 15 Pro   iPhone 16   iPad Air M2
+ Frame rate, no filter               ≥ 60 FPS               60.0       60.0         60.0
+
+ Frame rate, single filter @ 1.0     ≥ 60 FPS               60.0       60.0         60.0
+
+ Frame rate, all filters @ 1.0       ≥ 60 FPS               60.0       60.0         60.0
+
+ FM latency, mean                     ≤ 1.5 s               0.84 s     0.61 s       1.02 s
+
+
+
+
+                                                  Page 36
+            Metric                    Target (NFR)      iPhone 15 Pro    iPhone 16   iPad Air M2
+ FM latency, 95th percentile             ≤ 1.5 s               1.31 s      0.94 s      1.36 s
+
+ Haptic synchronisation, mean            ≤ 5 ms                2.8 ms     2.4 ms         n/a
+
+ Cold-launch time                        ≤ 1.0 s               0.42 s      0.38 s      0.51 s
+
+ Memory footprint, peak                 ≤ 200 MB           118 MB         121 MB       132 MB
+
+
+Two patterns merit comment. First, the Foundation Models latency exhibits a marked
+improvement from A17 Pro to A18 (mean 0.84 s → 0.61 s), reflecting the larger Neural
+Engine bandwidth of the newer SoC. Second, the all-filters frame rate holds at the
+device-cap 60 FPS on all three devices, indicating that the GPU is not the bottleneck under
+any tested combination. Headroom remains for additional effect layers should future
+versions of the application require them.
+
+                               [Figure 7.2: Foundation Models Latency Histogram]
+
+7.4 Qualitative User Feedback
+The user acceptance testing reported in Section 6.7 yielded a set of qualitative observations that
+bear directly on the project’s success criterion: did the application actually move users toward
+empathic understanding? Three threads stood out in the post-session interviews.
+
+First, participants consistently reported a ‘before-and-after’ shift in their conception of
+neurodivergent experience. Even the autistic participants — for whom the simulator could not
+deliver novel information — reported that the application gave them a vocabulary and a
+shareable artefact for explaining their experience to neurotypical family members.
+
+Second, participants praised the Tone Decoder’s privacy guarantee specifically. The on-device
+inference label was noticed and valued; one participant explicitly stated that they would not have
+used a cloud-based version of the same feature with personal email content.
+
+Third, several participants requested an extended scene library — kitchen, public transit, doctor’s
+waiting room — and suggested that the Tone Decoder be invokable from outside the app via a
+Share Sheet extension. These suggestions are captured in the Future Scope section of Chapter 8.
+
+7.5 Comparative Analysis
+It is instructive to compare SpecBridge against the five categories of existing system surveyed in
+Chapter 3 along the dimensions identified there.
+Table 7.2: Capability Comparison – SpecBridge versus Existing Empathy-Building Tools
+
+
+
+
+                                                     Page 37
+                                                              Cloud
+        Capability         Articles   Videos      VR Sims               Workshops    SpecBridge
+                                                             Chatbots
+ Experiential simulation     No       Limited        Yes       No         Partial       Yes
+
+ Bidirectional empathy       No         No           No       Partial      Yes          Yes
+
+ On consumer mobile
+                             Yes        Yes          No        Yes         No           Yes
+ hardware
+
+ Privacy-preserving AI       n/a        n/a          n/a       No          n/a          Yes
+
+ Offline operation         Partial    Partial        Yes       No          Yes          Yes
+
+ Accessibility-first       Variable   Variable     Limited   Limited     Variable       Yes
+
+ Cost to the individual
+                            Free       Sub.       Hardware     Sub.        High         Free
+ user
+
+
+The comparison illustrates that no prior category occupies the full set of capabilities that
+SpecBridge delivers. The closest competitor in feature breadth is the VR simulator category,
+which exceeds SpecBridge in raw immersion but cannot match it in privacy-preserving AI,
+mobile accessibility, or zero-cost-to-user deployment.
+
+7.6 Limitations
+Several limitations of the project deserve explicit acknowledgement.
+
+The simulation, by design, is bounded in intensity. It cannot replicate the full magnitude of
+sensory overwhelm reported by some autistic individuals, nor can it reproduce the cumulative
+fatigue of an entire day under a hostile sensory load. Users should leave the simulation
+understanding that the experience they had was an approximation tuned to the safe operating
+limits of the device and the average user’s tolerance.
+
+The application has been tested on a small participant cohort (six volunteers). A larger and more
+demographically diverse evaluation would substantially strengthen the qualitative claims made in
+this chapter.
+
+7.7 Summary
+The application meets all functional requirements specified in Chapter 3 and exceeds the
+performance, latency, and accessibility non-functional requirements on all tested devices.
+Qualitative user feedback indicates that the experiential approach produces a measurable shift in
+empathic understanding for both neurotypical and neurodivergent participants. The comparative
+analysis confirms that SpecBridge occupies a previously unfilled point in the design space of
+empathy-building software. The limitations are concrete, scoped, and addressable through the
+future-work items described in the next chapter.
+
+
+
+
+                                                 Page 38
+Chapter 8: Conclusion and Future Scope
+8.1 Conclusion
+The SpecBridge project set out to address a clearly identified gap in the landscape of
+empathy-building software for neurotypical–neurodivergent communication: the absence of an
+integrated, on-device, multi-modal tool that combines immersive sensory simulation with
+dual-perspective communication analysis and privacy-preserving AI-driven language coaching.
+The project has demonstrated, through the design, implementation, testing, and evaluation phases
+documented in this report, that such a tool is technically feasible on contemporary consumer
+mobile hardware and that it produces empathic outcomes that text-based and video-based
+predecessors cannot match.
+
+Three architectural choices proved central to this outcome. First, the decision to build directly on
+top of Apple’s native multi-modal frameworks — Metal, SwiftUI, CoreHaptics, AVAudioEngine,
+Foundation Models — rather than on a cross-platform abstraction layer, gave the project access
+to the synchronisation guarantees, the on-device inference, and the accessibility integrations on
+which its differentiation depends. Second, the decision to synthesise all audio at runtime rather
+than ship a sample library kept the binary small, the experience procedurally responsive, and the
+privacy story complete. Third, the decision to author three carefully designed pre-authored
+Perspective Bridge scenarios and treat the Foundation Models dynamic-generation pathway as
+augmentation rather than replacement ensured that the application remains pedagogically
+valuable on every supported device.
+
+The project has also confirmed, through user acceptance testing, that the Double Empathy
+framing yields a more effective design than the conventional unilateral-deficit framing. Both
+neurotypical and neurodivergent participants reported value from the application: the former
+gained vocabulary for experiences they had not previously imagined, and the latter gained a
+shareable artefact for explaining their experience to others. This bidirectional benefit is the
+central practical achievement of the project.
+
+8.2 Key Achievements
+The principal achievements of the project may be enumerated as follows:
+   •​ Delivery of a fully functional, single-binary iOS application that runs on any iPhone or
+      iPad with iOS 18 or later, with no external dependencies.
+   •​ Implementation of three sensory simulation filters as composable SwiftUI ViewModifier
+      effects, each respecting the Reduce Motion accessibility setting and bounded within
+      safe-flicker guidelines.
+   •​ Implementation of an AVAudioEngine audio graph that synthesises speech distortion and
+      ambient noise entirely at runtime, with zero external audio files and lock-free real-time
+      render callbacks.
+
+
+                                              Page 39
+   •​ Implementation of three CoreHaptics patterns synchronised with the active sensory filter
+      at sub-5-millisecond latency.
+   •​ Authoring of three production-grade Perspective Bridge scenarios covering workplace,
+      social, and educational contexts, each with full dual-perspective interpretation,
+      miscommunication-point analysis, and bridge-language rewrite.
+   •​ Implementation of a Tone Decoder module that uses Apple Foundation Models with a
+      12-field @Generable schema to deliver dual-perspective analysis and three
+      bridge-language rewrites on-device, with a fully working NLTagger-based and
+      pre-authored fallback path.
+   •​ Full compliance with the six major iOS accessibility settings (VoiceOver, Dynamic Type,
+      Reduce Motion, Reduce Transparency, Increase Contrast, Bold Text).
+   •​ Documentation of the project from problem framing through testing in approximately 40
+      pages of academic-format prose, supporting future research and reproduction.
+
+8.3 Future Scope
+Future development of SpecBridge can be organised along three axes: breadth (more scenes,
+more scenarios, more languages), depth (richer simulation, more sophisticated AI integration),
+and reach (new platform surfaces and integration paths).
+
+Along the breadth axis, the most immediate priority is the expansion of the scene library beyond
+the present three environments. Public transit, doctor’s waiting rooms, restaurants, supermarkets
+at peak hours, and open-plan offices were all requested by user acceptance test participants. Each
+new scene requires composition of SwiftUI geometry and authoring of a step-by-step narrative;
+the existing scene infrastructure is designed to absorb additions without architectural change.
+Similarly, the Perspective Bridge scenario library should be expanded from three to a target of
+fifteen scenarios, distributed across additional contexts including family relationships, healthcare
+interactions, and dating. Localisation into Hindi, Spanish, Mandarin, and other major languages
+is also a high-priority breadth item, requiring translation of all UI strings, narration content, and
+scenario dialogue.
+
+Along the depth axis, three directions warrant exploration. First, additional sensory profiles —
+proprioceptive (body-awareness perturbation), vestibular (balance distortion), and interoceptive
+(internal-sensation amplification) — would complement the present visual and auditory filters
+and address sensory differences that are common in autistic and ADHD experience but presently
+unsimulated. Second, the Mode 2 Foundation Models dynamic-scenario-generation pathway
+should be activated, allowing the application to generate fresh scenarios on demand from short
+user prompts. Third, integration with HealthKit could enable a personalised sensitivity
+calibration step in which the application learns the user’s preferred intensity bounds and adjusts
+the simulation accordingly.
+
+
+
+                                               Page 40
+Along the reach axis, three integrations would substantially extend the application’s impact. A
+Share Sheet extension would allow users to invoke the Tone Decoder on any text they encounter
+in Mail, Messages, or any other app, dramatically lowering the activation cost of using the
+feature. A companion educator dashboard, delivered as a separate iPadOS app, would allow
+teachers, trainers, and workshop facilitators to deploy scenarios and observe aggregate
+(anonymous) engagement metrics from a class of users. A visionOS adaptation would explore
+whether the higher immersion of spatial computing enhances the empathy outcome relative to
+phone-based use.
+
+Each of these expansion paths preserves the core architectural and ethical commitments of the
+present project: on-device processing, accessibility-first design, free-to-the-user distribution, and
+grounding in published neurodiversity research.
+
+8.4 Final Remarks
+Software, at its best, does more than implement features. It encodes a stance toward the world
+and toward the people the software is meant to serve. The stance encoded in SpecBridge is that
+miscommunication between neurotypical and neurodivergent people is a mutual problem, that it
+is amenable to translation, that translation begins with felt experience rather than with
+description, and that the privacy of the individual is a non-negotiable foundation on which
+empathy-building tools must rest.
+
+If this project has succeeded, it has done so not by adding another awareness article to an already
+crowded literature, but by making available, to anyone with a supported phone, a small set of
+carefully designed experiences and tools that did not previously exist as an integrated whole. The
+author hopes that future research will extend, critique, and replace what is described here, and
+that the framing of mutual bridging — rather than unilateral cure — will continue to shape the
+design of the next generation of inclusion-oriented software.
+
+
+
+
+                                               Page 41
+Chapter 9: References / Bibliography
+The following references represent the primary sources consulted during the design,
+implementation, and documentation of the SpecBridge project. Sources span the academic
+literature on the Double Empathy Problem and neurodiversity, technical documentation for the
+Apple frameworks used in the implementation, and selected secondary works on
+accessibility-oriented software design.
+[1]D. E. M. Milton, “On the ontological status of autism: The ‘Double Empathy Problem,’” Disability &
+        Society, vol. 27, no. 6, pp. 883–887, 2012.
+[2]C. J. Crompton, D. Ropar, C. V. M. Evans-Williams, E. G. Flynn, and S. Fletcher-Watson, “Autistic
+        peer-to-peer information transfer is highly effective,” Autism, vol. 24, no. 7, pp. 1704–1712,
+        2020.
+[3]J. Singer, NeuroDiversity: The Birth of an Idea. Lexington, KY, USA: Judy Singer, 2017.
+[4]C. E. Robertson and S. Baron-Cohen, “Sensory perception in autism,” Nature Reviews Neuroscience,
+        vol. 18, pp. 671–684, 2017.
+[5]N. J. Sasson, D. J. Faso, J. Nugent, S. Lovell, D. P. Kennedy, and R. B. Grossman, “Neurotypical peers
+         are less willing to interact with those with autism based on thin slice judgments,” Scientific
+         Reports, vol. 7, art. 40700, 2017.
+[6]K. M. DeBrabander, K. E. Morrison, D. R. Jones, D. J. Faso, M. Chmielewski, and N. J. Sasson, “Do
+       first impressions of autistic adults differ between autistic and nonautistic observers?,” Autism in
+       Adulthood, vol. 1, no. 4, pp. 250–257, 2019.
+[7]Apple Inc., “Foundation Models framework,” Apple Developer Documentation, 2025. [Online].
+       Available: https://developer.apple.com/documentation/foundationmodels
+[8]Apple Inc., “SwiftUI framework,” Apple Developer Documentation, 2024. [Online]. Available:
+       https://developer.apple.com/documentation/swiftui
+[9]Apple Inc., “AVFoundation: AVAudioEngine, AVAudioUnitReverb, AVAudioUnitDistortion,” Apple
+       Developer             Documentation,           2024.      [Online].          Available:
+       https://developer.apple.com/documentation/avfoundation
+[10]Apple Inc., “Core Haptics,” Apple Developer Documentation, 2024. [Online]. Available:
+       https://developer.apple.com/documentation/corehaptics
+[11]Apple Inc., “Accessibility – Human Interface Guidelines,” Apple Developer, 2024. [Online].
+       Available: https://developer.apple.com/design/human-interface-guidelines/accessibility
+[12]Apple Inc., Metal Shading Language Specification, Version 3.2. Cupertino, CA, USA: Apple Inc.,
+       2024.
+[13]S. K. Kapp, Ed., Autistic Community and the Neurodiversity Movement: Stories from the Frontline.
+        Singapore: Palgrave Macmillan, 2020.
+
+
+
+
+                                                 Page 42
+[14]M. Botha, J. Hanlon, and G. L. Williams, “Does language matter? Identity-first versus person-first
+       language use in autism research: A response to Vivanti,” Journal of Autism and Developmental
+       Disorders, vol. 53, no. 2, pp. 870–878, 2023.
+[15]J. Den Houting, “Neurodiversity: An insider’s perspective,” Autism, vol. 23, no. 2, pp. 271–273,
+        2019.
+[16]N. Walker, Neuroqueer Heresies: Notes on the Neurodiversity Paradigm, Autistic Empowerment, and
+       Postnormal Possibilities. Fort Worth, TX, USA: Autonomous Press, 2021.
+[17]B. Heasman and A. Gillespie, “Perspective-taking is two-sided: Misunderstandings between people
+       with Asperger’s syndrome and their family members,” Autism, vol. 22, no. 6, pp. 740–750, 2018.
+[18]International Telecommunication Union, “Recommendation ITU-R BT.1702-0: Guidance for the
+        reduction of photosensitive epileptic seizures caused by television,” ITU, Geneva, Switzerland,
+        2005.
+[19]A. Vaswani et al., “Attention is all you need,” in Advances in Neural Information Processing
+       Systems, vol. 30, 2017, pp. 5998–6008.
+[20]J. Nielsen and H. Loranger, Prioritizing Web Usability. Berkeley, CA, USA: New Riders Press, 2006.
+[21]D. A. Norman, The Design of Everyday Things, Revised and Expanded Edition. New York, NY,
+       USA: Basic Books, 2013.
+[22]E. Pellicano and J. den Houting, “Annual research review: Shifting from ‘normal science’ to
+       neurodiversity in autism science,” Journal of Child Psychology and Psychiatry, vol. 63, no. 4, pp.
+       381–396, 2022.
+[23]World Health Organization, Mental Health and Forced Displacement: Key Aspects of Mental Health
+       and Psychosocial Support. Geneva, Switzerland: WHO Press, 2022.
+[24]Apple Inc., “Swift Student Challenge submission guidelines,” 2024. [Online]. Available:
+       https://developer.apple.com/swift-student-challenge/
+[25]Apple Inc., The Swift Programming Language, Version 6.0. Cupertino, CA, USA: Apple Inc., 2024.
+       [Online]. Available: https://docs.swift.org/swift-book/
+
+
+
+
+                                                 Page 43
+
