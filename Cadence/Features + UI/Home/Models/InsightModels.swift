@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - WellnessDomain
 
 enum WellnessDomain: String, CaseIterable {
-    case stress, nutrition, sleep, activity, hydration, caffeine, mood, fasting, symptoms, cross
+    case stress, nutrition, sleep, activity, hydration, caffeine, mood, fasting, cross
 
     var label: String {
         switch self {
@@ -15,7 +15,6 @@ enum WellnessDomain: String, CaseIterable {
         case .caffeine:  return "Caffeine"
         case .mood:      return "Mood"
         case .fasting:   return "Fasting"
-        case .symptoms:  return "Symptoms"
         case .cross:        return "Patterns"
         }
     }
@@ -30,7 +29,6 @@ enum WellnessDomain: String, CaseIterable {
         case .caffeine:  return "cup.and.saucer.fill"
         case .mood:      return "face.smiling"
         case .fasting:   return "timer"
-        case .symptoms:  return "stethoscope"
         case .cross:        return "arrow.triangle.swap"
         }
     }
@@ -45,7 +43,6 @@ enum WellnessDomain: String, CaseIterable {
         case .caffeine:  return Color(hue: 0.10, saturation: 0.75, brightness: 0.88)
         case .mood:      return Color(hue: 0.14, saturation: 0.70, brightness: 0.95)
         case .fasting:   return .orange
-        case .symptoms:  return AppColors.error
         case .cross:        return AppColors.brand
         }
     }
@@ -58,7 +55,7 @@ enum WellnessDomain: String, CaseIterable {
         case .hydration:                   return "floral_water"
         case .stress, .fasting, .caffeine: return "floral_orange"
         case .sleep, .mood:                return "floral_faded"
-        case .cross, .symptoms:            return "floral_linear"
+        case .cross:                       return "floral_linear"
         }
     }
 }
@@ -171,9 +168,6 @@ struct WellnessDaySummary {
     let coffeeCups: Int?
     // Mood
     let moodLabel: String?
-    // Symptoms
-    let symptomNames: [String]
-    let symptomMaxSeverity: Int?
     // Fasting
     let fastingHours: Double?
     let fastingCompleted: Bool?

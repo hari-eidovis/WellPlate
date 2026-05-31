@@ -51,7 +51,6 @@ enum ProfileSheet: Identifiable {
     case editName
     case editWeight
     case editHeight
-    case symptomLog
 
     var id: String {
         switch self {
@@ -59,7 +58,6 @@ enum ProfileSheet: Identifiable {
         case .editName:           return "editName"
         case .editWeight:         return "editWeight"
         case .editHeight:         return "editHeight"
-        case .symptomLog:         return "symptomLog"
         }
     }
 }
@@ -73,11 +71,6 @@ struct ProfilePlaceholderView: View {
     @State private var isWidgetInstalled            = false
     @State private var activeSheet: ProfileSheet?
     @State private var showGoals                    = false
-    // Symptom state
-    @State private var showSymptomCorrelation       = false
-    @State private var selectedSymptomForCorrelation: String?
-    @Query(sort: \SymptomEntry.timestamp, order: .reverse) private var allSymptomEntries: [SymptomEntry]
-    @StateObject private var correlationEngine      = SymptomCorrelationEngine()
     // Daily check-in prompt toggle
     @State private var promptsEnabled: Bool = !UserDefaults.standard.bool(forKey: "wp.stress.dontAskAgain")
     @State private var editedName                   = UserProfileManager.shared.userName
@@ -135,16 +128,6 @@ struct ProfilePlaceholderView: View {
                     notificationsAndPromptsCard
                         .padding(.horizontal, 16)
 
-                    // ── Symptom tracking ─────────────────────
-                    symptomTrackingCard
-                        .padding(.horizontal, 16)
-
-                    // ── Symptom insights ──────────────────────
-                    if uniqueSymptomDays >= 7 {
-                        symptomInsightsCard
-                            .padding(.horizontal, 16)
-                    }
-
                     // ── Widget setup ─────────────────────────
                     WidgetSetupCard(
                         selectedSize: $selectedSize,
@@ -199,11 +182,6 @@ struct ProfilePlaceholderView: View {
             .navigationDestination(isPresented: $showGoals) {
                 GoalsView(viewModel: GoalsViewModel(modelContext: modelContext))
             }
-            .navigationDestination(isPresented: $showSymptomCorrelation) {
-                if let name = selectedSymptomForCorrelation {
-                    SymptomCorrelationView(symptomName: name, engine: correlationEngine)
-                }
-            }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .widgetInstructions:
@@ -222,8 +200,6 @@ struct ProfilePlaceholderView: View {
                     editHeightSheet
                         .presentationDetents([.height(280)])
                         .presentationDragIndicator(.visible)
-                case .symptomLog:
-                    SymptomLogSheet()
                 }
             }
         }
@@ -740,162 +716,6 @@ struct ProfilePlaceholderView: View {
                 }
             }
         }
-    }
-
-    // MARK: - Symptom Tracking Card
-
-    private var uniqueSymptomDays: Int {
-        Set(allSymptomEntries.map { $0.day }).count
-    }
-
-    private var topSymptomNames: [String] {
-        let counts = Dictionary(grouping: allSymptomEntries, by: \.name)
-            .mapValues(\.count)
-            .sorted { $0.value > $1.value }
-        return Array(counts.prefix(3).map(\.key))
-    }
-
-    private var symptomTrackingCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            cardHeader(eyebrow: "TRACK", title: "Symptoms", icon: "heart.text.square.fill")
-
-            if allSymptomEntries.isEmpty {
-                Button {
-                    HapticService.impact(.light)
-                    activeSheet = .symptomLog
-                } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                        Text("Log your first symptom")
-                            .font(.r(14, .semibold))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(.tertiarySystemFill).opacity(0.5))
-                    )
-                }
-                .buttonStyle(.plain)
-            } else {
-                VStack(spacing: 8) {
-                    ForEach(allSymptomEntries.prefix(3)) { entry in
-                        HStack(spacing: 12) {
-                            Text(entry.name)
-                                .font(.r(14, .semibold))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                            Spacer()
-                            severityPill(entry.severity)
-                            Text(relativeTimeString(for: entry.timestamp))
-                                .font(.r(11, .medium))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color(.tertiarySystemFill).opacity(0.5))
-                        )
-                    }
-                }
-            }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground())
-    }
-
-    private var symptomInsightsCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            cardHeader(eyebrow: "INSIGHTS", title: "Patterns", icon: "chart.line.uptrend.xyaxis")
-
-            VStack(spacing: 8) {
-                ForEach(topSymptomNames, id: \.self) { symptomName in
-                    let corr = correlationEngine.correlations
-                        .filter { $0.symptomName == symptomName && $0.isSignificant }
-                        .max(by: { abs($0.spearmanR) < abs($1.spearmanR) })
-
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(symptomName)
-                                .font(.r(14, .bold))
-                                .foregroundStyle(.primary)
-                            if let c = corr {
-                                Text("\(c.interpretation) with \(c.factorName)")
-                                    .font(.r(11, .medium))
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                Text("Analysing patterns…")
-                                    .font(.r(11, .medium))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer(minLength: 0)
-                        Button {
-                            HapticService.impact(.light)
-                            selectedSymptomForCorrelation = symptomName
-                            showSymptomCorrelation = true
-                        } label: {
-                            HStack(spacing: 3) {
-                                Text("View")
-                                    .font(.r(11, .bold))
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 9, weight: .bold))
-                            }
-                            .foregroundStyle(.primary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color(.tertiarySystemFill).opacity(0.5))
-                    )
-                }
-            }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground())
-    }
-
-    private func severityPill(_ severity: Int) -> some View {
-        let label: String = {
-            switch severity {
-            case 1...3: return "Low"
-            case 4...6: return "Mod"
-            default:    return "High"
-            }
-        }()
-        return HStack(spacing: 4) {
-            Text("\(severity)/10")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-                .monospacedDigit()
-            Text(label)
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
-    }
-
-    private func relativeTimeString(for date: Date) -> String {
-        let diff = Date().timeIntervalSince(date)
-        if diff < 3600 { return "\(Int(diff / 60))m ago" }
-        if diff < 86400 { return "\(Int(diff / 3600))h ago" }
-        return "yesterday"
     }
 
     // MARK: - App Info Footer
@@ -1451,7 +1271,7 @@ private struct InstructionRow: View {
 
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: SymptomEntry.self, UserGoals.self, configurations: config)
+    let container = try! ModelContainer(for: UserGoals.self, configurations: config)
     return ProfilePlaceholderView()
         .modelContainer(container)
 }

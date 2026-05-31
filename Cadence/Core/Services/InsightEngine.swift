@@ -102,7 +102,7 @@ final class InsightEngine: ObservableObject {
     }
 
     /// Counts distinct calendar days within the lookback window that have any user-logged data
-    /// (food, wellness, stress, symptoms, fasting). Updates `loggedDayCount` and
+    /// (food, wellness, stress, fasting). Updates `loggedDayCount` and
     /// `insufficientData`. Cheap — SwiftData only, no HealthKit calls.
     func refreshDayCount() async {
         guard let ctx = modelContext else { return }
@@ -123,10 +123,6 @@ final class InsightEngine: ObservableObject {
         if let wellness = try? ctx.fetch(FetchDescriptor<WellnessDayLog>(
             predicate: #Predicate { $0.day >= windowStart })) {
             loggedDays.formUnion(wellness.map { calendar.startOfDay(for: $0.day) })
-        }
-        if let symptoms = try? ctx.fetch(FetchDescriptor<SymptomEntry>(
-            predicate: #Predicate { $0.day >= windowStart })) {
-            loggedDays.formUnion(symptoms.map { calendar.startOfDay(for: $0.day) })
         }
         if let fasting = try? ctx.fetch(FetchDescriptor<FastingSession>(
             predicate: #Predicate { $0.startedAt >= windowStart })) {
@@ -167,11 +163,6 @@ final class InsightEngine: ObservableObject {
             predicate: #Predicate { $0.day >= windowStart }
         )
         let foodLogs = (try? ctx.fetch(foodDescriptor)) ?? []
-
-        let symptomDescriptor = FetchDescriptor<SymptomEntry>(
-            predicate: #Predicate { $0.day >= windowStart }
-        )
-        let symptomEntries = (try? ctx.fetch(symptomDescriptor)) ?? []
 
         let fastingDescriptor = FetchDescriptor<FastingSession>(
             predicate: #Predicate { $0.startedAt >= windowStart }
@@ -222,11 +213,6 @@ final class InsightEngine: ObservableObject {
             let heartRateValue = heartRateData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
             let exerciseValue = exerciseData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
 
-            // Symptoms
-            let daySymptoms = symptomEntries.filter { calendar.isDate($0.day, inSameDayAs: dayStart) }
-            let symptomNames = Array(Set(daySymptoms.map(\.name)))
-            let symptomMax = daySymptoms.map(\.severity).max()
-
             // Fasting
             let dayFasting = fastingSessions.filter { calendar.isDate($0.day, inSameDayAs: dayStart) }
             let fastingHours: Double? = dayFasting.isEmpty ? nil : dayFasting.map(\.actualDurationSeconds).reduce(0, +) / 3600.0
@@ -254,8 +240,6 @@ final class InsightEngine: ObservableObject {
                 waterGlasses: wellness?.waterGlasses,
                 coffeeCups: wellness?.coffeeCups,
                 moodLabel: wellness?.mood?.label,
-                symptomNames: symptomNames,
-                symptomMaxSeverity: symptomMax,
                 fastingHours: fastingHours,
                 fastingCompleted: fastingCompleted
             )

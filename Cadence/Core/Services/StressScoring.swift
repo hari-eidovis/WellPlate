@@ -3,7 +3,7 @@ import Foundation
 // MARK: - StressScoring (v3)
 //
 // Pure, stateless scoring for the v3 stress algorithm.
-// 13 driver factors (Tier A/B/C, sum-to-100), recovery bonuses, time-ramped
+// 12 driver factors (Tier A/B/C, sum-to-93), recovery bonuses, time-ramped
 // engagement penalty, multi-day pattern penalty, multiplicative HRV/RHR
 // calibrator, coverage-weighted confidence.
 //
@@ -179,7 +179,6 @@ enum StressScoring {
         var fasting: FastingInput?
         var triggerLogs: [FoodLogEntry]
         var mood: MoodOption?
-        var symptoms: [SymptomEntry]
         var recovery: RecoveryInput
         var history: HistoryInput
         var vitals: VitalsInput
@@ -222,7 +221,7 @@ enum StressScoring {
         }
     }
 
-    // MARK: - Weights (Tier A 60 / Tier B 25 / Tier C 15 = 100)
+    // MARK: - Weights (Tier A 60 / Tier B 25 / Tier C 8 = 93)
 
     enum Weights {
         // Tier A
@@ -240,7 +239,6 @@ enum StressScoring {
         static let eatingTriggers: Double  = 5
         // Tier C
         static let mood: Double            = 8
-        static let symptoms: Double        = 7
         // Caps
         static let recoveryCap: Double     = -10
         static let engagementCap: Double   = 18
@@ -540,45 +538,6 @@ enum StressScoring {
         return FactorPoints(points: pts, maxPoints: Weights.mood, hasData: true, detail: detail)
     }
 
-    // MARK: - Tier C: Symptoms
-
-    /// Symptoms penalty 0…7 per formula §3.13. Always reports `hasData: true` —
-    /// "no symptoms" is meaningful information.
-    static func symptomPoints(entries: [SymptomEntry]) -> FactorPoints {
-        guard !entries.isEmpty else {
-            return FactorPoints(points: 0, maxPoints: Weights.symptoms, hasData: true, detail: "No symptoms today")
-        }
-
-        // Dedupe by name; take max severity per name
-        var maxByName: [String: (severity: Int, category: String)] = [:]
-        for entry in entries {
-            if let existing = maxByName[entry.name] {
-                if entry.severity > existing.severity {
-                    maxByName[entry.name] = (entry.severity, entry.category)
-                }
-            } else {
-                maxByName[entry.name] = (entry.severity, entry.category)
-            }
-        }
-
-        func weight(for category: String) -> Double {
-            switch SymptomCategory(rawValue: category) {
-            case .cognitive, .pain: return 1.0
-            case .energy:           return 0.7
-            case .digestive:        return 0.5
-            case .none:             return 0.5
-            }
-        }
-
-        let weightedSum = maxByName.values.reduce(0.0) { acc, pair in
-            acc + Double(pair.severity) * weight(for: pair.category)
-        }
-
-        let pts = min(Weights.symptoms, weightedSum / 15.0 * Weights.symptoms)
-        let detail = "\(maxByName.count) symptom\(maxByName.count == 1 ? "" : "s") logged"
-        return FactorPoints(points: pts, maxPoints: Weights.symptoms, hasData: true, detail: detail)
-    }
-
     // MARK: - Recovery
 
     /// Intervention bonus, capped at −6.
@@ -769,7 +728,7 @@ enum StressScoring {
 
     /// Coverage-weighted confidence per formula §8.
     static func confidence(factors: [FactorPoints]) -> Confidence {
-        let totalPossible: Double = 100   // sum of driver weights
+        let totalPossible: Double = 93   // sum of driver weights
         let covered = factors.reduce(0.0) { $0 + ($1.hasData ? $1.maxPoints : 0) }
         let coverage = covered / totalPossible
         switch coverage {
@@ -781,7 +740,7 @@ enum StressScoring {
 
     // MARK: - Factor assembly
 
-    /// Returns all 13 driver factors in stable order. Index → title mapping
+    /// Returns all 12 driver factors in stable order. Index → title mapping
     /// owned by `StressViewModel` (see `factorTitle(_:)`).
     static func allFactors(inputs: StressInputs) -> [FactorPoints] {
         return [
@@ -797,7 +756,6 @@ enum StressScoring {
             fastingPoints(input: inputs.fasting),
             eatingTriggerPoints(logs: inputs.triggerLogs),
             moodPoints(mood: inputs.mood),
-            symptomPoints(entries: inputs.symptoms),
         ]
     }
 

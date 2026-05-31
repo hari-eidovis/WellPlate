@@ -23,7 +23,6 @@ struct ReportContext {
     let days: [WellnessDaySummary]
     let goals: UserGoalsSnapshot
     let availableVitals: Set<VitalMetric>
-    let foodSymptomLinks: [FoodSymptomLink]
     let crossCorrelations: [CrossCorrelation]
     let interventionResults: [InterventionResult]
     let topFoods: [(name: String, count: Int, totalCalories: Int)]
@@ -60,26 +59,6 @@ struct ActionRecommendation: Identifiable {
 
 struct ReportPromptContext {
     let text: String
-}
-
-// MARK: - FoodSymptomLink
-
-enum FoodSymptomClassification: String {
-    case potentialTrigger
-    case potentialProtective
-    case neutral
-}
-
-struct FoodSymptomLink: Identifiable {
-    let id = UUID()
-    let symptomName: String
-    let foodName: String
-    let symptomDayCount: Int
-    let clearDayCount: Int
-    let symptomDayAppearances: Int
-    let clearDayAppearances: Int
-    let ratio: Double
-    let classification: FoodSymptomClassification
 }
 
 // MARK: - CrossCorrelation

@@ -94,7 +94,7 @@ struct AllFactorsSheet: View {
 
     private let tierAtitles: Set<String> = ["Sleep", "Exercise", "Caffeine", "Screen Time", "Diet"]
     private let tierBtitles: Set<String> = ["Hydration", "Circadian", "Daylight", "Meal Timing", "Fasting", "Eating Triggers"]
-    private let tierCtitles: Set<String> = ["Mood", "Symptoms"]
+    private let tierCtitles: Set<String> = ["Mood"]
 }
 
 // MARK: - QuickLogManualSheet

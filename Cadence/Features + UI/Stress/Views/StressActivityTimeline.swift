@@ -1,176 +1,38 @@
 //
-//  StressActivityView.swift
+//  StressActivityTimeline.swift
 //  Cadence
 //
-//  Transaction-style change log of the stress score. Vertical-rail timeline
-//  with one entry per `groupID`. Multi-row groups stay expandable. Routes
-//  via `viewModel.usesMockData`: mock path reads
+//  Transaction-style change log of the stress score — the running record of
+//  every point added to / removed from today's score. Vertical-rail timeline
+//  with one entry per `groupID`; multi-row groups stay expandable. Designed to
+//  be embedded directly in `StressView` (no NavigationStack / outer ScrollView).
+//  Routes via `viewModel.usesMockData`: mock path reads
 //  `viewModel.mockChangeEntries`; live path runs a bounded `FetchDescriptor`.
 //
 
 import SwiftUI
 import SwiftData
-import Charts
 
-struct StressActivityView: View {
+struct StressActivityTimeline: View {
 
     let viewModel: StressViewModel
     let modelContext: ModelContext
-
-    @Environment(\.dismiss) private var dismiss
 
     @State private var entries: [any ChangeEntryDisplayable] = []
     @State private var filter: StressChangeFilter = .all
     @State private var expandedGroups: Set<UUID> = []
 
-    init(viewModel: StressViewModel, modelContext: ModelContext) {
-        self.viewModel = viewModel
-        self.modelContext = modelContext
-    }
-
     private static let themeBlue = Color(hex: "5E9FFF")
     private static let calibrationColor = Color(hue: 0.74, saturation: 0.45, brightness: 0.85)
 
     var body: some View {
-        NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 18) {
-                    heroArc
-                    filterChipRow
-                    sectionedTimeline
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 32)
-            }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            .navigationTitle("Activity")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Done") { dismiss() }
-                        .font(.system(size: 16, weight: .semibold))
-                }
-            }
+        VStack(alignment: .leading, spacing: 18) {
+            filterChipRow
+            sectionedTimeline
         }
         .task { loadEntries() }
         .onChange(of: filter) { _ in loadEntries() }
         .onChange(of: viewModel.lastChangeEmittedAt) { _ in loadEntries() }
-        .presentationDragIndicator(.visible)
-    }
-
-    // MARK: - Hero Arc
-
-    @ViewBuilder
-    private var heroArc: some View {
-        let readings = viewModel.todayReadings
-        let scores = readings.map(\.score)
-        let firstScore = scores.first ?? viewModel.totalScore
-        let currentScore = scores.last ?? viewModel.totalScore
-        let peakScore = scores.max() ?? currentScore
-        let lowScore = scores.min() ?? currentScore
-        let netDelta = Int((currentScore - firstScore).rounded())
-
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("TODAY'S ARC")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .tracking(1.2)
-                Spacer()
-                if !scores.isEmpty {
-                    netDeltaPill(netDelta)
-                }
-            }
-
-            if scores.count < 2 {
-                emptyArc(currentScore: currentScore)
-            } else {
-                Chart {
-                    ForEach(Array(readings.enumerated()), id: \.offset) { _, r in
-                        AreaMark(x: .value("t", r.timestamp), y: .value("score", r.score))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Self.themeBlue.opacity(0.30), Self.themeBlue.opacity(0.04)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                            .interpolationMethod(.monotone)
-                        LineMark(x: .value("t", r.timestamp), y: .value("score", r.score))
-                            .foregroundStyle(Self.themeBlue)
-                            .interpolationMethod(.monotone)
-                            .lineStyle(StrokeStyle(lineWidth: 2.4))
-                    }
-                }
-                .chartXAxis(.hidden)
-                .chartYAxis(.hidden)
-                .frame(height: 84)
-
-                HStack(spacing: 0) {
-                    arcKpi(label: "Start", value: Int(firstScore))
-                    Spacer()
-                    arcKpi(label: "Peak",  value: Int(peakScore))
-                    Spacer()
-                    arcKpi(label: "Low",   value: Int(lowScore))
-                    Spacer()
-                    arcKpi(label: "Now",   value: Int(currentScore), highlight: true)
-                }
-            }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(AppColors.card)
-                .appShadow(radius: 15, y: 5)
-        )
-    }
-
-    private func emptyArc(currentScore: Double) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            Text("\(Int(currentScore))")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Current score")
-                    .font(.r(.subheadline, .semibold))
-                Text("Today's arc fills in as your score moves.")
-                    .font(.r(.caption, .regular))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-        .padding(.vertical, 6)
-    }
-
-    private func arcKpi(label: String, value: Int, highlight: Bool = false) -> some View {
-        VStack(spacing: 2) {
-            Text("\(value)")
-                .font(.system(size: highlight ? 18 : 15, weight: .bold, design: .rounded))
-                .foregroundColor(highlight ? Self.themeBlue : .primary)
-            Text(label)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.secondary)
-                .tracking(0.6)
-        }
-    }
-
-    private func netDeltaPill(_ netDelta: Int) -> some View {
-        let isImprovement = netDelta < 0
-        let isFlat = netDelta == 0
-        let arrow = isFlat ? "minus" : (isImprovement ? "arrow.down" : "arrow.up")
-        let color: Color = isFlat ? .secondary : (isImprovement ? .green : .red)
-        let signed = isFlat ? "0" : "\(netDelta > 0 ? "+" : "")\(netDelta)"
-        return HStack(spacing: 4) {
-            Image(systemName: arrow)
-                .font(.system(size: 10, weight: .bold))
-            Text(signed)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-        }
-        .foregroundStyle(color)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(Capsule().fill(color.opacity(0.13)))
     }
 
     // MARK: - Filter Chip Row
@@ -192,7 +54,6 @@ struct StressActivityView: View {
             (.auto, "Auto"),
             (.logs, "Logs"),
             (.mood, "Mood"),
-            (.symptoms, "Symptoms"),
             (.screenTime, "Screen time"),
             (.food, "Food"),
             (.calibration, "Calibration"),
@@ -660,7 +521,7 @@ struct StressActivityView: View {
             return true
         case .calibration:
             return entry.entryKind == .calibrator
-        case .auto, .logs, .mood, .symptoms, .screenTime, .food:
+        case .auto, .logs, .mood, .screenTime, .food:
             guard let allowed = filter.sources else { return true }
             return allowed.contains(entry.source)
         }

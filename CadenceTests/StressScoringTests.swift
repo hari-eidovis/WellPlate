@@ -33,7 +33,7 @@ final class StressScoringTests: XCTestCase {
             sleep: nil, exercise: nil, caffeine: nil, screen: nil,
             diet: nil, hydration: nil, circadian: nil, daylight: nil,
             mealLogs: [], fasting: StressScoring.FastingInput(activeFastHours: nil, isConfigured: false),
-            triggerLogs: [], mood: nil, symptoms: [],
+            triggerLogs: [], mood: nil,
             recovery: emptyRecovery(),
             history: emptyHistory(),
             vitals: emptyVitals(),

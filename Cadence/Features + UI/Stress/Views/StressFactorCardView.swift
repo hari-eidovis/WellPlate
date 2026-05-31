@@ -125,7 +125,7 @@ struct StressFactorCardView: View {
         switch factor.title {
         case "Sleep", "Exercise", "Caffeine", "Screen Time", "Diet": return "A"
         case "Hydration", "Circadian", "Daylight", "Meal Timing", "Fasting", "Eating Triggers": return "B"
-        case "Mood", "Symptoms": return "C"
+        case "Mood": return "C"
         default: return nil
         }
     }

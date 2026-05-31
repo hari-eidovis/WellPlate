@@ -21,7 +21,6 @@ enum StressSheet: Identifiable {
     case allFactors
     case manualLog
     case mood
-    case symptoms
     case todayPatternDetail
 
     var id: String {
@@ -37,7 +36,6 @@ enum StressSheet: Identifiable {
         case .allFactors:         return "allFactors"
         case .manualLog:          return "manualLog"
         case .mood:               return "mood"
-        case .symptoms:           return "symptoms"
         case .todayPatternDetail: return "todayPatternDetail"
         }
     }
@@ -56,7 +54,6 @@ struct StressView: View {
     @EnvironmentObject private var tabSelector: TabSelector
     @State private var activeSheet: StressSheet? = nil
     @State private var showInsights = false
-    @State private var showActivity = false
     @State private var showV3Banner: Bool = !UserDefaults.standard.bool(forKey: "wp.stress.v3AnnouncementShown")
 
     // Entrance animation states
@@ -97,16 +94,6 @@ struct StressView: View {
                                 .foregroundStyle(Self.themeBlue)
                         }
                         .accessibilityLabel("Insights")
-
-                        Button {
-                            HapticService.impact(.light)
-                            showActivity = true
-                        } label: {
-                            Image(systemName: "clock.arrow.circlepath")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(Self.themeBlue)
-                        }
-                        .accessibilityLabel("Stress activity")
                     }
                 }
             }
@@ -148,10 +135,6 @@ struct StressView: View {
         // MARK: Insights sheet
         .sheet(isPresented: $showInsights) {
             insightsSheet
-        }
-        // MARK: Activity (change log) sheet
-        .sheet(isPresented: $showActivity) {
-            StressActivityView(viewModel: viewModel, modelContext: modelContext)
         }
         // MARK: Factor / vital detail sheets
         .sheet(item: $activeSheet) { sheet in
@@ -198,8 +181,6 @@ struct StressView: View {
                 QuickLogManualSheet()
             case .mood:
                 MoodCheckInSheet(onSaved: { viewModel.recompute(reason: .manualMood) })
-            case .symptoms:
-                SymptomLogSheet(onSaved: { viewModel.recompute(reason: .manualSymptoms) })
             case .todayPatternDetail:
                 StressPatternDetailView(
                     todayReadings: viewModel.todayReadings,
@@ -304,6 +285,16 @@ struct StressView: View {
                 .opacity(adviceAppeared ? 1 : 0)
                 .offset(y: adviceAppeared ? 0 : 16)
 
+                // ── ACTIVITY (point add/remove change log) ────────
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionLabel("Activity")
+                    StressActivityTimeline(viewModel: viewModel, modelContext: modelContext)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 28)
+                .opacity(adviceAppeared ? 1 : 0)
+                .offset(y: adviceAppeared ? 0 : 16)
+
                 // ── QUICK LOG ─────────────────────────────────────
                 // Hidden — sheet now auto-triggers via DailyPromptCoordinator
                 // when HK data is missing after 10 AM on Stress-tab entry.
@@ -348,7 +339,7 @@ struct StressView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Now smarter")
                     .font(.r(.subheadline, .semibold))
-                Text("Your stress score now considers mood, hydration, symptoms, and more — 13 factors total. Vitals like HRV are used to calibrate accuracy against your personal baseline.")
+                Text("Your stress score now considers mood, hydration, and more — 12 factors total. Vitals like HRV are used to calibrate accuracy against your personal baseline.")
                     .font(.r(.caption, .regular))
                     .foregroundStyle(.secondary)
             }
@@ -602,7 +593,6 @@ struct StressView: View {
         case "Fasting":         return .fasting
         case "Eating Triggers": return nil    // non-tappable in v3
         case "Mood":            return .mood
-        case "Symptoms":        return .symptoms
         default:                return nil
         }
     }

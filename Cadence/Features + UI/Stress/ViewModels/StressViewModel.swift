@@ -42,7 +42,7 @@ final class StressViewModel: ObservableObject {
     @Published var engagementPenaltyValue: Double = 0
     /// Multi-day pattern penalty 0…12.
     @Published var patternPenaltyValue: Double = 0
-    /// All 13 factors in stable order (per `StressScoring.allFactors`).
+    /// All 12 factors in stable order (per `StressScoring.allFactors`).
     @Published var allFactors: [StressFactorResult] = []
 
     // MARK: - Today's Vitals (display-only)
@@ -91,13 +91,13 @@ final class StressViewModel: ObservableObject {
         allFactors.sorted { $0.stressContribution > $1.stressContribution }.prefix(5).map { $0 }
     }
 
-    /// Number of factors that have valid input data for today (0–13 in v3).
+    /// Number of factors that have valid input data for today (0–12 in v3).
     var factorCoverage: Int { allFactors.filter(\.hasValidData).count }
 
     /// Coverage-weighted confidence per formula spec §8.
     /// `high` ≥70%, `medium` 40–70%, `low` <40%.
     var stressConfidence: Confidence {
-        let totalPossible: Double = 100   // sum of v3 driver weights
+        let totalPossible: Double = 93   // sum of v3 driver weights
         let covered = allFactors.reduce(0.0) { $0 + ($1.hasValidData ? $1.maxScore : 0) }
         let coverage = covered / totalPossible
         switch coverage {
@@ -165,7 +165,6 @@ final class StressViewModel: ObservableObject {
 
     private var tickerCancellable: AnyCancellable?
     private var manualInputCancellable: AnyCancellable?
-    private var symptomLoggedCancellable: AnyCancellable?
 
     // MARK: - Init
 
@@ -186,14 +185,6 @@ final class StressViewModel: ObservableObject {
         tickerCancellable = StressTimerService.shared.$tickerPulse
             .dropFirst()
             .sink { [weak self] _ in self?.recompute(reason: .autoEngagementTick) }
-
-        // Listen for symptom logs from any sheet presenter (Home/Stress/Profile)
-        // so the symptom factor refreshes even when the presenter doesn't own
-        // a `StressViewModel` reference (e.g. ProfileView).
-        symptomLoggedCancellable = NotificationCenter.default
-            .publisher(for: .symptomLogged)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.recompute(reason: .manualSymptoms) }
 
         // Once-per-day retention purge for the change log (decoupled from tab lifecycle).
         let purgeKey = "wp.stress.changeLog.lastPurgeDay"
@@ -339,7 +330,7 @@ final class StressViewModel: ObservableObject {
         WidgetRefreshHelper.refreshStress(viewModel: self)
     }
 
-    /// Re-fetches cheap SwiftData (mood/water/food/symptoms/interventions/manual/recent
+    /// Re-fetches cheap SwiftData (mood/water/food/interventions/manual/recent
     /// wellness/active fast) and reuses cached HK from the most recent `loadData()`.
     /// Calls `computeStress` and republishes.
     func recompute(reason: StressChangeSource) {
@@ -465,7 +456,7 @@ final class StressViewModel: ObservableObject {
     private var lastResult: StressScoring.StressResult?
     /// In-memory cache of the previous inputs (used for engagement breakdown diff).
     private var lastInputs: StressScoring.StressInputs?
-    /// Bumped on every successful change-log insert so `StressActivityView` can re-fetch.
+    /// Bumped on every successful change-log insert so `StressActivityTimeline` can re-fetch.
     @Published private(set) var lastChangeEmittedAt: Date = .distantPast
 
     private let lastResultDefaultsKey = "wp.stress.lastResultEnvelope.v1"
@@ -487,7 +478,7 @@ final class StressViewModel: ObservableObject {
         UserDefaults.standard.set(data, forKey: lastResultDefaultsKey)
     }
 
-    /// Mock-mode accessor — `StressActivityView` reads this when `usesMockData == true`.
+    /// Mock-mode accessor — `StressActivityTimeline` reads this when `usesMockData == true`.
     var mockChangeEntries: [MockChangeEntry] {
         guard usesMockData, let snap = mockSnapshot else { return [] }
         return snap.changeEntries
@@ -540,7 +531,6 @@ final class StressViewModel: ObservableObject {
         case 9:  return "fasting"
         case 10: return "eating_triggers"
         case 11: return "mood"
-        case 12: return "symptoms"
         default: return "unknown"
         }
     }
@@ -576,7 +566,7 @@ final class StressViewModel: ObservableObject {
         let prev: StressScoring.StressResult? = {
             guard let env = prevEnvelope,
                   env.version == StressLastResultEnvelope.currentVersion,
-                  env.result.factors.count == 13,
+                  env.result.factors.count == 12,
                   Calendar.current.isDate(env.capturedAt, inSameDayAs: now)
             else { return nil }
             return env.result
@@ -666,7 +656,7 @@ final class StressViewModel: ObservableObject {
             suppressEngagementGapDiff = true
         }
 
-        // ── Per-factor deltas (count == 13 validated above) ──
+        // ── Per-factor deltas (count == 12 validated above) ──
         for (idx, n) in next.factors.enumerated() {
             let p = prevEffective.factors[idx]
             let delta = n.points - p.points
@@ -810,7 +800,7 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - Apply v3 Result
 
-    /// Publishes a `StressResult` into all the @Published vars. Maps the 13 factor
+    /// Publishes a `StressResult` into all the @Published vars. Maps the 12 factor
     /// indices to titles/icons (in stable order matching `StressScoring.allFactors`).
     private func applyResult(_ result: StressScoring.StressResult, inputs: StressScoring.StressInputs, reason: StressChangeSource) {
         // Diff/persist hooks BEFORE publish so the change log sees the truthful
@@ -820,20 +810,6 @@ final class StressViewModel: ObservableObject {
         lastResult = result
         lastInputs = inputs
         persistLastResult(result)
-
-        #if DEBUG
-        if reason == .manualSymptoms {
-            let symptomFactor = result.factors[12]
-            let names = inputs.symptoms.map { "\($0.name)(\($0.severity)/\($0.category))" }.joined(separator: ",")
-            let msg = String(
-                format: "🔬 manualSymptoms prev=%.2f next=%.2f Δ=%+.2f | symptomPts=%.2f n=%d [%@] | driver=%.2f rec=%.2f eng=%.2f pat=%.2f calib=%.3f",
-                self.totalScore, result.score, result.score - self.totalScore,
-                symptomFactor.points, inputs.symptoms.count, names,
-                result.driverSum, result.recovery, result.engagementPenalty, result.patternPenalty, result.calibrator
-            )
-            WPLogger.stress.info(msg)
-        }
-        #endif
 
         // Detect ≥ 8-point drop BEFORE mutating totalScore so the comparison
         // uses the previously-published value as the baseline. Delegates to a
@@ -892,7 +868,6 @@ final class StressViewModel: ObservableObject {
         case 9:  return "Fasting"
         case 10: return "Eating Triggers"
         case 11: return "Mood"
-        case 12: return "Symptoms"
         default: return "Unknown"
         }
     }
@@ -911,7 +886,6 @@ final class StressViewModel: ObservableObject {
         case 9:  return "timer"
         case 10: return "exclamationmark.bubble"
         case 11: return "face.smiling"
-        case 12: return "bandage"
         default: return "questionmark.circle"
         }
     }
@@ -926,7 +900,6 @@ final class StressViewModel: ObservableObject {
         let manual = fetchTodayManualInput()
         let todayWellness = fetchTodayWellnessLog()
         let todayFoods = fetchTodayFoodLogs()
-        let todaySymptoms = fetchTodaySymptoms()
         let todayInterventions = fetchTodayInterventions().filter { $0.completed }
         let recentWellness = fetchRecentWellnessLogs()
         let recentFoodPresence = fetchRecentFoodLogPresence()
@@ -1019,7 +992,6 @@ final class StressViewModel: ObservableObject {
             fasting: fastingInput,
             triggerLogs: todayFoods,
             mood: mood,
-            symptoms: todaySymptoms,
             recovery: recovery,
             history: history,
             vitals: vitals,
@@ -1040,11 +1012,6 @@ final class StressViewModel: ObservableObject {
         // Live manual input from QuickCheckInSheet overrides the seeded snapshot
         // so mock mode reflects Quick Log saves immediately.
         let manualInput = fetchTodayManualInput()
-
-        // Live symptoms additive over the seeded snapshot so logging in mock mode
-        // actually moves the symptom factor. Dedupe by name happens inside
-        // `symptomPoints`, so duplicates are harmless.
-        let effectiveSymptoms = snap.todaySymptoms + fetchTodaySymptoms()
 
         let sleepInput: StressScoring.SleepInput = {
             if let m = manualInput, let h = m.sleepHours {
@@ -1163,7 +1130,6 @@ final class StressViewModel: ObservableObject {
             fasting: fastingInput,
             triggerLogs: snap.currentDayLogs,
             mood: effectiveMood,
-            symptoms: effectiveSymptoms,
             recovery: recovery,
             history: history,
             vitals: vitals,
@@ -1270,14 +1236,6 @@ final class StressViewModel: ObservableObject {
     private func fetchTodayFoodLogs() -> [FoodLogEntry] {
         let today = Calendar.current.startOfDay(for: Date())
         let descriptor = FetchDescriptor<FoodLogEntry>(
-            predicate: #Predicate { $0.day == today }
-        )
-        return (try? modelContext.fetch(descriptor)) ?? []
-    }
-
-    private func fetchTodaySymptoms() -> [SymptomEntry] {
-        let today = Calendar.current.startOfDay(for: Date())
-        let descriptor = FetchDescriptor<SymptomEntry>(
             predicate: #Predicate { $0.day == today }
         )
         return (try? modelContext.fetch(descriptor)) ?? []

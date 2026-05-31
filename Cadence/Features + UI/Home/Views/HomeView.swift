@@ -4,14 +4,12 @@ import SwiftData
 // MARK: - HomeSheet
 
 enum HomeSheet: Identifiable, Equatable {
-    case symptomLog
     case changeMood
     case insights
     case fasting
 
     var id: String {
         switch self {
-        case .symptomLog:   return "symptomLog"
         case .changeMood:   return "changeMood"
         case .insights:     return "insights"
         case .fasting:      return "fasting"
@@ -22,7 +20,7 @@ enum HomeSheet: Identifiable, Equatable {
 // MARK: - HomeView
 // Fixed "bento" dashboard: header, Today's Focus hero, a 2×2 grid of equal
 // metric tiles (stress, water, calories, move), then the mood check-in card.
-// The bottom ContextualActionBar (meal + symptom) is preserved.
+// The bottom ContextualActionBar (meal action) is preserved.
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -180,10 +178,7 @@ struct HomeView: View {
             onSeeInsight: {
                 activeSheet = .insights
             },
-            onLogSymptom: {
-                HapticService.impact(.light)
-                activeSheet = .symptomLog
-            }
+            onFasting: { activeSheet = .fasting }
         )
         .padding(.bottom, 4)
     }
@@ -193,8 +188,6 @@ struct HomeView: View {
     @ViewBuilder
     private func sheetContent(for sheet: HomeSheet) -> some View {
         switch sheet {
-        case .symptomLog:
-            SymptomLogSheet(onSaved: { stressViewModel.recompute(reason: .manualSymptoms) })
         case .changeMood:
             MoodCheckInSheet(onSaved: { stressViewModel.recompute(reason: .manualMood) })
         case .insights:
@@ -349,16 +342,6 @@ struct HomeView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Insights")
 
-            // Fast button — opens the intermittent fasting tracker
-            Button {
-                HapticService.impact(.light)
-                activeSheet = .fasting
-            } label: {
-                headerAssetIcon("fasting_icon")
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Fasting")
-
             // Mood button — emoji badge when logged, subtle face icon otherwise
             Button {
                 HapticService.impact(.light)
@@ -388,21 +371,6 @@ struct HomeView: View {
             Image(systemName: systemName)
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white)
-        }
-    }
-
-    /// Circular header button backed by an image asset (e.g. the fasting icon).
-    @ViewBuilder
-    private func headerAssetIcon(_ assetName: String) -> some View {
-        ZStack {
-            Circle()
-                .fill(Color(.systemBackground))
-                .frame(width: 40, height: 40)
-                .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
-            Image(assetName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 22, height: 22)
         }
     }
 

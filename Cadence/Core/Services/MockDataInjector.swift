@@ -35,7 +35,6 @@ enum MockDataInjector {
         injectStressReadings(into: context, today: today, cal: cal)
 
         // New injectors
-        injectSymptomEntries(into: context, today: today, cal: cal)
         injectFastingSessions(into: context, today: today, cal: cal, injectedDates: &injectedDates)
 
         do {
@@ -65,15 +64,7 @@ enum MockDataInjector {
             mockReadings.forEach { context.delete($0) }
         }
 
-        // 3. SymptomEntry — by tag
-        let symptomDescriptor = FetchDescriptor<SymptomEntry>(
-            predicate: #Predicate { $0.notes == "[mock]" }
-        )
-        if let mockSymptoms = try? context.fetch(symptomDescriptor) {
-            mockSymptoms.forEach { context.delete($0) }
-        }
-
-        // 4. WellnessDayLog + FastingSession — by tracked dates
+        // 3. WellnessDayLog + FastingSession — by tracked dates
         let formatter = ISO8601DateFormatter()
         let trackedDates = AppConfig.shared.mockInjectedDates.compactMap { formatter.date(from: $0) }
         for date in trackedDates {
@@ -235,25 +226,6 @@ enum MockDataInjector {
                 )
                 context.insert(reading)
             }
-        }
-    }
-
-    // MARK: - Symptom Entries
-
-    private static func injectSymptomEntries(into context: ModelContext, today: Date, cal: Calendar) {
-        let symptoms: [(name: String, category: SymptomCategory, severityRange: ClosedRange<Int>)] = [
-            ("Headache", .pain, 3...7),
-            ("Bloating", .digestive, 2...5),
-            ("Fatigue", .energy, 4...8),
-            ("Brain Fog", .cognitive, 3...6),
-        ]
-        for offset in stride(from: 0, to: 30, by: 3) {
-            let day = cal.date(byAdding: .day, value: -offset, to: today)!
-            let symptom = symptoms[offset / 3 % symptoms.count]
-            let severity = symptom.severityRange.lowerBound + (offset % (symptom.severityRange.upperBound - symptom.severityRange.lowerBound + 1))
-            let ts = cal.date(bySettingHour: 9 + (offset % 8), minute: 0, second: 0, of: day) ?? day
-            let entry = SymptomEntry(name: symptom.name, category: symptom.category, severity: severity, timestamp: ts, notes: "[mock]")
-            context.insert(entry)
         }
     }
 
