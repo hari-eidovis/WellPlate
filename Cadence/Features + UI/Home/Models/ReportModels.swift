@@ -27,7 +27,6 @@ struct ReportContext {
     let crossCorrelations: [CrossCorrelation]
     let interventionResults: [InterventionResult]
     let topFoods: [(name: String, count: Int, totalCalories: Int)]
-    let perSupplementAdherence: [(name: String, rate: Double)]
     let dataQualityNote: String
 }
 

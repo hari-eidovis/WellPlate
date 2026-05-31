@@ -49,7 +49,7 @@ struct MockModeDebugCard: View {
                 }
 
             if isMockMode {
-                Text("All features use mock data. 30 days of food logs, wellness data, stress readings, HealthKit metrics, symptoms, fasting sessions, supplements, and journal entries.")
+                Text("All features use mock data. 30 days of food logs, wellness data, stress readings, HealthKit metrics, symptoms, fasting sessions, and journal entries.")
                     .font(.r(.caption, .medium))
                     .foregroundStyle(.secondary)
             } else {

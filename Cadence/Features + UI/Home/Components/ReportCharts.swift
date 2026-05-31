@@ -378,44 +378,6 @@ struct CorrelationMatrixChart: View {
     }
 }
 
-// MARK: - AdherenceGauge
-
-struct AdherenceGauge: View {
-    let rate: Double
-    let label: String
-
-    @State private var appeared = false
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(WellnessDomain.supplements.accentColor.opacity(0.15), lineWidth: 8)
-            Circle()
-                .trim(from: 0, to: appeared ? CGFloat(min(1, rate)) : 0)
-                .stroke(gaugeColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.spring(response: 0.8, dampingFraction: 0.7), value: appeared)
-
-            VStack(spacing: 2) {
-                Text("\(Int(rate * 100))%")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-                Text(label)
-                    .font(.system(size: 9, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(width: 80, height: 80)
-        .onAppear { appeared = true }
-    }
-
-    private var gaugeColor: Color {
-        if rate >= 0.8 { return .green }
-        if rate >= 0.5 { return .orange }
-        return .red
-    }
-}
-
 // MARK: - FoodSensitivityRow
 
 struct FoodSensitivityRow: View {

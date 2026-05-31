@@ -358,7 +358,7 @@ private struct _ReportActionRecommendation {
     var title: String
     @Guide(description: "1-2 sentences explaining why, referencing a specific data point")
     var rationale: String
-    @Guide(description: "Wellness domain: stress, nutrition, sleep, activity, hydration, caffeine, symptoms, supplements, fasting, or mood")
+    @Guide(description: "Wellness domain: stress, nutrition, sleep, activity, hydration, caffeine, symptoms, fasting, or mood")
     var domain: String
 }
 #endif

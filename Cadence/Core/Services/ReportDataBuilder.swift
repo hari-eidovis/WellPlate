@@ -46,14 +46,6 @@ final class ReportDataBuilder {
         )
         let symptomEntries = (try? modelContext.fetch(symptomDescriptor)) ?? []
 
-        let adherenceDescriptor = FetchDescriptor<AdherenceLog>(
-            predicate: #Predicate { $0.day >= windowStart }
-        )
-        let adherenceLogs = (try? modelContext.fetch(adherenceDescriptor)) ?? []
-
-        let supplementDescriptor = FetchDescriptor<SupplementEntry>()
-        let allSupplements = ((try? modelContext.fetch(supplementDescriptor)) ?? []).filter { $0.isActive }
-
         let fastingDescriptor = FetchDescriptor<FastingSession>(
             predicate: #Predicate { $0.startedAt >= windowStart }
         )
@@ -132,14 +124,6 @@ final class ReportDataBuilder {
             let fastingHours: Double? = dayFasting.isEmpty ? nil : dayFasting.map(\.actualDurationSeconds).reduce(0, +) / 3600.0
             let fastingCompleted: Bool? = dayFasting.isEmpty ? nil : dayFasting.contains(where: \.completed)
 
-            // Supplements
-            let dayAdherence = adherenceLogs.filter { $0.day == dayStart }
-            let supplementAdherence: Double? = dayAdherence.isEmpty ? nil : {
-                let taken = Double(dayAdherence.filter { $0.status == "taken" }.count)
-                let total = Double(dayAdherence.count)
-                return total > 0 ? taken / total : nil
-            }()
-
             var summary = WellnessDaySummary(
                 date: dayStart,
                 stressScore: avgScore,
@@ -166,7 +150,6 @@ final class ReportDataBuilder {
                 symptomMaxSeverity: symptomMax,
                 fastingHours: fastingHours,
                 fastingCompleted: fastingCompleted,
-                supplementAdherence: supplementAdherence,
                 journalLogged: false
             )
 
@@ -210,10 +193,6 @@ final class ReportDataBuilder {
         )
 
         let topFoods = computeTopFoods(foodLogs: foodLogs)
-        let perSupplementAdherence = computePerSupplementAdherence(
-            adherenceLogs: adherenceLogs,
-            supplements: allSupplements
-        )
 
         // Data quality note
         var missingCategories: [String] = []
@@ -230,7 +209,6 @@ final class ReportDataBuilder {
             crossCorrelations: crossCorrelations,
             interventionResults: interventionResults,
             topFoods: topFoods,
-            perSupplementAdherence: perSupplementAdherence,
             dataQualityNote: qualityNote
         )
     }
@@ -554,22 +532,6 @@ final class ReportDataBuilder {
             .sorted { $0.count > $1.count }
             .prefix(10)
             .map { $0 }
-    }
-
-    // MARK: - Per-Supplement Adherence
-
-    private func computePerSupplementAdherence(
-        adherenceLogs: [AdherenceLog],
-        supplements: [SupplementEntry]
-    ) -> [(name: String, rate: Double)] {
-        let grouped = Dictionary(grouping: adherenceLogs, by: \.supplementName)
-        return grouped
-            .map { name, logs in
-                let taken = Double(logs.filter { $0.status == "taken" }.count)
-                let total = Double(logs.count)
-                return (name: name, rate: total > 0 ? taken / total : 0)
-            }
-            .sorted { $0.rate < $1.rate }
     }
 
     // MARK: - Safe Fetch Helpers

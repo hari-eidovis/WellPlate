@@ -125,7 +125,6 @@ final class AI15DayReportViewModel: ObservableObject {
                 symptomMaxSeverity: i == 2 || i == 5 || i == 8 ? 5 : (i == 4 ? 7 : nil),
                 fastingHours: i % 4 == 0 ? 16.0 : nil,
                 fastingCompleted: i % 4 == 0 ? true : nil,
-                supplementAdherence: i < 12 ? 0.75 : 1.0,
                 journalLogged: false
             )
             s.stressMin = stressScores[i] - 8
@@ -161,10 +160,6 @@ final class AI15DayReportViewModel: ObservableObject {
                 (name: "Rice bowl", count: 8, totalCalories: 4800),
                 (name: "Greek yogurt", count: 7, totalCalories: 980),
                 (name: "Banana", count: 6, totalCalories: 630),
-            ],
-            perSupplementAdherence: [
-                (name: "Omega-3", rate: 0.53),
-                (name: "Vitamin D", rate: 0.87),
             ],
             dataQualityNote: ""
         )

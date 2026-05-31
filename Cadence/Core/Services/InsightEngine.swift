@@ -182,11 +182,6 @@ final class InsightEngine: ObservableObject {
         )
         let fastingSessions = ((try? ctx.fetch(fastingDescriptor)) ?? []).filter { !$0.isActive }
 
-        let adherenceDescriptor = FetchDescriptor<AdherenceLog>(
-            predicate: #Predicate { $0.day >= windowStart }
-        )
-        let adherenceLogs = (try? ctx.fetch(adherenceDescriptor)) ?? []
-
         let journalDescriptor = FetchDescriptor<JournalEntry>(
             predicate: #Predicate { $0.day >= windowStart }
         )
@@ -246,14 +241,6 @@ final class InsightEngine: ObservableObject {
             let fastingHours: Double? = dayFasting.isEmpty ? nil : dayFasting.map(\.actualDurationSeconds).reduce(0, +) / 3600.0
             let fastingCompleted: Bool? = dayFasting.isEmpty ? nil : dayFasting.contains(where: \.completed)
 
-            // Supplements
-            let dayAdherence = adherenceLogs.filter { $0.day == dayStart }
-            let supplementAdherence: Double? = dayAdherence.isEmpty ? nil : {
-                let taken = Double(dayAdherence.filter { $0.status == "taken" }.count)
-                let total = Double(dayAdherence.count)
-                return total > 0 ? taken / total : nil
-            }()
-
             // Journal
             let journalLogged = journalEntries.contains { calendar.isDate($0.day, inSameDayAs: dayStart) }
 
@@ -283,7 +270,6 @@ final class InsightEngine: ObservableObject {
                 symptomMaxSeverity: symptomMax,
                 fastingHours: fastingHours,
                 fastingCompleted: fastingCompleted,
-                supplementAdherence: supplementAdherence,
                 journalLogged: journalLogged
             )
 

@@ -27,7 +27,6 @@ struct ReportHeaderSection: View {
         if days.contains(where: { $0.steps != nil }) { count += 1 }
         if days.contains(where: { ($0.waterGlasses ?? 0) > 0 }) { count += 1 }
         if days.contains(where: { !$0.symptomNames.isEmpty }) { count += 1 }
-        if days.contains(where: { $0.supplementAdherence != nil }) { count += 1 }
         if days.contains(where: { $0.fastingHours != nil }) { count += 1 }
         if days.contains(where: { $0.moodLabel != nil }) { count += 1 }
         return count

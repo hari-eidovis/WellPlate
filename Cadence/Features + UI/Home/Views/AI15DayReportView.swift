@@ -136,11 +136,6 @@ struct AI15DayReportView: View {
             sections.append(AnyView(SymptomSection(data: data)))
         }
 
-        // Supplements
-        if days.contains(where: { $0.supplementAdherence != nil }) {
-            sections.append(AnyView(SupplementSection(data: data)))
-        }
-
         // Fasting
         if days.contains(where: { $0.fastingHours != nil }) {
             sections.append(AnyView(FastingSection(data: data)))

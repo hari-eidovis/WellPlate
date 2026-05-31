@@ -9,11 +9,9 @@ struct WellnessCalendarView: View {
     @Query private var allWellnessDayLogs: [WellnessDayLog]
     @Query private var allFoodEntries: [FoodLogEntry]
     @StateObject private var viewModel = WellnessCalendarViewModel()
-    @StateObject private var supplementService = SupplementService()
     @State private var showCalendar = false
     @State private var showJournalHistory = false
     @State private var showSymptomHistory = false
-    @State private var showSupplementList = false
 
     private let weekdaySymbols = Calendar.current.veryShortWeekdaySymbols
     private var currentGoals: UserGoals { userGoalsList.first ?? UserGoals.defaults() }
@@ -46,12 +44,10 @@ struct WellnessCalendarView: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 toolbarButton(icon: "book.fill", label: "Journal history") { showJournalHistory = true }
                 toolbarButton(icon: "heart.text.square.fill", label: "Symptom history") { showSymptomHistory = true }
-                toolbarButton(icon: "pill.fill", label: "Health regimen") { showSupplementList = true }
             }
         }
         .navigationDestination(isPresented: $showJournalHistory) { JournalHistoryView() }
         .navigationDestination(isPresented: $showSymptomHistory) { SymptomHistoryView() }
-        .navigationDestination(isPresented: $showSupplementList) { SupplementListView(service: supplementService) }
         .onAppear { viewModel.bind(modelContext) }
         .onChange(of: allWellnessDayLogs) { viewModel.loadData(for: viewModel.selectedDate) }
         .onChange(of: allFoodEntries) { viewModel.loadData(for: viewModel.selectedDate) }

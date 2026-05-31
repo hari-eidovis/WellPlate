@@ -28,7 +28,6 @@ enum MockDataInjector {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
         var injectedDates: [String] = []
-        var injectedIDs: [String] = []
 
         // Existing injectors
         injectFoodLogs(into: context, today: today, cal: cal)
@@ -38,13 +37,11 @@ enum MockDataInjector {
         // New injectors
         injectSymptomEntries(into: context, today: today, cal: cal)
         injectFastingSessions(into: context, today: today, cal: cal, injectedDates: &injectedDates)
-        injectAdherenceLogs(into: context, today: today, cal: cal, injectedIDs: &injectedIDs)
         injectJournalEntries(into: context, today: today, cal: cal, injectedDates: &injectedDates)
 
         do {
             try context.save()
             AppConfig.shared.mockInjectedDates = injectedDates
-            AppConfig.shared.mockInjectedRecordIDs = injectedIDs
             WPLogger.app.info("Mock data injection complete")
         } catch {
             WPLogger.app.error("Mock data injection failed: \(error.localizedDescription)")
@@ -110,19 +107,9 @@ enum MockDataInjector {
             }
         }
 
-        // 6. AdherenceLog — by tracked UUIDs
-        let trackedIDs = Set(AppConfig.shared.mockInjectedRecordIDs)
-        if !trackedIDs.isEmpty {
-            let adherenceDescriptor = FetchDescriptor<AdherenceLog>()
-            if let allLogs = try? context.fetch(adherenceDescriptor) {
-                allLogs.filter { trackedIDs.contains($0.id.uuidString) }.forEach { context.delete($0) }
-            }
-        }
-
-        // 7. Save + clear tracking
+        // 6. Save + clear tracking
         try? context.save()
         AppConfig.shared.mockInjectedDates = []
-        AppConfig.shared.mockInjectedRecordIDs = []
     }
 
     // MARK: - Food Logs
@@ -293,25 +280,6 @@ enum MockDataInjector {
             session.completed = true
             context.insert(session)
             injectedDates.append(formatter.string(from: cal.startOfDay(for: startTime)))
-        }
-    }
-
-    // MARK: - Adherence Logs
-
-    private static func injectAdherenceLogs(into context: ModelContext, today: Date, cal: Calendar, injectedIDs: inout [String]) {
-        let supplements: [(name: String, id: UUID, minute: Int)] = [
-            ("Vitamin D", UUID(), 480),
-            ("Omega-3", UUID(), 1200),
-        ]
-        for offset in 0..<30 {
-            let day = cal.date(byAdding: .day, value: -offset, to: today)!
-            for supp in supplements {
-                let status = offset % 7 == 0 ? "skipped" : "taken"
-                let takenAt = status == "taken" ? cal.date(bySettingHour: supp.minute / 60, minute: supp.minute % 60, second: 0, of: day) : nil
-                let log = AdherenceLog(supplementName: supp.name, supplementID: supp.id, day: day, scheduledMinute: supp.minute, status: status, takenAt: takenAt)
-                context.insert(log)
-                injectedIDs.append(log.id.uuidString)
-            }
         }
     }
 

@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - WellnessDomain
 
 enum WellnessDomain: String, CaseIterable {
-    case stress, nutrition, sleep, activity, hydration, caffeine, mood, fasting, symptoms, cross, supplements
+    case stress, nutrition, sleep, activity, hydration, caffeine, mood, fasting, symptoms, cross
 
     var label: String {
         switch self {
@@ -17,7 +17,6 @@ enum WellnessDomain: String, CaseIterable {
         case .fasting:   return "Fasting"
         case .symptoms:  return "Symptoms"
         case .cross:        return "Patterns"
-        case .supplements:  return "Supplements"
         }
     }
 
@@ -33,7 +32,6 @@ enum WellnessDomain: String, CaseIterable {
         case .fasting:   return "timer"
         case .symptoms:  return "stethoscope"
         case .cross:        return "arrow.triangle.swap"
-        case .supplements:  return "pill.fill"
         }
     }
 
@@ -49,7 +47,6 @@ enum WellnessDomain: String, CaseIterable {
         case .fasting:   return .orange
         case .symptoms:  return AppColors.error
         case .cross:        return AppColors.brand
-        case .supplements:  return Color(hue: 0.72, saturation: 0.50, brightness: 0.80)
         }
     }
 }
@@ -152,8 +149,6 @@ struct WellnessDaySummary {
     // Fasting
     let fastingHours: Double?
     let fastingCompleted: Bool?
-    // Supplements
-    let supplementAdherence: Double?
     // Journal
     let journalLogged: Bool
 

@@ -41,7 +41,6 @@ final class AppConfig {
         static let mockResponseDelay = "app.nutrition.mockResponseDelay"
         static let apiTimeout = "app.networking.apiTimeout"
         static let mockInjectedDates = "app.mock.injectedDates"
-        static let mockInjectedRecordIDs = "app.mock.injectedRecordIDs"
         static let stressAlgorithmV2 = "app.stress.algorithmV2"
         static let fastingAccessOverride = "app.fasting.accessOverride"
     }
@@ -164,22 +163,6 @@ final class AppConfig {
         set {
             #if DEBUG
             UserDefaults.standard.set(newValue, forKey: Keys.mockInjectedDates)
-            #endif
-        }
-    }
-
-    /// UUID strings of mock-injected AdherenceLog records.
-    var mockInjectedRecordIDs: [String] {
-        get {
-            #if DEBUG
-            return UserDefaults.standard.stringArray(forKey: Keys.mockInjectedRecordIDs) ?? []
-            #else
-            return []
-            #endif
-        }
-        set {
-            #if DEBUG
-            UserDefaults.standard.set(newValue, forKey: Keys.mockInjectedRecordIDs)
             #endif
         }
     }
