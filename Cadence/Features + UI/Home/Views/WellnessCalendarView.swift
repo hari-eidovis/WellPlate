@@ -144,7 +144,8 @@ struct WellnessCalendarView: View {
 
         return HStack(spacing: 8) {
             snapshotTile(
-                emoji: mood?.emoji ?? "🫥",
+                emoji: mood?.emoji,
+                icon: mood == nil ? "face.smiling" : nil,
                 value: mood?.label ?? "—",
                 label: "Mood",
                 accent: mood?.accentColor ?? .secondary,

@@ -358,19 +358,19 @@ struct HomeView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Insights")
 
-            // Mood button — emoji badge when logged, subtle face icon otherwise
-            Button {
-                HapticService.impact(.light)
-                activeSheet = .changeMood
-            } label: {
-                if hasLoggedMoodToday, let mood = selectedMood {
+            // Mood button — only shown once a mood is logged; tapping it lets the
+            // user change today's mood. Until then nothing is shown here (logging
+            // a fresh mood happens via the MoodCheckInCard in the scroll content).
+            if hasLoggedMoodToday, let mood = selectedMood {
+                Button {
+                    HapticService.impact(.light)
+                    activeSheet = .changeMood
+                } label: {
                     moodBadge(mood)
-                } else {
-                    headerIcon("face.smiling")
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Change today's mood")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(hasLoggedMoodToday ? "Change today's mood" : "Log your mood")
         }
     }
 
