@@ -575,7 +575,7 @@ enum StressScoring {
             acc + Double(pair.severity) * weight(for: pair.category)
         }
 
-        let pts = min(Weights.symptoms, weightedSum / 30.0 * Weights.symptoms)
+        let pts = min(Weights.symptoms, weightedSum / 15.0 * Weights.symptoms)
         let detail = "\(maxByName.count) symptom\(maxByName.count == 1 ? "" : "s") logged"
         return FactorPoints(points: pts, maxPoints: Weights.symptoms, hasData: true, detail: detail)
     }

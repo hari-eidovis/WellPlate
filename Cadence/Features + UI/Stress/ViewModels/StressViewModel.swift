@@ -165,6 +165,7 @@ final class StressViewModel: ObservableObject {
 
     private var tickerCancellable: AnyCancellable?
     private var manualInputCancellable: AnyCancellable?
+    private var symptomLoggedCancellable: AnyCancellable?
 
     // MARK: - Init
 
@@ -185,6 +186,14 @@ final class StressViewModel: ObservableObject {
         tickerCancellable = StressTimerService.shared.$tickerPulse
             .dropFirst()
             .sink { [weak self] _ in self?.recompute(reason: .autoEngagementTick) }
+
+        // Listen for symptom logs from any sheet presenter (Home/Stress/Profile)
+        // so the symptom factor refreshes even when the presenter doesn't own
+        // a `StressViewModel` reference (e.g. ProfileView).
+        symptomLoggedCancellable = NotificationCenter.default
+            .publisher(for: .symptomLogged)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.recompute(reason: .manualSymptoms) }
 
         // Once-per-day retention purge for the change log (decoupled from tab lifecycle).
         let purgeKey = "wp.stress.changeLog.lastPurgeDay"
@@ -816,6 +825,20 @@ final class StressViewModel: ObservableObject {
         lastInputs = inputs
         persistLastResult(result)
 
+        #if DEBUG
+        if reason == .manualSymptoms {
+            let symptomFactor = result.factors[12]
+            let names = inputs.symptoms.map { "\($0.name)(\($0.severity)/\($0.category))" }.joined(separator: ",")
+            let msg = String(
+                format: "🔬 manualSymptoms prev=%.2f next=%.2f Δ=%+.2f | symptomPts=%.2f n=%d [%@] | driver=%.2f rec=%.2f eng=%.2f pat=%.2f calib=%.3f",
+                self.totalScore, result.score, result.score - self.totalScore,
+                symptomFactor.points, inputs.symptoms.count, names,
+                result.driverSum, result.recovery, result.engagementPenalty, result.patternPenalty, result.calibrator
+            )
+            WPLogger.stress.info(msg)
+        }
+        #endif
+
         // Detect ≥ 8-point drop BEFORE mutating totalScore so the comparison
         // uses the previously-published value as the baseline. Delegates to a
         // global coordinator so the overlay can appear from any screen, not
@@ -1024,6 +1047,11 @@ final class StressViewModel: ObservableObject {
         // so mock mode reflects Quick Log saves immediately.
         let manualInput = fetchTodayManualInput()
 
+        // Live symptoms additive over the seeded snapshot so logging in mock mode
+        // actually moves the symptom factor. Dedupe by name happens inside
+        // `symptomPoints`, so duplicates are harmless.
+        let effectiveSymptoms = snap.todaySymptoms + fetchTodaySymptoms()
+
         let sleepInput: StressScoring.SleepInput = {
             if let m = manualInput, let h = m.sleepHours {
                 let derivedDeep: Double = {
@@ -1142,7 +1170,7 @@ final class StressViewModel: ObservableObject {
             fasting: fastingInput,
             triggerLogs: snap.currentDayLogs,
             mood: effectiveMood,
-            symptoms: snap.todaySymptoms,
+            symptoms: effectiveSymptoms,
             recovery: recovery,
             history: history,
             vitals: vitals,

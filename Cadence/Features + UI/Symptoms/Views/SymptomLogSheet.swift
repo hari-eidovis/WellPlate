@@ -1,6 +1,14 @@
 import SwiftUI
 import SwiftData
 
+extension Notification.Name {
+    /// Broadcast after a `SymptomEntry` is persisted from any sheet site.
+    /// `StressViewModel` listens and triggers a `recompute(reason: .manualSymptoms)`
+    /// so the stress score always reflects the new entry even when the presenter
+    /// (e.g. ProfileView) has no direct ViewModel reference.
+    static let symptomLogged = Notification.Name("wp.symptom.logged")
+}
+
 // MARK: - SymptomLogSheet
 //
 // 3-step quick-log flow: category → symptom → severity + save.
@@ -9,6 +17,11 @@ import SwiftData
 struct SymptomLogSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+
+    /// Fires after the symptom is persisted, before dismissal. Lets parents
+    /// (e.g. StressView) trigger a stress recompute so the score reflects
+    /// the new symptom immediately.
+    var onSaved: (() -> Void)? = nil
 
     @State private var step: LogStep = .category
     @State private var selectedCategory: SymptomCategory?
@@ -377,6 +390,8 @@ struct SymptomLogSheet: View {
             try modelContext.save()
             HapticService.notify(.success)
             WPLogger.home.info("Symptom logged: \(symptom.name) severity \(Int(severity))")
+            NotificationCenter.default.post(name: .symptomLogged, object: nil)
+            onSaved?()
         } catch {
             WPLogger.home.error("Symptom save failed: \(error.localizedDescription)")
         }

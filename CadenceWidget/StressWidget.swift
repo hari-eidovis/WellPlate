@@ -41,8 +41,6 @@ struct StressWidgetEntryView: View {
             StressSmallView(data: entry.data)
         case .systemMedium:
             StressMediumView(data: entry.data)
-        case .systemLarge:
-            StressLargeView(data: entry.data)
         default:
             StressSmallView(data: entry.data)
         }
@@ -60,7 +58,7 @@ struct StressWidget: Widget {
         }
         .configurationDisplayName("Stress Level")
         .description("Monitor your stress score and top factors.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
@@ -75,9 +73,6 @@ struct StressWidget_Previews: PreviewProvider {
 
             StressWidgetEntryView(entry: StressEntry(date: .now, data: .placeholder))
                 .previewContext(WidgetPreviewContext(family: .systemMedium))
-
-            StressWidgetEntryView(entry: StressEntry(date: .now, data: .placeholder))
-                .previewContext(WidgetPreviewContext(family: .systemLarge))
         }
     }
 }

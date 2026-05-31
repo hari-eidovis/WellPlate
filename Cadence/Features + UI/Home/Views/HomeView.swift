@@ -375,7 +375,7 @@ struct HomeView: View {
                 onSave: saveJournalEntry
             )
         case .symptomLog:
-            SymptomLogSheet()
+            SymptomLogSheet(onSaved: { stressViewModel.recompute(reason: .manualSymptoms) })
         case .customizeCard(let card):
             CardCustomizeSheet(card: card, layout: layoutBinding)
         case .changeMood:

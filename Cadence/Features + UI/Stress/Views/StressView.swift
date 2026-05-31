@@ -212,7 +212,7 @@ struct StressView: View {
             case .mood:
                 MoodCheckInSheet(onSaved: { viewModel.recompute(reason: .manualMood) })
             case .symptoms:
-                SymptomLogSheet()
+                SymptomLogSheet(onSaved: { viewModel.recompute(reason: .manualSymptoms) })
             case .todayPatternDetail:
                 StressPatternDetailView(
                     todayReadings: viewModel.todayReadings,
