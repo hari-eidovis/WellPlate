@@ -181,7 +181,6 @@ struct ProgressInsightsView: View {
                             mainChartCard
                             keyMetricsGrid
                             macroDistributionCard
-                            trendsCard
                             detailedStatsCard
                         }
                         .padding(.horizontal, 20)
@@ -667,69 +666,7 @@ struct ProgressInsightsView: View {
         }
     }
 
-    // MARK: - Trends Card
 
-    private var trendsCard: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            SectionHeader(title: "Smart Insights", subtitle: "based on your data")
-            VStack(spacing: 10) {
-                if currentPeriodStats.avgCalories > Double(currentGoals.calorieGoal) {
-                    insightRow(icon: "exclamationmark.triangle.fill",
-                               gradientColors: [Color(hex: "FF6B35"), Color(hex: "FFA500")],
-                               title: "Above Calorie Goal",
-                               description: "\(Int(currentPeriodStats.avgCalories - Double(currentGoals.calorieGoal))) kcal over your daily target on average")
-                } else {
-                    insightRow(icon: "checkmark.circle.fill",
-                               gradientColors: [Color(hex: "34C759"), Color(hex: "30D158")],
-                               title: "Within Calorie Goal",
-                               description: "You're nailing it! Staying on track consistently.")
-                }
-                if currentPeriodStats.avgProtein >= 100 {
-                    insightRow(icon: "bolt.fill",
-                               gradientColors: [Color(hex: "5E9FFF"), Color(hex: "007AFF")],
-                               title: "Excellent Protein Intake",
-                               description: "Averaging \(Int(currentPeriodStats.avgProtein))g/day — great for muscle support.")
-                }
-                if currentPeriodStats.consistencyScore >= 70 {
-                    insightRow(icon: "star.fill",
-                               gradientColors: [Color(hex: "FFD60A"), Color(hex: "FF9F0A")],
-                               title: "Consistent Logger",
-                               description: "You've tracked \(currentPeriodStats.consistencyScore)% of days — keep the streak alive!")
-                }
-                let streakDays = calculateCurrentStreak()
-                if streakDays >= 3 {
-                    insightRow(icon: "flame.fill",
-                               gradientColors: [Color(hex: "FF4B6E"), Color(hex: "FF6B35")],
-                               title: "\(streakDays)-Day Streak 🔥",
-                               description: "Incredible consistency — don't break the chain!")
-                }
-            }
-        }
-        .padding(20)
-        .glassCard(background: cardBackground, shadowColor: cardShadowColor)
-    }
-
-    private func insightRow(icon: String, gradientColors: [Color], title: String, description: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(LinearGradient(colors: gradientColors, startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 42, height: 42)
-                Image(systemName: icon).font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-            }
-            .shadow(color: gradientColors.first?.opacity(0.4) ?? .clear, radius: 6, y: 3)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 14, weight: .bold, design: .rounded)).foregroundColor(.primary)
-                Text(description).font(.system(size: 12)).foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer()
-        }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 14)
-            .fill(Color.secondary.opacity(colorScheme == .dark ? 0.08 : 0.04)))
-    }
 
     // MARK: - Detailed Stats Card
 

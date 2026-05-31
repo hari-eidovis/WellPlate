@@ -276,14 +276,14 @@ struct StressView: View {
                     .opacity(scoreAppeared ? 1 : 0)
 
                 // ── QUICK RESET ───────────────────────────────────
-                VStack(alignment: .leading, spacing: 10) {
-                    sectionLabel("Quick Reset")
-                    ResetExercisesCard()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 28)
-                .opacity(adviceAppeared ? 1 : 0)
-                .offset(y: adviceAppeared ? 0 : 16)
+                // VStack(alignment: .leading, spacing: 10) {
+                //     sectionLabel("Quick Reset")
+                //     ResetExercisesCard()
+                // }
+                // .padding(.horizontal, 20)
+                // .padding(.top, 28)
+                // .opacity(adviceAppeared ? 1 : 0)
+                // .offset(y: adviceAppeared ? 0 : 16)
 
                 // ── ACTIVITY (point add/remove change log) ────────
                 VStack(alignment: .leading, spacing: 10) {

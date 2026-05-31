@@ -42,7 +42,8 @@ struct HomeView: View {
     @State private var hasLoggedMoodToday = false
     @State private var healthSuggestedMood: MoodOption?
     @State private var hydrationGlasses: Int = 0
-    @State private var showLogMeal = false
+    @State private var showFoodJournal = false
+    @State private var showMealLogEntry = false
     @State private var showWaterDetail = false
     // TODO: F-next — re-home WellnessCalendarView to Profile tab. Kept as dead
     // navigation state to avoid touching the nav chain; remove with that move.
@@ -99,7 +100,7 @@ struct HomeView: View {
                             current: todayCalories,
                             goal: currentGoals.calorieGoal
                         ),
-                        onTap: { showLogMeal = true }
+                        onTap: { showFoodJournal = true }
                     )
                     HomeMetricTile(
                         .screenTime(hours: stressViewModel.screenTimeDisplayHours),
@@ -173,7 +174,7 @@ struct HomeView: View {
     private var contextualActionBar: some View {
         ContextualActionBar(
             state: contextualBarState,
-            onLogMeal: { showLogMeal = true },
+            onLogMeal: { showMealLogEntry = true },
             onStressTab: { selectedTab = 1 },
             onSeeInsight: {
                 activeSheet = .insights
@@ -217,7 +218,7 @@ struct HomeView: View {
                     let vAmt = abs(value.translation.height)
                     if hAmt > 80 && hAmt > vAmt * 1.5 {
                         HapticService.impact(.medium)
-                        showLogMeal = true
+                        showFoodJournal = true
                     }
                 }
         )
@@ -226,7 +227,7 @@ struct HomeView: View {
         }
         .background(HomePalette.background.ignoresSafeArea())
         .scrollIndicators(.hidden)
-        .navigationDestination(isPresented: $showLogMeal) {
+        .navigationDestination(isPresented: $showFoodJournal) {
             FoodJournalView(viewModel: foodJournalViewModel)
         }
         .navigationDestination(isPresented: $showWaterDetail) {
@@ -249,6 +250,12 @@ struct HomeView: View {
             }
             .sheet(item: $activeSheet) { sheet in
                 sheetContent(for: sheet)
+            }
+            .sheet(isPresented: $showMealLogEntry) {
+                MealLogSheetContent(
+                    homeViewModel: foodJournalViewModel,
+                    selectedDate: Date()
+                )
             }
             .alert("Nice work! 🎉", isPresented: $showWaterGoalCelebration) {
                 Button("OK", role: .cancel) {}
