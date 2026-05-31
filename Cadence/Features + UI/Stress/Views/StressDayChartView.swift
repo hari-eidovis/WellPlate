@@ -15,6 +15,7 @@ struct StressDayChartView: View {
 
     let readings: [StressReading]
     var onLongPress: (() -> Void)? = nil
+    var onInfoTap: (() -> Void)? = nil
 
     @State private var selectedReading: StressReading? = nil
     @State private var dismissTask: Task<Void, Never>? = nil
@@ -121,6 +122,17 @@ struct StressDayChartView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(Capsule().fill(statusColor.opacity(0.13)))
+
+                if let onInfoTap {
+                    Button {
+                        onInfoTap()
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(.bottom, 14)
 
