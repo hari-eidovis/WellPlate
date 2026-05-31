@@ -276,10 +276,17 @@ struct StressView: View {
                 // ── TODAY'S PATTERN ───────────────────────────────
                 VStack(alignment: .leading, spacing: 10) {
                     sectionLabel("Today's Pattern")
-                    StressDayChartView(readings: viewModel.todayReadings) {
-                        HapticService.impact(.medium)
-                        activeSheet = .todayPatternDetail
-                    }
+                    StressDayChartView(
+                        readings: viewModel.todayReadings,
+                        onLongPress: {
+                            HapticService.impact(.medium)
+                            activeSheet = .todayPatternDetail
+                        },
+                        onInfoTap: {
+                            HapticService.impact(.light)
+                            activeSheet = .allFactors
+                        }
+                    )
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 28)
@@ -300,32 +307,6 @@ struct StressView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 18)
                 }
-
-                // ── ALL FACTORS DISCLOSURE ────────────────────────
-                Button {
-                    HapticService.impact(.light)
-                    activeSheet = .allFactors
-                } label: {
-                    HStack {
-                        Text("View all 13 factors")
-                            .font(.r(.subheadline, .semibold))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(.secondary.opacity(0.5))
-                    }
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 18)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Color(.systemBackground))
-                            .appShadow(radius: 15, y: 5)
-                    )
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 20)
-                .padding(.top, 14)
 
                 // ── TOP DRIVER (minimal pill) ─────────────────────
                 topDriverPill
