@@ -63,10 +63,10 @@ Path to an approved plan — either:
 ## Post-Implementation
 
 - [ ] Build all 4 targets:
-  - [ ] `xcodebuild -project WellPlate.xcodeproj -scheme WellPlate -destination 'generic/platform=iOS Simulator' build`
-  - [ ] `xcodebuild -project WellPlate.xcodeproj -scheme ScreenTimeMonitor -destination 'generic/platform=iOS Simulator' build`
-  - [ ] `xcodebuild -project WellPlate.xcodeproj -scheme ScreenTimeReport -destination 'generic/platform=iOS Simulator' build`
-  - [ ] `xcodebuild -project WellPlate.xcodeproj -target WellPlateWidget -destination 'generic/platform=iOS Simulator' build`
+  - [ ] `xcodebuild -workspace Cadence.xcworkspace -scheme Cadence -destination 'generic/platform=iOS Simulator' build`
+  - [ ] `xcodebuild -workspace Cadence.xcworkspace -scheme ScreenTimeMonitor -destination 'generic/platform=iOS Simulator' build`
+  - [ ] `xcodebuild -workspace Cadence.xcworkspace -scheme ScreenTimeReport -destination 'generic/platform=iOS Simulator' build`
+  - [ ] `xcodebuild -project Cadence.xcodeproj -target CadenceWidget -destination 'generic/platform=iOS Simulator' build`
 - [ ] Git commit
 ```
 
@@ -77,7 +77,7 @@ Path to an approved plan — either:
 3. **Include exact file paths** — no vague references like "update the config"
 4. **Include exact commands** where applicable (build, git, mv, etc.)
 5. **Order matters** — respect dependencies; group related items
-6. **Post-implementation MUST include building all 4 targets** (WellPlate, ScreenTimeMonitor, ScreenTimeReport, WellPlateWidget)
+6. **Post-implementation MUST include building all 4 targets** (Cadence, ScreenTimeMonitor, ScreenTimeReport, CadenceWidget)
 7. **Use `- [ ]` checkbox format** for every actionable item
 
 ## Checklist Quality Checks

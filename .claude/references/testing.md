@@ -1,24 +1,24 @@
-# Testing — WellPlate
+# Testing — Cadence
 
 ## Current State
 
-Tests live in `WellPlateTests/` with 4 test files covering nutrition services and speech transcription. Test infrastructure exists but is not yet wired into a dedicated test scheme — tests run through the main `WellPlate` scheme's Test action with auto-created test plans.
+Tests live in `CadenceTests/` with 4 test files covering nutrition services and speech transcription. Test infrastructure exists but is not yet wired into a dedicated test scheme — tests run through the main `Cadence` scheme's Test action with auto-created test plans.
 
 **Build verification** is the primary gate: `xcodebuild build` must pass. Automated test coverage is supplementary and growing.
 
 ## Test Location
 
-All test files live under `WellPlateTests/`. Never create a separate `Tests/` directory at the project root.
+All test files live under `CadenceTests/`. Never create a separate `Tests/` directory at the project root.
 
 ```
-WellPlateTests/
+CadenceTests/
 ├── MealLogViewModelTranscriptionTests.swift
 ├── NutritionServiceTests.swift
 ├── GeminiNutritionProviderTests.swift
 └── MockNutritionProviderTests.swift
 ```
 
-Current layout is flat. Place new test files directly in `WellPlateTests/`.
+Current layout is flat. Place new test files directly in `CadenceTests/`.
 
 **Classification**:
 - Pure logic, no simulator needed → Unit test
@@ -137,14 +137,14 @@ XCTAssertTrue(viewModel.showTranscriptionPermissionAlert)
 
 ```bash
 # Build verification (primary gate)
-xcodebuild -project WellPlate.xcodeproj \
-  -scheme WellPlate \
+xcodebuild -project Cadence.xcodeproj \
+  -scheme Cadence \
   -destination 'generic/platform=iOS Simulator' \
   build
 
 # Run tests
-xcodebuild test -project WellPlate.xcodeproj \
-  -scheme WellPlate \
+xcodebuild test -project Cadence.xcodeproj \
+  -scheme Cadence \
   -destination 'platform=iOS Simulator,name=iPhone 16' \
   -parallel-testing-enabled YES -quiet 2>&1 \
   | grep -E "error:|warning:|TEST SUCCEEDED|TEST FAILED|Executed|BUILD"

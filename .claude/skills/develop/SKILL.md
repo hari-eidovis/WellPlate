@@ -6,7 +6,7 @@ model: opus
 extended_thinking: true
 ---
 
-You are the `/develop` orchestrator — the single entry point for the WellPlate feature development workflow.
+You are the `/develop` orchestrator — the single entry point for the Cadence feature development workflow.
 
 ## Dispatch Mechanism
 
@@ -71,7 +71,7 @@ When invoked as `/develop <sub-command> [args]`:
 When invoked as `/develop` with no sub-command, display this workflow overview:
 
 ```
-WellPlate Development Workflow
+Cadence Development Workflow
 ==============================
 
 STEP 0 (OPTIONAL): BRAINSTORM — creative exploration

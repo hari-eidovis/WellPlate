@@ -1,4 +1,4 @@
-# Coding Style — WellPlate
+# Coding Style — Cadence
 
 ## Immutability
 
@@ -9,10 +9,10 @@ Prefer structs (value types) over classes. Use classes only for SwiftData `@Mode
 - 200-400 lines typical, 800 max
 - Organize by feature/domain under `Features + UI/`
 - One type per file (exceptions: small related enums, extensions in the same domain)
-- All files under `WellPlate/` are auto-included in the build (`PBXFileSystemSynchronizedRootGroup`) — no pbxproj edits needed
+- All files under `Cadence/` are auto-included in the build (`PBXFileSystemSynchronizedRootGroup`) — no pbxproj edits needed
 
 ```
-WellPlate/
+Cadence/
 ├── App/                    # Entry point, RootView
 ├── Core/
 │   ├── AppConfig.swift     # Debug toggles, API config
@@ -153,7 +153,7 @@ Decouple through protocols. Constructor injection with defaults for production c
 | ViewModels | Constructor injection (protocol) | `init(service: HealthKitServiceProtocol = HealthKitService())` |
 | Services | Constructor injection (protocol) | `init(liveProvider: NutritionProvider, mockProvider: NutritionProvider)` |
 | Views | `@StateObject` / `@EnvironmentObject` | `@StateObject private var viewModel = HomeViewModel()` |
-| App Entry | Composition root | `ModelContainer` setup in `WellPlateApp.swift` |
+| App Entry | Composition root | `ModelContainer` setup in `CadenceApp.swift` |
 
 **Protocol naming**: `[TypeName]Protocol` for DI abstractions (e.g., `HealthKitServiceProtocol`), capability-based names for domain contracts (e.g., `NutritionProvider`).
 

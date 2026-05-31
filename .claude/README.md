@@ -1,6 +1,6 @@
-# Claude Code Configuration — WellPlate
+# Claude Code Configuration — Cadence
 
-This directory powers [Claude Code](https://claude.ai/code) for the WellPlate iOS app. It provides a structured development workflow with specialized skills, agents, references, and an integrated code-review knowledge graph.
+This directory powers [Claude Code](https://claude.ai/code) for the Cadence iOS app. It provides a structured development workflow with specialized skills, agents, references, and an integrated code-review knowledge graph.
 
 ## Overview
 

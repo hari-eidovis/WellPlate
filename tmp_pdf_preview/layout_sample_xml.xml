@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pdf2xml SYSTEM "pdf2xml.dtd">
+
+<pdf2xml producer="poppler" version="26.04.0">
+<page number="10" position="absolute" top="0" left="0" height="1188" width="918">
+	<fontspec id="0" size="3" family="AAAAAB+TimesNewRomanPSMT" color="#000000"/>
+	<fontspec id="1" size="26" family="AAAAAC+TimesNewRomanPS" color="#1f3864"/>
+	<fontspec id="2" size="18" family="AAAAAB+TimesNewRomanPSMT" color="#000000"/>
+	<fontspec id="3" size="18" family="AAAAAC+TimesNewRomanPS" color="#000000"/>
+	<fontspec id="4" size="15" family="AAAAAB+TimesNewRomanPSMT" color="#000000"/>
+<image top="45" left="797" width="56" height="46" src="/Users/hariom/Desktop/WellPlate/tmp_pdf_preview/layout_sample_xml-10_1.png"/>
+<text top="45" left="810" width="1" height="4" font="0"> </text>
+<text top="109" left="162" width="101" height="28" font="1"><b>Abstract </b></text>
+<text top="169" left="162" width="652" height="20" font="2">Psychological  stress  is  a  major  determinant  of  long-term health, yet the consumer tools </text>
+<text top="200" left="162" width="652" height="20" font="2">that  purport  to  measure  it  suffer  from  two  structural  weaknesses:  they  silo  data  across </text>
+<text top="231" left="162" width="652" height="20" font="2">disconnected  applications,  and  they  rely  predominantly  on a single physiological signal </text>
+<text top="262" left="162" width="652" height="20" font="2">—  heart-rate  variability  (HRV)  —  which  registers the consequences of stress only after </text>
+<text top="293" left="162" width="652" height="20" font="2">sleep has already been disrupted, by which point the window for intervention has closed. </text>
+<text top="324" left="162" width="286" height="20" font="2">This  project  proposes  and implements </text>
+<text top="324" left="449" width="66" height="20" font="3"><b>Cadence</b></text>
+<text top="324" left="515" width="299" height="20" font="2">, a native iOS application that computes </text>
+<text top="356" left="162" width="652" height="20" font="2">an  explainable  daily  stress  score  on  a  0–100  scale  from  thirteen  behavioural, </text>
+<text top="387" left="162" width="652" height="20" font="2">physiological, and lifestyle drivers organised into three weighted tiers. The methodology </text>
+<text top="418" left="162" width="389" height="20" font="2">is  a  pure,  stateless,  deterministic  algorithm  —  the </text>
+<text top="418" left="554" width="138" height="20" font="3"><b>Stress  Scoring  v3</b></text>
+<text top="418" left="693" width="121" height="20" font="2">  engine  —  that </text>
+<text top="449" left="162" width="652" height="20" font="2">combines  a  tier-weighted driver sum with a recovery bonus, a time-ramped engagement </text>
+<text top="480" left="162" width="652" height="20" font="2">penalty,  a  multi-day  pattern  penalty,  and  an  HRV/resting-heart-rate  physiological </text>
+<text top="511" left="162" width="652" height="20" font="2">calibrator,  while  degrading  gracefully when wearable data is absent. The system is built </text>
+<text top="542" left="162" width="652" height="20" font="2">on  SwiftUI  and  SwiftData  and  integrates  HealthKit,  the  DeviceActivity  framework, </text>
+<text top="573" left="162" width="652" height="20" font="2">ActivityKit, and a Groq large-language-model backend. Evaluation through deterministic </text>
+<text top="604" left="162" width="652" height="20" font="2">unit tests confirms that identical inputs always yield identical, fully decomposable scores, </text>
+<text top="635" left="162" width="652" height="20" font="2">enabling the interface to surface precisely why a user’s stress changed rather than merely </text>
+<text top="666" left="162" width="652" height="20" font="2">that  it  changed.  The  results  indicate  that  a multimodal, transparent, on-device approach </text>
+<text top="697" left="162" width="652" height="20" font="2">offers materially greater interpretability and intervention value than opaque single-signal </text>
+<text top="728" left="162" width="652" height="20" font="2">commercial  alternatives.  Cadence  thus  contributes  a  reproducible,  auditable,  and </text>
+<text top="759" left="162" width="443" height="20" font="2">privacy-preserving model for consumer stress quantification. </text>
+<text top="802" left="162" width="84" height="20" font="3"><b>Keywords:</b></text>
+<text top="802" left="246" width="551" height="20" font="2"> stress quantification, heart-rate variability, multimodal sensing, explainable </text>
+<text top="833" left="162" width="510" height="20" font="2">algorithms, mobile health (mHealth), iOS, SwiftUI, on-device privacy </text>
+<text top="1123" left="445" width="87" height="17" font="4">Page 10 of 46 </text>
+</page>
+<page number="11" position="absolute" top="0" left="0" height="1188" width="918">
+	<fontspec id="5" size="19" family="AAAAAC+TimesNewRomanPS" color="#2e74b5"/>
+	<fontspec id="6" size="18" family="AAAAAD+TimesNewRomanPS" color="#000000"/>
+<image top="45" left="797" width="56" height="46" src="/Users/hariom/Desktop/WellPlate/tmp_pdf_preview/layout_sample_xml-11_1.png"/>
+<text top="45" left="810" width="1" height="4" font="0"> </text>
+<text top="109" left="162" width="269" height="28" font="1"><b>Chapter 1: Introduction </b></text>
+<text top="169" left="162" width="244" height="22" font="5"><b>1.1 Background and Context </b></text>
+<text top="213" left="162" width="651" height="20" font="2">Psychological  stress  is  one  of  the  most  consequential,  yet  least  directly  observable, </text>
+<text top="244" left="162" width="651" height="20" font="2">determinants  of  human  health.  Chronic  exposure  to  stressors  imposes  a  cumulative </text>
+<text top="275" left="162" width="442" height="20" font="2">physiological  cost  that the biologist Bruce McEwen termed </text>
+<text top="275" left="605" width="105" height="20" font="6"><i>allostatic load</i></text>
+<text top="275" left="710" width="104" height="20" font="2"> — the “wear </text>
+<text top="307" left="162" width="652" height="20" font="2">and  tear”  the  body  accumulates  when  its  stress-response  systems  are  activated  too </text>
+<text top="338" left="162" width="652" height="20" font="2">frequently,  fail  to  switch  off,  or  respond  inadequately  to  challenge  [1],  [2].  Elevated </text>
+<text top="369" left="162" width="652" height="20" font="2">allostatic load is implicated in cardiovascular disease, metabolic dysregulation, impaired </text>
+<text top="400" left="162" width="652" height="20" font="2">immunity,  and  mood  disorders.  Because  the  underlying  biology  is  gradual  and  silent, </text>
+<text top="431" left="162" width="652" height="20" font="2">individuals  frequently  remain  unaware  of  their  accumulating  stress  burden  until  it </text>
+<text top="462" left="162" width="228" height="20" font="2">manifests as illness or burnout. </text>
+<text top="505" left="162" width="652" height="20" font="2">The  proliferation  of  smartphones  and wrist-worn wearables has, in principle, created an </text>
+<text top="536" left="162" width="652" height="20" font="2">unprecedented  opportunity  to  observe  the  antecedents  of  stress  continuously  and </text>
+<text top="567" left="162" width="652" height="20" font="2">unobtrusively.  Modern  devices  can  record  heart  rate,  heart-rate  variability,  sleep </text>
+<text top="598" left="162" width="652" height="20" font="2">architecture, physical activity, and even ambient-light exposure. In practice, however, this </text>
+<text top="629" left="162" width="652" height="20" font="2">data  remains  fragmented  and  under-exploited.  The  information  needed  to  understand  a </text>
+<text top="660" left="162" width="652" height="20" font="2">single  stressful  day  is  typically  scattered  across  a  calorie-tracking  app,  the  operating </text>
+<text top="691" left="162" width="652" height="20" font="2">system’s  health store, a screen-time dashboard, and a journaling app, leaving the user to </text>
+<text top="722" left="162" width="507" height="20" font="2">perform the cognitively demanding task of mentally correlating them. </text>
+<text top="765" left="162" width="326" height="20" font="2">This  project  addresses  that  gap  through </text>
+<text top="765" left="496" width="66" height="20" font="3"><b>Cadence</b></text>
+<text top="765" left="562" width="252" height="20" font="2">,  a  native  iOS  application  that </text>
+<text top="796" left="162" width="652" height="20" font="2">consolidates these heterogeneous signals and synthesises them into a single, interpretable </text>
+<text top="827" left="162" width="652" height="20" font="2">measure of daily stress. Rather than treating stress as a black-box output of a proprietary </text>
+<text top="858" left="162" width="652" height="20" font="2">model,  Cadence  is built on the conviction that a wellness score is actionable only to the </text>
+<text top="889" left="162" width="115" height="20" font="2">degree that it is </text>
+<text top="889" left="277" width="84" height="20" font="6"><i>explainable</i></text>
+<text top="889" left="361" width="9" height="20" font="2">. </text>
+<text top="935" left="162" width="126" height="22" font="5"><b>1.2 Motivation </b></text>
+<text top="980" left="162" width="459" height="20" font="2">Four  specific  observations  motivated  this  work.  First, </text>
+<text top="980" left="632" width="181" height="20" font="3"><b>conventional  wellness </b></text>
+<text top="1011" left="162" width="169" height="20" font="3"><b>applications silo data.</b></text>
+<text top="1011" left="331" width="483" height="20" font="2"> Calories live in one application, sleep in another, mood in a third; </text>
+<text top="1042" left="162" width="652" height="20" font="2">no  single  surface  integrates  them, and the burden of synthesis falls on the user. Second, </text>
+<text top="1123" left="445" width="86" height="17" font="4">Page 11 of 46 </text>
+</page>
+<page number="12" position="absolute" top="0" left="0" height="1188" width="918">
+<image top="45" left="797" width="56" height="46" src="/Users/hariom/Desktop/WellPlate/tmp_pdf_preview/layout_sample_xml-12_1.png"/>
+<text top="45" left="810" width="1" height="4" font="0"> </text>
+<text top="109" left="162" width="482" height="20" font="3"><b>HRV-only  stress  scores  are  reactive  rather  than  prospective.</b></text>
+<text top="109" left="644" width="170" height="20" font="2">  Commercial  recovery </text>
+<text top="140" left="162" width="652" height="20" font="2">scores  derived chiefly from overnight heart-rate variability — as popularised by devices </text>
+<text top="171" left="162" width="652" height="20" font="2">such  as  Whoop,  Oura,  and  Garmin — capture the physiological aftermath of a stressful </text>
+<text top="202" left="162" width="652" height="20" font="2">episode, but a behavioural cause such as several hours of late-night screen exposure does </text>
+<text top="233" left="162" width="188" height="20" font="2">not register in HRV until </text>
+<text top="233" left="351" width="34" height="20" font="6"><i>after</i></text>
+<text top="233" left="385" width="429" height="20" font="2"> sleep has been impaired, by which time the opportunity to </text>
+<text top="264" left="162" width="157" height="20" font="2">intervene has passed. </text>
+<text top="307" left="162" width="49" height="20" font="2">Third, </text>
+<text top="307" left="213" width="239" height="20" font="3"><b>commercial  scores are opaque.</b></text>
+<text top="307" left="453" width="362" height="20" font="2"> Their formulas are proprietary and unpublished, </text>
+<text top="338" left="162" width="652" height="20" font="2">so  a  user  cannot  determine  whether  today’s  poor  score  is  attributable  to  caffeine, </text>
+<text top="369" left="162" width="652" height="20" font="2">insufficient  sleep,  or  excessive  evening  screen  time,  and therefore cannot act on it with </text>
+<text top="400" left="162" width="652" height="20" font="2">confidence. Recent scholarship on trustworthy artificial intelligence in health care argues </text>
+<text top="431" left="162" width="652" height="20" font="2">that,  for  high-stakes  or  behaviour-shaping decisions, interpretable models are preferable </text>
+<text top="462" left="162" width="480" height="20" font="2">to post-hoc explanations of black-box systems [20], [21]. Fourth, </text>
+<text top="462" left="642" width="173" height="20" font="3"><b>existing apps describe </b></text>
+<text top="493" left="162" width="348" height="20" font="3"><b>stress  rather than offering modifiable levers.</b></text>
+<text top="493" left="510" width="303" height="20" font="2"> They report that stress occurred without </text>
+<text top="524" left="162" width="652" height="20" font="2">surfacing  the  eating  triggers,  fasting  windows,  or  circadian  drift  that  are  themselves </text>
+<text top="555" left="162" width="135" height="20" font="2">modifiable inputs. </text>
+<text top="602" left="162" width="195" height="22" font="5"><b>1.3 Problem Statement </b></text>
+<text top="646" left="162" width="494" height="20" font="2">The central problem this project addresses can be stated concisely: </text>
+<text top="646" left="657" width="157" height="20" font="6"><i>How can a consumer </i></text>
+<text top="677" left="162" width="652" height="20" font="6"><i>mobile  application  compute  a  single,  trustworthy,  and  explainable  measure  of  daily </i></text>
+<text top="708" left="162" width="652" height="20" font="6"><i>psychological stress from heterogeneous physiological, behavioural, and lifestyle signals, </i></text>
+<text top="739" left="162" width="652" height="20" font="6"><i>while  preserving  the  privacy  of  sensitive  health  data  and  remaining  useful  even  when </i></text>
+<text top="770" left="162" width="386" height="20" font="6"><i>wearable physiological data is incomplete or absent?</i></text>
+<text top="770" left="548" width="5" height="20" font="2"> </text>
+<text top="813" left="162" width="652" height="20" font="2">Embedded within this statement are several sub-problems: the fusion of signals that differ </text>
+<text top="844" left="162" width="652" height="20" font="2">in units, reliability, and sampling frequency; the assignment of defensible relative weights </text>
+<text top="875" left="162" width="652" height="20" font="2">to drivers of differing physiological importance; the honest communication of uncertainty </text>
+<text top="906" left="162" width="652" height="20" font="2">when  inputs  are  missing;  and  the  architectural  challenge  of  integrating  multiple </text>
+<text top="937" left="162" width="482" height="20" font="2">privileged Apple frameworks within a single coherent application. </text>
+<text top="983" left="162" width="199" height="22" font="5"><b>1.4 Aim and Objectives </b></text>
+<text top="1123" left="445" width="87" height="17" font="4">Page 12 of 46 </text>
+</page>
+<page number="13" position="absolute" top="0" left="0" height="1188" width="918">
+<image top="45" left="797" width="56" height="46" src="/Users/hariom/Desktop/WellPlate/tmp_pdf_preview/layout_sample_xml-13_1.png"/>
+<text top="45" left="810" width="1" height="4" font="0"> </text>
+<text top="109" left="162" width="32" height="20" font="2">The </text>
+<text top="109" left="197" width="29" height="20" font="3"><b>aim</b></text>
+<text top="109" left="226" width="588" height="20" font="2">  of  this  project is to design, implement, and validate a transparent, multimodal, </text>
+<text top="140" left="162" width="652" height="20" font="2">on-device  stress-monitoring  application  for  iOS.  This  aim  is  decomposed  into  the </text>
+<text top="171" left="162" width="157" height="20" font="2">following objectives: </text>
+<text top="214" left="185" width="125" height="20" font="2">1.  To  design  an </text>
+<text top="214" left="312" width="229" height="20" font="3"><b>explainable  daily  stress  score</b></text>
+<text top="214" left="541" width="274" height="20" font="2">  (0–100)  computed  deterministically </text>
+<text top="245" left="207" width="550" height="20" font="2">from a set of heterogeneous physiological, behavioural, and lifestyle inputs. </text>
+<text top="282" left="185" width="339" height="20" font="2">2.  To  present  every  contributing  input  as  a </text>
+<text top="282" left="526" width="179" height="20" font="3"><b>modifiable  factor  card</b></text>
+<text top="282" left="705" width="109" height="20" font="2">,  so  that  each </text>
+<text top="313" left="207" width="432" height="20" font="2">signal that affects the score is also a surface for user action. </text>
+<text top="350" left="185" width="121" height="20" font="2">3.  To  persist  a </text>
+<text top="350" left="311" width="251" height="20" font="3"><b>complete  daily  wellness  record</b></text>
+<text top="350" left="562" width="252" height="20" font="2">  locally  on  device,  requiring  no </text>
+<text top="381" left="207" width="198" height="20" font="2">mandatory backend server. </text>
+<text top="418" left="185" width="110" height="20" font="2">4.  To  provide </text>
+<text top="418" left="299" width="198" height="20" font="3"><b>prospective  interventions</b></text>
+<text top="418" left="496" width="317" height="20" font="2">  —  guided  breathing,  progressive  muscle </text>
+<text top="449" left="207" width="607" height="20" font="2">relaxation,  fasting  protocols,  and  journaling  —  that  allow  the  user  to  act  before </text>
+<text top="480" left="207" width="142" height="20" font="2">stress accumulates. </text>
+<text top="517" left="185" width="118" height="20" font="2">5.  To  maintain </text>
+<text top="517" left="307" width="216" height="20" font="3"><b>strict  medical-data  privacy</b></text>
+<text top="517" left="523" width="291" height="20" font="2">,  ensuring  that  data  read  from  Apple </text>
+<text top="548" left="207" width="252" height="20" font="2">HealthKit never leaves the device. </text>
+<text top="585" left="185" width="202" height="20" font="2">6.  To ensure the algorithm </text>
+<text top="585" left="387" width="152" height="20" font="3"><b>degrades gracefully</b></text>
+<text top="585" left="539" width="275" height="20" font="2">, producing a useful score even when </text>
+<text top="616" left="207" width="412" height="20" font="2">wearable physiological data such as HRV is unavailable. </text>
+<text top="663" left="162" width="200" height="22" font="5"><b>1.5 Scope of the Project </b></text>
+<text top="707" left="162" width="652" height="20" font="2">The  scope  of  this  project  encompasses  the  full  design  and  implementation  of  the  iOS </text>
+<text top="738" left="162" width="652" height="20" font="2">application,  its  deterministic  scoring  engine,  its  data  model,  and  its  integrations  with </text>
+<text top="769" left="162" width="652" height="20" font="2">HealthKit,  the  DeviceActivity  framework,  ActivityKit,  and  a  large-language-model </text>
+<text top="800" left="162" width="652" height="20" font="2">nutrition  service.  The  flagship  deliverable  is  the Stress Scoring v3 engine together with </text>
+<text top="831" left="162" width="561" height="20" font="2">the user interface that renders its decomposition. The project explicitly does </text>
+<text top="831" left="723" width="23" height="20" font="6"><i>not</i></text>
+<text top="831" left="746" width="67" height="20" font="2"> claim to </text>
+<text top="862" left="162" width="652" height="20" font="2">provide  medical  diagnosis;  Cadence  is  a  wellness-and-self-awareness  tool,  not  a </text>
+<text top="893" left="162" width="652" height="20" font="2">regulated  medical  device.  Multi-user  clinical  deployment,  server-side  population </text>
+<text top="924" left="162" width="652" height="20" font="2">analytics, and machine-learned weight personalisation are identified as future work rather </text>
+<text top="955" left="162" width="141" height="20" font="2">than current scope. </text>
+<text top="1001" left="162" width="233" height="22" font="5"><b>1.6 Principal Contributions </b></text>
+<text top="1123" left="445" width="87" height="17" font="4">Page 13 of 46 </text>
+</page>
+<page number="14" position="absolute" top="0" left="0" height="1188" width="918">
+<image top="45" left="797" width="56" height="46" src="/Users/hariom/Desktop/WellPlate/tmp_pdf_preview/layout_sample_xml-14_1.png"/>
+<text top="45" left="810" width="1" height="4" font="0"> </text>
+<text top="109" left="185" width="11" height="20" font="2">• </text>
+<text top="109" left="207" width="438" height="20" font="3"><b>A  transparent,  deterministic,  multi-driver  stress  model.</b></text>
+<text top="109" left="645" width="169" height="20" font="2">  In  contrast  to  opaque </text>
+<text top="140" left="207" width="607" height="20" font="2">single-signal  commercial  scores,  Cadence’s  Stress  Scoring  v3  engine  is  a  pure, </text>
+<text top="171" left="207" width="607" height="20" font="2">stateless  function  whose  output is fully decomposable into its thirteen drivers and </text>
+<text top="202" left="207" width="112" height="20" font="2">four modifiers. </text>
+<text top="239" left="185" width="11" height="20" font="2">• </text>
+<text top="239" left="207" width="234" height="20" font="3"><b>A tier-weighted fusion scheme</b></text>
+<text top="239" left="441" width="373" height="20" font="2"> that encodes a physiological prior — foundational </text>
+<text top="270" left="207" width="607" height="20" font="2">lifestyle  drivers  dominate,  modulators  refine,  and  subjective  signals  adjust  — </text>
+<text top="301" left="207" width="343" height="20" font="2">rather than naively averaging dissimilar inputs. </text>
+<text top="338" left="185" width="11" height="20" font="2">• </text>
+<text top="338" left="207" width="437" height="20" font="3"><b>Graceful  degradation  with  honest  confidence  reporting</b></text>
+<text top="338" left="644" width="170" height="20" font="2">,  whereby  the  score  is </text>
+<text top="369" left="207" width="607" height="20" font="2">accompanied by a high/medium/low confidence level derived from input coverage, </text>
+<text top="400" left="207" width="607" height="20" font="2">and the physiological calibrator defaults to a neutral multiplier when wearable data </text>
+<text top="431" left="207" width="71" height="20" font="2">is absent. </text>
+<text top="468" left="185" width="11" height="20" font="2">• </text>
+<text top="468" left="207" width="353" height="20" font="3"><b>A  privacy-preserving,  on-device  architecture</b></text>
+<text top="468" left="560" width="254" height="20" font="2">  that  integrates  several  privileged </text>
+<text top="499" left="207" width="508" height="20" font="2">Apple frameworks while confining sensitive health data to the device. </text>
+<text top="545" left="162" width="259" height="22" font="5"><b>1.7 Organisation of the Report </b></text>
+<text top="590" left="162" width="383" height="20" font="2">The remainder of this report is organised as follows. </text>
+<text top="590" left="545" width="77" height="20" font="3"><b>Chapter 2</b></text>
+<text top="590" left="622" width="191" height="20" font="2"> surveys the scientific and </text>
+<text top="621" left="162" width="652" height="20" font="2">technical  literature  underpinning  stress  measurement,  multimodal  sensing,  explainable </text>
+<text top="652" left="162" width="404" height="20" font="2">health  algorithms,  and  existing  commercial  systems. </text>
+<text top="652" left="571" width="82" height="20" font="3"><b>Chapter  3</b></text>
+<text top="652" left="653" width="161" height="20" font="2">  presents  the  system </text>
+<text top="683" left="162" width="651" height="20" font="2">analysis,  formalising  the  requirements  and  detailing  the  design  of  the  thirteen-driver </text>
+<text top="714" left="162" width="141" height="20" font="2">scoring  algorithm. </text>
+<text top="714" left="307" width="82" height="20" font="3"><b>Chapter  4</b></text>
+<text top="714" left="389" width="425" height="20" font="2">  describes  the  system  and  model  design,  including  the </text>
+<text top="745" left="162" width="443" height="20" font="2">software  architecture,  navigation  model,  and  data  model. </text>
+<text top="745" left="610" width="82" height="20" font="3"><b>Chapter  5</b></text>
+<text top="745" left="692" width="122" height="20" font="2">  documents  the </text>
+<text top="776" left="162" width="652" height="20" font="2">implementation,  technology  stack,  and  external  integrations,  with  supporting  figures. </text>
+<text top="807" left="162" width="80" height="20" font="3"><b>Chapter  6</b></text>
+<text top="807" left="242" width="229" height="20" font="2">  describes  the  testing  strategy. </text>
+<text top="807" left="473" width="80" height="20" font="3"><b>Chapter  7</b></text>
+<text top="807" left="553" width="262" height="20" font="2"> presents results and a comparative </text>
+<text top="838" left="162" width="330" height="20" font="2">discussion  against  commercial  alternatives. </text>
+<text top="838" left="496" width="82" height="20" font="3"><b>Chapter  8</b></text>
+<text top="838" left="578" width="235" height="20" font="2">  concludes  and  outlines  future </text>
+<text top="869" left="162" width="80" height="20" font="2">scope, and </text>
+<text top="869" left="242" width="77" height="20" font="3"><b>Chapter 9</b></text>
+<text top="869" left="320" width="147" height="20" font="2"> lists the references. </text>
+<text top="1123" left="445" width="87" height="17" font="4">Page 14 of 46 </text>
+</page>
+<page number="15" position="absolute" top="0" left="0" height="1188" width="918">
+<image top="45" left="797" width="56" height="46" src="/Users/hariom/Desktop/WellPlate/tmp_pdf_preview/layout_sample_xml-15_1.png"/>
+<text top="45" left="810" width="1" height="4" font="0"> </text>
+<text top="109" left="162" width="531" height="28" font="1"><b>Chapter 2: System Study and Literature Review </b></text>
+<text top="169" left="162" width="652" height="20" font="2">This chapter reviews the body of scientific and engineering literature on which Cadence </text>
+<text top="200" left="162" width="651" height="20" font="2">is  founded.  It  proceeds  from  the  physiology  and  measurement  of  stress,  through  the </text>
+<text top="231" left="162" width="652" height="20" font="2">established  and  emerging  methods  of  automated  stress  detection,  to  the  principles  of </text>
+<text top="262" left="162" width="652" height="20" font="2">explainable health algorithms and the landscape of existing systems, concluding with the </text>
+<text top="293" left="162" width="289" height="20" font="2">research gap that this project addresses. </text>
+<text top="340" left="162" width="340" height="22" font="5"><b>2.1 Stress: Physiology and Measurement </b></text>
+<text top="384" left="162" width="652" height="20" font="2">Stress  is  most  usefully  understood  not  as  a  single  event  but  as  the  body’s  adaptive </text>
+<text top="415" left="162" width="652" height="20" font="2">response  to  perceived  demand.  The  allostatic-load  framework  introduced  by  McEwen </text>
+<text top="446" left="162" width="652" height="20" font="2">and  Stellar  [2]  and  elaborated  by  McEwen  [1]  models  the  cumulative  cost  of  repeated </text>
+<text top="477" left="162" width="652" height="20" font="2">stress  activation,  distinguishing  several  damaging  patterns:  too-frequent  activation, </text>
+<text top="508" left="162" width="652" height="20" font="2">failure  of  the  response  to  terminate,  and  inadequate  response  that allows compensatory </text>
+<text top="539" left="162" width="652" height="20" font="2">systems to over-activate. This framework directly motivates Cadence’s multi-day pattern </text>
+<text top="570" left="162" width="652" height="20" font="2">penalty,  which penalises a sustained upward trend in stress rather than treating each day </text>
+<text top="601" left="162" width="89" height="20" font="2">in isolation. </text>
+<text top="644" left="162" width="652" height="20" font="2">Because  the  underlying  neuroendocrine  activity  —  principally  activation  of  the </text>
+<text top="675" left="162" width="652" height="20" font="2">hypothalamic–pituitary–adrenal axis and the resulting cortisol secretion — is not directly </text>
+<text top="706" left="162" width="652" height="20" font="2">observable  on  consumer  hardware,  applied  systems  rely  on  validated  proxies. </text>
+<text top="737" left="162" width="652" height="20" font="2">Subjectively,  the  Perceived  Stress  Scale  of  Cohen,  Kamarck,  and  Mermelstein  [3] </text>
+<text top="768" left="162" width="652" height="20" font="2">remains the most widely used self-report instrument and provides the conceptual basis for </text>
+<text top="799" left="162" width="652" height="20" font="2">Cadence’s  subjective  mood  and  symptom  drivers.  Objectively,  the  most  accessible </text>
+<text top="830" left="162" width="483" height="20" font="2">physiological proxy on wearable hardware is heart-rate variability. </text>
+<text top="876" left="162" width="409" height="22" font="5"><b>2.2 Heart-Rate Variability as a Stress Biomarker </b></text>
+<text top="920" left="162" width="652" height="20" font="2">Heart-rate variability (HRV) — the beat-to-beat variation in the cardiac inter-beat interval </text>
+<text top="952" left="162" width="652" height="20" font="2">—  reflects  the  balance  between  sympathetic  and  parasympathetic  activity  of  the </text>
+<text top="983" left="162" width="652" height="20" font="2">autonomic  nervous  system.  The  standards  of  measurement  and  interpretation  were </text>
+<text top="1014" left="162" width="652" height="20" font="2">codified in the seminal joint report of the European Society of Cardiology and the North </text>
+<text top="1045" left="162" width="652" height="20" font="2">American  Society  of  Pacing  and  Electrophysiology  [4], which defined the time-domain </text>
+<text top="1123" left="445" width="87" height="17" font="4">Page 15 of 46 </text>
+</page>
+<outline>
+<item page="2">Bonafide Certificate </item>
+<item page="3">Declaration </item>
+<item page="4">Acknowledgement </item>
+<item page="5">Executive Summary </item>
+<item page="6">Table of Contents </item>
+<item page="9">List of Abbreviations </item>
+<item page="10">Abstract </item>
+<item page="11">Chapter 1: Introduction </item>
+<outline>
+<item page="11">1.1 Background and Context </item>
+<item page="11">1.2 Motivation </item>
+<item page="12">1.3 Problem Statement </item>
+<item page="12">1.4 Aim and Objectives </item>
+<item page="13">1.5 Scope of the Project </item>
+<item page="13">1.6 Principal Contributions </item>
+<item page="14">1.7 Organisation of the Report </item>
+</outline>
+<item page="15">Chapter 2: System Study and Literature Review </item>
+<outline>
+<item page="15">2.1 Stress: Physiology and Measurement </item>
+<item page="15">2.2 Heart-Rate Variability as a Stress Biomarker </item>
+<item page="16">2.3 Multimodal and Behavioural Stress Detection </item>
+<item page="17">2.4 The Scientific Basis of the Behavioural Drivers </item>
+<item page="17">2.5 Explainable and Transparent Algorithms in Health </item>
+<item page="18">2.6 Mobile Health and Just-in-Time Adaptive Interventions </item>
+<item page="18">2.7 Existing Systems and Commercial Comparators </item>
+<item page="18">2.8 Research Gap </item>
+</outline>
+<item page="20">Chapter 3: System Analysis </item>
+<outline>
+<item page="20">3.1 Requirement Analysis </item>
+<outline>
+<item page="20">3.1.1 Functional Requirements </item>
+<item page="20">3.1.2 Non-Functional Requirements </item>
+</outline>
+<item page="21">3.2 Feasibility Study </item>
+<item page="21">3.3 The Stress Scoring v3 Algorithm </item>
+<outline>
+<item page="21">3.3.1 Driver Tiers </item>
+<item page="23">3.3.2 Justification of Individual Drivers </item>
+<item page="23">3.3.3 Modifiers </item>
+<item page="24">3.3.4 Final Score Formula </item>
+<item page="24">3.3.5 Confidence Estimation </item>
+<item page="24">3.3.6 Why Tier-Weighting Rather Than Averaging </item>
+<item page="25">3.3.7 Determinism and Auditability </item>
+<item page="25">3.3.8 Worked Example </item>
+</outline>
+</outline>
+<item page="27">Chapter 4: System Design and Model Design </item>
+<outline>
+<item page="27">4.1 Architectural Overview </item>
+<item page="28">4.2 Design Patterns </item>
+<item page="28">4.3 Navigation Model </item>
+<item page="29">4.4 Data Model </item>
+<item page="29">4.5 Score-to-Level Mapping and Visual Design </item>
+<item page="30">4.6 Concurrency and Error-Handling Design </item>
+<item page="30">4.7 Daily Update Sequence </item>
+</outline>
+<item page="32">Chapter 5: System Implementation </item>
+<outline>
+<item page="32">5.1 Technology Stack </item>
+<item page="32">5.2 Implementation of the Scoring Pipeline </item>
+<item page="33">5.3 External Integrations </item>
+<outline>
+<item page="33">5.3.1 HealthKit </item>
+<item page="34">5.3.2 DeviceActivity (Screen Time) </item>
+<item page="34">5.3.3 ActivityKit Live Activities </item>
+<item page="34">5.3.4 Large-Language-Model Nutrition Parsing </item>
+</outline>
+<item page="34">5.4 Project Structure </item>
+<item page="35">5.5 Entitlements and Privacy Posture </item>
+<item page="35">5.6 Development Workflow </item>
+<item page="36">5.7 Food Logging and the Insight Engine </item>
+</outline>
+<item page="37">Chapter 6: Testing </item>
+<outline>
+<item page="37">6.1 Testing Strategy </item>
+<item page="37">6.2 Unit Test Coverage </item>
+<item page="37">6.3 Determinism as a Testability Property </item>
+<item page="38">6.4 Test Scenarios </item>
+<item page="38">6.5 Limitations of the Current Test Suite </item>
+</outline>
+<item page="39">Chapter 7: Results and Discussion </item>
+<outline>
+<item page="39">7.1 Functional Outcomes </item>
+<item page="39">7.2 The Explainability Outcome </item>
+<item page="39">7.3 Illustrative Stress Trajectory </item>
+<item page="40">7.4 Comparison with Commercial Systems </item>
+<item page="41">7.5 Discussion: Multimodal Fusion versus Single-Signal Scoring </item>
+<item page="41">7.6 Discussion: Determinism, Privacy, and Trust </item>
+<item page="42">7.7 Threats to Validity and Limitations </item>
+<item page="42">7.8 Realised User-Facing Surfaces </item>
+</outline>
+<item page="43">Chapter 8: Conclusion and Future Scope </item>
+<outline>
+<item page="43">8.1 Conclusion </item>
+<item page="43">8.2 Future Scope </item>
+</outline>
+<item page="45">Chapter 9: References </item>
+</outline>
+</pdf2xml>

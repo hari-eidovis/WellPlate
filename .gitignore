@@ -1,4 +1,5 @@
-WellPlate/Resources/Secrets.plist
+Cadence/Resources/Secrets.plist
+**/Resources/Secrets.plist
 
 # Carthage
 Carthage/Build/
