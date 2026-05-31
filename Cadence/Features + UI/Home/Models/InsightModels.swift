@@ -49,6 +49,18 @@ enum WellnessDomain: String, CaseIterable {
         case .cross:        return AppColors.brand
         }
     }
+
+    /// Decorative floral art used behind the Home insight card, grouped by mood
+    /// so each domain reads in a fitting tone. (5 assets, all light pastels.)
+    var floralBackground: String {
+        switch self {
+        case .nutrition, .activity:        return "floral_green"
+        case .hydration:                   return "floral_water"
+        case .stress, .fasting, .caffeine: return "floral_orange"
+        case .sleep, .mood:                return "floral_faded"
+        case .cross, .symptoms:            return "floral_linear"
+        }
+    }
 }
 
 // MARK: - InsightType
@@ -84,6 +96,20 @@ enum InsightType: String, CaseIterable {
     }
 }
 
+// MARK: - HydrationDay
+
+/// One day in the weekly hydration strip on the hydration-streak milestone card.
+/// `fraction` is that day's water intake as a share of the daily goal:
+/// `0` = nothing logged (empty dot), `0..<1` = partially filled, `>= 1` = goal
+/// reached (full dot). `date` drives the weekday initial and "today" emphasis.
+/// `isFuture` flags days later this week that haven't happened yet — they render
+/// as ghosted placeholders rather than empty (failed) days.
+struct HydrationDay {
+    let date: Date
+    let fraction: Double
+    var isFuture: Bool = false
+}
+
 // MARK: - InsightChartData
 
 enum InsightChartData {
@@ -92,6 +118,8 @@ enum InsightChartData {
     case comparisonBars(bars: [(label: String, value: Double, domain: WellnessDomain)], highlight: Int?)
     case macroRadar(actual: [String: Double], goals: [String: Double])
     case milestoneRing(current: Int, target: Int, streakLabel: String)
+    /// Per-day water-vs-goal for the trailing week, rendered as weekday dots.
+    case weeklyHydration(days: [HydrationDay])
     case sparkline(points: [Double])
 }
 
@@ -149,8 +177,6 @@ struct WellnessDaySummary {
     // Fasting
     let fastingHours: Double?
     let fastingCompleted: Bool?
-    // Journal
-    let journalLogged: Bool
 
     // Report-specific fields (var with defaults — preserves memberwise init)
     var eatingTriggers: [String: Int] = [:]

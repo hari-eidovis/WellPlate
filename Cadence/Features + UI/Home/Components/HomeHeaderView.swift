@@ -57,7 +57,7 @@ struct HomeHeaderView: View {
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
+                    .fill(AppColors.card)
                     .appShadow(radius: 8, y: 2)
             )
         }

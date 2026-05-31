@@ -96,7 +96,7 @@ struct MainTabView: View {
                     .imageScale(.small)
             }
         }
-        .tint(tabSelector.selectedTab == .stress ? Color(hex: "5E9FFF") : AppColors.brand)
+        .tint(AppColors.brand)
         .animation(.smooth(duration: 0.35), value: tabSelector.selectedTab)
         .sensoryFeedback(.selection, trigger: tabSelector.selectedTab)
         .sheet(item: $tabSelector.presentedSheet) { kind in

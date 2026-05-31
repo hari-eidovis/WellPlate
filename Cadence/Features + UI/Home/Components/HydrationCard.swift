@@ -101,7 +101,7 @@ struct HydrationCard: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 5)
         )
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -131,7 +131,6 @@ struct HydrationCard: View {
     private func addGlass() {
         guard glassesConsumed < totalGlasses else { return }
         HapticService.impact(.light)
-        SoundService.play("water_log_sound", ext: "mp3")
         glassesConsumed += 1
     }
 
@@ -141,7 +140,6 @@ struct HydrationCard: View {
             glassesConsumed = index
         } else {
             HapticService.impact(.light)
-            SoundService.play("water_log_sound", ext: "mp3")
             glassesConsumed = index + 1
         }
     }

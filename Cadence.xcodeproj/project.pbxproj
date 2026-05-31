@@ -19,7 +19,6 @@
 		BF76276B2F49170700984E8E /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF76276A2F49170700984E8E /* HealthKit.framework */; };
 		BF76276D2F49170F00984E8E /* HealthKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF76276C2F49170F00984E8E /* HealthKitUI.framework */; };
 		BF9000022F70000100984E8E /* Speech.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF9000012F70000100984E8E /* Speech.framework */; };
-		F7BA0002F7BA0002F7BA0002 /* BreathingActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BA0001F7BA0001F7BA0001 /* BreathingActivityAttributes.swift */; };
 		F7FA0002F7FA0002F7FA0002 /* FastingActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7FA0001F7FA0001F7FA0001 /* FastingActivityAttributes.swift */; };
 /* End PBXBuildFile section */
 
@@ -77,7 +76,6 @@
 		BFD33EC22F27DF8100D93897 /* Cadence.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cadence.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C47B1C41084536AB56178669 /* Pods-Cadence.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Cadence.release.xcconfig"; path = "Target Support Files/Pods-Cadence/Pods-Cadence.release.xcconfig"; sourceTree = "<group>"; };
 		E6C8853E87642E3E22CFF4CE /* Pods-Cadence.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Cadence.debug.xcconfig"; path = "Target Support Files/Pods-Cadence/Pods-Cadence.debug.xcconfig"; sourceTree = "<group>"; };
-		F7BA0001F7BA0001F7BA0001 /* BreathingActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BreathingActivityAttributes.swift; path = Cadence/Widgets/BreathingActivityAttributes.swift; sourceTree = SOURCE_ROOT; };
 		F7FA0001F7FA0001F7FA0001 /* FastingActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FastingActivityAttributes.swift; path = Cadence/Widgets/FastingActivityAttributes.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -182,7 +180,6 @@
 			children = (
 				AB100005AB100005AB100005 /* SharedStressData.swift */,
 				F7FA0001F7FA0001F7FA0001 /* FastingActivityAttributes.swift */,
-				F7BA0001F7BA0001F7BA0001 /* BreathingActivityAttributes.swift */,
 			);
 			name = "Recovered References";
 			sourceTree = "<group>";
@@ -467,7 +464,6 @@
 			files = (
 				AB100002AB100002AB100002 /* SharedStressData.swift in Sources */,
 				F7FA0002F7FA0002F7FA0002 /* FastingActivityAttributes.swift in Sources */,
-				F7BA0002F7BA0002F7BA0002 /* BreathingActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

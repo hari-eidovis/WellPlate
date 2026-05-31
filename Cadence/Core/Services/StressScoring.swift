@@ -140,7 +140,6 @@ enum StressScoring {
 
     struct RecoveryInput {
         let completedInterventionsToday: Int
-        let hasJournalToday: Bool
         let hasMoodToday: Bool
         let hasMindfulSessionToday: Bool
     }
@@ -588,10 +587,6 @@ enum StressScoring {
         return max(-6, Double(completed) * -3)
     }
 
-    static func journalBonus(hasEntry: Bool) -> Double {
-        hasEntry ? -2 : 0
-    }
-
     /// Mindful bonus — mood logging counts as a mindful act.
     static func mindfulBonus(hasMoodToday: Bool, hasMindfulSession: Bool) -> Double {
         (hasMoodToday || hasMindfulSession) ? -2 : 0
@@ -601,9 +596,8 @@ enum StressScoring {
     static func recoveryTotal(_ inputs: RecoveryInput) -> Double {
         // Reconstruct intervention bonus from the count (skip `completed` filter — caller filters).
         let intervention = max(-6, Double(inputs.completedInterventionsToday) * -3)
-        let journal = journalBonus(hasEntry: inputs.hasJournalToday)
         let mindful = mindfulBonus(hasMoodToday: inputs.hasMoodToday, hasMindfulSession: inputs.hasMindfulSessionToday)
-        return max(Weights.recoveryCap, intervention + journal + mindful)
+        return max(Weights.recoveryCap, intervention + mindful)
     }
 
     // MARK: - Engagement penalty
@@ -642,19 +636,13 @@ enum StressScoring {
         if let s = inputs.exercise?.steps, s < 2000 {
             sum += 3 * ramp(start: 16, end: 20)
         }
-        // no_reflection: max 2, 18→21
-        if !inputs.recovery.hasJournalToday
-            && inputs.mood == nil
-            && !inputs.recovery.hasMindfulSessionToday {
-            sum += 2 * ramp(start: 18, end: 21)
-        }
 
         return min(Weights.engagementCap, sum)
     }
 
     /// Per-key breakdown of the engagement penalty. Sum of values equals
     /// `engagementPenalty(inputs:now:)` exactly (post engagement-cap distribution).
-    /// Keys: `no_mood`, `no_food`, `no_water`, `low_steps`, `no_reflection`.
+    /// Keys: `no_mood`, `no_food`, `no_water`, `low_steps`.
     static func engagementBreakdown(inputs: StressInputs, now: Date) -> [String: Double] {
         // Activation guard: at least one driver must have data (mirrors engagementPenalty).
         let factors = allFactors(inputs: inputs)
@@ -690,13 +678,6 @@ enum StressScoring {
         if let s = inputs.exercise?.steps, s < 2000 {
             let v = 3 * ramp(start: 16, end: 20)
             if v > 0 { perKey["low_steps"] = v }
-        }
-        // no_reflection: max 2, 18->21
-        if !inputs.recovery.hasJournalToday
-            && inputs.mood == nil
-            && !inputs.recovery.hasMindfulSessionToday {
-            let v = 2 * ramp(start: 18, end: 21)
-            if v > 0 { perKey["no_reflection"] = v }
         }
 
         // Apply proportional cap-distribution so the breakdown sum equals

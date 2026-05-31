@@ -124,8 +124,7 @@ final class AI15DayReportViewModel: ObservableObject {
                 symptomNames: i == 2 || i == 5 || i == 8 ? ["Bloating"] : (i == 4 ? ["Headache", "Bloating"] : []),
                 symptomMaxSeverity: i == 2 || i == 5 || i == 8 ? 5 : (i == 4 ? 7 : nil),
                 fastingHours: i % 4 == 0 ? 16.0 : nil,
-                fastingCompleted: i % 4 == 0 ? true : nil,
-                journalLogged: false
+                fastingCompleted: i % 4 == 0 ? true : nil
             )
             s.stressMin = stressScores[i] - 8
             s.stressMax = stressScores[i] + 12

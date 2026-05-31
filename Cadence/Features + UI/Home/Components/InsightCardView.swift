@@ -65,7 +65,7 @@ struct InsightCardView: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 12, y: 4)
         )
     }
@@ -89,6 +89,9 @@ struct InsightCardView: View {
                 MilestoneRingView(current: current, target: target, streakLabel: label)
                 Spacer()
             }
+        case .weeklyHydration(let days):
+            WeeklyHydrationDots(days: days, accentColor: card.domain.accentColor, dotSize: 28)
+                .padding(.vertical, 4)
         case .sparkline(let points):
             SparklineView(points: points, accentColor: card.domain.accentColor)
         }

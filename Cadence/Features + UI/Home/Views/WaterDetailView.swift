@@ -115,7 +115,7 @@ struct WaterDetailView: View {
         .padding(.vertical, 24)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 5)
         )
     }
@@ -158,7 +158,7 @@ struct WaterDetailView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 5)
         )
     }
@@ -174,7 +174,7 @@ struct WaterDetailView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 5)
         )
     }
@@ -236,7 +236,7 @@ struct WaterDetailView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 5)
         )
     }
@@ -246,7 +246,6 @@ struct WaterDetailView: View {
     private func addGlass() {
         guard glassesConsumed < totalGlasses else { return }
         HapticService.impact(.light)
-        SoundService.play("water_log_sound", ext: "mp3")
         updateGlasses(glassesConsumed + 1)
     }
 
@@ -262,7 +261,6 @@ struct WaterDetailView: View {
             updateGlasses(index)
         } else {
             HapticService.impact(.light)
-            SoundService.play("water_log_sound", ext: "mp3")
             updateGlasses(index + 1)
         }
     }

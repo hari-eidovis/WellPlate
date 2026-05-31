@@ -113,7 +113,7 @@ struct CircularLiquidTile: View {
                     .frame(width: 34, height: 34)
                     .background(
                         Circle()
-                            .fill(Color(.systemBackground))
+                            .fill(AppColors.card)
                     )
                     .appShadow(radius: 6, y: 2)
             } else {
@@ -127,7 +127,7 @@ struct CircularLiquidTile: View {
                         .frame(width: 34, height: 34)
                         .background(
                             Circle()
-                                .fill(Color(.systemBackground))
+                                .fill(AppColors.card)
                         )
                         .appShadow(radius: 6, y: 2)
                 }

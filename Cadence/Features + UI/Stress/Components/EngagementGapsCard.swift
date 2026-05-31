@@ -1,8 +1,8 @@
 import SwiftUI
 import SwiftData
 
-/// Surfaces active engagement gaps (no_mood / no_food / no_water / low_steps /
-/// no_reflection) with one-tap CTAs that route the user to the appropriate
+/// Surfaces active engagement gaps (no_mood / no_food / no_water / low_steps)
+/// with one-tap CTAs that route the user to the appropriate
 /// logger. Visible only when `viewModel.engagementPenaltyValue > 0`.
 struct EngagementGapsCard: View {
     @ObservedObject var viewModel: StressViewModel
@@ -43,7 +43,7 @@ struct EngagementGapsCard: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.88))
+                .fill(AppColors.card.opacity(0.88))
                 .shadow(color: .black.opacity(0.06), radius: 32, x: 0, y: 16)
         )
     }
@@ -51,7 +51,7 @@ struct EngagementGapsCard: View {
     // MARK: - Gap definition
 
     private enum Gap: Hashable {
-        case mood, food, water, steps, reflection
+        case mood, food, water, steps
 
         var label: String {
             switch self {
@@ -59,7 +59,6 @@ struct EngagementGapsCard: View {
             case .food:       return "Log a meal"
             case .water:      return "Log water"
             case .steps:      return "Track activity"
-            case .reflection: return "Add a reflection"
             }
         }
 
@@ -69,7 +68,6 @@ struct EngagementGapsCard: View {
             case .food:       return "fork.knife"
             case .water:      return "drop.fill"
             case .steps:      return "figure.walk"
-            case .reflection: return "pencil.and.outline"
             }
         }
     }
@@ -129,8 +127,6 @@ struct EngagementGapsCard: View {
             tabSelector.switchTo(.home, andPresent: .water)
         case .steps:
             tabSelector.switchTo(.home)
-        case .reflection:
-            activeSheet = .mood
         }
     }
 }

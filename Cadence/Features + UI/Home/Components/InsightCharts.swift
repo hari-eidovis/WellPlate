@@ -299,6 +299,99 @@ struct MilestoneRingView: View {
     }
 }
 
+// MARK: - WeeklyHydrationDots
+
+/// Seven-day hydration strip: one dot per day filled from the bottom in
+/// proportion to that day's water intake vs. goal — empty when nothing was
+/// logged, partially filled under goal, full when the goal was reached — with
+/// the weekday initial beneath each. Replaces the flat progress bar on the
+/// hydration-streak milestone card so the whole week reads at a glance.
+struct WeeklyHydrationDots: View {
+    let days: [HydrationDay]
+    let accentColor: Color
+    var dotSize: CGFloat = 24
+    /// Weekday-initial color for non-today days. Defaults to `.secondary`; the
+    /// Home card sits on light floral art and passes a fixed dark ink instead.
+    var labelColor: Color = .secondary
+
+    private let calendar = Calendar.current
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(days.enumerated()), id: \.offset) { _, day in
+                let isToday = calendar.isDateInToday(day.date)
+                VStack(spacing: 6) {
+                    HydrationDot(fraction: day.fraction, color: accentColor, isToday: isToday, isFuture: day.isFuture, size: dotSize)
+                    Text(weekdayInitial(for: day.date))
+                        .font(.system(size: 11, weight: isToday ? .bold : .medium, design: .rounded))
+                        .foregroundStyle(day.isFuture ? labelColor.opacity(0.4) : (isToday ? accentColor : labelColor))
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func weekdayInitial(for date: Date) -> String {
+        // Locale-aware single letters, e.g. ["S","M","T","W","T","F","S"].
+        let symbols = calendar.veryShortWeekdaySymbols
+        let weekday = calendar.component(.weekday, from: date)   // 1...7
+        guard symbols.indices.contains(weekday - 1) else { return "" }
+        return symbols[weekday - 1]
+    }
+}
+
+// MARK: - HydrationDot
+
+/// One day's water level: a circular "glass" filled from the bottom up to
+/// `fraction` (clamped to 1). Today is marked with a solid accent rim.
+struct HydrationDot: View {
+    let fraction: Double
+    let color: Color
+    var isToday: Bool = false
+    var isFuture: Bool = false
+    var size: CGFloat = 24
+
+    @State private var appeared = false
+
+    private var level: CGFloat { min(1, max(0, CGFloat(fraction))) }
+    private var isFull: Bool { fraction >= 1 }
+
+    var body: some View {
+        ZStack {
+            if isFuture {
+                // Upcoming day — ghosted placeholder, no fill
+                Circle()
+                    .fill(Color.secondary.opacity(0.06))
+                Circle()
+                    .strokeBorder(Color.secondary.opacity(0.25),
+                                  style: StrokeStyle(lineWidth: 1.5, dash: [3, 2]))
+            } else {
+                // Empty glass
+                Circle()
+                    .fill(color.opacity(0.12))
+
+                // Water rising from the bottom
+                GeometryReader { geo in
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 0)
+                        Rectangle()
+                            .fill(color.opacity(isFull ? 1.0 : 0.85))
+                            .frame(height: geo.size.height * (appeared ? level : 0))
+                    }
+                }
+                .clipShape(Circle())
+
+                // Rim — light for normal days, solid accent for today
+                Circle()
+                    .strokeBorder(isToday ? color : color.opacity(0.30), lineWidth: isToday ? 2 : 1.5)
+            }
+        }
+        .frame(width: size, height: size)
+        .animation(.spring(response: 0.7, dampingFraction: 0.85), value: appeared)
+        .onAppear { appeared = true }
+    }
+}
+
 // MARK: - SparklineView
 
 struct SparklineView: View {
@@ -377,4 +470,18 @@ struct SparklineView: View {
 
 #Preview("Sparkline") {
     SparklineView(points: [6, 7, 8, 8, 7, 8, 8], accentColor: .blue)
+}
+
+#Preview("WeeklyHydrationDots") {
+    let cal = Calendar.current
+    let today = cal.startOfDay(for: Date())
+    let weekStart = cal.dateInterval(of: .weekOfYear, for: today)?.start ?? today
+    let sample: [Double] = [1.0, 0.5, 1.0, 0.0, 0.75, 1.0, 0.3]   // full / partial / empty mix
+    let days = (0..<7).compactMap { i -> HydrationDay? in
+        guard let date = cal.date(byAdding: .day, value: i, to: weekStart) else { return nil }
+        let isFuture = date > today
+        return HydrationDay(date: date, fraction: isFuture ? 0 : sample[i], isFuture: isFuture)
+    }
+    return WeeklyHydrationDots(days: days, accentColor: WellnessDomain.hydration.accentColor, dotSize: 30)
+        .padding()
 }

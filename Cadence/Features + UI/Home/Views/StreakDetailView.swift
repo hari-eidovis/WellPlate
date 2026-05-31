@@ -198,7 +198,7 @@ struct StreakDetailView: View {
         .padding(.vertical, 32)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 15, y: 5)
         )
     }
@@ -231,7 +231,7 @@ struct StreakDetailView: View {
         .padding(.vertical, 14)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 15, y: 5)
         )
     }
@@ -292,7 +292,7 @@ struct StreakDetailView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 15, y: 5)
         )
     }
@@ -336,7 +336,7 @@ struct StreakDetailView: View {
                     .padding(.vertical, 28)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(Color(.systemBackground))
+                            .fill(AppColors.card)
                             .appShadow(radius: 15, y: 5)
                     )
             } else {
@@ -363,7 +363,7 @@ struct StreakDetailView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(Color(.systemBackground))
+                        .fill(AppColors.card)
                         .appShadow(radius: 15, y: 5)
                 )
             }

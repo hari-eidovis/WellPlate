@@ -50,8 +50,6 @@ struct StressMockSnapshot {
     let mood: MoodOption?
     /// Today's symptom entries (drives symptoms factor).
     let todaySymptoms: [SymptomEntry]
-    /// Today's journal presence (drives recovery `journal`).
-    let todayJournal: JournalEntry?
     /// Today's completed intervention sessions (drives recovery `intervention`).
     let todayInterventions: [InterventionSession]
     /// Last 3 days of WellnessDayLog (drives 3-day pattern penalties).
@@ -124,7 +122,6 @@ struct StressMockSnapshot {
             currentDayLogs: [],
             mood: nil,
             todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: [],
@@ -160,7 +157,6 @@ struct StressMockSnapshot {
             currentDayLogs: base.currentDayLogs,
             mood: .good,
             todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: base.currentDayLogs,
@@ -218,7 +214,6 @@ struct StressMockSnapshot {
             currentDayLogs: base.currentDayLogs,
             mood: .awful,
             todaySymptoms: symptoms,
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: base.currentDayLogs,
@@ -268,7 +263,6 @@ struct StressMockSnapshot {
             currentDayLogs: [],
             mood: nil,
             todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: [],
@@ -313,7 +307,6 @@ struct StressMockSnapshot {
             currentDayLogs: [],
             mood: nil,
             todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: [],
@@ -541,7 +534,6 @@ struct StressMockSnapshot {
             currentDayLogs: logs,
             mood: nil,
             todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: logs,

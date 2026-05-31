@@ -81,7 +81,7 @@ struct AllFactorsSheet: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
         )
     }
 

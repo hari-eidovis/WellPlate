@@ -163,7 +163,7 @@ struct FastingCelebrationOverlay: View {
 
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 28, style: .continuous)
-            .fill(Color(.systemBackground))
+            .fill(AppColors.card)
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .strokeBorder(

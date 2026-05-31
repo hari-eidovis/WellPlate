@@ -149,8 +149,7 @@ final class ReportDataBuilder {
                 symptomNames: symptomNames,
                 symptomMaxSeverity: symptomMax,
                 fastingHours: fastingHours,
-                fastingCompleted: fastingCompleted,
-                journalLogged: false
+                fastingCompleted: fastingCompleted
             )
 
             // Mutate new var fields

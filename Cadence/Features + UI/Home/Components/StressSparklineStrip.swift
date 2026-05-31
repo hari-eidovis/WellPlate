@@ -124,7 +124,7 @@ struct StressSparklineStrip: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.systemBackground))
+                    .fill(AppColors.card)
                     .appShadow(radius: 15, y: 5)
             )
         }
@@ -290,7 +290,7 @@ struct StressSparklineStrip: View {
                             .fill(accentColor.opacity(0.25))
                             .frame(width: nowPulse ? 18 : 10, height: nowPulse ? 18 : 10)
                         Circle()
-                            .fill(Color(.systemBackground))
+                            .fill(AppColors.card)
                             .frame(width: 9, height: 9)
                         Circle()
                             .fill(accentColor)

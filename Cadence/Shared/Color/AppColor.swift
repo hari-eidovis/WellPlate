@@ -4,10 +4,13 @@ enum AppColors {
     // MARK: - Brand / Primary
     static let brand             = Color("AppPrimary")           // adaptive: reads light/dark from AppPrimary.colorset
     static let primary           = Color("AppPrimary")
-    static let primaryContainer  = Color("PrimaryContainer")     // soft green background
+    static let primaryContainer  = Color("PrimaryContainer")     // soft blue background
     static let onPrimary         = Color("OnPrimary")            // text/icons on primary
 
     // MARK: - Surfaces / Borders / Text
+    /// Card surface: white in light mode, an elevated dark grey (~0.9 black,
+    /// #1C1C1E) in dark mode so cards separate from a pure-black background.
+    static let card = Color(.secondarySystemGroupedBackground)
     static let cream = Color(red: 1.0, green: 0.976, blue: 0.902) // #FFF9E6
     static let surface = Color("Surface")
     static let borderSubtle = Color("BorderSubtle")

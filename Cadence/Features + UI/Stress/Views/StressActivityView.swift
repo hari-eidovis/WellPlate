@@ -121,7 +121,7 @@ struct StressActivityView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 15, y: 5)
         )
     }
@@ -281,7 +281,7 @@ struct StressActivityView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 15, y: 5)
         )
     }

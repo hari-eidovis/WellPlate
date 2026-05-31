@@ -10,7 +10,6 @@ enum HomeCardID: String, Codable, CaseIterable, Identifiable, Hashable {
     case wellnessRings      // Position 2
     case stressSparkline    // Position 2b
     case moodCheckIn        // Position 3a (conditional)
-    case journalReflection  // Position 3b (conditional)
     case quickStats         // Position 4
 
     var id: String { rawValue }
@@ -21,7 +20,6 @@ enum HomeCardID: String, Codable, CaseIterable, Identifiable, Hashable {
         case .wellnessRings:      return "Wellness Rings"
         case .stressSparkline:    return "Stress Sparkline"
         case .moodCheckIn:        return "Mood Check-In"
-        case .journalReflection:  return "Journal Reflection"
         case .quickStats:         return "Water & Coffee"
         }
     }
@@ -32,7 +30,6 @@ enum HomeCardID: String, Codable, CaseIterable, Identifiable, Hashable {
         case .wellnessRings:      return "circle.circle"
         case .stressSparkline:    return "waveform.path.ecg"
         case .moodCheckIn:        return "face.smiling"
-        case .journalReflection:  return "book"
         case .quickStats:         return "drop.fill"
         }
     }

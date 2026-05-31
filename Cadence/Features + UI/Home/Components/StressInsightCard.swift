@@ -77,7 +77,7 @@ struct StressInsightCard: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 5)
         )
     }

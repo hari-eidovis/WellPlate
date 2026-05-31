@@ -73,7 +73,6 @@ struct GroundingSessionView: View {
                 if !showComplete {
                     Button("Cancel") {
                         saveSession(completed: false)
-                        ActivityManager.shared.endBreathingActivity()
                         dismiss()
                     }
                     .font(.system(size: 15, weight: .medium))
@@ -85,32 +84,11 @@ struct GroundingSessionView: View {
             UIApplication.shared.isIdleTimerDisabled = true
             sessionStart = .now
 
-            let sessionPhases = phases
-            let totalDuration = sessionPhases.map(\.duration).reduce(0, +)
-            ActivityManager.shared.startBreathingActivity(
-                sessionName: "Grounding",
-                totalSteps: senses.count,
-                stepLabel: "Sense",
-                firstPhaseName: sessionPhases[0].name,
-                firstPhaseEndDate: Date().addingTimeInterval(sessionPhases[0].duration),
-                totalSessionDuration: totalDuration
-            )
-
-            timer.onPhaseStart = { phase in
-                ActivityManager.shared.updateBreathingActivity(
-                    phaseName: phase.name,
-                    phaseEndDate: Date().addingTimeInterval(phase.duration),
-                    currentStep: timer.currentPhaseIndex + 1,
-                    totalProgress: timer.totalProgress
-                )
-            }
-
             timer.onComplete = {
                 saveSession(completed: true)
-                ActivityManager.shared.endBreathingActivity()
                 withAnimation(.easeIn(duration: 0.3)) { showComplete = true }
             }
-            timer.start(phases: sessionPhases)
+            timer.start(phases: phases)
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false

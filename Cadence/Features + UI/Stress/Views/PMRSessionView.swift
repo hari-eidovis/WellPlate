@@ -61,7 +61,6 @@ struct PMRSessionView: View {
                 if !showComplete {
                     Button("Cancel") {
                         saveSession(completed: false)
-                        ActivityManager.shared.endBreathingActivity()
                         dismiss()
                     }
                     .font(.system(size: 15, weight: .medium))
@@ -73,35 +72,11 @@ struct PMRSessionView: View {
             UIApplication.shared.isIdleTimerDisabled = true
             sessionStart = .now
 
-            // Start Live Activity before timer (so onPhaseStart can update it)
-            let sessionPhases = phases
-            let totalDuration = sessionPhases.map(\.duration).reduce(0, +)
-            ActivityManager.shared.startBreathingActivity(
-                sessionName: "PMR",
-                totalSteps: muscleGroups.count,
-                stepLabel: "Group",
-                firstPhaseName: sessionPhases[0].name,
-                firstPhaseEndDate: Date().addingTimeInterval(sessionPhases[0].duration),
-                totalSessionDuration: totalDuration
-            )
-
-            // PMR: 2 phases per muscle group (tense + release)
-            timer.onPhaseStart = { phase in
-                let groupNumber = (timer.currentPhaseIndex / 2) + 1
-                ActivityManager.shared.updateBreathingActivity(
-                    phaseName: phase.name,
-                    phaseEndDate: Date().addingTimeInterval(phase.duration),
-                    currentStep: groupNumber,
-                    totalProgress: timer.totalProgress
-                )
-            }
-
             timer.onComplete = {
                 saveSession(completed: true)
-                ActivityManager.shared.endBreathingActivity()
                 withAnimation(.easeIn(duration: 0.3)) { showComplete = true }
             }
-            timer.start(phases: sessionPhases)
+            timer.start(phases: phases)
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false

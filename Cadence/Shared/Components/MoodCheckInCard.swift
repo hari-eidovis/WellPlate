@@ -89,7 +89,7 @@ struct MoodCheckInCard: View {
         .padding(.vertical, 22)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .overlay(
                     LinearGradient(
                         colors: [

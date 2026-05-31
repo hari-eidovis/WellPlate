@@ -60,7 +60,7 @@
 //        .padding(.vertical, 12)
 //        .background(
 //            RoundedRectangle(cornerRadius: 20)
-//                .fill(Color(.systemBackground))
+//                .fill(AppColors.card)
 //                .appShadow(radius: 15, y: 5)
 //        )
 //        .padding(.horizontal, 16)

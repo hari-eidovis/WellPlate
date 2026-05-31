@@ -10,8 +10,6 @@ struct WellnessCalendarView: View {
     @Query private var allFoodEntries: [FoodLogEntry]
     @StateObject private var viewModel = WellnessCalendarViewModel()
     @State private var showCalendar = false
-    @State private var showJournalHistory = false
-    @State private var showSymptomHistory = false
 
     private let weekdaySymbols = Calendar.current.veryShortWeekdaySymbols
     private var currentGoals: UserGoals { userGoalsList.first ?? UserGoals.defaults() }
@@ -23,6 +21,11 @@ struct WellnessCalendarView: View {
     private let calorieAccent = Color(hue: 0.06, saturation: 0.78, brightness: 0.92)
     private let stepsAccent = Color(hue: 0.76, saturation: 0.55, brightness: 0.78)
     private let foodAccent = Color(hue: 0.07, saturation: 0.72, brightness: 0.92)
+
+    // MARK: - Activity Ring Colors (Apple Fitness style)
+    private let moveRing = Color(red: 0.96, green: 0.26, blue: 0.31)      // red — Move
+    private let exerciseRing = Color(red: 0.30, green: 0.82, blue: 0.42)  // green — Exercise
+    private let standRing = Color(red: 0.36, green: 0.78, blue: 0.97)     // sky blue — Stand/Steps
 
     var body: some View {
         ScrollView {
@@ -40,14 +43,6 @@ struct WellnessCalendarView: View {
         .scrollIndicators(.hidden)
         .simultaneousGesture(swipeGesture)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                toolbarButton(icon: "book.fill", label: "Journal history") { showJournalHistory = true }
-                toolbarButton(icon: "heart.text.square.fill", label: "Symptom history") { showSymptomHistory = true }
-            }
-        }
-        .navigationDestination(isPresented: $showJournalHistory) { JournalHistoryView() }
-        .navigationDestination(isPresented: $showSymptomHistory) { SymptomHistoryView() }
         .onAppear { viewModel.bind(modelContext) }
         .onChange(of: allWellnessDayLogs) { viewModel.loadData(for: viewModel.selectedDate) }
         .onChange(of: allFoodEntries) { viewModel.loadData(for: viewModel.selectedDate) }
@@ -87,22 +82,6 @@ struct WellnessCalendarView: View {
             .ignoresSafeArea(edges: .top)
         }
         .allowsHitTesting(false)
-    }
-
-    // MARK: - Toolbar
-
-    private func toolbarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
-        Button {
-            HapticService.impact(.light)
-            action()
-        } label: {
-            Image(systemName: icon)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(AppColors.brand)
-                .frame(width: 30, height: 30)
-                .background(Circle().fill(AppColors.brand.opacity(0.14)))
-        }
-        .accessibilityLabel(label)
     }
 
     // MARK: - Hero Header
@@ -147,7 +126,7 @@ struct WellnessCalendarView: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .overlay(
                     RoundedRectangle(cornerRadius: 26, style: .continuous)
                         .strokeBorder(AppColors.brand.opacity(0.08), lineWidth: 1)
@@ -303,7 +282,7 @@ struct WellnessCalendarView: View {
                 .appShadow(radius: 12, y: 5)
         } else {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 4, y: 2)
         }
     }
@@ -355,7 +334,7 @@ struct WellnessCalendarView: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 16, y: 6)
         )
     }
@@ -501,32 +480,51 @@ struct WellnessCalendarView: View {
         let stepsProgress = min(CGFloat(activity.steps) / CGFloat(stepsGoal), 1.0)
 
         return detailCard(icon: "figure.run", iconColor: exerciseAccent, title: "Activity") {
-            HStack(alignment: .center, spacing: 16) {
-                triRingView(
-                    outer: stepsProgress, outerColor: stepsAccent,
-                    middle: calorieProgress, middleColor: calorieAccent,
-                    inner: exerciseProgress, innerColor: exerciseAccent
-                )
-                .frame(width: 96, height: 96)
+            HStack(alignment: .center, spacing: 12) {
+                HStack(alignment: .top, spacing: 18) {
+                    activityStat(
+                        label: "Move",
+                        value: "\(activity.caloriesBurned)",
+                        unit: "cal"
+                    )
+                    activityStat(
+                        label: "Exercise",
+                        value: "\(activity.exerciseMinutes)",
+                        unit: "min"
+                    )
+                    activityStat(
+                        label: "Steps",
+                        value: shortNumber(activity.steps),
+                        unit: ""
+                    )
+                }
 
-                VStack(spacing: 10) {
-                    activityRow(
-                        icon: "timer", label: "Exercise",
-                        value: "\(activity.exerciseMinutes) min",
-                        progress: exerciseProgress, color: exerciseAccent
-                    )
-                    activityRow(
-                        icon: "flame.fill", label: "Calories",
-                        value: "\(activity.caloriesBurned) cal",
-                        progress: calorieProgress, color: calorieAccent
-                    )
-                    activityRow(
-                        icon: "figure.walk", label: "Steps",
-                        value: NumberFormatter.localizedString(
-                            from: NSNumber(value: activity.steps), number: .decimal
-                        ),
-                        progress: stepsProgress, color: stepsAccent
-                    )
+                Spacer(minLength: 8)
+
+                triRingView(
+                    outer: calorieProgress, outerColor: moveRing,
+                    middle: exerciseProgress, middleColor: exerciseRing,
+                    inner: stepsProgress, innerColor: standRing
+                )
+                .frame(width: 64, height: 64)
+            }
+        }
+    }
+
+    private func activityStat(label: String, value: String, unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label)
+                .font(.r(12, .medium))
+                .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                Text(value)
+                    .font(.r(22, .bold))
+                    .foregroundStyle(.primary)
+                    .monospacedDigit()
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(.r(12, .medium))
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -538,9 +536,9 @@ struct WellnessCalendarView: View {
         inner: CGFloat, innerColor: Color
     ) -> some View {
         ZStack {
-            ring(progress: outer, color: outerColor, lineWidth: 9, diameter: 96)
-            ring(progress: middle, color: middleColor, lineWidth: 9, diameter: 72)
-            ring(progress: inner, color: innerColor, lineWidth: 9, diameter: 48)
+            ring(progress: outer, color: outerColor, lineWidth: 7, diameter: 64)
+            ring(progress: middle, color: middleColor, lineWidth: 7, diameter: 46)
+            ring(progress: inner, color: innerColor, lineWidth: 7, diameter: 28)
         }
     }
 
@@ -561,39 +559,6 @@ struct WellnessCalendarView: View {
                 .frame(width: diameter, height: diameter)
                 .rotationEffect(.degrees(-90))
                 .animation(.spring(response: 0.7, dampingFraction: 0.8), value: progress)
-        }
-    }
-
-    private func activityRow(
-        icon: String, label: String, value: String,
-        progress: CGFloat, color: Color
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(color)
-                Text(label)
-                    .font(.r(12, .semibold))
-                    .foregroundStyle(.secondary)
-                Spacer(minLength: 0)
-                Text(value)
-                    .font(.r(13, .bold))
-                    .foregroundStyle(.primary)
-                    .monospacedDigit()
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(color.opacity(0.16)).frame(height: 5)
-                    Capsule()
-                        .fill(LinearGradient(
-                            colors: [color, color.opacity(0.75)],
-                            startPoint: .leading, endPoint: .trailing
-                        ))
-                        .frame(width: max(geo.size.width * progress, 5), height: 5)
-                }
-            }
-            .frame(height: 5)
         }
     }
 
@@ -756,7 +721,7 @@ struct WellnessCalendarView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 12, y: 4)
         )
     }
@@ -813,7 +778,7 @@ struct WellnessCalendarView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 14, y: 5)
         )
     }

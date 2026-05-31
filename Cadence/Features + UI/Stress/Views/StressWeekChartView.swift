@@ -96,7 +96,7 @@ struct StressWeekChartView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
         )
         .appShadow(radius: 15, y: 5)
     }

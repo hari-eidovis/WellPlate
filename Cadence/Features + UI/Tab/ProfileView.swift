@@ -73,7 +73,6 @@ struct ProfilePlaceholderView: View {
     @State private var isWidgetInstalled            = false
     @State private var activeSheet: ProfileSheet?
     @State private var showGoals                    = false
-    @State private var showHomeLayout               = false
     // Symptom state
     @State private var showSymptomCorrelation       = false
     @State private var selectedSymptomForCorrelation: String?
@@ -134,10 +133,6 @@ struct ProfilePlaceholderView: View {
 
                     // ── Notifications & Prompts ──────────────
                     notificationsAndPromptsCard
-                        .padding(.horizontal, 16)
-
-                    // ── Home layout ─────────────────────
-                    homeLayoutCard
                         .padding(.horizontal, 16)
 
                     // ── Symptom tracking ─────────────────────
@@ -203,16 +198,6 @@ struct ProfilePlaceholderView: View {
             #endif
             .navigationDestination(isPresented: $showGoals) {
                 GoalsView(viewModel: GoalsViewModel(modelContext: modelContext))
-            }
-            .navigationDestination(isPresented: $showHomeLayout) {
-                HomeLayoutEditor(layout: Binding(
-                    get: { (userGoalsList.first ?? UserGoals.defaults()).homeLayout },
-                    set: { newValue in
-                        let goals = UserGoals.current(in: modelContext)
-                        goals.homeLayout = newValue
-                        try? modelContext.save()
-                    }
-                ))
             }
             .navigationDestination(isPresented: $showSymptomCorrelation) {
                 if let name = selectedSymptomForCorrelation {
@@ -498,51 +483,6 @@ struct ProfilePlaceholderView: View {
             existing.eveningAskedAt = nil
             try? modelContext.save()
         }
-    }
-
-    // MARK: - Home Layout
-
-    private var homeLayoutCard: some View {
-        Button {
-            HapticService.impact(.light)
-            showHomeLayout = true
-        } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "square.grid.2x2.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 42, height: 42)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color(.tertiarySystemFill).opacity(0.6))
-                    )
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("CUSTOMIZE")
-                        .font(.r(10, .bold))
-                        .tracking(0.7)
-                        .foregroundStyle(.secondary)
-                    Text("Home Layout")
-                        .font(.r(16, .bold))
-                        .foregroundStyle(.primary)
-                    let goals = userGoalsList.first ?? UserGoals.defaults()
-                    let hidden = goals.homeLayout.hiddenCount
-                    Text(hidden > 0 ? "\(hidden) card\(hidden == 1 ? "" : "s") hidden" : "All cards visible")
-                        .font(.r(12, .medium))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(cardBackground())
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Goals Snapshot

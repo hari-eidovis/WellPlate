@@ -24,7 +24,6 @@ final class StressScoringTests: XCTestCase {
 
     private func emptyRecovery() -> StressScoring.RecoveryInput {
         StressScoring.RecoveryInput(completedInterventionsToday: 0,
-                                    hasJournalToday: false,
                                     hasMoodToday: false,
                                     hasMindfulSessionToday: false)
     }
@@ -72,7 +71,7 @@ final class StressScoringTests: XCTestCase {
         inputs.daylight = .init(minutes: 60, source: .healthKit)
         inputs.fasting = .init(activeFastHours: 14, isConfigured: true)
         inputs.mood = .great
-        inputs.recovery = .init(completedInterventionsToday: 1, hasJournalToday: true,
+        inputs.recovery = .init(completedInterventionsToday: 1,
                                 hasMoodToday: true, hasMindfulSessionToday: true)
         let result = StressScoring.computeStress(inputs: inputs, now: morningTime(hour: 12))
         XCTAssertLessThanOrEqual(result.score, 5, "Perfect day should land near 0")
@@ -127,7 +126,7 @@ final class StressScoringTests: XCTestCase {
         let scoreNoMood = StressScoring.computeStress(inputs: base, now: now).score
         var withMood = base
         withMood.mood = .great
-        withMood.recovery = .init(completedInterventionsToday: 0, hasJournalToday: false,
+        withMood.recovery = .init(completedInterventionsToday: 0,
                                   hasMoodToday: true, hasMindfulSessionToday: false)
         let scoreGreat = StressScoring.computeStress(inputs: withMood, now: now).score
         XCTAssertLessThan(scoreGreat, scoreNoMood, "Logging great mood should reduce S")

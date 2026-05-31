@@ -151,7 +151,7 @@ struct FastingCareInterventionView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 12, y: 4)
         )
     }
@@ -182,7 +182,7 @@ struct FastingCareInterventionView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 12, y: 4)
         )
         .accessibilityElement(children: .combine)

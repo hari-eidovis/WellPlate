@@ -151,7 +151,7 @@ final class AppConfig {
         }
     }
 
-    /// ISO8601 date strings of mock-injected records (WellnessDayLog, FastingSession, JournalEntry).
+    /// ISO8601 date strings of mock-injected records (WellnessDayLog, FastingSession).
     var mockInjectedDates: [String] {
         get {
             #if DEBUG

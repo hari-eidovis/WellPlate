@@ -339,7 +339,7 @@ final class StressViewModel: ObservableObject {
         WidgetRefreshHelper.refreshStress(viewModel: self)
     }
 
-    /// Re-fetches cheap SwiftData (mood/water/food/symptoms/journal/interventions/manual/recent
+    /// Re-fetches cheap SwiftData (mood/water/food/symptoms/interventions/manual/recent
     /// wellness/active fast) and reuses cached HK from the most recent `loadData()`.
     /// Calls `computeStress` and republishes.
     func recompute(reason: StressChangeSource) {
@@ -519,10 +519,6 @@ final class StressViewModel: ObservableObject {
             return EngagementMeta(icon: "figure.walk",
                                   openedDetail: "Steps gap opened",
                                   closedDetail: "Steps gap closed")
-        case "no_reflection":
-            return EngagementMeta(icon: "book.closed",
-                                  openedDetail: "Reflection gap opened",
-                                  closedDetail: "Reflection gap closed")
         default:
             return EngagementMeta(icon: "circle.dashed",
                                   openedDetail: "Engagement gap opened",
@@ -931,7 +927,6 @@ final class StressViewModel: ObservableObject {
         let todayWellness = fetchTodayWellnessLog()
         let todayFoods = fetchTodayFoodLogs()
         let todaySymptoms = fetchTodaySymptoms()
-        let todayJournal = fetchTodayJournal()
         let todayInterventions = fetchTodayInterventions().filter { $0.completed }
         let recentWellness = fetchRecentWellnessLogs()
         let recentFoodPresence = fetchRecentFoodLogPresence()
@@ -992,7 +987,6 @@ final class StressViewModel: ObservableObject {
         // Recovery
         let recovery = StressScoring.RecoveryInput(
             completedInterventionsToday: todayInterventions.count,
-            hasJournalToday: todayJournal != nil,
             hasMoodToday: mood != nil,
             hasMindfulSessionToday: !todayInterventions.isEmpty
         )
@@ -1132,7 +1126,6 @@ final class StressViewModel: ObservableObject {
 
         let recovery = StressScoring.RecoveryInput(
             completedInterventionsToday: snap.todayInterventions.count,
-            hasJournalToday: snap.todayJournal != nil,
             hasMoodToday: effectiveMood != nil,
             hasMindfulSessionToday: !snap.todayInterventions.isEmpty
         )
@@ -1288,14 +1281,6 @@ final class StressViewModel: ObservableObject {
             predicate: #Predicate { $0.day == today }
         )
         return (try? modelContext.fetch(descriptor)) ?? []
-    }
-
-    private func fetchTodayJournal() -> JournalEntry? {
-        let today = Calendar.current.startOfDay(for: Date())
-        let descriptor = FetchDescriptor<JournalEntry>(
-            predicate: #Predicate { $0.day == today }
-        )
-        return (try? modelContext.fetch(descriptor))?.first
     }
 
     private func fetchTodayInterventions() -> [InterventionSession] {

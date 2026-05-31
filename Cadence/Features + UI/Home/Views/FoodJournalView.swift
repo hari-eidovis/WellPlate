@@ -350,7 +350,7 @@ struct FoodJournalView: View {
                                 .padding(.vertical, 7)
                                 .background(
                                     Capsule()
-                                        .fill(Color(.systemBackground))
+                                        .fill(AppColors.card)
                                         .shadow(color: .black.opacity(0.12), radius: 5, x: 0, y: 2)
                                 )
 
