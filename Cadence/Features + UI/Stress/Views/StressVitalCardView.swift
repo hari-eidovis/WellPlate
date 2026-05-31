@@ -84,7 +84,7 @@ struct StressVitalCardView: View {
         .padding(.vertical, 13)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground).opacity(0.85))
+                .fill(AppColors.card.opacity(0.85))
                 .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
         )
     }

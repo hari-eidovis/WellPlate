@@ -4,26 +4,23 @@ import SwiftData
 // MARK: - HomeSheet
 
 enum HomeSheet: Identifiable, Equatable {
-    case coffeeTypePicker
-    case journalEntry
-    case symptomLog
-    case customizeCard(HomeCardID)
     case changeMood
+    case insights
+    case fasting
 
     var id: String {
         switch self {
-        case .coffeeTypePicker: return "coffeeTypePicker"
-        case .journalEntry: return "journalEntry"
-        case .symptomLog: return "symptomLog"
-        case .customizeCard(let card): return "customizeCard_\(card.rawValue)"
-        case .changeMood: return "changeMood"
+        case .changeMood:   return "changeMood"
+        case .insights:     return "insights"
+        case .fasting:      return "fasting"
         }
     }
 }
 
 // MARK: - HomeView
-// Redesigned dashboard: header, wellness rings, quick log, mood check-in,
-// hydration, activity, and stress insight sections.
+// Fixed "bento" dashboard: header, Today's Focus hero, a 2×2 grid of equal
+// metric tiles (stress, water, calories, move), then the mood check-in card.
+// The bottom ContextualActionBar (meal action) is preserved.
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -31,13 +28,12 @@ struct HomeView: View {
     @Query private var userGoalsList: [UserGoals]
     @Query(sort: \FoodLogEntry.createdAt, order: .forward) private var allFoodLogs: [FoodLogEntry]
     @Query private var allWellnessDayLogs: [WellnessDayLog]
-    @Query private var allJournalEntries: [JournalEntry]
     @Query(sort: \StressReading.timestamp) private var allStressReadings: [StressReading]
 
     @Binding var selectedTab: Int
     /// Shared instance from MainTabView. HomeView observes `totalScore` /
-    /// `stressLevel` directly so the sparkline card stays in sync with the
-    /// Stress tab even when the user is logging mood/water/food/etc.
+    /// `stressLevel` directly so the stress ring stays in sync with the Stress
+    /// tab even when the user is logging mood/water/food/etc.
     @ObservedObject var stressViewModel: StressViewModel
 
     // MARK: - State
@@ -46,17 +42,13 @@ struct HomeView: View {
     @State private var hasLoggedMoodToday = false
     @State private var healthSuggestedMood: MoodOption?
     @State private var hydrationGlasses: Int = 0
-    @State private var coffeeCups: Int = 0
-    @State private var showLogMeal = false
+    @State private var showFoodJournal = false
+    @State private var shouldAutoExpandFoodJournalAddMenu = false
     @State private var showWaterDetail = false
-    @State private var showCoffeeDetail = false
+    // TODO: F-next — re-home WellnessCalendarView to Profile tab. Kept as dead
+    // navigation state to avoid touching the nav chain; remove with that move.
     @State private var showWellnessCalendar = false
-    // TODO: F-next — re-home WellnessCalendarView to Profile tab.
-    // The calendar button has been removed from the header as of the Home Screen UX Update.
-    // This state and its .navigationDestination are kept as dead code to avoid touching the
-    // navigation chain. Remove both when the Profile tab relocation is implemented.
     @State private var activeSheet: HomeSheet?
-    @State private var showCoffeeWaterAlert = false
     /// Celebration when the user hits their daily water goal. Fires at most
     /// once per calendar day (guarded by `waterGoalCelebratedDay`).
     @State private var showWaterGoalCelebration = false
@@ -65,201 +57,12 @@ struct HomeView: View {
     @AppStorage("waterGoalCelebratedDay") private var waterGoalCelebratedDay: String = ""
     /// Guards against onChange(of: hydrationGlasses) firing during initial state restoration.
     @State private var hasHydrationStateLoaded = false
-    /// Guards against onChange(of: coffeeCups) firing during initial state restoration.
-    @State private var hasCoffeeStateLoaded = false
-    /// Handoff variable for the sheet→alert race-safe pattern.
-    /// Set by the picker closure, read by onChange(of: activeSheet).
-    @State private var pendingCoffeeType: CoffeeType? = nil
-    @State private var showInsightsHub = false
-    @State private var showFasting = false
     @State private var showBurnView = false
-    // Layout customisation
-    @State private var undoState: (card: HomeCardID, previousLayout: HomeLayoutConfig, id: UUID)? = nil
-    @State private var showLayoutEditor = false
-    // Journal state
-    @State private var journalText: String = ""
-    @State private var hasJournaledToday = false
     @StateObject private var foodJournalViewModel = HomeViewModel()
     @StateObject private var insightEngine = InsightEngine()
-    @StateObject private var journalPromptService = JournalPromptService()
 
     private var currentGoals: UserGoals {
         userGoalsList.first ?? UserGoals.defaults()
-    }
-
-    private var layout: HomeLayoutConfig {
-        currentGoals.homeLayout
-    }
-
-    /// Safe writable accessor — always returns a context-tracked UserGoals instance.
-    private var writableGoals: UserGoals {
-        UserGoals.current(in: modelContext)
-    }
-
-    private var layoutBinding: Binding<HomeLayoutConfig> {
-        Binding(
-            get: { currentGoals.homeLayout },
-            set: { newValue in
-                writableGoals.homeLayout = newValue
-                try? modelContext.save()
-            }
-        )
-    }
-
-    /// Visible cards filtered by both layout config AND runtime conditions.
-    private var effectiveVisibleCards: [HomeCardID] {
-        layout.visibleCards.filter { card in
-            switch card {
-            case .moodCheckIn:
-                return !hasLoggedMoodToday
-            case .journalReflection:
-                return hasLoggedMoodToday && !hasJournaledToday
-            default:
-                return true
-            }
-        }
-    }
-
-    private var todayJournalEntry: JournalEntry? {
-        allJournalEntries.first { Calendar.current.isDate($0.day, inSameDayAs: Date()) }
-    }
-
-    // MARK: - Card Dispatch
-
-    @ViewBuilder
-    private func cardView(for card: HomeCardID) -> some View {
-        switch card {
-        case .dailyInsight:
-            DailyInsightCard(
-                card: insightEngine.dailyInsight,
-                isGenerating: insightEngine.isGenerating,
-                actionLabel: insightActionLabel,
-                actionIcon: insightActionIcon,
-                onTap: { showInsightsHub = true },
-                onAction: insightQuickAction,
-                onDismiss: { hideCard(.dailyInsight) }
-            )
-            .padding(.horizontal, 16)
-
-        case .wellnessRings:
-            WellnessRingsCard(
-                rings: filteredWellnessRings,
-                completionPercent: wellnessCompletionPercent,
-                deltaValues: wellnessDeltaValues,
-                onRingTap: { destination in
-                    switch destination {
-                    case .calories: showLogMeal = true
-                    case .water:    showWaterDetail = true
-                    case .exercise: showBurnView = true
-                    case .stress:   selectedTab = 1
-                    }
-                }
-            )
-            .padding(.horizontal, 16)
-
-        case .stressSparkline:
-            StressSparklineStrip(
-                readings: todayStressReadings,
-                stressLevel: todayWellnessLog?.stressLevel,
-                scoreDelta: stressScoreDelta,
-                liveScore: liveStressScore,
-                onTap: { selectedTab = 1 }
-            )
-            .padding(.horizontal, 16)
-
-        case .moodCheckIn:
-            MoodCheckInCard(selectedMood: $selectedMood, suggestion: healthSuggestedMood)
-                .padding(.horizontal, 16)
-
-        case .journalReflection:
-            JournalReflectionCard(
-                prompt: journalPromptService.currentPrompt,
-                promptCategory: journalPromptService.promptCategory,
-                onWriteMore: { activeSheet = .journalEntry },
-                isGeneratingPrompt: journalPromptService.isGenerating
-            )
-            .padding(.horizontal, 16)
-            .transition(.asymmetric(
-                insertion: .move(edge: .bottom).combined(with: .opacity),
-                removal: .opacity
-            ))
-
-        case .quickStats:
-            QuickStatsRow(
-                hydrationGlasses: $hydrationGlasses,
-                hydrationGoal: currentGoals.waterDailyCups,
-                coffeeCups: $coffeeCups,
-                coffeeGoal: currentGoals.coffeeDailyCups,
-                coffeeType: todayWellnessLog?.resolvedCoffeeType,
-                yesterdayWater: foodJournalViewModel.yesterdayStats.water,
-                yesterdayCoffee: foodJournalViewModel.yesterdayStats.coffee,
-                cupSizeML: currentGoals.waterCupSizeML,
-                onWaterTap: { showWaterDetail = true },
-                onCoffeeTap: { showCoffeeDetail = true },
-                onCoffeeLog: { activeSheet = .coffeeTypePicker },
-                showWater: layout.isElementVisible(.waterTile, in: .quickStats),
-                showCoffee: layout.isElementVisible(.coffeeTile, in: .quickStats)
-            )
-        }
-    }
-
-    /// Wellness rings filtered by layout visibility.
-    private var filteredWellnessRings: [WellnessRingItem] {
-        let elementToDestination: [HomeElementID: WellnessRingDestination] = [
-            .calorieRing: .calories,
-            .waterRing: .water,
-            .exerciseRing: .exercise,
-            .stressRing: .stress
-        ]
-        let visibleDestinations = Set(
-            layout.visibleElements(for: .wellnessRings)
-                .compactMap { elementToDestination[$0] }
-        )
-        return wellnessRings.filter { visibleDestinations.contains($0.destination) }
-    }
-
-    // MARK: - Layout Actions
-
-    private func hideCard(_ card: HomeCardID) {
-        let previousLayout = layout
-        let undoID = UUID()
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-            var updated = layout
-            updated.hideCard(card)
-            writableGoals.homeLayout = updated
-            try? modelContext.save()
-        }
-        HapticService.impact(.medium)
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            undoState = (card: card, previousLayout: previousLayout, id: undoID)
-        }
-    }
-
-    private func undoHide() {
-        guard let undo = undoState else { return }
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-            writableGoals.homeLayout = undo.previousLayout
-            try? modelContext.save()
-            undoState = nil
-        }
-        HapticService.impact(.light)
-    }
-
-    private func dismissUndo(id: UUID) {
-        guard undoState?.id == id else { return }
-        undoState = nil
-    }
-
-    /// One-time migration: if @AppStorage("hideInsightCard") was true,
-    /// transfer that state into HomeLayoutConfig and remove the key.
-    private func migrateHideInsightCardIfNeeded() {
-        let key = "hideInsightCard"
-        guard UserDefaults.standard.bool(forKey: key) else { return }
-        var updatedLayout = writableGoals.homeLayout
-        updatedLayout.hideCard(.dailyInsight)
-        writableGoals.homeLayout = updatedLayout
-        try? modelContext.save()
-        UserDefaults.standard.removeObject(forKey: key)
     }
 
     // MARK: - Home Scroll Content
@@ -270,33 +73,100 @@ struct HomeView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
 
-            ForEach(effectiveVisibleCards, id: \.self) { card in
-                cardView(for: card)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .top).combined(with: .opacity),
-                        removal: .scale(scale: 0.9).combined(with: .opacity)
-                    ))
-                    .homeCardMenu(
-                        card: card,
-                        layout: layoutBinding,
-                        hasHiddenCards: layout.hiddenCount > 0,
-                        onCustomize: card.hasSubElements ? {
-                            activeSheet = .customizeCard(card)
-                        } : nil,
-                        onShowLayoutEditor: { showLayoutEditor = true },
-                        onHide: { hideCard($0) }
-                    )
-            }
-            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: effectiveVisibleCards)
+            // Today's Focus — insight card with floral artwork
+            DailyInsightCard(
+                card: insightEngine.dailyInsight,
+                isGenerating: insightEngine.isGenerating,
+                onTap: { activeSheet = .insights },
+                insufficientData: insightEngine.insufficientData,
+                daysRemaining: insightEngine.daysRemaining
+            )
+            .padding(.horizontal, 16)
 
-            if layout.hiddenCount > 0 {
-                HiddenCardsPill(count: layout.hiddenCount) {
-                    showLayoutEditor = true
+            // Today's stress score — big "NN /100" headline + context pills.
+            // Tapping jumps to the Stress tab for the full breakdown.
+            HomeStressScoreCard(
+                viewModel: stressViewModel,
+                onTap: { selectedTab = 1 }
+            )
+            .padding(.horizontal, 16)
+
+            // Bento grid: four equal tiles — calories + water (top),
+            // screen time + move (bottom).
+            HStack(alignment: .top, spacing: 12) {
+                VStack(spacing: 12) {
+                    HomeMetricTile(
+                        .calories(
+                            current: todayCalories,
+                            goal: currentGoals.calorieGoal
+                        ),
+                        onTap: { openFoodJournal(autoExpandAddMenu: false) }
+                    )
+                    HomeMetricTile(
+                        .screenTime(hours: stressViewModel.screenTimeDisplayHours),
+                        onTap: { selectedTab = 1 }
+                    )
                 }
-                .padding(.top, 8)
+                .frame(maxWidth: .infinity)
+
+                VStack(spacing: 12) {
+                    HomeMetricTile(
+                        .water(
+                            current: hydrationGlasses,
+                            goal: currentGoals.waterDailyCups,
+                            behind: expectedCupsDeficit()
+                        ),
+                        onTap: { showWaterDetail = true }
+                    )
+                    HomeMetricTile(
+                        .move(
+                            steps: todayWellnessLog?.steps ?? 0,
+                            goal: currentGoals.dailyStepsGoal
+                        ),
+                        onTap: { showBurnView = true }
+                    )
+                }
+                .frame(maxWidth: .infinity)
             }
+            .padding(.horizontal, 16)
+
+            // Mood check-in — prompts until a mood is logged for today
+            if !hasLoggedMoodToday {
+                MoodCheckInCard(selectedMood: $selectedMood, suggestion: healthSuggestedMood)
+                    .padding(.horizontal, 16)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                        removal: .scale(scale: 0.95).combined(with: .opacity)
+                    ))
+            }
+
+            // Footnote: Cadence's scores are estimates, not medical advice.
+            medicalDisclaimer
         }
         .padding(.bottom, 32)
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: hasLoggedMoodToday)
+    }
+
+    // MARK: - Medical Disclaimer
+
+    /// Footer note clarifying that Cadence's scores and insights are estimates,
+    /// not medical advice. Stress, calorie, hydration, and activity figures are
+    /// derived from device sensors, Health data, and what the user logs — all of
+    /// which external factors can skew.
+    private var medicalDisclaimer: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Important:")
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+
+            Text("Cadence is not a medical device. Your stress score, insights, and nutrition, hydration, and activity figures are estimates drawn from your device sensors, Health data, and what you log. External factors can affect their accuracy. Use them only as a reference and seek professional medical advice if you're unsure.")
+                .font(.system(size: 11, weight: .regular, design: .rounded))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
     }
 
     // MARK: - Contextual Action Bar
@@ -304,55 +174,14 @@ struct HomeView: View {
     private var contextualActionBar: some View {
         ContextualActionBar(
             state: contextualBarState,
-            onLogMeal: { showLogMeal = true },
-//            onAddWater: {
-//                guard hydrationGlasses < currentGoals.waterDailyCups else { return }
-//                hydrationGlasses += 1
-//            },
+            onLogMeal: { openFoodJournal(autoExpandAddMenu: true) },
             onStressTab: { selectedTab = 1 },
             onSeeInsight: {
-                showInsightsHub = true
+                activeSheet = .insights
             },
-            onLogSymptom: {
-                HapticService.impact(.light)
-                activeSheet = .symptomLog
-            }
+            onFasting: { activeSheet = .fasting }
         )
         .padding(.bottom, 4)
-    }
-
-    // MARK: - Navigation Destinations
-
-    @ViewBuilder
-    private var navigationDestinations: some View {
-        Color.clear
-            .navigationDestination(isPresented: $showLogMeal) {
-                FoodJournalView(viewModel: foodJournalViewModel)
-            }
-            .navigationDestination(isPresented: $showWaterDetail) {
-                WaterDetailView(
-                    totalGlasses: currentGoals.waterDailyCups,
-                    cupSizeML: currentGoals.waterCupSizeML
-                )
-            }
-            .navigationDestination(isPresented: $showCoffeeDetail) {
-                CoffeeDetailView(
-                    totalCups: currentGoals.coffeeDailyCups,
-                    coffeeType: todayWellnessLog?.resolvedCoffeeType
-                )
-            }
-            .navigationDestination(isPresented: $showBurnView) {
-                BurnView()
-            }
-            .navigationDestination(isPresented: $showWellnessCalendar) {
-                WellnessCalendarView()
-            }
-            .navigationDestination(isPresented: $showInsightsHub) {
-                InsightsHubView(engine: insightEngine)
-            }
-            .navigationDestination(isPresented: $showLayoutEditor) {
-                HomeLayoutEditor(layout: layoutBinding)
-            }
     }
 
     // MARK: - Sheet Content
@@ -360,55 +189,27 @@ struct HomeView: View {
     @ViewBuilder
     private func sheetContent(for sheet: HomeSheet) -> some View {
         switch sheet {
-        case .coffeeTypePicker:
-            CoffeeTypePickerSheet { type in
-                pendingCoffeeType = type
-                activeSheet = nil
-            }
-        case .journalEntry:
-            JournalEntryView(
-                mood: selectedMood,
-                stressLevel: todayWellnessLog?.stressLevel,
-                entryText: $journalText,
-                prompt: journalPromptService.currentPrompt,
-                promptService: journalPromptService,
-                onSave: saveJournalEntry
-            )
-        case .symptomLog:
-            SymptomLogSheet(onSaved: { stressViewModel.recompute(reason: .manualSymptoms) })
-        case .customizeCard(let card):
-            CardCustomizeSheet(card: card, layout: layoutBinding)
         case .changeMood:
             MoodCheckInSheet(onSaved: { stressViewModel.recompute(reason: .manualMood) })
-        }
-    }
-
-    // MARK: - Undo Toast Overlay
-
-    @ViewBuilder
-    private var undoToastOverlay: some View {
-        if let undo = undoState {
-            VStack {
-                Spacer()
-                UndoToast(
-                    message: "\(undo.card.displayName) hidden",
-                    dismissID: undo.id,
-                    onUndo: { undoHide() },
-                    onDismiss: { id in dismissUndo(id: id) }
-                )
-                .padding(.bottom, 80)
+        case .insights:
+            NavigationStack {
+                InsightsHubView(engine: insightEngine)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Done") { activeSheet = nil }
+                        }
+                    }
             }
+        case .fasting:
+            FastingView()
         }
     }
 
     // MARK: - Navigation Content
 
     private var navigationContent: some View {
-        ZStack {
-          ScrollView {
+        ScrollView {
             homeScrollContent
-          }
-          undoToastOverlay
         }
         .simultaneousGesture(
             DragGesture(minimumDistance: 20)
@@ -417,100 +218,46 @@ struct HomeView: View {
                     let vAmt = abs(value.translation.height)
                     if hAmt > 80 && hAmt > vAmt * 1.5 {
                         HapticService.impact(.medium)
-                        showLogMeal = true
+                        openFoodJournal(autoExpandAddMenu: false)
                     }
                 }
         )
         .safeAreaInset(edge: .bottom) {
             contextualActionBar
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(HomePalette.background.ignoresSafeArea())
         .scrollIndicators(.hidden)
-        .navigationDestination(isPresented: $showLogMeal) {
-            FoodJournalView(viewModel: foodJournalViewModel)
+        .navigationDestination(isPresented: $showFoodJournal) {
+            FoodJournalView(
+                viewModel: foodJournalViewModel,
+                autoExpandAddMenu: shouldAutoExpandFoodJournalAddMenu
+            )
         }
         .navigationDestination(isPresented: $showWaterDetail) {
             WaterDetailView(totalGlasses: currentGoals.waterDailyCups, cupSizeML: currentGoals.waterCupSizeML)
         }
-        .navigationDestination(isPresented: $showCoffeeDetail) {
-            CoffeeDetailView(totalCups: currentGoals.coffeeDailyCups, coffeeType: todayWellnessLog?.resolvedCoffeeType)
-        }
         .navigationDestination(isPresented: $showBurnView) { BurnView() }
         .navigationDestination(isPresented: $showWellnessCalendar) { WellnessCalendarView() }
-        .navigationDestination(isPresented: $showInsightsHub) { InsightsHubView(engine: insightEngine) }
-        .navigationDestination(isPresented: $showLayoutEditor) { HomeLayoutEditor(layout: layoutBinding) }
         .navigationBarHidden(true)
-        .sheet(isPresented: $showFasting) {
-            FastingView()
-        }
     }
 
     // MARK: - Body
 
     var body: some View {
         bodyPart1
-            .onChange(of: hasLoggedMoodToday) { _, logged in
-                if logged {
-                    Task {
-                        await journalPromptService.generatePrompt(
-                            mood: selectedMood,
-                            stressLevel: todayWellnessLog?.stressLevel
-                        )
-                    }
-                }
-            }
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active else { return }
                 refreshTodayMoodState()
                 refreshTodayHydrationState()
-                refreshTodayCoffeeState()
-                refreshTodayJournalState()
                 refreshTodayActivityFromHealthKit()
             }
             .sheet(item: $activeSheet) { sheet in
                 sheetContent(for: sheet)
             }
-            .alert("Stay Hydrated!", isPresented: $showCoffeeWaterAlert) {
-                Button("Log Water") {
-                    if hydrationGlasses < currentGoals.waterDailyCups {
-                        hydrationGlasses += 1
-                    }
-                }
-                Button("Skip", role: .cancel) {}
+            .alert("Nice work! 🎉", isPresented: $showWaterGoalCelebration) {
+                Button("OK", role: .cancel) {}
             } message: {
-                Text("Coffee can cause dehydration. Want to log a glass of water too?")
-            }
-            .confirmationDialog(
-                "Good job! 🎉",
-                isPresented: $showWaterGoalCelebration,
-                titleVisibility: .visible
-            ) {
-                let waterVisible = layout.isElementVisible(.waterTile, in: .quickStats)
-                let coffeeVisible = layout.isElementVisible(.coffeeTile, in: .quickStats)
-
-                if waterVisible && coffeeVisible {
-                    Button("Hide water & coffee tiles", role: .destructive) {
-                        hideWaterTile()
-                        hideCoffeeTile()
-                    }
-                    Button("Hide water tile only", role: .destructive) {
-                        hideWaterTile()
-                    }
-                    Button("Hide coffee tile only", role: .destructive) {
-                        hideCoffeeTile()
-                    }
-                } else if waterVisible {
-                    Button("Hide water tile", role: .destructive) {
-                        hideWaterTile()
-                    }
-                } else if coffeeVisible {
-                    Button("Hide coffee tile", role: .destructive) {
-                        hideCoffeeTile()
-                    }
-                }
-                Button("Keep them", role: .cancel) {}
-            } message: {
-                Text("You hit your daily water goal. Hide the water tile now that it's filled? More coffee can cause dehydration, so consider hiding the coffee tile too. You can bring tiles back from the layout editor.")
+                Text("You hit your daily water goal.")
             }
     }
 
@@ -521,29 +268,21 @@ struct HomeView: View {
         .onAppear {
             foodJournalViewModel.bindContext(modelContext)
             insightEngine.bindContext(modelContext)
-            migrateHideInsightCardIfNeeded()
             Task { await insightEngine.generateInsights() }
             refreshTodayMoodState()
             refreshTodayHydrationState()
-            refreshTodayCoffeeState()
-            // Defer flipping the *StateLoaded guards to the next runloop so
-            // the initial 0 → restored-value onChange fires while the guards
-            // are still false. Otherwise SwiftUI batches both @State writes
-            // and the celebration trips on app launch, burning
-            // waterGoalCelebratedDay for the rest of the day.
+            // Defer flipping the hydration guard to the next runloop so the
+            // initial 0 → restored-value onChange fires while the guard is
+            // still false. Otherwise SwiftUI batches the @State writes and the
+            // celebration trips on launch, burning waterGoalCelebratedDay.
             DispatchQueue.main.async {
                 hasHydrationStateLoaded = true
-                hasCoffeeStateLoaded = true
             }
-            refreshTodayJournalState()
             foodJournalViewModel.loadYesterdayStats()
             refreshTodayActivityFromHealthKit()
         }
         .onChange(of: showWaterDetail) { _, showing in
             if !showing { refreshTodayHydrationState() }
-        }
-        .onChange(of: showCoffeeDetail) { _, showing in
-            if !showing { refreshTodayCoffeeState() }
         }
         .onChange(of: selectedMood) { _, mood in
             guard let mood else { return }
@@ -553,28 +292,23 @@ struct HomeView: View {
             updateHydrationForToday(cups)
             handleWaterGoalCrossing(from: oldCups, to: cups)
         }
-        .onChange(of: coffeeCups) { _, newCups in
-            guard hasCoffeeStateLoaded else { return }
-            updateCoffeeForToday(cups: newCups, type: todayWellnessLog?.resolvedCoffeeType)
-        }
         .onChange(of: activeSheet) { old, new in
-            if old == .coffeeTypePicker && new == nil {
-                if let type = pendingCoffeeType {
-                    pendingCoffeeType = nil
-                    coffeeCups += 1
-                    updateCoffeeForToday(cups: coffeeCups, type: type)
-                    showCoffeeWaterAlert = true
-                }
-            }
-            if old == .journalEntry && new == nil {
-                refreshTodayJournalState()
-            }
             if old == .changeMood && new == nil {
                 // Sheet's `onSaved` already triggered recompute(); just refresh
                 // the badge emoji from the persisted log here.
                 refreshTodayMoodState()
             }
         }
+        .onChange(of: showFoodJournal) { _, showing in
+            if !showing {
+                shouldAutoExpandFoodJournalAddMenu = false
+            }
+        }
+    }
+
+    private func openFoodJournal(autoExpandAddMenu: Bool) {
+        shouldAutoExpandFoodJournalAddMenu = autoExpandAddMenu
+        showFoodJournal = true
     }
 
     // MARK: - Header
@@ -599,10 +333,12 @@ struct HomeView: View {
                         Text(userName)
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundStyle(.primary)
-                            .background(alignment: .top) {
-                                LottieLoopView(name: "hiddencat")
+                            .background(alignment: .topLeading) {
+                                // Forward (cat peeks up) → reverse (cat goes back) → repeat,
+                                // so it never snaps abruptly back to the start frame.
+                                LottieLoopView(name: "hiddencat", autoReverse: true)
                                     .frame(width: 60, height: 60)
-                                    .offset(y: -60)
+                                    .offset(x:-16,y: -60)
                                     .allowsHitTesting(false)
                                     .accessibilityHidden(true)
                             }
@@ -615,57 +351,38 @@ struct HomeView: View {
             // AI Insights button
             Button {
                 HapticService.impact(.light)
-                showInsightsHub = true
+                activeSheet = .insights
             } label: {
                 headerIcon("sparkles")
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Insights")
 
-            // Fast button — opens intermittent fasting tracker
-            Button {
-                HapticService.impact(.light)
-                showFasting = true
-            } label: {
-                headerAssetIcon("fasting_icon")
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Fasting")
-
-            // Mood badge — visible only when mood is logged today (38pt to match icons)
+            // Mood button — only shown once a mood is logged; tapping it lets the
+            // user change today's mood. Until then nothing is shown here (logging
+            // a fresh mood happens via the MoodCheckInCard in the scroll content).
             if hasLoggedMoodToday, let mood = selectedMood {
                 Button {
                     HapticService.impact(.light)
                     activeSheet = .changeMood
                 } label: {
-                    ZStack {
-                        Circle()
-                            .fill(Color(.systemBackground))
-                            .frame(width: 38, height: 38)
-                            .shadow(color: mood.accentColor.opacity(0.25), radius: 6, x: 0, y: 3)
-
-                        Circle()
-                            .stroke(mood.accentColor.opacity(0.35), lineWidth: 1.5)
-                            .frame(width: 38, height: 38)
-
-                        Text(mood.emoji)
-                            .font(.system(size: 19))
-                    }
+                    moodBadge(mood)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Change today's mood")
-                .transition(.scale(scale: 0.6).combined(with: .opacity))
             }
         }
     }
 
-    // MARK: - Header Icon Helper (38pt — 2 icons + optional mood badge)
+    // MARK: - Header Helpers
 
+    /// Circular header button — black circle + white glyph with a soft shadow.
     @ViewBuilder
     private func headerIcon(_ systemName: String) -> some View {
         ZStack {
             Circle()
                 .fill(Color.black)
-                .frame(width: 38, height: 38)
+                .frame(width: 40, height: 40)
                 .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
             Image(systemName: systemName)
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -674,21 +391,24 @@ struct HomeView: View {
     }
 
     @ViewBuilder
-    private func headerAssetIcon(_ assetName: String) -> some View {
+    private func moodBadge(_ mood: MoodOption) -> some View {
         ZStack {
             Circle()
                 .fill(Color(.systemBackground))
-                .frame(width: 38, height: 38)
-                .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                .frame(width: 40, height: 40)
+                .shadow(color: mood.accentColor.opacity(0.25), radius: 6, x: 0, y: 3)
 
-            Image(assetName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 22, height: 22)
+            Circle()
+                .stroke(mood.accentColor.opacity(0.35), lineWidth: 1.5)
+                .frame(width: 40, height: 40)
+
+            Text(mood.emoji)
+                .font(.system(size: 20))
         }
+        .transition(.scale(scale: 0.6).combined(with: .opacity))
     }
 
-    // MARK: - Wellness Rings Data
+    // MARK: - Date Helpers
 
     private var todayStart: Date {
         Calendar.current.startOfDay(for: Date())
@@ -698,119 +418,47 @@ struct HomeView: View {
         allWellnessDayLogs.first { Calendar.current.isDate($0.day, inSameDayAs: Date()) }
     }
 
-    // MARK: - Stress Sparkline Data
+    // MARK: - Stress Data
 
     private var todayStressReadings: [StressReading] {
         allStressReadings.filter { Calendar.current.isDateInToday($0.timestamp) }
     }
 
-    private var yesterdayLastStressReading: StressReading? {
-        allStressReadings.last { Calendar.current.isDateInYesterday($0.timestamp) }
-    }
-
-    private var stressScoreDelta: Int? {
-        guard let today = todayStressReadings.last,
-              let yesterday = yesterdayLastStressReading else { return nil }
-        let delta = Int(today.score.rounded()) - Int(yesterday.score.rounded())
-        return delta == 0 ? nil : delta
-    }
-
     /// Live score from the shared StressViewModel. Nil until the first
-    /// successful `loadData()` so the card can fall back to the latest
-    /// persisted reading instead of showing 0.
+    /// successful load so the ring can fall back to the latest persisted reading.
     private var liveStressScore: Double? {
         guard stressViewModel.isAuthorized || stressViewModel.usesMockData else { return nil }
         guard stressViewModel.totalScore > 0 else { return nil }
         return stressViewModel.totalScore
     }
 
+    // MARK: - Nutrition Data
+
     private var todayCalories: Int {
         allFoodLogs.filter { $0.day == todayStart }.reduce(0) { $0 + $1.calories }
     }
 
     /// Today's food log entries, filtered from the `@Query` result.
-    /// Used by MealLogCard and contextualBarState.
-    // RESOLVED: M7 — using $0.day == todayStart for consistency with the existing todayCalories
-    // pattern in HomeView. Direct equality avoids a Calendar call on every element.
     private var todayFoodLogs: [FoodLogEntry] {
         allFoodLogs.filter { $0.day == todayStart }
     }
 
+    // MARK: - Contextual Bar State
+
     /// Pure computed property. Evaluated on every body call.
-    /// Priority: goalsCelebration > stressActionable > waterBehindPace > logNextMeal > defaultActions
+    /// Priority: goalsCelebration > stressActionable > logNextMeal > defaultActions
     private var contextualBarState: ContextualBarState {
-        // 1. Goals celebration
         if wellnessCompletionPercent >= 100 {
             return .goalsCelebration
         }
-
-        // 2. Stress actionable
         if let level = effectiveStressLevel?.lowercased(),
            level == "high" || level == "very high" {
             return .stressActionable(level: effectiveStressLevel ?? "High")
         }
-
-        // 3. Log next meal
         if let mealLabel = nextMealLabel() {
             return .logNextMeal(mealLabel: mealLabel)
         }
-
-        // 5. Default
         return .defaultActions
-    }
-
-    // MARK: - Insight Quick Action
-
-    /// Label for the nudge button on the daily insight card, based on insight domain.
-    private var insightActionLabel: String? {
-        guard let domain = insightEngine.dailyInsight?.domain else { return nil }
-        switch domain {
-        case .hydration: return "Add"
-        case .nutrition: return "Log"
-        case .stress:    return "Breathe"
-        case .caffeine:  return "Log"
-        default:         return nil
-        }
-    }
-
-    /// SF Symbol for the nudge button on the daily insight card.
-    private var insightActionIcon: String? {
-        guard let domain = insightEngine.dailyInsight?.domain else { return nil }
-        switch domain {
-        case .hydration: return "plus"
-        case .nutrition: return "plus"
-        case .stress:    return "wind"
-        case .caffeine:  return "cup.and.saucer.fill"
-        default:         return nil
-        }
-    }
-
-    /// Quick action closure for the nudge button, domain-specific.
-    private var insightQuickAction: (() -> Void)? {
-        guard let domain = insightEngine.dailyInsight?.domain else { return nil }
-        switch domain {
-        case .hydration:
-            return {
-                guard hydrationGlasses < currentGoals.waterDailyCups else { return }
-                hydrationGlasses += 1
-            }
-        case .nutrition:
-            return { showLogMeal = true }
-        case .stress:
-            return { selectedTab = 1 }
-        case .caffeine:
-            return {
-                let wasFirst = coffeeCups == 0 && todayWellnessLog?.coffeeType == nil
-                coffeeCups += 1
-                if wasFirst {
-                    activeSheet = .coffeeTypePicker
-                } else {
-                    showCoffeeWaterAlert = true
-                }
-            }
-        default:
-            return nil
-        }
     }
 
     /// Returns how many cups behind the user is vs. expected pace (wake 07:00, sleep 22:00).
@@ -870,11 +518,9 @@ struct HomeView: View {
     }
 
     /// Resolves today's stress level from the first available source:
-    ///  1. Persisted `WellnessDayLog.stressLevel` (set by StressViewModel after a load).
-    ///  2. The shared StressViewModel's live `totalScore` (Stress tab has run).
-    ///  3. The most recent `StressReading` for today (mock injector seeds these,
-    ///     so the ring still shows a value even when MockDataInjector skipped
-    ///     today's WellnessDayLog because one already existed).
+    ///  1. Persisted `WellnessDayLog.stressLevel`.
+    ///  2. The shared StressViewModel's live `totalScore`.
+    ///  3. The most recent `StressReading` for today.
     private var effectiveStressLevel: String? {
         if let level = todayWellnessLog?.stressLevel, !level.isEmpty {
             return level
@@ -886,90 +532,6 @@ struct HomeView: View {
             return latest.levelLabel
         }
         return nil
-    }
-
-    private var wellnessRings: [WellnessRingItem] {
-        let cupGoal = currentGoals.waterDailyCups
-        let energyGoal = currentGoals.activeEnergyGoalKcal
-        let calorieGoal = currentGoals.calorieGoal
-        let log = todayWellnessLog
-        let stressLevel = effectiveStressLevel
-
-        let calorieProgress: CGFloat = calorieGoal > 0
-            ? min(1.0, CGFloat(todayCalories) / CGFloat(calorieGoal))
-            : 0
-        let waterProgress = cupGoal > 0 ? min(1.0, CGFloat(hydrationGlasses) / CGFloat(cupGoal)) : 0
-        let burnedKcal = log?.caloriesBurned ?? 0
-        let exerciseProgress: CGFloat = energyGoal > 0
-            ? min(1.0, CGFloat(burnedKcal) / CGFloat(energyGoal))
-            : 0
-        let stressProgress = stressProgressFromLevel(stressLevel)
-
-        return [
-            WellnessRingItem(
-                label: "Calories",
-                sublabel: "/ \(calorieGoal)",
-                value: "\(todayCalories)",
-                progress: calorieProgress,
-                color: AppColors.brand,
-                emojiOrSymbol: nil,
-                inlineLabel: nil,
-                destination: .calories
-            ),
-            WellnessRingItem(
-                label: "Water",
-                sublabel: "/ \(cupGoal) cups",
-                value: "\(hydrationGlasses)",
-                progress: waterProgress,
-                color: Color(hue: 0.58, saturation: 0.68, brightness: 0.82),
-                emojiOrSymbol: nil,
-                inlineLabel: nil,
-                destination: .water
-            ),
-            WellnessRingItem(
-                label: "Exercise",
-                sublabel: "/ \(energyGoal) kcal",
-                value: "\(burnedKcal)",
-                progress: exerciseProgress,
-                color: Color(hue: 0.50, saturation: 0.62, brightness: 0.70),
-                emojiOrSymbol: nil,
-                inlineLabel: nil,
-                destination: .exercise
-            ),
-            WellnessRingItem(
-                label: "Stress",
-                sublabel: "Today",
-                value: "",
-                progress: stressProgress,
-                color: Color(hue: 0.76, saturation: 0.50, brightness: 0.75),
-                emojiOrSymbol: stressEmojiFromLevel(stressLevel),
-                inlineLabel: stressLevel,
-                destination: .stress
-            )
-        ]
-    }
-
-    /// Delta values passed to WellnessRingsCard for Δ badges.
-    /// Uses yesterdayStats from the VM for water and activity.
-    /// Returns nil when no yesterday data is available.
-    private var wellnessDeltaValues: [WellnessRingDestination: Int]? {
-        let stats = foodJournalViewModel.yesterdayStats
-        // Only show deltas when we have yesterday data
-        guard stats.water > 0 || stats.coffee > 0 || stats.steps > 0 else { return nil }
-
-        var values: [WellnessRingDestination: Int] = [:]
-
-        // Water delta: current glasses vs yesterday
-        let waterDiff = hydrationGlasses - stats.water
-        if waterDiff != 0 { values[.water] = waterDiff }
-
-        // Activity (steps) delta
-        if let steps = todayWellnessLog?.steps, stats.steps > 0 {
-            let stepsDiff = steps - stats.steps
-            if stepsDiff != 0 { values[.exercise] = stepsDiff }
-        }
-
-        return values.isEmpty ? nil : values
     }
 
     private var wellnessCompletionPercent: Int {
@@ -999,18 +561,7 @@ struct HomeView: View {
         }
     }
 
-    private func stressEmojiFromLevel(_ level: String?) -> String? {
-        switch level?.lowercased() {
-        case "excellent": return "😄"
-        case "good":      return "😌"
-        case "moderate":  return "😐"
-        case "high":      return "😣"
-        case "very high": return "😰"
-        default:          return "—"
-        }
-    }
-
-    // MARK: - Helpers
+    // MARK: - Greeting Helpers
 
     private var todayString: String {
         let f = DateFormatter()
@@ -1029,10 +580,6 @@ struct HomeView: View {
 
     private var userName: String {
         UserProfileManager.shared.userName.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var greeting: String {
-        userName.isEmpty ? greetingPrefix : "\(greetingPrefix), \(userName)"
     }
 
     // MARK: - Mood Logging
@@ -1091,9 +638,8 @@ struct HomeView: View {
                 Task { try? await HealthKitServiceFactory.shared.writeMood(mood) }
             }
             healthSuggestedMood = nil
-            // Mood feeds the stress score (mood factor, mindful bonus, no_mood
-            // engagement penalty). Trigger the shared VM to recompute so the
-            // Stress ring + sparkline reflect the new mood immediately.
+            // Mood feeds the stress score. Trigger the shared VM to recompute so
+            // the Stress ring reflects the new mood immediately.
             stressViewModel.recompute(reason: .manualMood)
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 hasLoggedMoodToday = true
@@ -1105,16 +651,15 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Hydration & Activity
+
     private func refreshTodayHydrationState() {
         hydrationGlasses = fetchTodayWellnessLog()?.waterGlasses ?? 0
     }
 
-    /// Pulls today's active energy + steps from HealthKit and persists them
-    /// into the today `WellnessDayLog` so the Exercise ring reads non-zero
-    /// even before the user has visited the Stress tab. In mock mode the
-    /// factory routes to `MockHealthKitService`, which keeps Home and Burn
-    /// reading from the same source even when `MockDataInjector` skipped
-    /// today (its guard skips dates that already have a WellnessDayLog).
+    /// Pulls today's active energy + steps from HealthKit and persists them into
+    /// the today `WellnessDayLog` so the Move tile reads non-zero even before the
+    /// user visits the Stress tab.
     private func refreshTodayActivityFromHealthKit() {
         guard HealthKitServiceFactory.isDataAvailable else { return }
 
@@ -1169,9 +714,8 @@ struct HomeView: View {
         }
     }
 
-    /// Fires the "good job" celebration alert the first time today's hydration
-    /// crosses the daily goal. Skips if the state hasn't loaded yet, if the
-    /// user already celebrated today, or if the goal is non-positive.
+    /// Fires the celebration alert the first time today's hydration crosses the
+    /// daily goal. Skips if state hasn't loaded, already celebrated, or goal <= 0.
     private func handleWaterGoalCrossing(from oldCups: Int, to newCups: Int) {
         guard hasHydrationStateLoaded else { return }
         let goal = currentGoals.waterDailyCups
@@ -1183,28 +727,6 @@ struct HomeView: View {
         showWaterGoalCelebration = true
     }
 
-    /// Hides the water tile inside the Quick Stats card. If coffee is already
-    /// hidden, `toggleElement` auto-hides the whole card.
-    private func hideWaterTile() {
-        var updated = layout
-        guard updated.isElementVisible(.waterTile, in: .quickStats) else { return }
-        updated.toggleElement(.waterTile, in: .quickStats)
-        writableGoals.homeLayout = updated
-        try? modelContext.save()
-        HapticService.impact(.light)
-    }
-
-    /// Hides the coffee tile inside the Quick Stats card. Offered after a
-    /// water-goal crossing because additional coffee can negate hydration.
-    private func hideCoffeeTile() {
-        var updated = layout
-        guard updated.isElementVisible(.coffeeTile, in: .quickStats) else { return }
-        updated.toggleElement(.coffeeTile, in: .quickStats)
-        writableGoals.homeLayout = updated
-        try? modelContext.save()
-        HapticService.impact(.light)
-    }
-
     private static func dayKey(for date: Date) -> String {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -1212,23 +734,6 @@ struct HomeView: View {
         formatter.timeZone = .current
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date)
-    }
-
-    // MARK: - Coffee Logging
-
-    private func refreshTodayCoffeeState() {
-        coffeeCups = fetchTodayWellnessLog()?.coffeeCups ?? 0
-    }
-
-    private func updateCoffeeForToday(cups: Int, type: CoffeeType?) {
-        let log = fetchOrCreateTodayWellnessLog()
-        log.coffeeCups = max(0, cups)
-        if let type { log.coffeeType = type.rawValue }
-        do {
-            try modelContext.save()
-        } catch {
-            WPLogger.home.error("Coffee save failed: \(error.localizedDescription)")
-        }
     }
 
     private func fetchTodayWellnessLog() -> WellnessDayLog? {
@@ -1248,61 +753,6 @@ struct HomeView: View {
         modelContext.insert(newLog)
         return newLog
     }
-
-    // MARK: - Journal
-
-    /// Restores journal state from SwiftData. Intentionally does NOT animate —
-    /// called from onAppear and scenePhase for state restore, not user interactions.
-    private func refreshTodayJournalState() {
-        if let entry = todayJournalEntry {
-            hasJournaledToday = true
-            journalText = entry.text
-        } else {
-            hasJournaledToday = false
-            journalText = ""
-        }
-        // If mood is already logged and no journal yet, generate a prompt
-        if hasLoggedMoodToday && !hasJournaledToday {
-            Task {
-                await journalPromptService.generatePrompt(
-                    mood: selectedMood,
-                    stressLevel: todayWellnessLog?.stressLevel
-                )
-            }
-        }
-    }
-
-    /// Saves today's journal entry. Uses withAnimation() so the card removal transition fires.
-    private func saveJournalEntry() {
-        let trimmed = journalText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-
-        if let existing = todayJournalEntry {
-            existing.text = trimmed
-            existing.updatedAt = .now
-        } else {
-            let entry = JournalEntry(
-                day: Date(),
-                text: trimmed,
-                moodRaw: selectedMood?.rawValue,
-                promptUsed: journalPromptService.currentPrompt,
-                stressScore: nil
-            )
-            modelContext.insert(entry)
-        }
-
-        do {
-            try modelContext.save()
-            HapticService.notify(.success)
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                hasJournaledToday = true
-            }
-            activeSheet = nil // Dismiss journal sheet if open
-            WPLogger.home.info("Journal entry saved for today")
-        } catch {
-            WPLogger.home.error("Journal save failed: \(error.localizedDescription)")
-        }
-    }
 }
 
 // MARK: - Preview
@@ -1310,7 +760,7 @@ struct HomeView: View {
 #Preview("Home Dashboard") {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(
-        for: FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, JournalEntry.self, StressReading.self,
+        for: FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, StressReading.self,
         configurations: config
     )
     return HomeView(

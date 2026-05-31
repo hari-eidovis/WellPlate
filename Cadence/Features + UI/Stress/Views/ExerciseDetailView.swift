@@ -119,7 +119,7 @@ struct ExerciseDetailView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 15, y: 5)
         )
     }
@@ -224,7 +224,7 @@ struct ExerciseDetailView: View {
 
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 20)
-            .fill(Color(.systemBackground))
+            .fill(AppColors.card)
             .appShadow(radius: 15, y: 5)
     }
 

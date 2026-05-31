@@ -102,7 +102,7 @@ final class InsightEngine: ObservableObject {
     }
 
     /// Counts distinct calendar days within the lookback window that have any user-logged data
-    /// (food, wellness, stress, symptoms, fasting, journal). Updates `loggedDayCount` and
+    /// (food, wellness, stress, fasting). Updates `loggedDayCount` and
     /// `insufficientData`. Cheap — SwiftData only, no HealthKit calls.
     func refreshDayCount() async {
         guard let ctx = modelContext else { return }
@@ -124,17 +124,9 @@ final class InsightEngine: ObservableObject {
             predicate: #Predicate { $0.day >= windowStart })) {
             loggedDays.formUnion(wellness.map { calendar.startOfDay(for: $0.day) })
         }
-        if let symptoms = try? ctx.fetch(FetchDescriptor<SymptomEntry>(
-            predicate: #Predicate { $0.day >= windowStart })) {
-            loggedDays.formUnion(symptoms.map { calendar.startOfDay(for: $0.day) })
-        }
         if let fasting = try? ctx.fetch(FetchDescriptor<FastingSession>(
             predicate: #Predicate { $0.startedAt >= windowStart })) {
             loggedDays.formUnion(fasting.map { calendar.startOfDay(for: $0.day) })
-        }
-        if let journal = try? ctx.fetch(FetchDescriptor<JournalEntry>(
-            predicate: #Predicate { $0.day >= windowStart })) {
-            loggedDays.formUnion(journal.map { calendar.startOfDay(for: $0.day) })
         }
 
         loggedDayCount = loggedDays.count
@@ -172,20 +164,10 @@ final class InsightEngine: ObservableObject {
         )
         let foodLogs = (try? ctx.fetch(foodDescriptor)) ?? []
 
-        let symptomDescriptor = FetchDescriptor<SymptomEntry>(
-            predicate: #Predicate { $0.day >= windowStart }
-        )
-        let symptomEntries = (try? ctx.fetch(symptomDescriptor)) ?? []
-
         let fastingDescriptor = FetchDescriptor<FastingSession>(
             predicate: #Predicate { $0.startedAt >= windowStart }
         )
         let fastingSessions = ((try? ctx.fetch(fastingDescriptor)) ?? []).filter { !$0.isActive }
-
-        let journalDescriptor = FetchDescriptor<JournalEntry>(
-            predicate: #Predicate { $0.day >= windowStart }
-        )
-        let journalEntries = (try? ctx.fetch(journalDescriptor)) ?? []
 
         // Concurrent HealthKit fetches
         async let sleepFetch = fetchSleepSafely(range: interval)
@@ -231,18 +213,10 @@ final class InsightEngine: ObservableObject {
             let heartRateValue = heartRateData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
             let exerciseValue = exerciseData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
 
-            // Symptoms
-            let daySymptoms = symptomEntries.filter { calendar.isDate($0.day, inSameDayAs: dayStart) }
-            let symptomNames = Array(Set(daySymptoms.map(\.name)))
-            let symptomMax = daySymptoms.map(\.severity).max()
-
             // Fasting
             let dayFasting = fastingSessions.filter { calendar.isDate($0.day, inSameDayAs: dayStart) }
             let fastingHours: Double? = dayFasting.isEmpty ? nil : dayFasting.map(\.actualDurationSeconds).reduce(0, +) / 3600.0
             let fastingCompleted: Bool? = dayFasting.isEmpty ? nil : dayFasting.contains(where: \.completed)
-
-            // Journal
-            let journalLogged = journalEntries.contains { calendar.isDate($0.day, inSameDayAs: dayStart) }
 
             var summary = WellnessDaySummary(
                 date: dayStart,
@@ -266,11 +240,8 @@ final class InsightEngine: ObservableObject {
                 waterGlasses: wellness?.waterGlasses,
                 coffeeCups: wellness?.coffeeCups,
                 moodLabel: wellness?.mood?.label,
-                symptomNames: symptomNames,
-                symptomMaxSeverity: symptomMax,
                 fastingHours: fastingHours,
-                fastingCompleted: fastingCompleted,
-                journalLogged: journalLogged
+                fastingCompleted: fastingCompleted
             )
 
             // Populate report-specific var fields
@@ -523,13 +494,22 @@ private extension InsightEngine {
             let narrative = "You've hit your \(def.name.lowercased()) for \(streak) consecutive days."
             let priority = min(1.0, Double(streak) / 7.0 * 0.6 + 0.2)
 
+            // Hydration renders the current calendar week as fill-by-day dots
+            // (each day's water vs. goal); the other streaks keep the ring/bar.
+            let chartData: InsightChartData
+            if def.domain == .hydration, goals.waterDailyCups > 0 {
+                chartData = .weeklyHydration(days: hydrationWeek(from: days, goalCups: goals.waterDailyCups))
+            } else {
+                chartData = .milestoneRing(current: streak, target: def.target, streakLabel: def.name)
+            }
+
             cards.append(InsightCard(
                 id: UUID(),
                 type: .milestone,
                 domain: def.domain,
                 headline: headline,
                 narrative: narrative,
-                chartData: .milestoneRing(current: streak, target: def.target, streakLabel: def.name),
+                chartData: chartData,
                 priority: priority,
                 isLLMGenerated: false,
                 generatedAt: Date(),
@@ -541,6 +521,25 @@ private extension InsightEngine {
         }
 
         return cards
+    }
+
+    /// The current calendar week (locale's first weekday → +6 days) for the
+    /// hydration dots. Past/today carry their water-vs-goal fraction; days later
+    /// this week are flagged `isFuture` so they render as empty placeholders
+    /// instead of looking like missed days.
+    private func hydrationWeek(from days: [WellnessDaySummary], goalCups: Int) -> [HydrationDay] {
+        guard goalCups > 0 else { return [] }
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        guard let weekStart = calendar.dateInterval(of: .weekOfYear, for: today)?.start else { return [] }
+
+        return (0..<7).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: weekStart) else { return nil }
+            let isFuture = date > today
+            let glasses = days.first { calendar.isDate($0.date, inSameDayAs: date) }?.waterGlasses ?? 0
+            let fraction = isFuture ? 0 : Double(glasses) / Double(goalCups)
+            return HydrationDay(date: date, fraction: fraction, isFuture: isFuture)
+        }
     }
 
     // MARK: Imbalances (macro deficits)

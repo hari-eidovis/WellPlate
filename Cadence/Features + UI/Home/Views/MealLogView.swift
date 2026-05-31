@@ -344,7 +344,7 @@ struct MealLogModePickerView: View {
             .padding(.vertical, 22)
             .background(
                 RoundedRectangle(cornerRadius: 18)
-                    .fill(Color(.systemBackground))
+                    .fill(AppColors.card)
                     .appShadow(radius: 12, y: 4)
             )
         }

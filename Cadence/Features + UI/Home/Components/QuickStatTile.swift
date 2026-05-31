@@ -44,7 +44,7 @@ struct QuickStatTile: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 12, y: 4)
         )
         .contentShape(RoundedRectangle(cornerRadius: 16))

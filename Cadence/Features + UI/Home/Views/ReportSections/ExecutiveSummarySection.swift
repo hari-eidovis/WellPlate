@@ -24,7 +24,7 @@ struct ExecutiveSummarySection: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 12, y: 4)
         )
     }

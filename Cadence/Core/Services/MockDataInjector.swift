@@ -35,9 +35,7 @@ enum MockDataInjector {
         injectStressReadings(into: context, today: today, cal: cal)
 
         // New injectors
-        injectSymptomEntries(into: context, today: today, cal: cal)
         injectFastingSessions(into: context, today: today, cal: cal, injectedDates: &injectedDates)
-        injectJournalEntries(into: context, today: today, cal: cal, injectedDates: &injectedDates)
 
         do {
             try context.save()
@@ -66,23 +64,7 @@ enum MockDataInjector {
             mockReadings.forEach { context.delete($0) }
         }
 
-        // 3. SymptomEntry — by tag
-        let symptomDescriptor = FetchDescriptor<SymptomEntry>(
-            predicate: #Predicate { $0.notes == "[mock]" }
-        )
-        if let mockSymptoms = try? context.fetch(symptomDescriptor) {
-            mockSymptoms.forEach { context.delete($0) }
-        }
-
-        // 4. JournalEntry — by tag
-        let journalDescriptor = FetchDescriptor<JournalEntry>(
-            predicate: #Predicate { $0.promptUsed == "[mock]" }
-        )
-        if let mockJournals = try? context.fetch(journalDescriptor) {
-            mockJournals.forEach { context.delete($0) }
-        }
-
-        // 5. WellnessDayLog + FastingSession — by tracked dates
+        // 3. WellnessDayLog + FastingSession — by tracked dates
         let formatter = ISO8601DateFormatter()
         let trackedDates = AppConfig.shared.mockInjectedDates.compactMap { formatter.date(from: $0) }
         for date in trackedDates {
@@ -107,7 +89,7 @@ enum MockDataInjector {
             }
         }
 
-        // 6. Save + clear tracking
+        // 5. Save + clear tracking
         try? context.save()
         AppConfig.shared.mockInjectedDates = []
     }
@@ -247,25 +229,6 @@ enum MockDataInjector {
         }
     }
 
-    // MARK: - Symptom Entries
-
-    private static func injectSymptomEntries(into context: ModelContext, today: Date, cal: Calendar) {
-        let symptoms: [(name: String, category: SymptomCategory, severityRange: ClosedRange<Int>)] = [
-            ("Headache", .pain, 3...7),
-            ("Bloating", .digestive, 2...5),
-            ("Fatigue", .energy, 4...8),
-            ("Brain Fog", .cognitive, 3...6),
-        ]
-        for offset in stride(from: 0, to: 30, by: 3) {
-            let day = cal.date(byAdding: .day, value: -offset, to: today)!
-            let symptom = symptoms[offset / 3 % symptoms.count]
-            let severity = symptom.severityRange.lowerBound + (offset % (symptom.severityRange.upperBound - symptom.severityRange.lowerBound + 1))
-            let ts = cal.date(bySettingHour: 9 + (offset % 8), minute: 0, second: 0, of: day) ?? day
-            let entry = SymptomEntry(name: symptom.name, category: symptom.category, severity: severity, timestamp: ts, notes: "[mock]")
-            context.insert(entry)
-        }
-    }
-
     // MARK: - Fasting Sessions
 
     private static func injectFastingSessions(into context: ModelContext, today: Date, cal: Calendar, injectedDates: inout [String]) {
@@ -283,45 +246,5 @@ enum MockDataInjector {
         }
     }
 
-    // MARK: - Journal Entries
-
-    private static func injectJournalEntries(into context: ModelContext, today: Date, cal: Calendar, injectedDates: inout [String]) {
-        let texts = [
-            "Felt energized today after morning walk. Good sleep last night.",
-            "Stressful day at work. Tried deep breathing exercises.",
-            "Meal prep went well. Hit protein goal for the first time this week.",
-            "Slept poorly. Need to cut caffeine after 2pm.",
-            "Great workout session. Recovery shake tasted amazing.",
-            "Practiced mindfulness for 10 minutes. Noticed less anxiety.",
-            "Weekend hike with friends. Perfect weather.",
-            "Tried a new recipe — lentil soup turned out great.",
-            "Journaling before bed helps me wind down.",
-            "Feeling grateful for small wins this week.",
-        ]
-        let moods = [3, 1, 4, 0, 4, 3, 4, 3, 3, 4]
-        let stressScores: [Double?] = [28, 55, 32, 68, 22, 35, 18, 40, 30, 25]
-        let formatter = ISO8601DateFormatter()
-
-        for (i, offset) in stride(from: 0, to: 30, by: 3).enumerated() {
-            guard i < texts.count else { break }
-            let day = cal.date(byAdding: .day, value: -offset, to: today)!
-            let startOfDay = cal.startOfDay(for: day)
-
-            let descriptor = FetchDescriptor<JournalEntry>(
-                predicate: #Predicate { $0.day == startOfDay }
-            )
-            guard (try? context.fetchCount(descriptor)) == 0 else { continue }
-
-            let entry = JournalEntry(
-                day: day,
-                text: texts[i],
-                moodRaw: moods[i],
-                promptUsed: "[mock]",
-                stressScore: stressScores[i]
-            )
-            context.insert(entry)
-            injectedDates.append(formatter.string(from: startOfDay))
-        }
-    }
 }
 #endif

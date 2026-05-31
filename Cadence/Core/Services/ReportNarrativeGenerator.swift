@@ -13,7 +13,7 @@ import FoundationModels
 final class ReportNarrativeGenerator {
 
     // Section priority for FM narrative generation
-    private let sectionPriority = ["stress", "nutrition", "sleep", "symptoms", "activity", "cross"]
+    private let sectionPriority = ["stress", "nutrition", "sleep", "activity", "cross"]
 
     // MARK: - Public API
 
@@ -163,13 +163,6 @@ final class ReportNarrativeGenerator {
                 narrative: "You slept an average of \(String(format: "%.1f", avg)) hours against your \(String(format: "%.0f", goals.sleepGoalHours))h goal."
             )
         }
-        if days.contains(where: { !$0.symptomNames.isEmpty }) {
-            let symptomDayCount = days.filter { !$0.symptomNames.isEmpty }.count
-            sectionNarratives["symptoms"] = SectionNarrative(
-                headline: "Symptoms on \(symptomDayCount) days",
-                narrative: "You logged symptoms on \(symptomDayCount) out of \(days.count) days."
-            )
-        }
         if !stepValues.isEmpty {
             let avg = stepValues.reduce(0, +) / stepValues.count
             sectionNarratives["activity"] = SectionNarrative(
@@ -267,7 +260,6 @@ final class ReportNarrativeGenerator {
         case "stress":    return context.days.contains { $0.stressScore != nil }
         case "nutrition": return context.days.contains { $0.totalCalories != nil }
         case "sleep":     return context.days.contains { $0.sleepHours != nil }
-        case "symptoms":  return context.days.contains { !$0.symptomNames.isEmpty }
         case "activity":  return context.days.contains { $0.steps != nil }
         case "cross":     return !context.crossCorrelations.isEmpty
         default:          return false
@@ -358,7 +350,7 @@ private struct _ReportActionRecommendation {
     var title: String
     @Guide(description: "1-2 sentences explaining why, referencing a specific data point")
     var rationale: String
-    @Guide(description: "Wellness domain: stress, nutrition, sleep, activity, hydration, caffeine, symptoms, fasting, or mood")
+    @Guide(description: "Wellness domain: stress, nutrition, sleep, activity, hydration, caffeine, fasting, or mood")
     var domain: String
 }
 #endif

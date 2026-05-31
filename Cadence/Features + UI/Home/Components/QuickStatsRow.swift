@@ -55,7 +55,6 @@ struct QuickStatsRow: View {
                     subtitleText: waterSubtitle,
                     onTap: { onWaterTap() },
                     onIncrement: {
-                        SoundService.play("water_log_sound", ext: "mp3")
                         hydrationGlasses += 1
                     }
                 )

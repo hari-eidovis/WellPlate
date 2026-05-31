@@ -98,7 +98,7 @@ struct StressFactorCardView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.88))
+                .fill(AppColors.card.opacity(0.88))
                 .shadow(color: .black.opacity(0.06), radius: 32, x: 0, y: 16)
         )
     }
@@ -125,7 +125,7 @@ struct StressFactorCardView: View {
         switch factor.title {
         case "Sleep", "Exercise", "Caffeine", "Screen Time", "Diet": return "A"
         case "Hydration", "Circadian", "Daylight", "Meal Timing", "Fasting", "Eating Triggers": return "B"
-        case "Mood", "Symptoms": return "C"
+        case "Mood": return "C"
         default: return nil
         }
     }

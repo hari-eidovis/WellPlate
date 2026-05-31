@@ -40,7 +40,7 @@ struct CadenceApp: App {
                 .environmentObject(promptCoordinator)
                 .environmentObject(tabSelector)
         }
-        .modelContainer(for: [FoodCache.self, FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, StressReading.self, InterventionSession.self, FastingSchedule.self, FastingSession.self, FastingEligibility.self, JournalEntry.self, SymptomEntry.self, ManualDailyInput.self, StressChangeEntry.self])
+        .modelContainer(for: [FoodCache.self, FoodLogEntry.self, WellnessDayLog.self, UserGoals.self, StressReading.self, InterventionSession.self, FastingSchedule.self, FastingSession.self, FastingEligibility.self, ManualDailyInput.self, StressChangeEntry.self])
 
     }
 

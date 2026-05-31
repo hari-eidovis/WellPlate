@@ -18,7 +18,7 @@ struct ContextualActionBar: View {
     var onLogMeal: () -> Void
     var onStressTab: () -> Void
     var onSeeInsight: () -> Void
-    var onLogSymptom: () -> Void
+    var onFasting: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -59,9 +59,9 @@ struct ContextualActionBar: View {
     private var primaryPill: some View {
         switch state {
         case .defaultActions, .logNextMeal:
-            symptomPill {
+            fastingPill {
                 HapticService.impact(.light)
-                onLogSymptom()
+                onFasting()
             }
         case .goalsCelebration:
             actionPill(icon: "party.popper", label: "All goals met!", color: AppColors.success) {
@@ -84,16 +84,24 @@ struct ContextualActionBar: View {
         MealBowlButton(label: label, action: action)
     }
 
-    private func symptomPill(action: @escaping () -> Void) -> some View {
+    /// Circular fasting button — black circle in light mode, white in dark mode
+    /// (the inverse of `systemBackground`), with the fasting glyph centered.
+    private func fastingPill(action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: "pill.circle.fill")
-                .font(.system(size: 28, weight: .regular))
-                .foregroundStyle(Color.primary)
-                .frame(width: 38, height: 38)
+            ZStack {
+                Circle()
+                    .fill(Color(.label))
+                    .frame(width: 40, height: 40)
+                    .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                Image("fasting_icon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+            }
         }
         .buttonStyle(.plain)
         .frame(minWidth: 44, minHeight: 44)
-        .accessibilityLabel("Log symptom")
+        .accessibilityLabel("Fasting")
     }
 
     private func actionPill(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
@@ -213,7 +221,7 @@ private struct MealBowlButton: View {
     ContextualActionBar(
         state: .defaultActions,
         onLogMeal: {},
-        onStressTab: {}, onSeeInsight: {}, onLogSymptom: {}
+        onStressTab: {}, onSeeInsight: {}, onFasting: {}
     )
     .padding()
 }

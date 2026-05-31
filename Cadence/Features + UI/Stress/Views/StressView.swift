@@ -21,7 +21,6 @@ enum StressSheet: Identifiable {
     case allFactors
     case manualLog
     case mood
-    case symptoms
     case todayPatternDetail
 
     var id: String {
@@ -37,7 +36,6 @@ enum StressSheet: Identifiable {
         case .allFactors:         return "allFactors"
         case .manualLog:          return "manualLog"
         case .mood:               return "mood"
-        case .symptoms:           return "symptoms"
         case .todayPatternDetail: return "todayPatternDetail"
         }
     }
@@ -56,7 +54,6 @@ struct StressView: View {
     @EnvironmentObject private var tabSelector: TabSelector
     @State private var activeSheet: StressSheet? = nil
     @State private var showInsights = false
-    @State private var showActivity = false
     @State private var showV3Banner: Bool = !UserDefaults.standard.bool(forKey: "wp.stress.v3AnnouncementShown")
 
     // Entrance animation states
@@ -86,19 +83,6 @@ struct StressView: View {
             .navigationTitle("Stress")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if !viewModel.isLoading {
-                        Button {
-                            HapticService.impact(.light)
-                            activeSheet = .interventions
-                        } label: {
-                            Image(systemName: "bolt.heart.fill")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(Self.themeBlue)
-                        }
-                        .accessibilityLabel("Quick reset")
-                    }
-                }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if (HealthKitService.isAvailable || viewModel.usesMockData) && viewModel.isAuthorized && !viewModel.isLoading {
                         Button {
@@ -110,16 +94,6 @@ struct StressView: View {
                                 .foregroundStyle(Self.themeBlue)
                         }
                         .accessibilityLabel("Insights")
-
-                        Button {
-                            HapticService.impact(.light)
-                            showActivity = true
-                        } label: {
-                            Image(systemName: "clock.arrow.circlepath")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(Self.themeBlue)
-                        }
-                        .accessibilityLabel("Stress activity")
                     }
                 }
             }
@@ -161,10 +135,6 @@ struct StressView: View {
         // MARK: Insights sheet
         .sheet(isPresented: $showInsights) {
             insightsSheet
-        }
-        // MARK: Activity (change log) sheet
-        .sheet(isPresented: $showActivity) {
-            StressActivityView(viewModel: viewModel, modelContext: modelContext)
         }
         // MARK: Factor / vital detail sheets
         .sheet(item: $activeSheet) { sheet in
@@ -211,8 +181,6 @@ struct StressView: View {
                 QuickLogManualSheet()
             case .mood:
                 MoodCheckInSheet(onSaved: { viewModel.recompute(reason: .manualMood) })
-            case .symptoms:
-                SymptomLogSheet(onSaved: { viewModel.recompute(reason: .manualSymptoms) })
             case .todayPatternDetail:
                 StressPatternDetailView(
                     todayReadings: viewModel.todayReadings,
@@ -240,7 +208,7 @@ struct StressView: View {
 
     private var levelBackground: some View {
         ZStack {
-            Color(.systemGroupedBackground)
+            HomePalette.background
             LinearGradient(
                 colors: [
                     Self.themeBlue.opacity(0.10),
@@ -265,13 +233,6 @@ struct StressView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 12)
                 }
-
-                // ── Score Header ──────────────────────────────────
-                scoreHeader
-                    .padding(.top, 20)
-                    .padding(.horizontal, 20)
-                    .opacity(scoreAppeared ? 1 : 0)
-                    .scaleEffect(scoreAppeared ? 1 : 0.93, anchor: .topLeading)
 
                 // ── TODAY'S PATTERN ───────────────────────────────
                 VStack(alignment: .leading, spacing: 10) {
@@ -314,17 +275,25 @@ struct StressView: View {
                     .padding(.top, 14)
                     .opacity(scoreAppeared ? 1 : 0)
 
-                // ── QUICK RESET (conditional) ─────────────────────
-                if viewModel.stressLevel == .high || viewModel.stressLevel == .veryHigh {
-                    VStack(alignment: .leading, spacing: 10) {
-                        sectionLabel("Quick Reset")
-                        resetRecommendationCard
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 28)
-                    .opacity(adviceAppeared ? 1 : 0)
-                    .offset(y: adviceAppeared ? 0 : 16)
+                // ── QUICK RESET ───────────────────────────────────
+                // VStack(alignment: .leading, spacing: 10) {
+                //     sectionLabel("Quick Reset")
+                //     ResetExercisesCard()
+                // }
+                // .padding(.horizontal, 20)
+                // .padding(.top, 28)
+                // .opacity(adviceAppeared ? 1 : 0)
+                // .offset(y: adviceAppeared ? 0 : 16)
+
+                // ── ACTIVITY (point add/remove change log) ────────
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionLabel("Activity")
+                    StressActivityTimeline(viewModel: viewModel, modelContext: modelContext)
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 28)
+                .opacity(adviceAppeared ? 1 : 0)
+                .offset(y: adviceAppeared ? 0 : 16)
 
                 // ── QUICK LOG ─────────────────────────────────────
                 // Hidden — sheet now auto-triggers via DailyPromptCoordinator
@@ -370,7 +339,7 @@ struct StressView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Now smarter")
                     .font(.r(.subheadline, .semibold))
-                Text("Your stress score now considers mood, hydration, symptoms, and more — 13 factors total. Vitals like HRV are used to calibrate accuracy against your personal baseline.")
+                Text("Your stress score now considers mood, hydration, and more — 12 factors total. Vitals like HRV are used to calibrate accuracy against your personal baseline.")
                     .font(.r(.caption, .regular))
                     .foregroundStyle(.secondary)
             }
@@ -394,137 +363,12 @@ struct StressView: View {
         )
     }
 
-    // MARK: - Score Header
-
-    private var scoreHeader: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .lastTextBaseline, spacing: 4) {
-                Text("\(Int(viewModel.totalScore.rounded()))")
-                    .font(.system(size: 56, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
-                    .contentTransition(.numericText())
-
-                Text("/100")
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .padding(.bottom, 5)
-            }
-            confidenceBadge
-        }
-    }
-
-    private var confidenceBadge: some View {
-        HStack(spacing: 6) {
-            HStack(spacing: 4) {
-                Image(systemName: viewModel.stressConfidence.systemImage)
-                    .font(.system(size: 10, weight: .semibold))
-                Text("\(viewModel.factorCoverage) of 13 factors logged")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .tracking(0.2)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-            }
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(Color(.systemGray6)))
-
-            strainPill
-
-            CalibratorChip(
-                calibrator: viewModel.calibratorMultiplier,
-                hasBaseline: viewModel.todayHRV != nil || viewModel.todayRestingHR != nil
-            )
-        }
-        .lineLimit(1)
-        .fixedSize(horizontal: true, vertical: false)
-    }
-
-    /// Day-over-day score change vs yesterday, shown as a colored pill.
-    /// Hidden when there's no prior baseline reading.
-    @ViewBuilder
-    private var strainPill: some View {
-        if let delta = strainDeltaPercent {
-            let isUp = delta >= 0
-            let color: Color = isUp ? Color(hex: "E08A2B") : Color(hex: "1FA971")
-            HStack(spacing: 2) {
-                Image(systemName: isUp ? "arrow.up.right" : "arrow.down.right")
-                    .font(.system(size: 8, weight: .bold))
-                Text("\(isUp ? "+" : "")\(delta)% strain")
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-            }
-            .foregroundColor(color)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(color.opacity(0.13)))
-        }
-    }
-
-    /// Returns the rounded integer % change in stress score from yesterday's
-    /// most recent reading to today's, or nil when there's no comparison data.
-    private var strainDeltaPercent: Int? {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        guard let yesterday = cal.date(byAdding: .day, value: -1, to: today) else { return nil }
-
-        let yesterdayReadings = viewModel.weekReadings.filter {
-            cal.isDate($0.timestamp, inSameDayAs: yesterday)
-        }
-        guard let yesterdayScore = yesterdayReadings.last?.score, yesterdayScore > 0 else { return nil }
-
-        let current = viewModel.totalScore
-        guard current > 0 else { return nil }
-
-        let pct = ((current - yesterdayScore) / yesterdayScore) * 100
-        let rounded = Int(pct.rounded())
-        return rounded == 0 ? nil : rounded
-    }
+    // MARK: - Date Helpers
 
     private var formattedToday: String {
         let f = DateFormatter()
         f.dateFormat = "EEE MMM d"
         return f.string(from: Date())
-    }
-
-    // MARK: - Advice Card
-
-    private var resetRecommendationCard: some View {
-        Button {
-            HapticService.impact(.light)
-            activeSheet = .interventions
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.teal.opacity(0.12))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "bolt.heart.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.teal)
-                }
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Try a Quick Reset")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.primary)
-                    Text("60-sec exercises to ease stress now")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.secondary.opacity(0.4))
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color(.systemBackground))
-                    .appShadow(radius: 15, y: 5)
-            )
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Insights Sheet
@@ -660,7 +504,7 @@ struct StressView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.systemBackground).opacity(0.85))
+                    .fill(AppColors.card.opacity(0.85))
                     .shadow(color: .black.opacity(0.06), radius: 32, x: 0, y: 16)
             )
         }
@@ -749,7 +593,6 @@ struct StressView: View {
         case "Fasting":         return .fasting
         case "Eating Triggers": return nil    // non-tappable in v3
         case "Mood":            return .mood
-        case "Symptoms":        return .symptoms
         default:                return nil
         }
     }

@@ -7,7 +7,6 @@ import WidgetKit
 enum StressWidgetSize: String, CaseIterable, Identifiable {
     case small  = "Small"
     case medium = "Medium"
-    case large  = "Large"
 
     var id: String { rawValue }
 
@@ -15,7 +14,6 @@ enum StressWidgetSize: String, CaseIterable, Identifiable {
         switch self {
         case .small:  return "square.fill"
         case .medium: return "rectangle.fill"
-        case .large:  return "rectangle.portrait.fill"
         }
     }
 
@@ -23,7 +21,6 @@ enum StressWidgetSize: String, CaseIterable, Identifiable {
         switch self {
         case .small:  return "Score ring + level"
         case .medium: return "Ring + top factor + vitals"
-        case .large:  return "Full breakdown + 7-day trend"
         }
     }
 
@@ -31,7 +28,6 @@ enum StressWidgetSize: String, CaseIterable, Identifiable {
         switch self {
         case .small:  return 1.0
         case .medium: return 2.12
-        case .large:  return 1.0
         }
     }
 
@@ -39,7 +35,6 @@ enum StressWidgetSize: String, CaseIterable, Identifiable {
         switch self {
         case .small:  return 130
         case .medium: return 130
-        case .large:  return 260
         }
     }
 }
@@ -51,7 +46,6 @@ enum ProfileSheet: Identifiable {
     case editName
     case editWeight
     case editHeight
-    case symptomLog
 
     var id: String {
         switch self {
@@ -59,7 +53,6 @@ enum ProfileSheet: Identifiable {
         case .editName:           return "editName"
         case .editWeight:         return "editWeight"
         case .editHeight:         return "editHeight"
-        case .symptomLog:         return "symptomLog"
         }
     }
 }
@@ -73,12 +66,6 @@ struct ProfilePlaceholderView: View {
     @State private var isWidgetInstalled            = false
     @State private var activeSheet: ProfileSheet?
     @State private var showGoals                    = false
-    @State private var showHomeLayout               = false
-    // Symptom state
-    @State private var showSymptomCorrelation       = false
-    @State private var selectedSymptomForCorrelation: String?
-    @Query(sort: \SymptomEntry.timestamp, order: .reverse) private var allSymptomEntries: [SymptomEntry]
-    @StateObject private var correlationEngine      = SymptomCorrelationEngine()
     // Daily check-in prompt toggle
     @State private var promptsEnabled: Bool = !UserDefaults.standard.bool(forKey: "wp.stress.dontAskAgain")
     @State private var editedName                   = UserProfileManager.shared.userName
@@ -136,20 +123,6 @@ struct ProfilePlaceholderView: View {
                     notificationsAndPromptsCard
                         .padding(.horizontal, 16)
 
-                    // ── Home layout ─────────────────────
-                    homeLayoutCard
-                        .padding(.horizontal, 16)
-
-                    // ── Symptom tracking ─────────────────────
-                    symptomTrackingCard
-                        .padding(.horizontal, 16)
-
-                    // ── Symptom insights ──────────────────────
-                    if uniqueSymptomDays >= 7 {
-                        symptomInsightsCard
-                            .padding(.horizontal, 16)
-                    }
-
                     // ── Widget setup ─────────────────────────
                     WidgetSetupCard(
                         selectedSize: $selectedSize,
@@ -204,21 +177,6 @@ struct ProfilePlaceholderView: View {
             .navigationDestination(isPresented: $showGoals) {
                 GoalsView(viewModel: GoalsViewModel(modelContext: modelContext))
             }
-            .navigationDestination(isPresented: $showHomeLayout) {
-                HomeLayoutEditor(layout: Binding(
-                    get: { (userGoalsList.first ?? UserGoals.defaults()).homeLayout },
-                    set: { newValue in
-                        let goals = UserGoals.current(in: modelContext)
-                        goals.homeLayout = newValue
-                        try? modelContext.save()
-                    }
-                ))
-            }
-            .navigationDestination(isPresented: $showSymptomCorrelation) {
-                if let name = selectedSymptomForCorrelation {
-                    SymptomCorrelationView(symptomName: name, engine: correlationEngine)
-                }
-            }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .widgetInstructions:
@@ -237,8 +195,6 @@ struct ProfilePlaceholderView: View {
                     editHeightSheet
                         .presentationDetents([.height(280)])
                         .presentationDragIndicator(.visible)
-                case .symptomLog:
-                    SymptomLogSheet()
                 }
             }
         }
@@ -500,51 +456,6 @@ struct ProfilePlaceholderView: View {
         }
     }
 
-    // MARK: - Home Layout
-
-    private var homeLayoutCard: some View {
-        Button {
-            HapticService.impact(.light)
-            showHomeLayout = true
-        } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "square.grid.2x2.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 42, height: 42)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color(.tertiarySystemFill).opacity(0.6))
-                    )
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("CUSTOMIZE")
-                        .font(.r(10, .bold))
-                        .tracking(0.7)
-                        .foregroundStyle(.secondary)
-                    Text("Home Layout")
-                        .font(.r(16, .bold))
-                        .foregroundStyle(.primary)
-                    let goals = userGoalsList.first ?? UserGoals.defaults()
-                    let hidden = goals.homeLayout.hiddenCount
-                    Text(hidden > 0 ? "\(hidden) card\(hidden == 1 ? "" : "s") hidden" : "All cards visible")
-                        .font(.r(12, .medium))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(cardBackground())
-        }
-        .buttonStyle(.plain)
-    }
-
     // MARK: - Goals Snapshot
 
     private var goalsSnapshotCard: some View {
@@ -802,162 +713,6 @@ struct ProfilePlaceholderView: View {
         }
     }
 
-    // MARK: - Symptom Tracking Card
-
-    private var uniqueSymptomDays: Int {
-        Set(allSymptomEntries.map { $0.day }).count
-    }
-
-    private var topSymptomNames: [String] {
-        let counts = Dictionary(grouping: allSymptomEntries, by: \.name)
-            .mapValues(\.count)
-            .sorted { $0.value > $1.value }
-        return Array(counts.prefix(3).map(\.key))
-    }
-
-    private var symptomTrackingCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            cardHeader(eyebrow: "TRACK", title: "Symptoms", icon: "heart.text.square.fill")
-
-            if allSymptomEntries.isEmpty {
-                Button {
-                    HapticService.impact(.light)
-                    activeSheet = .symptomLog
-                } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                        Text("Log your first symptom")
-                            .font(.r(14, .semibold))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(.tertiarySystemFill).opacity(0.5))
-                    )
-                }
-                .buttonStyle(.plain)
-            } else {
-                VStack(spacing: 8) {
-                    ForEach(allSymptomEntries.prefix(3)) { entry in
-                        HStack(spacing: 12) {
-                            Text(entry.name)
-                                .font(.r(14, .semibold))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                            Spacer()
-                            severityPill(entry.severity)
-                            Text(relativeTimeString(for: entry.timestamp))
-                                .font(.r(11, .medium))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color(.tertiarySystemFill).opacity(0.5))
-                        )
-                    }
-                }
-            }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground())
-    }
-
-    private var symptomInsightsCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            cardHeader(eyebrow: "INSIGHTS", title: "Patterns", icon: "chart.line.uptrend.xyaxis")
-
-            VStack(spacing: 8) {
-                ForEach(topSymptomNames, id: \.self) { symptomName in
-                    let corr = correlationEngine.correlations
-                        .filter { $0.symptomName == symptomName && $0.isSignificant }
-                        .max(by: { abs($0.spearmanR) < abs($1.spearmanR) })
-
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(symptomName)
-                                .font(.r(14, .bold))
-                                .foregroundStyle(.primary)
-                            if let c = corr {
-                                Text("\(c.interpretation) with \(c.factorName)")
-                                    .font(.r(11, .medium))
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                Text("Analysing patterns…")
-                                    .font(.r(11, .medium))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer(minLength: 0)
-                        Button {
-                            HapticService.impact(.light)
-                            selectedSymptomForCorrelation = symptomName
-                            showSymptomCorrelation = true
-                        } label: {
-                            HStack(spacing: 3) {
-                                Text("View")
-                                    .font(.r(11, .bold))
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 9, weight: .bold))
-                            }
-                            .foregroundStyle(.primary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color(.tertiarySystemFill).opacity(0.5))
-                    )
-                }
-            }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground())
-    }
-
-    private func severityPill(_ severity: Int) -> some View {
-        let label: String = {
-            switch severity {
-            case 1...3: return "Low"
-            case 4...6: return "Mod"
-            default:    return "High"
-            }
-        }()
-        return HStack(spacing: 4) {
-            Text("\(severity)/10")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-                .monospacedDigit()
-            Text(label)
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .background(Capsule().fill(Color(.tertiarySystemFill).opacity(0.7)))
-    }
-
-    private func relativeTimeString(for date: Date) -> String {
-        let diff = Date().timeIntervalSince(date)
-        if diff < 3600 { return "\(Int(diff / 60))m ago" }
-        if diff < 86400 { return "\(Int(diff / 3600))h ago" }
-        return "yesterday"
-    }
-
     // MARK: - App Info Footer
 
     private var appInfoFooter: some View {
@@ -1183,11 +938,6 @@ private struct WidgetPreview: View {
                 MediumPreview(data: mockData)
                     .frame(maxWidth: .infinity)
                     .frame(height: 130)
-
-            case .large:
-                LargePreview(data: mockData)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 260)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 20))
@@ -1287,80 +1037,6 @@ private struct MediumPreview: View {
                 .frame(maxWidth: .infinity)
             }
             .padding(.horizontal, 12).padding(.vertical, 10)
-        }
-    }
-}
-
-private struct LargePreview: View {
-    let data: WidgetStressData
-
-    private var levelColor: Color { previewLevelColor(for: data.levelRaw) }
-    private var fraction: Double { min(data.totalScore / 100.0, 1.0) }
-
-    var body: some View {
-        ZStack {
-            LinearGradient(colors: [Color(.systemBackground), levelColor.opacity(0.06)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 4) {
-                    Image(systemName: "brain.head.profile.fill").font(.system(size: 12)).foregroundStyle(levelColor)
-                    Text("Stress Level").font(.system(size: 11, weight: .bold))
-                    Spacer()
-                    Text("Today").font(.system(size: 9)).foregroundStyle(.secondary)
-                }
-                .padding(.bottom, 10)
-
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle().stroke(levelColor.opacity(0.18), lineWidth: 7)
-                        Circle()
-                            .trim(from: 0, to: fraction)
-                            .stroke(levelColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
-                            .rotationEffect(.degrees(-90))
-                        VStack(spacing: 0) {
-                            Text("\(Int(data.totalScore))").font(.system(size: 14, weight: .bold, design: .rounded))
-                            Text("/100").font(.system(size: 7)).foregroundStyle(.secondary)
-                        }
-                    }
-                    .frame(width: 56, height: 56)
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(data.levelRaw)
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundStyle(levelColor)
-                        Text(data.encouragement)
-                            .font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(2)
-                    }
-                }
-                .padding(.bottom, 10)
-
-                Divider().padding(.bottom, 8)
-
-                VStack(spacing: 6) {
-                    ForEach(data.factors, id: \.title) { factor in
-                        MiniFactorBar(factor: factor)
-                    }
-                }
-                .padding(.bottom, 10)
-
-                Divider().padding(.bottom, 8)
-
-                Text("7-Day Trend").font(.system(size: 8, weight: .medium)).foregroundStyle(.tertiary)
-                    .textCase(.uppercase).padding(.bottom, 4)
-
-                HStack(alignment: .bottom, spacing: 4) {
-                    ForEach(data.weeklyScores, id: \.date) { day in
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(levelColor.opacity(0.6))
-                            .frame(height: max(CGFloat(day.score ?? 0) / 100.0 * 24, 2))
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                .frame(height: 28)
-
-                Spacer(minLength: 4)
-            }
-            .padding(12)
         }
     }
 }
@@ -1511,7 +1187,7 @@ private struct InstructionRow: View {
 
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: SymptomEntry.self, UserGoals.self, configurations: config)
+    let container = try! ModelContainer(for: UserGoals.self, configurations: config)
     return ProfilePlaceholderView()
         .modelContainer(container)
 }

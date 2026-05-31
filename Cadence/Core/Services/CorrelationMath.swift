@@ -3,7 +3,7 @@ import Foundation
 // MARK: - CorrelationMath
 //
 // Shared Spearman rank correlation + bootstrap CI utilities.
-// Extracted from SymptomCorrelationEngine; also used by InsightEngine.
+// Used by InsightEngine and ReportDataBuilder for cross-domain correlations.
 // All functions are nonisolated static for use in Task.detached contexts.
 //
 // File order matters: ranks → pearsonR → spearmanR → bootstrapCI → interpretationLabel

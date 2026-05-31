@@ -7,6 +7,5 @@ struct CadenceWidgetBundle: WidgetBundle {
     var body: some Widget {
         StressWidget()
         FastingLiveActivity()
-        BreathingLiveActivity()
     }
 }

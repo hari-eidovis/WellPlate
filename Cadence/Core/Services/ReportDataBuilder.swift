@@ -4,7 +4,7 @@ import SwiftData
 // MARK: - ReportDataBuilder
 //
 // Fetches all SwiftData + HealthKit data for 15-day window, builds
-// ReportContext with per-day summaries, food-symptom links, cross-domain
+// ReportContext with per-day summaries, cross-domain
 // correlations, and intervention results.
 
 @MainActor
@@ -40,11 +40,6 @@ final class ReportDataBuilder {
             predicate: #Predicate { $0.day >= windowStart }
         )
         let foodLogs = (try? modelContext.fetch(foodDescriptor)) ?? []
-
-        let symptomDescriptor = FetchDescriptor<SymptomEntry>(
-            predicate: #Predicate { $0.day >= windowStart }
-        )
-        let symptomEntries = (try? modelContext.fetch(symptomDescriptor)) ?? []
 
         let fastingDescriptor = FetchDescriptor<FastingSession>(
             predicate: #Predicate { $0.startedAt >= windowStart }
@@ -114,11 +109,6 @@ final class ReportDataBuilder {
             let heartRateValue = heartRateData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
             let exerciseValue = exerciseData.first { calendar.isDate($0.date, inSameDayAs: dayStart) }?.value
 
-            // Symptoms
-            let daySymptoms = symptomEntries.filter { calendar.isDate($0.day, inSameDayAs: dayStart) }
-            let symptomNames = Array(Set(daySymptoms.map(\.name)))
-            let symptomMax = daySymptoms.map(\.severity).max()
-
             // Fasting
             let dayFasting = fastingSessions.filter { calendar.isDate($0.day, inSameDayAs: dayStart) }
             let fastingHours: Double? = dayFasting.isEmpty ? nil : dayFasting.map(\.actualDurationSeconds).reduce(0, +) / 3600.0
@@ -146,11 +136,8 @@ final class ReportDataBuilder {
                 waterGlasses: wellness?.waterGlasses,
                 coffeeCups: wellness?.coffeeCups,
                 moodLabel: wellness?.mood?.label,
-                symptomNames: symptomNames,
-                symptomMaxSeverity: symptomMax,
                 fastingHours: fastingHours,
-                fastingCompleted: fastingCompleted,
-                journalLogged: false
+                fastingCompleted: fastingCompleted
             )
 
             // Mutate new var fields
@@ -176,12 +163,6 @@ final class ReportDataBuilder {
 
         // MARK: Compute aggregates
 
-        let foodSymptomLinks = computeFoodSymptomLinks(
-            symptomEntries: symptomEntries,
-            foodLogs: foodLogs,
-            days: days
-        )
-
         let crossCorrelations = await computeCrossCorrelations(
             days: days,
             availableVitals: availableVitals
@@ -205,7 +186,6 @@ final class ReportDataBuilder {
             days: days,
             goals: goals,
             availableVitals: availableVitals,
-            foodSymptomLinks: foodSymptomLinks,
             crossCorrelations: crossCorrelations,
             interventionResults: interventionResults,
             topFoods: topFoods,
@@ -281,28 +261,11 @@ final class ReportDataBuilder {
             lines.append("Coffee: avg \(String(format: "%.1f", avg)) cups, limit \(goals.coffeeDailyCups)")
         }
 
-        // Symptoms
-        let symptomDays = days.filter { !$0.symptomNames.isEmpty }
-        if !symptomDays.isEmpty {
-            let allNames = symptomDays.flatMap(\.symptomNames)
-            let counts = Dictionary(allNames.map { ($0, 1) }, uniquingKeysWith: +)
-            let top = counts.sorted { $0.value > $1.value }.prefix(3)
-            let desc = top.map { "\($0.key) (\($0.value) days)" }.joined(separator: ", ")
-            lines.append("Symptoms: \(symptomDays.count) days with symptoms. Top: \(desc)")
-        }
-
         // Correlations
         if !context.crossCorrelations.isEmpty {
             let top = context.crossCorrelations.prefix(3)
             let desc = top.map { "\($0.xName)↔\($0.yName) r=\(String(format: "%.2f", $0.spearmanR))" }.joined(separator: ", ")
             lines.append("Correlations: \(desc)")
-        }
-
-        // Food-symptom links
-        let triggers = context.foodSymptomLinks.filter { $0.classification == .potentialTrigger }
-        if !triggers.isEmpty {
-            let desc = triggers.prefix(3).map { "\($0.foodName)→\($0.symptomName) (\(String(format: "%.1f", $0.ratio))x)" }.joined(separator: ", ")
-            lines.append("Food triggers: \(desc)")
         }
 
         // Interventions
@@ -314,90 +277,6 @@ final class ReportDataBuilder {
         }
 
         return ReportPromptContext(text: lines.joined(separator: "\n"))
-    }
-
-    // MARK: - Food-Symptom Correlations
-
-    private func computeFoodSymptomLinks(
-        symptomEntries: [SymptomEntry],
-        foodLogs: [FoodLogEntry],
-        days: [WellnessDaySummary]
-    ) -> [FoodSymptomLink] {
-        let calendar = Calendar.current
-        var results: [FoodSymptomLink] = []
-
-        // Group symptoms by name, filter to >= 3 occurrences
-        let symptomsByName = Dictionary(grouping: symptomEntries, by: \.name)
-        let qualifyingSymptoms = symptomsByName.filter { $0.value.count >= 3 }
-
-        // All food days (dates with food logs)
-        let foodByDay = Dictionary(grouping: foodLogs) { calendar.startOfDay(for: $0.day) }
-
-        for (symptomName, entries) in qualifyingSymptoms {
-            let symptomDays = Set(entries.map { calendar.startOfDay(for: $0.day) })
-            let allFoodDays = Set(foodByDay.keys)
-            let clearDays = allFoodDays.subtracting(symptomDays)
-
-            guard !clearDays.isEmpty else { continue }
-
-            // Collect all unique foods
-            let allFoodNames = Set(foodLogs.map(\.foodName))
-
-            for food in allFoodNames {
-                // Require food appears >= 2 times total
-                let totalAppearances = foodLogs.filter { $0.foodName == food }.count
-                guard totalAppearances >= 2 else { continue }
-
-                // Count appearances on symptom days (same day or day before)
-                var symptomDayAppearances = 0
-                for sd in symptomDays {
-                    let dayBefore = calendar.date(byAdding: .day, value: -1, to: sd) ?? sd
-                    let foodsOnDay = (foodByDay[sd] ?? []) + (foodByDay[dayBefore] ?? [])
-                    if foodsOnDay.contains(where: { $0.foodName == food }) {
-                        symptomDayAppearances += 1
-                    }
-                }
-
-                // Count appearances on clear days
-                var clearDayAppearances = 0
-                for cd in clearDays {
-                    if (foodByDay[cd] ?? []).contains(where: { $0.foodName == food }) {
-                        clearDayAppearances += 1
-                    }
-                }
-
-                // Compute ratio
-                let symptomDayCount = symptomDays.count
-                let clearDayCount = clearDays.count
-                guard clearDayAppearances > 0, clearDayCount > 0 else { continue }
-
-                let symptomRate = Double(symptomDayAppearances) / Double(symptomDayCount)
-                let clearRate = Double(clearDayAppearances) / Double(clearDayCount)
-                guard clearRate > 0 else { continue }
-
-                let ratio = symptomRate / clearRate
-
-                let classification: FoodSymptomClassification
-                if ratio > 2.0 { classification = .potentialTrigger }
-                else if ratio < 0.5 { classification = .potentialProtective }
-                else { classification = .neutral }
-
-                guard classification != .neutral else { continue }
-
-                results.append(FoodSymptomLink(
-                    symptomName: symptomName,
-                    foodName: food,
-                    symptomDayCount: symptomDayCount,
-                    clearDayCount: clearDayCount,
-                    symptomDayAppearances: symptomDayAppearances,
-                    clearDayAppearances: clearDayAppearances,
-                    ratio: ratio,
-                    classification: classification
-                ))
-            }
-        }
-
-        return results.sorted { $0.ratio > $1.ratio }
     }
 
     // MARK: - Cross-Domain Correlations

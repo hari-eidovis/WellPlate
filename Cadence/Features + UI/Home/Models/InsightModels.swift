@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - WellnessDomain
 
 enum WellnessDomain: String, CaseIterable {
-    case stress, nutrition, sleep, activity, hydration, caffeine, mood, fasting, symptoms, cross
+    case stress, nutrition, sleep, activity, hydration, caffeine, mood, fasting, cross
 
     var label: String {
         switch self {
@@ -15,7 +15,6 @@ enum WellnessDomain: String, CaseIterable {
         case .caffeine:  return "Caffeine"
         case .mood:      return "Mood"
         case .fasting:   return "Fasting"
-        case .symptoms:  return "Symptoms"
         case .cross:        return "Patterns"
         }
     }
@@ -30,7 +29,6 @@ enum WellnessDomain: String, CaseIterable {
         case .caffeine:  return "cup.and.saucer.fill"
         case .mood:      return "face.smiling"
         case .fasting:   return "timer"
-        case .symptoms:  return "stethoscope"
         case .cross:        return "arrow.triangle.swap"
         }
     }
@@ -45,8 +43,19 @@ enum WellnessDomain: String, CaseIterable {
         case .caffeine:  return Color(hue: 0.10, saturation: 0.75, brightness: 0.88)
         case .mood:      return Color(hue: 0.14, saturation: 0.70, brightness: 0.95)
         case .fasting:   return .orange
-        case .symptoms:  return AppColors.error
         case .cross:        return AppColors.brand
+        }
+    }
+
+    /// Decorative floral art used behind the Home insight card, grouped by mood
+    /// so each domain reads in a fitting tone. (5 assets, all light pastels.)
+    var floralBackground: String {
+        switch self {
+        case .nutrition, .activity:        return "floral_green"
+        case .hydration:                   return "floral_water"
+        case .stress, .fasting, .caffeine: return "floral_orange"
+        case .sleep, .mood:                return "floral_faded"
+        case .cross:                       return "floral_linear"
         }
     }
 }
@@ -84,6 +93,20 @@ enum InsightType: String, CaseIterable {
     }
 }
 
+// MARK: - HydrationDay
+
+/// One day in the weekly hydration strip on the hydration-streak milestone card.
+/// `fraction` is that day's water intake as a share of the daily goal:
+/// `0` = nothing logged (empty dot), `0..<1` = partially filled, `>= 1` = goal
+/// reached (full dot). `date` drives the weekday initial and "today" emphasis.
+/// `isFuture` flags days later this week that haven't happened yet — they render
+/// as ghosted placeholders rather than empty (failed) days.
+struct HydrationDay {
+    let date: Date
+    let fraction: Double
+    var isFuture: Bool = false
+}
+
 // MARK: - InsightChartData
 
 enum InsightChartData {
@@ -92,6 +115,8 @@ enum InsightChartData {
     case comparisonBars(bars: [(label: String, value: Double, domain: WellnessDomain)], highlight: Int?)
     case macroRadar(actual: [String: Double], goals: [String: Double])
     case milestoneRing(current: Int, target: Int, streakLabel: String)
+    /// Per-day water-vs-goal for the trailing week, rendered as weekday dots.
+    case weeklyHydration(days: [HydrationDay])
     case sparkline(points: [Double])
 }
 
@@ -143,14 +168,9 @@ struct WellnessDaySummary {
     let coffeeCups: Int?
     // Mood
     let moodLabel: String?
-    // Symptoms
-    let symptomNames: [String]
-    let symptomMaxSeverity: Int?
     // Fasting
     let fastingHours: Double?
     let fastingCompleted: Bool?
-    // Journal
-    let journalLogged: Bool
 
     // Report-specific fields (var with defaults — preserves memberwise init)
     var eatingTriggers: [String: Int] = [:]

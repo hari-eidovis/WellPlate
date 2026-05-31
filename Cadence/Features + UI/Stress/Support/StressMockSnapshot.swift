@@ -48,10 +48,6 @@ struct StressMockSnapshot {
 
     /// Today's logged mood (drives mood factor + recovery `mindful`).
     let mood: MoodOption?
-    /// Today's symptom entries (drives symptoms factor).
-    let todaySymptoms: [SymptomEntry]
-    /// Today's journal presence (drives recovery `journal`).
-    let todayJournal: JournalEntry?
     /// Today's completed intervention sessions (drives recovery `intervention`).
     let todayInterventions: [InterventionSession]
     /// Last 3 days of WellnessDayLog (drives 3-day pattern penalties).
@@ -123,8 +119,6 @@ struct StressMockSnapshot {
             weekReadings: base.weekReadings,
             currentDayLogs: [],
             mood: nil,
-            todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: [],
@@ -159,8 +153,6 @@ struct StressMockSnapshot {
             weekReadings: base.weekReadings,
             currentDayLogs: base.currentDayLogs,
             mood: .good,
-            todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: base.currentDayLogs,
@@ -188,14 +180,6 @@ struct StressMockSnapshot {
             wakeTime: cal.date(byAdding: .hour, value: -1, to: now)
         )
 
-        // 4 awful symptoms (cognitive + pain)
-        let symptoms = [
-            SymptomEntry(name: "Headache", category: .pain, severity: 8),
-            SymptomEntry(name: "Anxiety", category: .cognitive, severity: 8),
-            SymptomEntry(name: "Brain fog", category: .energy, severity: 7),
-            SymptomEntry(name: "Fatigue", category: .energy, severity: 7),
-        ]
-
         return StressMockSnapshot(
             steps: 1500,
             energy: 70,
@@ -217,8 +201,6 @@ struct StressMockSnapshot {
             weekReadings: base.weekReadings,
             currentDayLogs: base.currentDayLogs,
             mood: .awful,
-            todaySymptoms: symptoms,
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: base.currentDayLogs,
@@ -267,8 +249,6 @@ struct StressMockSnapshot {
             weekReadings: base.weekReadings,
             currentDayLogs: [],
             mood: nil,
-            todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: [],
@@ -312,8 +292,6 @@ struct StressMockSnapshot {
             weekReadings: [],
             currentDayLogs: [],
             mood: nil,
-            todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: [],
@@ -540,8 +518,6 @@ struct StressMockSnapshot {
             weekReadings: weekReadings,
             currentDayLogs: logs,
             mood: nil,
-            todaySymptoms: [],
-            todayJournal: nil,
             todayInterventions: [],
             recentWellnessLogs: [],
             recentFoodLogs: logs,
@@ -691,15 +667,6 @@ struct StressMockSnapshot {
                 deltaPoints: -3.5, prevValue: 9.0, nextValue: 5.5,
                 totalBefore: 41, totalAfter: 38,
                 source: .autoAppOpen, detailText: "Sleep improved"
-            ),
-
-            // Yesterday — symptoms logged
-            MockChangeEntry(
-                id: UUID(), timestamp: at(yesterday, 14, 0), groupID: UUID(), sequence: 0,
-                kind: .factor, subjectKey: "symptoms", subjectIcon: "bandage",
-                deltaPoints: 2.1, prevValue: 0, nextValue: 2.1,
-                totalBefore: 35, totalAfter: 37,
-                source: .manualSymptoms, detailText: "Symptoms worsened"
             ),
         ]
     }

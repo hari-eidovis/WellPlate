@@ -2,9 +2,11 @@ import SwiftUI
 
 // MARK: - DailyInsightCard
 //
-// Nudge-style home-screen card showing the top insight with tinted background,
-// domain/type badges, progress bar (when available), and an optional inline action button.
-// Taps on the card body navigate to InsightsHubView; the action button fires a domain-specific quick action.
+// Home-screen "Today's Focus" card showing the top insight over light floral
+// artwork (chosen per domain), with domain/type badges, a progress/sparkline
+// bottom row, and an optional inline action button. Taps on the card body open
+// the Insights hub; the action button fires a domain-specific quick action.
+// Falls back to a loading or "keep logging" state when no insight is ready.
 
 struct DailyInsightCard: View {
     let card: InsightCard?
@@ -14,14 +16,24 @@ struct DailyInsightCard: View {
     var onTap: () -> Void
     var onAction: (() -> Void)? = nil
     var onDismiss: (() -> Void)? = nil
+    /// Empty-state copy when no insight is ready yet (mirrors the old hero card).
+    var insufficientData: Bool = false
+    var daysRemaining: Int = 0
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    // The floral artwork is always light, so text stays dark in both color schemes.
+    private let inkPrimary = Color(red: 0.13, green: 0.13, blue: 0.15)
+    private let inkSecondary = Color(red: 0.33, green: 0.34, blue: 0.38)
 
     var body: some View {
         if isGenerating {
             loadingState
         } else if let card {
             cardContent(card)
+        } else {
+            fallbackState
         }
-        // nil card + not generating = don't render
     }
 
     // MARK: - Loading State
@@ -32,44 +44,80 @@ struct DailyInsightCard: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 Circle()
-                    .fill(Color(.tertiarySystemFill))
+                    .fill(Color.black.opacity(0.06))
                     .frame(width: 32, height: 32)
                     .overlay { ProgressView().scaleEffect(0.7) }
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Analyzing your data...")
                         .font(.r(.subheadline, .semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(inkPrimary)
                     Text("Generating personalized insights")
                         .font(.r(.caption, .regular))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(inkSecondary)
                 }
             }
 
             // Shimmer placeholder bars
             RoundedRectangle(cornerRadius: 4)
-                .fill(Color(.tertiarySystemFill))
+                .fill(Color.black.opacity(0.08))
                 .frame(height: 10)
                 .opacity(shimmer ? 0.4 : 1)
             RoundedRectangle(cornerRadius: 4)
-                .fill(Color(.tertiarySystemFill))
+                .fill(Color.black.opacity(0.08))
                 .frame(height: 10)
                 .frame(maxWidth: 200)
                 .opacity(shimmer ? 0.4 : 1)
         }
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(AppColors.brand.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(AppColors.brand.opacity(0.10), lineWidth: 1)
-                )
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .floralCard("floral_faded")
         .onAppear {
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                 shimmer = true
             }
         }
+    }
+
+    // MARK: - Fallback (no insight yet)
+
+    private var fallbackHeadline: String {
+        if insufficientData {
+            let d = max(0, daysRemaining)
+            return d > 0
+                ? "Keep logging — \(d) more day\(d == 1 ? "" : "s") to unlock your daily focus."
+                : "Your daily focus is on its way."
+        }
+        return "You're all set for today — tap to explore your insights."
+    }
+
+    private var fallbackState: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("TODAY'S FOCUS")
+                    .font(.r(.caption, .bold))
+                    .tracking(1.1)
+            }
+            .foregroundStyle(inkSecondary)
+
+            Text(fallbackHeadline)
+                .font(.r(.body, .bold))
+                .foregroundStyle(inkPrimary)
+                .lineLimit(3)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if !insufficientData {
+                seeInsightsPill
+                    .padding(.top, 2)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .floralCard("floral_faded")
+        .contentShape(RoundedRectangle(cornerRadius: 20))
+        .onTapGesture { if !insufficientData { onTap() } }
     }
 
     // MARK: - Card Content
@@ -103,14 +151,14 @@ struct DailyInsightCard: View {
             // Headline
             Text(card.headline)
                 .font(.r(.body, .bold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(inkPrimary)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
 
             // Narrative
             Text(card.narrative)
                 .font(.r(.subheadline, .regular))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(inkSecondary)
                 .lineLimit(3)
                 .multilineTextAlignment(.leading)
 
@@ -119,14 +167,7 @@ struct DailyInsightCard: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(color.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(color.opacity(0.12), lineWidth: 1)
-                )
-        )
+        .floralCard(card.domain.floralBackground)
         .contentShape(RoundedRectangle(cornerRadius: 20))
         .onTapGesture { onTap() }
     }
@@ -166,12 +207,28 @@ struct DailyInsightCard: View {
 
     @ViewBuilder
     private func bottomRow(card: InsightCard, color: Color) -> some View {
-        if let progress = extractProgress(from: card) {
+        if case .weeklyHydration(let days) = card.chartData, !days.isEmpty {
+            weeklyDotsRow(days: days, color: color)
+        } else if let progress = extractProgress(from: card) {
             progressRow(progress: progress, color: color)
         } else if case .sparkline(let points) = card.chartData, !points.isEmpty {
             sparklineRow(points: points, color: color)
         } else {
             fallbackRow(color: color)
+        }
+    }
+
+    // MARK: - Weekly Hydration Dots Row
+
+    private func weeklyDotsRow(days: [HydrationDay], color: Color) -> some View {
+        HStack(spacing: 12) {
+            // inkSecondary keeps the weekday initials legible on the light floral art.
+            WeeklyHydrationDots(days: days, accentColor: color, labelColor: inkSecondary)
+                .frame(maxWidth: .infinity)
+
+            if let actionLabel, let onAction {
+                nudgeButton(label: actionLabel, icon: actionIcon, color: color, action: onAction)
+            }
         }
     }
 
@@ -255,13 +312,25 @@ struct DailyInsightCard: View {
     // MARK: - Details Chevron
 
     private func detailsChevron(color: Color) -> some View {
+        seeInsightsPill
+    }
+
+    /// "See insights" pill with a solid rounded-rectangle background that flips
+    /// black (light mode) / white (dark mode), with contrasting text.
+    private var seeInsightsPill: some View {
         HStack(spacing: 4) {
             Text("See insights")
                 .font(.r(.caption, .semibold))
             Image(systemName: "chevron.right")
                 .font(.system(size: 10, weight: .semibold))
         }
-        .foregroundStyle(color)
+        .foregroundStyle(colorScheme == .dark ? Color.black : Color.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(colorScheme == .dark ? Color.white : Color.black)
+        )
     }
 
     // MARK: - Progress Extraction
@@ -290,6 +359,43 @@ struct DailyInsightCard: View {
     }
 }
 
+// MARK: - Floral Card Background
+
+private extension View {
+    /// Lays a light floral illustration behind the card with a leading white
+    /// scrim so the dark, left-aligned text stays legible across all 5 images.
+    func floralCard(_ imageName: String) -> some View {
+        self
+            .background {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFill()
+                    // Zoom slightly to crop the artwork's pale edge frame. In short
+                    // cards scaledToFill matches the image width exactly, so without
+                    // this the asset's light border lands at the card edges and shows
+                    // through on the right (where the legibility scrim is weakest).
+                    .scaleEffect(1.06)
+                    .overlay(
+                        LinearGradient(
+                            stops: [
+                                .init(color: .white.opacity(0.82), location: 0.0),
+                                .init(color: .white.opacity(0.55), location: 0.45),
+                                .init(color: .white.opacity(0.32), location: 1.0)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.black.opacity(0.05), lineWidth: 1)
+            )
+            .appShadow(radius: 12, y: 4)
+    }
+}
+
 // MARK: - Preview
 
 #Preview("Nudge — Milestone with Progress") {
@@ -299,15 +405,22 @@ struct DailyInsightCard: View {
                 id: UUID(), type: .milestone, domain: .hydration,
                 headline: "6-day hydration streak!",
                 narrative: "You've hit your water goal 6 out of 7 days this week. One more day to go.",
-                chartData: .milestoneRing(current: 6, target: 7, streakLabel: "6 / 7 days"),
+                chartData: .weeklyHydration(days: {
+                    let cal = Calendar.current
+                    let today = cal.startOfDay(for: Date())
+                    let weekStart = cal.dateInterval(of: .weekOfYear, for: today)?.start ?? today
+                    let sample: [Double] = [1.0, 1.0, 0.5, 1.0, 0.0, 1.0, 0.7]
+                    return (0..<7).compactMap { i -> HydrationDay? in
+                        guard let date = cal.date(byAdding: .day, value: i, to: weekStart) else { return nil }
+                        let isFuture = date > today
+                        return HydrationDay(date: date, fraction: isFuture ? 0 : sample[i], isFuture: isFuture)
+                    }
+                }()),
                 priority: 0.9, isLLMGenerated: false, generatedAt: Date(),
                 detailSuggestions: ["Keep it up."]
             ),
             isGenerating: false,
-            actionLabel: "Add",
-            actionIcon: "plus",
-            onTap: {},
-            onAction: {}
+            onTap: {}
         )
 
         DailyInsightCard(

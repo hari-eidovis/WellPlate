@@ -127,6 +127,10 @@ struct InsightDetailSheet: View {
                 Spacer()
             }
             .frame(height: 140)
+        case .weeklyHydration(let days):
+            WeeklyHydrationDots(days: days, accentColor: card.domain.accentColor, dotSize: 40)
+                .frame(maxWidth: .infinity)
+                .frame(height: 120)
         case .sparkline(let points):
             SparklineView(points: points, accentColor: card.domain.accentColor)
                 .frame(width: 200, height: 60)

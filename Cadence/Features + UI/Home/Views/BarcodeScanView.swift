@@ -103,7 +103,7 @@ struct BarcodeScanView: View {
 
         case .confirmProduct(let product, let nutrition):
             confirmProductView(product: product, nutrition: nutrition)
-
+ 
         case .error(let message):
             errorView(message: message)
         }
@@ -326,7 +326,7 @@ struct BarcodeScanView: View {
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.systemBackground))
+                        .fill(AppColors.card)
                         .appShadow(radius: 8, y: 3)
                 )
 
@@ -340,7 +340,7 @@ struct BarcodeScanView: View {
                             .keyboardType(.decimalPad)
                             .font(.r(.body, .regular))
                             .padding(10)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
+                            .background(RoundedRectangle(cornerRadius: 10).fill(AppColors.card))
                             .frame(maxWidth: 100)
                         Picker("Unit", selection: $confirmedUnit) {
                             ForEach(QuantityUnit.allCases) { unit in

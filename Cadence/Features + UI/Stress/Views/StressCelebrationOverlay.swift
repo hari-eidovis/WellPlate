@@ -285,7 +285,7 @@ struct StressCelebrationOverlay: View {
 
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 26, style: .continuous)
-            .fill(Color(.systemBackground))
+            .fill(AppColors.card)
             .overlay(
                 // Subtle Pampas warmth that survives both light + dark mode.
                 RoundedRectangle(cornerRadius: 26, style: .continuous)

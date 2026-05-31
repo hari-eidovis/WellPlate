@@ -42,7 +42,7 @@ struct CircadianCardView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.systemBackground).opacity(0.85))
+                    .fill(AppColors.card.opacity(0.85))
                     .shadow(color: .black.opacity(0.06), radius: 32, x: 0, y: 16)
             )
         }

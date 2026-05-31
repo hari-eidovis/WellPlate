@@ -149,7 +149,7 @@ struct LiquidGaugeTile: View {
         .frame(height: 210)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(AppColors.card)
                 .appShadow(radius: 14, y: 5)
         )
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))

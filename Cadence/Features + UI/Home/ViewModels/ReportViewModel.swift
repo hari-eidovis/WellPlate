@@ -121,11 +121,8 @@ final class AI15DayReportViewModel: ObservableObject {
                 waterGlasses: 4 + i % 5,
                 coffeeCups: 2 + i % 3,
                 moodLabel: ["Good", "Okay", "Great", "Good", "Awful", "Good", "Great", "Good", "Okay", "Great", "Good", "Good", "Great", "Good", "Great"][i],
-                symptomNames: i == 2 || i == 5 || i == 8 ? ["Bloating"] : (i == 4 ? ["Headache", "Bloating"] : []),
-                symptomMaxSeverity: i == 2 || i == 5 || i == 8 ? 5 : (i == 4 ? 7 : nil),
                 fastingHours: i % 4 == 0 ? 16.0 : nil,
-                fastingCompleted: i % 4 == 0 ? true : nil,
-                journalLogged: false
+                fastingCompleted: i % 4 == 0 ? true : nil
             )
             s.stressMin = stressScores[i] - 8
             s.stressMax = stressScores[i] + 12
@@ -143,10 +140,6 @@ final class AI15DayReportViewModel: ObservableObject {
             days: days,
             goals: goals,
             availableVitals: [.heartRate],
-            foodSymptomLinks: [
-                FoodSymptomLink(symptomName: "Bloating", foodName: "Dairy", symptomDayCount: 4, clearDayCount: 11, symptomDayAppearances: 3, clearDayAppearances: 2, ratio: 4.12, classification: .potentialTrigger),
-                FoodSymptomLink(symptomName: "Bloating", foodName: "Greek yogurt", symptomDayCount: 4, clearDayCount: 11, symptomDayAppearances: 1, clearDayAppearances: 5, ratio: 0.27, classification: .potentialProtective),
-            ],
             crossCorrelations: [
                 CrossCorrelation(xName: "Sleep", yName: "Stress", xDomain: .sleep, yDomain: .stress, spearmanR: -0.62, ciLow: -0.85, ciHigh: -0.30, pairedDays: 15, isSignificant: true, scatterPoints: zip(sleepHours, stressScores).map { (x: $0, y: $1) }),
                 CrossCorrelation(xName: "Steps", yName: "Stress", xDomain: .activity, yDomain: .stress, spearmanR: -0.45, ciLow: -0.72, ciHigh: -0.10, pairedDays: 15, isSignificant: true, scatterPoints: zip(stepCounts.map(Double.init), stressScores).map { (x: $0, y: $1) }),

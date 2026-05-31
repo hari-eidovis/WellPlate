@@ -86,7 +86,7 @@ struct GoalsExpandableView: View {
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 24)
-                    .fill(Color(.systemBackground))
+                    .fill(AppColors.card)
                     .appShadow(radius: 20, y: -5)
             )
             .padding(.horizontal, 16)
@@ -218,7 +218,7 @@ struct GoalsExpandableView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
+                    .fill(AppColors.card)
                     .appShadow(radius: 15, y: -5)
             )
             .padding(.horizontal, 16)

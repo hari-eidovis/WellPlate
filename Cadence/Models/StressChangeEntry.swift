@@ -41,7 +41,6 @@ enum StressChangeSource: String, CaseIterable, Codable {
     case manualWater
     case manualCoffee
     case manualMood
-    case manualSymptoms
     case manualFasting
     case manualIntervention
     case manualOther            // catch-all for QuickLog / DailyPromptCoordinator pipe
@@ -63,7 +62,6 @@ enum StressChangeSource: String, CaseIterable, Codable {
         case .manualWater:          return "Logged water"
         case .manualCoffee:         return "Logged coffee"
         case .manualMood:           return "Mood logged"
-        case .manualSymptoms:       return "Symptoms logged"
         case .manualFasting:        return "Fasting updated"
         case .manualIntervention:   return "Reset completed"
         case .manualOther:          return "Manual update"
@@ -191,7 +189,7 @@ enum StressChangeFilter: Hashable {
     case all
     case auto                                   // any .autoX
     case logs                                   // any .manualX
-    case mood, symptoms, screenTime, food, calibration
+    case mood, screenTime, food, calibration
 
     /// Sources allowed by this filter.
     /// Returns nil for .all (no source predicate) and .calibration
@@ -202,7 +200,6 @@ enum StressChangeFilter: Hashable {
         case .auto:         return Set(StressChangeSource.allCases.filter(\.isAuto))
         case .logs:         return Set(StressChangeSource.allCases.filter { !$0.isAuto })
         case .mood:         return [.manualMood]
-        case .symptoms:     return [.manualSymptoms]
         case .screenTime:   return [.manualScreenTime]
         case .food:         return [.manualFoodLog, .manualFoodDelete]
         case .calibration:  return nil
