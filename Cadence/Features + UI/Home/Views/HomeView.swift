@@ -319,10 +319,12 @@ struct HomeView: View {
                         Text(userName)
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundStyle(.primary)
-                            .background(alignment: .top) {
-                                LottieLoopView(name: "hiddencat")
+                            .background(alignment: .topLeading) {
+                                // Forward (cat peeks up) → reverse (cat goes back) → repeat,
+                                // so it never snaps abruptly back to the start frame.
+                                LottieLoopView(name: "hiddencat", autoReverse: true)
                                     .frame(width: 60, height: 60)
-                                    .offset(y: -60)
+                                    .offset(x:-16,y: -60)
                                     .allowsHitTesting(false)
                                     .accessibilityHidden(true)
                             }

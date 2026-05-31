@@ -6,12 +6,17 @@ import Lottie
 struct LottieLoopView: UIViewRepresentable {
     let name: String
     var loopMode: LottieLoopMode = .loop
+    /// Plays forward then backward on repeat (overrides `loopMode`). Lets feature
+    /// views request a ping-pong loop without importing the Lottie module.
+    var autoReverse: Bool = false
     var speed: CGFloat = 1.0
     var contentMode: UIView.ContentMode = .scaleAspectFit
 
+    private var effectiveLoopMode: LottieLoopMode { autoReverse ? .autoReverse : loopMode }
+
     func makeUIView(context: Context) -> LottieAnimationView {
         let view = LottieAnimationView()
-        view.loopMode = loopMode
+        view.loopMode = effectiveLoopMode
         view.animationSpeed = speed
         view.contentMode = contentMode
         view.backgroundBehavior = .pauseAndRestore
@@ -21,7 +26,7 @@ struct LottieLoopView: UIViewRepresentable {
         view.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
 
         let resourceName = name
-        let loop = loopMode
+        let loop = effectiveLoopMode
 
         if Bundle.main.url(forResource: resourceName, withExtension: "lottie") != nil {
             DotLottieFile.named(resourceName) { result in
@@ -43,7 +48,7 @@ struct LottieLoopView: UIViewRepresentable {
 
     func updateUIView(_ uiView: LottieAnimationView, context: Context) {
         uiView.animationSpeed = speed
-        uiView.loopMode = loopMode
+        uiView.loopMode = effectiveLoopMode
         if !uiView.isAnimationPlaying { uiView.play() }
     }
 }
