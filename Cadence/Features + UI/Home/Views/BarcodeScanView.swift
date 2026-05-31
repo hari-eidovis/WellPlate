@@ -103,7 +103,7 @@ struct BarcodeScanView: View {
 
         case .confirmProduct(let product, let nutrition):
             confirmProductView(product: product, nutrition: nutrition)
-
+ 
         case .error(let message):
             errorView(message: message)
         }

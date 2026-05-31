@@ -124,9 +124,13 @@ struct MainTabView: View {
         .task {
             // Bind manual-input updates here so the shared VM responds to
             // mood/water/food saves regardless of which tab is active.
-            // HK auth + initial loadData stay in StressView.task to preserve
-            // the existing UX where the auth prompt is tied to the Stress tab.
             stressViewModel.bindManualInputUpdates(from: promptCoordinator)
+            // Kick off the initial HealthKit permission + stress load at launch,
+            // tab-agnostically, so the Home score populates immediately instead
+            // of waiting for the user to open the Stress tab. The load is
+            // coalesced in the VM, so the Stress tab's own `.task` won't re-run
+            // it (nor re-flash its loading view).
+            await stressViewModel.requestPermissionAndLoad(reason: .autoAppOpen)
         }
     }
 }

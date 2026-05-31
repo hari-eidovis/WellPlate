@@ -208,7 +208,7 @@ struct StressView: View {
 
     private var levelBackground: some View {
         ZStack {
-            Color(.systemGroupedBackground)
+            HomePalette.background
             LinearGradient(
                 colors: [
                     Self.themeBlue.opacity(0.10),

@@ -7,14 +7,18 @@ import SwiftData
 struct FoodJournalView: View {
     @Environment(\.modelContext) private var modelContext
     @ObservedObject var viewModel: HomeViewModel
+    let autoExpandAddMenu: Bool
     @StateObject private var mealLogViewModel: MealLogViewModel
     @Query private var userGoalsList: [UserGoals]
+
+    private static let autoExpandAddMenuDelay: TimeInterval = 0.35
 
     @State private var selectedDate = Date()
     @State private var showDatePicker = false
     @State private var showProgressInsights = false
     @State private var showStreak = false
     @State private var fabExpanded = false
+    @State private var didAutoExpandAddMenu = false
     @State private var showNotepad = false
     @State private var showVoice = false
     @State private var showBarcode = false
@@ -22,8 +26,9 @@ struct FoodJournalView: View {
     @State private var showMealDetail = false
     @FocusState private var isTextEditorFocused: Bool
 
-    init(viewModel: HomeViewModel) {
+    init(viewModel: HomeViewModel, autoExpandAddMenu: Bool = false) {
         self.viewModel = viewModel
+        self.autoExpandAddMenu = autoExpandAddMenu
         _mealLogViewModel = StateObject(wrappedValue: MealLogViewModel(homeViewModel: viewModel))
     }
 
@@ -270,6 +275,9 @@ struct FoodJournalView: View {
             showBarcode = false
             mealLogViewModel.resetDismissState()
         }
+        .onAppear {
+            autoExpandAddMenuIfNeeded()
+        }
     }
 
     // MARK: - Actions
@@ -315,6 +323,17 @@ struct FoodJournalView: View {
                     HapticService.notify(.success)
                 }
                 viewModel.foodDescription = ""
+            }
+        }
+    }
+
+    private func autoExpandAddMenuIfNeeded() {
+        guard autoExpandAddMenu, !didAutoExpandAddMenu else { return }
+        didAutoExpandAddMenu = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.autoExpandAddMenuDelay) {
+            guard !isTextEditorFocused else { return }
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                fabExpanded = true
             }
         }
     }

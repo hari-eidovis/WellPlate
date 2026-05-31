@@ -43,7 +43,7 @@ struct HomeView: View {
     @State private var healthSuggestedMood: MoodOption?
     @State private var hydrationGlasses: Int = 0
     @State private var showFoodJournal = false
-    @State private var showMealLogEntry = false
+    @State private var shouldAutoExpandFoodJournalAddMenu = false
     @State private var showWaterDetail = false
     // TODO: F-next — re-home WellnessCalendarView to Profile tab. Kept as dead
     // navigation state to avoid touching the nav chain; remove with that move.
@@ -100,7 +100,7 @@ struct HomeView: View {
                             current: todayCalories,
                             goal: currentGoals.calorieGoal
                         ),
-                        onTap: { showFoodJournal = true }
+                        onTap: { openFoodJournal(autoExpandAddMenu: false) }
                     )
                     HomeMetricTile(
                         .screenTime(hours: stressViewModel.screenTimeDisplayHours),
@@ -174,7 +174,7 @@ struct HomeView: View {
     private var contextualActionBar: some View {
         ContextualActionBar(
             state: contextualBarState,
-            onLogMeal: { showMealLogEntry = true },
+            onLogMeal: { openFoodJournal(autoExpandAddMenu: true) },
             onStressTab: { selectedTab = 1 },
             onSeeInsight: {
                 activeSheet = .insights
@@ -218,7 +218,7 @@ struct HomeView: View {
                     let vAmt = abs(value.translation.height)
                     if hAmt > 80 && hAmt > vAmt * 1.5 {
                         HapticService.impact(.medium)
-                        showFoodJournal = true
+                        openFoodJournal(autoExpandAddMenu: false)
                     }
                 }
         )
@@ -228,7 +228,10 @@ struct HomeView: View {
         .background(HomePalette.background.ignoresSafeArea())
         .scrollIndicators(.hidden)
         .navigationDestination(isPresented: $showFoodJournal) {
-            FoodJournalView(viewModel: foodJournalViewModel)
+            FoodJournalView(
+                viewModel: foodJournalViewModel,
+                autoExpandAddMenu: shouldAutoExpandFoodJournalAddMenu
+            )
         }
         .navigationDestination(isPresented: $showWaterDetail) {
             WaterDetailView(totalGlasses: currentGoals.waterDailyCups, cupSizeML: currentGoals.waterCupSizeML)
@@ -250,12 +253,6 @@ struct HomeView: View {
             }
             .sheet(item: $activeSheet) { sheet in
                 sheetContent(for: sheet)
-            }
-            .sheet(isPresented: $showMealLogEntry) {
-                MealLogSheetContent(
-                    homeViewModel: foodJournalViewModel,
-                    selectedDate: Date()
-                )
             }
             .alert("Nice work! 🎉", isPresented: $showWaterGoalCelebration) {
                 Button("OK", role: .cancel) {}
@@ -302,6 +299,16 @@ struct HomeView: View {
                 refreshTodayMoodState()
             }
         }
+        .onChange(of: showFoodJournal) { _, showing in
+            if !showing {
+                shouldAutoExpandFoodJournalAddMenu = false
+            }
+        }
+    }
+
+    private func openFoodJournal(autoExpandAddMenu: Bool) {
+        shouldAutoExpandFoodJournalAddMenu = autoExpandAddMenu
+        showFoodJournal = true
     }
 
     // MARK: - Header

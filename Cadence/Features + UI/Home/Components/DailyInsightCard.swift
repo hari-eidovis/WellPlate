@@ -370,6 +370,11 @@ private extension View {
                 Image(imageName)
                     .resizable()
                     .scaledToFill()
+                    // Zoom slightly to crop the artwork's pale edge frame. In short
+                    // cards scaledToFill matches the image width exactly, so without
+                    // this the asset's light border lands at the card edges and shows
+                    // through on the right (where the legibility scrim is weakest).
+                    .scaleEffect(1.06)
                     .overlay(
                         LinearGradient(
                             stops: [

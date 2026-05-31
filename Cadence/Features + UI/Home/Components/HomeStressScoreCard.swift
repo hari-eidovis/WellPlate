@@ -16,6 +16,14 @@ struct HomeStressScoreCard: View {
     @ObservedObject var viewModel: StressViewModel
     var onTap: () -> Void
 
+    /// True while we expect a score but the first compute hasn't produced one
+    /// yet. Mirrors `HomeView.liveStressScore`'s convention of treating a
+    /// non-positive `totalScore` as "not loaded". Stays false when HealthKit is
+    /// unauthorized (and not mock), since no score will ever arrive there.
+    private var isAwaitingScore: Bool {
+        (viewModel.isAuthorized || viewModel.usesMockData) && viewModel.totalScore <= 0
+    }
+
     var body: some View {
         Button(action: { HapticService.impact(.light); onTap() }) {
             VStack(alignment: .leading, spacing: 12) {
@@ -23,10 +31,17 @@ struct HomeStressScoreCard: View {
                 pills
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            // Until the first compute lands, redact the "NN /100" + pills into a
+            // shimmering placeholder skeleton rather than flashing a misleading "0".
+            .redacted(reason: isAwaitingScore ? .placeholder : [])
+            .shimmering(active: isAwaitingScore)
         }
         .buttonStyle(.plain)
+        .disabled(isAwaitingScore)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Stress score \(Int(viewModel.totalScore.rounded())) out of 100")
+        .accessibilityLabel(isAwaitingScore
+            ? "Stress score loading"
+            : "Stress score \(Int(viewModel.totalScore.rounded())) out of 100")
         .accessibilityHint("Opens the Stress tab")
     }
 
@@ -69,7 +84,7 @@ struct HomeStressScoreCard: View {
         HStack(spacing: 4) {
             Image(systemName: viewModel.stressConfidence.systemImage)
                 .font(.system(size: 10, weight: .semibold))
-            Text("\(viewModel.factorCoverage) of 13 factors logged")
+            Text("\(viewModel.factorCoverage) of 12 factors logged")
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .tracking(0.2)
                 .lineLimit(1)

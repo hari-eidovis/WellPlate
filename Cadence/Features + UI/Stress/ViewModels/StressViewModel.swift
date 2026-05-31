@@ -206,7 +206,30 @@ final class StressViewModel: ObservableObject {
 
     // MARK: - Actions
 
+    /// Single in-flight handle for the initial permission + load. Both the Home
+    /// tab (at launch, via `MainTabView`) and the Stress tab (`.task`) call this;
+    /// the first call performs the work while later/concurrent callers await the
+    /// same load. Once it succeeds the latch holds, so re-entry returns instantly
+    /// with no second loading-view flash. A failed attempt clears the latch so a
+    /// later call can retry. Periodic refreshes go through `loadData`/`recompute`,
+    /// not here.
+    private var initialLoadTask: Task<Void, Never>?
+
     func requestPermissionAndLoad(reason: StressChangeSource = .autoAppOpen) async {
+        if let existing = initialLoadTask {
+            await existing.value
+            return
+        }
+        let task = Task { await performInitialLoad(reason: reason) }
+        initialLoadTask = task
+        await task.value
+        // Allow a retry on a later call if the attempt never authorized.
+        if !isAuthorized && !usesMockData {
+            initialLoadTask = nil
+        }
+    }
+
+    private func performInitialLoad(reason: StressChangeSource) async {
         if usesMockData {
             isLoading = true
             defer { isLoading = false }

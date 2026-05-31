@@ -72,7 +72,7 @@ struct WellnessCalendarView: View {
 
     private var backgroundCanvas: some View {
         ZStack(alignment: .top) {
-            Color(.systemGroupedBackground).ignoresSafeArea()
+            HomePalette.background.ignoresSafeArea()
             LinearGradient(
                 colors: [AppColors.brand.opacity(0.12), .clear],
                 startPoint: .top,
