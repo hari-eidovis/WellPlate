@@ -7,7 +7,6 @@ import WidgetKit
 enum StressWidgetSize: String, CaseIterable, Identifiable {
     case small  = "Small"
     case medium = "Medium"
-    case large  = "Large"
 
     var id: String { rawValue }
 
@@ -15,7 +14,6 @@ enum StressWidgetSize: String, CaseIterable, Identifiable {
         switch self {
         case .small:  return "square.fill"
         case .medium: return "rectangle.fill"
-        case .large:  return "rectangle.portrait.fill"
         }
     }
 
@@ -23,7 +21,6 @@ enum StressWidgetSize: String, CaseIterable, Identifiable {
         switch self {
         case .small:  return "Score ring + level"
         case .medium: return "Ring + top factor + vitals"
-        case .large:  return "Full breakdown + 7-day trend"
         }
     }
 
@@ -31,7 +28,6 @@ enum StressWidgetSize: String, CaseIterable, Identifiable {
         switch self {
         case .small:  return 1.0
         case .medium: return 2.12
-        case .large:  return 1.0
         }
     }
 
@@ -39,7 +35,6 @@ enum StressWidgetSize: String, CaseIterable, Identifiable {
         switch self {
         case .small:  return 130
         case .medium: return 130
-        case .large:  return 260
         }
     }
 }
@@ -943,11 +938,6 @@ private struct WidgetPreview: View {
                 MediumPreview(data: mockData)
                     .frame(maxWidth: .infinity)
                     .frame(height: 130)
-
-            case .large:
-                LargePreview(data: mockData)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 260)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 20))
@@ -1047,80 +1037,6 @@ private struct MediumPreview: View {
                 .frame(maxWidth: .infinity)
             }
             .padding(.horizontal, 12).padding(.vertical, 10)
-        }
-    }
-}
-
-private struct LargePreview: View {
-    let data: WidgetStressData
-
-    private var levelColor: Color { previewLevelColor(for: data.levelRaw) }
-    private var fraction: Double { min(data.totalScore / 100.0, 1.0) }
-
-    var body: some View {
-        ZStack {
-            LinearGradient(colors: [Color(.systemBackground), levelColor.opacity(0.06)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 4) {
-                    Image(systemName: "brain.head.profile.fill").font(.system(size: 12)).foregroundStyle(levelColor)
-                    Text("Stress Level").font(.system(size: 11, weight: .bold))
-                    Spacer()
-                    Text("Today").font(.system(size: 9)).foregroundStyle(.secondary)
-                }
-                .padding(.bottom, 10)
-
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle().stroke(levelColor.opacity(0.18), lineWidth: 7)
-                        Circle()
-                            .trim(from: 0, to: fraction)
-                            .stroke(levelColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
-                            .rotationEffect(.degrees(-90))
-                        VStack(spacing: 0) {
-                            Text("\(Int(data.totalScore))").font(.system(size: 14, weight: .bold, design: .rounded))
-                            Text("/100").font(.system(size: 7)).foregroundStyle(.secondary)
-                        }
-                    }
-                    .frame(width: 56, height: 56)
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(data.levelRaw)
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundStyle(levelColor)
-                        Text(data.encouragement)
-                            .font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(2)
-                    }
-                }
-                .padding(.bottom, 10)
-
-                Divider().padding(.bottom, 8)
-
-                VStack(spacing: 6) {
-                    ForEach(data.factors, id: \.title) { factor in
-                        MiniFactorBar(factor: factor)
-                    }
-                }
-                .padding(.bottom, 10)
-
-                Divider().padding(.bottom, 8)
-
-                Text("7-Day Trend").font(.system(size: 8, weight: .medium)).foregroundStyle(.tertiary)
-                    .textCase(.uppercase).padding(.bottom, 4)
-
-                HStack(alignment: .bottom, spacing: 4) {
-                    ForEach(data.weeklyScores, id: \.date) { day in
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(levelColor.opacity(0.6))
-                            .frame(height: max(CGFloat(day.score ?? 0) / 100.0 * 24, 2))
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                .frame(height: 28)
-
-                Spacer(minLength: 4)
-            }
-            .padding(12)
         }
     }
 }
